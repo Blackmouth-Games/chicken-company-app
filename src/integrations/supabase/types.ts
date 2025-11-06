@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_metrics: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          metadata: Json | null
+          metric_type: Database["public"]["Enums"]["metric_type"]
+          metric_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          metadata?: Json | null
+          metric_type: Database["public"]["Enums"]["metric_type"]
+          metric_value?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          metadata?: Json | null
+          metric_type?: Database["public"]["Enums"]["metric_type"]
+          metric_value?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      metric_events: {
+        Row: {
+          created_at: string | null
+          event_type: Database["public"]["Enums"]["metric_type"]
+          event_value: number | null
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: Database["public"]["Enums"]["metric_type"]
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: Database["public"]["Enums"]["metric_type"]
+          event_value?: number | null
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metric_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -225,10 +300,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_metrics_summary: {
+        Args: { p_end_date?: string; p_start_date?: string }
+        Returns: {
+          date: string
+          metadata: Json
+          metric_type: Database["public"]["Enums"]["metric_type"]
+          metric_value: number
+        }[]
+      }
+      increment_daily_metric: {
+        Args: {
+          p_date: string
+          p_increment?: number
+          p_metadata?: Json
+          p_metric_type: Database["public"]["Enums"]["metric_type"]
+        }
+        Returns: undefined
+      }
+      record_metric_event: {
+        Args: {
+          p_event_type: Database["public"]["Enums"]["metric_type"]
+          p_event_value?: number
+          p_metadata?: Json
+          p_session_id?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
-      [_ in never]: never
+      metric_type:
+        | "new_guest_users"
+        | "new_registered_users"
+        | "session_duration"
+        | "page_view"
+        | "button_click"
+        | "feature_usage"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -355,6 +463,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      metric_type: [
+        "new_guest_users",
+        "new_registered_users",
+        "session_duration",
+        "page_view",
+        "button_click",
+        "feature_usage",
+      ],
+    },
   },
 } as const
