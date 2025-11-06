@@ -29,6 +29,25 @@ const Home = () => {
     if (!telegramUser?.id) return;
 
     try {
+      // Ensure profile exists or create it
+      const { data: createdRows } = await supabase.rpc('create_or_update_profile', {
+        p_telegram_id: telegramUser.id,
+        p_telegram_first_name: telegramUser.first_name ?? null,
+        p_telegram_last_name: telegramUser.last_name ?? null,
+        p_telegram_username: telegramUser.username ?? null,
+        p_source: 'telegram',
+        p_referrer_code: null,
+      });
+
+      const created = Array.isArray(createdRows) ? createdRows[0] : undefined;
+
+      if (created?.profile_id) {
+        setUserId(created.profile_id);
+        await loadBuildings(created.profile_id);
+        return;
+      }
+
+      // Fallback: select by telegram id
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
@@ -40,7 +59,7 @@ const Home = () => {
         loadBuildings(profile.id);
       }
     } catch (error) {
-      console.error("Error loading profile:", error);
+      console.error("Error loading/creating profile:", error);
     }
   };
 

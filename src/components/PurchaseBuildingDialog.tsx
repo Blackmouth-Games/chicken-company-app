@@ -39,14 +39,7 @@ export const PurchaseBuildingDialog = ({
     try {
       setIsPurchasing(true);
 
-      // Check if user is identified
-      if (!userId) {
-        setShowConnectWallet(true);
-        setIsPurchasing(false);
-        return;
-      }
-
-      // Check if wallet is connected
+      // Show connect dialog only if wallet is NOT connected
       if (!tonConnectUI.connected) {
         setShowConnectWallet(true);
         setIsPurchasing(false);
