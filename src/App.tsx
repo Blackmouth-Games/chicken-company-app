@@ -7,6 +7,8 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
+import { SplashScreen } from "./components/SplashScreen";
+import { LoadingScreen } from "./components/LoadingScreen";
 import ComingSoon from "./pages/ComingSoon";
 import Home from "./pages/Home";
 import Wallet from "./pages/Wallet";
@@ -19,6 +21,7 @@ const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL;
 
 const AppRoutes = () => {
   const [isFromTelegram, setIsFromTelegram] = useState<boolean | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     initTelegramWebApp();
@@ -26,15 +29,14 @@ const AppRoutes = () => {
     setIsFromTelegram(telegramStatus);
   }, []);
 
+  // Show splash screen first
+  if (showSplash && isFromTelegram !== false) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+  }
+
   // Show loading while checking Telegram status
   if (isFromTelegram === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-xl text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading" />;
   }
 
   // If not from Telegram, show Coming Soon page
