@@ -14,11 +14,11 @@ const Home = () => {
       className="min-h-screen w-full bg-cover bg-center relative"
       style={{ backgroundImage: `url(${bgFarm})` }}
     >
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
       
       <div className="relative z-10 p-6">
         {/* Settings Button */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 pointer-events-auto">
           <Button
             variant="outline"
             size="icon"

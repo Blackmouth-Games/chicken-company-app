@@ -6,7 +6,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useAudio } from "@/contexts/AudioContext";
-import { X } from "lucide-react";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -34,17 +33,9 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border" hideCloseButton>
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">SETTINGS</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
@@ -105,13 +96,6 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
               onClick={() => window.open("https://t.me/ChickenCo_io", "_blank")}
             >
               TG
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open("https://discord.gg/chickencoin", "_blank")}
-            >
-              Discord
             </Button>
             <Button
               variant="outline"
