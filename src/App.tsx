@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
+import { AudioProvider } from "./contexts/AudioContext";
 import ComingSoon from "./pages/ComingSoon";
 import Home from "./pages/Home";
 import Wallet from "./pages/Wallet";
@@ -57,13 +58,15 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TonConnectUIProvider manifestUrl={manifestUrl}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
+      <AudioProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </TooltipProvider>
+      </AudioProvider>
     </TonConnectUIProvider>
   </QueryClientProvider>
 );

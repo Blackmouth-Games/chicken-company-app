@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonConnectUI } from "@tonconnect/ui-react";
+import { useAudio } from "@/contexts/AudioContext";
 import { X } from "lucide-react";
 
 interface SettingsDialogProps {
@@ -16,13 +17,19 @@ const APP_VERSION = "1.0";
 
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
-  const [soundVolume, setSoundVolume] = useState([50]);
-  const [musicVolume, setMusicVolume] = useState([50]);
-  const [isMuted, setIsMuted] = useState(false);
+  const { soundVolume, musicVolume, isMuted, setSoundVolume, setMusicVolume, setIsMuted } = useAudio();
   const [language, setLanguage] = useState("es");
 
   const handleDisconnect = async () => {
     await tonConnectUI.disconnect();
+  };
+
+  const handleSoundVolumeChange = (value: number[]) => {
+    setSoundVolume(value[0]);
+  };
+
+  const handleMusicVolumeChange = (value: number[]) => {
+    setMusicVolume(value[0]);
   };
 
   return (
@@ -46,8 +53,8 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Sound</label>
               <Slider
-                value={soundVolume}
-                onValueChange={setSoundVolume}
+                value={[soundVolume]}
+                onValueChange={handleSoundVolumeChange}
                 max={100}
                 step={1}
                 className="w-full"
@@ -57,8 +64,8 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             <div className="space-y-2">
               <label className="text-sm font-medium">Music</label>
               <Slider
-                value={musicVolume}
-                onValueChange={setMusicVolume}
+                value={[musicVolume]}
+                onValueChange={handleMusicVolumeChange}
                 max={100}
                 step={1}
                 className="w-full"
