@@ -102,7 +102,9 @@ export const PurchaseBuildingDialog = ({
 
         <div className="flex flex-col items-center gap-4 py-4">
           {/* Building Image */}
-          <div className="text-8xl">🏠</div>
+          <div className="w-32 h-32 flex items-center justify-center">
+            <div className="text-7xl">🏠</div>
+          </div>
 
           {/* Level */}
           <div className="text-lg font-semibold text-muted-foreground">Lvl 1</div>

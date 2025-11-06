@@ -1,37 +1,47 @@
 import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 interface BuildingSlotProps {
   position: number;
   building?: {
     id: string;
-    type: string;
+    building_type: string;
     level: number;
-  } | null;
+    capacity: number;
+    current_chickens: number;
+  };
   onBuyClick: (position: number) => void;
+  onBuildingClick?: () => void;
 }
 
-export const BuildingSlot = ({ position, building, onBuyClick }: BuildingSlotProps) => {
+export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }: BuildingSlotProps) => {
   if (building) {
     return (
-      <div className="relative border-2 border-dashed border-primary/40 rounded-lg p-4 bg-card/50 backdrop-blur-sm aspect-square flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-sm font-semibold text-card-foreground">
-            {building.type === 'corral' ? '🐔 Corral' : building.type}
-          </div>
-          <div className="text-xs text-muted-foreground">Lvl {building.level}</div>
+      <div
+        onClick={onBuildingClick}
+        className="aspect-square border-2 border-dashed border-green-600 rounded-lg bg-green-50/50 p-2 cursor-pointer hover:bg-green-100/50 transition-colors"
+      >
+        <div className="flex flex-col items-center justify-center h-full">
+          <div className="text-4xl mb-1">🏠</div>
+          <p className="text-xs font-medium text-green-900">Lvl {building.level}</p>
+          <p className="text-xs text-green-700">{building.current_chickens}/{building.capacity}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative border-2 border-dashed border-border rounded-lg p-4 bg-background/50 backdrop-blur-sm aspect-square flex items-center justify-center">
+    <div className="aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg bg-background/50 p-2 flex items-center justify-center">
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
         onClick={() => onBuyClick(position)}
-        className="h-12 w-12 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground"
+        className={cn(
+          "h-12 w-12 rounded-full",
+          "bg-background/80 hover:bg-background",
+          "border-muted-foreground/50"
+        )}
       >
         <Plus className="h-6 w-6" />
       </Button>
