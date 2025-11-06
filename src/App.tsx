@@ -7,6 +7,7 @@ import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
+import { MetricsProvider } from "./components/MetricsProvider";
 import { SplashScreen } from "./components/SplashScreen";
 import { LoadingScreen } from "./components/LoadingScreen";
 import ComingSoon from "./pages/ComingSoon";
@@ -46,14 +47,16 @@ const AppRoutes = () => {
 
   // If from Telegram, show app with navigation
   return (
-    <TelegramLayout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/wallet" element={<Wallet />} />
-        <Route path="/friends" element={<Friends />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TelegramLayout>
+    <MetricsProvider>
+      <TelegramLayout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/wallet" element={<Wallet />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </TelegramLayout>
+    </MetricsProvider>
   );
 };
 
