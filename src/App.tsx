@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
 import { MetricsProvider } from "./components/MetricsProvider";
+import { useReferral } from "./hooks/useReferral";
 import { OrientationLock } from "./components/OrientationLock";
 import { SplashScreen } from "./components/SplashScreen";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -24,6 +25,9 @@ const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL;
 const AppRoutes = () => {
   const [isFromTelegram, setIsFromTelegram] = useState<boolean | null>(null);
   const [showSplash, setShowSplash] = useState(true);
+  
+  // Initialize referral tracking
+  useReferral();
 
   useEffect(() => {
     initTelegramWebApp();

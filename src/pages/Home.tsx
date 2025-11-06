@@ -11,7 +11,7 @@ const Home = () => {
 
   return (
     <div 
-      className="min-h-screen w-full bg-cover bg-center relative"
+      className="min-h-screen w-full bg-repeat relative"
       style={{ backgroundImage: `url(${bgFarm})` }}
     >
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />

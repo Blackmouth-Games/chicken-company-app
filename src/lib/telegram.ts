@@ -10,6 +10,7 @@ declare global {
             last_name?: string;
             username?: string;
           };
+          start_param?: string;
         };
         ready: () => void;
         expand: () => void;
@@ -32,6 +33,11 @@ export const initTelegramWebApp = () => {
     window.Telegram?.WebApp.ready();
     window.Telegram?.WebApp.expand();
   }
+};
+
+export const getTelegramStartParam = (): string | null => {
+  if (!isTelegramWebApp()) return null;
+  return window.Telegram?.WebApp.initDataUnsafe.start_param || null;
 };
 
 export {};
