@@ -65,14 +65,6 @@ const Home = () => {
   };
 
   const handleBuyClick = (position: number) => {
-    if (!userId) {
-      toast({
-        title: "Error",
-        description: "Usuario no identificado",
-        variant: "destructive",
-      });
-      return;
-    }
     setSelectedPosition(position);
     setPurchaseDialogOpen(true);
   };
@@ -133,15 +125,13 @@ const Home = () => {
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       
-      {userId && (
-        <PurchaseBuildingDialog
-          open={purchaseDialogOpen}
-          onOpenChange={setPurchaseDialogOpen}
-          position={selectedPosition}
-          userId={userId}
-          onPurchaseComplete={handlePurchaseComplete}
-        />
-      )}
+      <PurchaseBuildingDialog
+        open={purchaseDialogOpen}
+        onOpenChange={setPurchaseDialogOpen}
+        position={selectedPosition}
+        userId={userId}
+        onPurchaseComplete={handlePurchaseComplete}
+      />
     </div>
   );
 };

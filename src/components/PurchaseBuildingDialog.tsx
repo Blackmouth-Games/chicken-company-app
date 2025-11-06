@@ -15,7 +15,7 @@ interface PurchaseBuildingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   position: number;
-  userId: string;
+  userId: string | null;
   onPurchaseComplete: () => void;
 }
 
@@ -37,6 +37,17 @@ export const PurchaseBuildingDialog = ({
     try {
       setIsPurchasing(true);
 
+      // Check if user is identified
+      if (!userId) {
+        toast({
+          title: "Conecta tu wallet",
+          description: "Por favor conecta tu wallet en la pestaña Wallet para continuar",
+          variant: "destructive",
+        });
+        setIsPurchasing(false);
+        return;
+      }
+
       // Check if wallet is connected
       if (!tonConnectUI.connected) {
         toast({
@@ -44,6 +55,7 @@ export const PurchaseBuildingDialog = ({
           description: "Por favor conecta tu wallet en la pestaña Wallet",
           variant: "destructive",
         });
+        setIsPurchasing(false);
         return;
       }
 
