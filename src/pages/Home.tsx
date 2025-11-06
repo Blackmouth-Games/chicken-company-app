@@ -1,8 +1,13 @@
+import { useState } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
 import { getTelegramUser } from "@/lib/telegram";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
+import { SettingsDialog } from "@/components/SettingsDialog";
 
 const Home = () => {
   const telegramUser = getTelegramUser();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div 
@@ -12,6 +17,18 @@ const Home = () => {
       <div className="absolute inset-0 bg-black/20" />
       
       <div className="relative z-10 p-6">
+        {/* Settings Button */}
+        <div className="absolute top-4 right-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
             Welcome, {telegramUser?.first_name || 'Guest'}!
@@ -30,6 +47,8 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
