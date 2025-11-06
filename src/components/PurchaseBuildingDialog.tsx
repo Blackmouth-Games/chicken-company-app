@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
+import { useBuildingPrices } from "@/hooks/useBuildingPrices";
+import { TON_RECEIVER_WALLET, TRANSACTION_TIMEOUT } from "@/lib/constants";
 
 interface PurchaseBuildingDialogProps {
   open: boolean;
@@ -31,9 +33,11 @@ export const PurchaseBuildingDialog = ({
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const { toast } = useToast();
   const [tonConnectUI] = useTonConnectUI();
+  const { getPrice } = useBuildingPrices();
 
-  const CORRAL_PRICE = 0.1; // TON price for level 1 corral
-  const CORRAL_CAPACITY = 50;
+  const buildingPrice = getPrice("corral", 1);
+  const CORRAL_PRICE = buildingPrice?.price_ton || 0.1;
+  const CORRAL_CAPACITY = buildingPrice?.capacity || 50;
 
   const handlePurchase = async () => {
     try {
@@ -46,30 +50,73 @@ export const PurchaseBuildingDialog = ({
         return;
       }
 
+      // Create purchase record first
+      const { data: purchaseRecord, error: purchaseError } = await supabase
+        .from("building_purchases")
+        .insert({
+          user_id: userId,
+          building_type: "corral",
+          level: 1,
+          price_ton: CORRAL_PRICE,
+          wallet_address: tonConnectUI.wallet?.account.address,
+          status: "pending",
+        })
+        .select()
+        .single();
+
+      if (purchaseError) throw purchaseError;
+
+      // Record metric: payment initiated
+      await supabase.rpc("record_metric_event", {
+        p_user_id: userId,
+        p_event_type: "building_purchased",
+        p_event_value: CORRAL_PRICE,
+        p_metadata: {
+          building_type: "corral",
+          level: 1,
+          purchase_id: purchaseRecord.id,
+        },
+      });
+
       // Send TON transaction
       const transaction = {
-        validUntil: Math.floor(Date.now() / 1000) + 60, // 60 seconds
+        validUntil: Math.floor(Date.now() / 1000) + TRANSACTION_TIMEOUT,
         messages: [
           {
-            address: "UQD5D_QOx3KxNVGcXPLp15j_pJvA2Z5BCjJWIYVHHPLvQ3K8", // Replace with your wallet
+            address: TON_RECEIVER_WALLET,
             amount: (CORRAL_PRICE * 1e9).toString(), // Convert TON to nanoTON
           },
         ],
       };
 
-      await tonConnectUI.sendTransaction(transaction);
+      const result = await tonConnectUI.sendTransaction(transaction);
 
       // Insert building into database
-      const { error } = await supabase.from("user_buildings").insert({
-        user_id: userId,
-        building_type: "corral",
-        level: 1,
-        position_index: position,
-        capacity: CORRAL_CAPACITY,
-        current_chickens: 0,
-      });
+      const { data: newBuilding, error: buildingError } = await supabase
+        .from("user_buildings")
+        .insert({
+          user_id: userId,
+          building_type: "corral",
+          level: 1,
+          position_index: position,
+          capacity: CORRAL_CAPACITY,
+          current_chickens: 0,
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (buildingError) throw buildingError;
+
+      // Update purchase record as completed
+      await supabase
+        .from("building_purchases")
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+          building_id: newBuilding.id,
+          transaction_hash: result.boc,
+        })
+        .eq("id", purchaseRecord.id);
 
       toast({
         title: "¡Corral comprado!",
@@ -78,11 +125,12 @@ export const PurchaseBuildingDialog = ({
 
       onPurchaseComplete();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error purchasing building:", error);
+      
       toast({
         title: "Error",
-        description: "No se pudo completar la compra. Intenta nuevamente.",
+        description: error?.message || "No se pudo completar la compra. Intenta nuevamente.",
         variant: "destructive",
       });
     } finally {

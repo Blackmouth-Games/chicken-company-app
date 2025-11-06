@@ -14,6 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      building_prices: {
+        Row: {
+          building_type: string
+          capacity: number
+          created_at: string
+          id: string
+          level: number
+          price_ton: number
+          updated_at: string
+        }
+        Insert: {
+          building_type: string
+          capacity: number
+          created_at?: string
+          id?: string
+          level: number
+          price_ton: number
+          updated_at?: string
+        }
+        Update: {
+          building_type?: string
+          capacity?: number
+          created_at?: string
+          id?: string
+          level?: number
+          price_ton?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      building_purchases: {
+        Row: {
+          building_id: string | null
+          building_type: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          level: number
+          price_ton: number
+          status: string
+          transaction_hash: string | null
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          building_id?: string | null
+          building_type: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          level: number
+          price_ton: number
+          status?: string
+          transaction_hash?: string | null
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          building_id?: string | null
+          building_type?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          level?: number
+          price_ton?: number
+          status?: string
+          transaction_hash?: string | null
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_purchases_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "user_buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_metrics: {
         Row: {
           created_at: string | null
