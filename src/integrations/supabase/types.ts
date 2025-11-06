@@ -96,6 +96,7 @@ export type Database = {
           preferred_language: string | null
           referral_code: string | null
           referred_by: string | null
+          source: string | null
           telegram_first_name: string | null
           telegram_id: number | null
           telegram_last_name: string | null
@@ -109,6 +110,7 @@ export type Database = {
           preferred_language?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          source?: string | null
           telegram_first_name?: string | null
           telegram_id?: number | null
           telegram_last_name?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           preferred_language?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          source?: string | null
           telegram_first_name?: string | null
           telegram_id?: number | null
           telegram_last_name?: string | null
@@ -172,6 +175,50 @@ export type Database = {
           {
             foreignKeyName: "referrals_referrer_id_fkey"
             columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_buildings: {
+        Row: {
+          building_type: Database["public"]["Enums"]["building_type"]
+          capacity: number
+          created_at: string
+          current_chickens: number
+          id: string
+          level: number
+          position_index: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          building_type?: Database["public"]["Enums"]["building_type"]
+          capacity?: number
+          created_at?: string
+          current_chickens?: number
+          id?: string
+          level?: number
+          position_index: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          building_type?: Database["public"]["Enums"]["building_type"]
+          capacity?: number
+          created_at?: string
+          current_chickens?: number
+          id?: string
+          level?: number
+          position_index?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_buildings_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -300,6 +347,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_or_update_profile: {
+        Args: {
+          p_referrer_code?: string
+          p_source?: string
+          p_telegram_first_name: string
+          p_telegram_id: number
+          p_telegram_last_name?: string
+          p_telegram_username?: string
+        }
+        Returns: {
+          is_new_user: boolean
+          profile_id: string
+          referral_code: string
+        }[]
+      }
       get_metrics_summary: {
         Args: { p_end_date?: string; p_start_date?: string }
         Returns: {
@@ -307,6 +369,14 @@ export type Database = {
           metadata: Json
           metric_type: Database["public"]["Enums"]["metric_type"]
           metric_value: number
+        }[]
+      }
+      get_referral_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          active_referrals: number
+          total_referrals: number
+          total_rewards: number
         }[]
       }
       increment_daily_metric: {
@@ -330,6 +400,7 @@ export type Database = {
       }
     }
     Enums: {
+      building_type: "corral" | "market" | "warehouse"
       metric_type:
         | "new_guest_users"
         | "new_registered_users"
@@ -464,6 +535,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      building_type: ["corral", "market", "warehouse"],
       metric_type: [
         "new_guest_users",
         "new_registered_users",
