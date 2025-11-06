@@ -18,7 +18,7 @@ const Home = () => {
       
       <div className="relative z-10 p-6">
         {/* Settings Button */}
-        <div className="absolute top-4 right-4 pointer-events-auto">
+        <div className="absolute top-4 right-4 z-50">
           <Button
             variant="outline"
             size="icon"
