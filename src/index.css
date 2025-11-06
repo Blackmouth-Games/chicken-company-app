@@ -102,8 +102,4 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
-
-  #root {
-    @apply max-w-screen-sm mx-auto;
-  }
 }
