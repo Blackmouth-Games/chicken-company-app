@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
 import { MetricsProvider } from "./components/MetricsProvider";
+import { OrientationLock } from "./components/OrientationLock";
 import { SplashScreen } from "./components/SplashScreen";
 import { LoadingScreen } from "./components/LoadingScreen";
 import ComingSoon from "./pages/ComingSoon";
@@ -65,6 +66,7 @@ const App = () => (
     <TonConnectUIProvider manifestUrl={manifestUrl}>
       <AudioProvider>
         <TooltipProvider>
+          <OrientationLock />
           <Toaster />
           <Sonner />
           <BrowserRouter>
