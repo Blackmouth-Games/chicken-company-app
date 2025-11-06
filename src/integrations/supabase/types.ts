@@ -14,7 +14,212 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          preferred_language: string | null
+          referral_code: string | null
+          referred_by: string | null
+          telegram_first_name: string | null
+          telegram_id: number | null
+          telegram_last_name: string | null
+          telegram_username: string | null
+          total_points: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          telegram_first_name?: string | null
+          telegram_id?: number | null
+          telegram_last_name?: string | null
+          telegram_username?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          preferred_language?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
+          telegram_first_name?: string | null
+          telegram_id?: number | null
+          telegram_last_name?: string | null
+          telegram_username?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+          reward_claimed?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          actions_count: number | null
+          duration_seconds: number | null
+          id: string
+          is_active: boolean | null
+          page_views: number | null
+          session_end: string | null
+          session_start: string | null
+          user_id: string
+        }
+        Insert: {
+          actions_count?: number | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          page_views?: number | null
+          session_end?: string | null
+          session_start?: string | null
+          user_id: string
+        }
+        Update: {
+          actions_count?: number | null
+          duration_seconds?: number | null
+          id?: string
+          is_active?: boolean | null
+          page_views?: number | null
+          session_end?: string | null
+          session_start?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_wallets: {
+        Row: {
+          blockchain: string
+          connected_at: string | null
+          id: string
+          is_primary: boolean | null
+          last_used_at: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          blockchain: string
+          connected_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          last_used_at?: string | null
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          blockchain?: string
+          connected_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          last_used_at?: string | null
+          user_id?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_connections: {
+        Row: {
+          connected_at: string | null
+          disconnected_at: string | null
+          id: string
+          ip_address: string | null
+          session_duration_seconds: number | null
+          user_agent: string | null
+          wallet_id: string
+        }
+        Insert: {
+          connected_at?: string | null
+          disconnected_at?: string | null
+          id?: string
+          ip_address?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          wallet_id: string
+        }
+        Update: {
+          connected_at?: string | null
+          disconnected_at?: string | null
+          id?: string
+          ip_address?: string | null
+          session_duration_seconds?: number | null
+          user_agent?: string | null
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_connections_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "user_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
