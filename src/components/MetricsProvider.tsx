@@ -12,7 +12,9 @@ export const MetricsProvider = ({ children }: MetricsProviderProps) => {
 
   // Track page views on route change
   useEffect(() => {
-    trackPageView(location.pathname);
+    if (location.pathname) {
+      trackPageView(location.pathname);
+    }
   }, [location.pathname, trackPageView]);
 
   return <>{children}</>;
