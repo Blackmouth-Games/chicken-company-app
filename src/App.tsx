@@ -19,6 +19,8 @@ import Friends from "./pages/Friends";
 import Store from "./pages/Store";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
+import DebugOverlay from "./components/DebugOverlay";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect-manifest.json";
@@ -55,15 +57,17 @@ const AppRoutes = () => {
   // If from Telegram, show app with navigation
   return (
     <MetricsProvider>
-      <TelegramLayout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/wallet" element={<Wallet />} />
-          <Route path="/store" element={<Store />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TelegramLayout>
+      <ErrorBoundary>
+        <TelegramLayout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/store" element={<Store />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TelegramLayout>
+      </ErrorBoundary>
     </MetricsProvider>
   );
 };
@@ -79,6 +83,8 @@ const App = () => (
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>
+          {/* Debug overlay toggled by ?debug=1 */}
+          <DebugOverlay manifestUrl={manifestUrl} />
         </TooltipProvider>
       </AudioProvider>
     </TonConnectUIProvider>
