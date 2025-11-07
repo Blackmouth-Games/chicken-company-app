@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { X } from "lucide-react";
 import { StoreProduct } from "@/hooks/useStoreProducts";
 import { useState } from "react";
-import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,6 @@ interface ProductDetailDialogProps {
 }
 
 export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDetailDialogProps) => {
-  const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -31,8 +30,9 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
 
   const handlePurchase = async () => {
     // Check wallet connection
-    if (!wallet) {
-      setShowConnectWallet(true);
+    if (!tonConnectUI.connected) {
+      onOpenChange(false);
+      setTimeout(() => setShowConnectWallet(true), 0);
       return;
     }
 
@@ -70,7 +70,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
           product_key: product.product_key,
           price_ton: product.price_ton,
           status: "pending",
-          wallet_address: wallet.account.address,
+          wallet_address: tonConnectUI.account?.address || null,
         })
         .select()
         .single();
@@ -244,7 +244,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
               {isPurchasing ? "Procesando compra..." : `Comprar - ${product.price_ton} TON`}
             </Button>
 
-            {!wallet && (
+            {!tonConnectUI.connected && (
               <p className="text-xs text-center text-muted-foreground">
                 Necesitas conectar tu wallet TON para realizar la compra
               </p>
