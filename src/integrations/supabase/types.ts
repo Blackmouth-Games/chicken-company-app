@@ -268,6 +268,51 @@ export type Database = {
           },
         ]
       }
+      store_products: {
+        Row: {
+          content_items: string[] | null
+          created_at: string
+          description: string | null
+          detail_image_url: string
+          id: string
+          is_active: boolean
+          name: string
+          price_ton: number
+          product_key: string
+          sort_order: number
+          store_image_url: string
+          updated_at: string
+        }
+        Insert: {
+          content_items?: string[] | null
+          created_at?: string
+          description?: string | null
+          detail_image_url: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price_ton: number
+          product_key: string
+          sort_order?: number
+          store_image_url: string
+          updated_at?: string
+        }
+        Update: {
+          content_items?: string[] | null
+          created_at?: string
+          description?: string | null
+          detail_image_url?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_ton?: number
+          product_key?: string
+          sort_order?: number
+          store_image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_buildings: {
         Row: {
           building_type: Database["public"]["Enums"]["building_type"]

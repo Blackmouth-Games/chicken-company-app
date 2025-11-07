@@ -1,95 +1,59 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, Package, Star } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useState } from "react";
+import { useStoreProducts } from "@/hooks/useStoreProducts";
+import { ProductDetailDialog } from "@/components/ProductDetailDialog";
+import { StoreProduct } from "@/hooks/useStoreProducts";
+import { Loader2 } from "lucide-react";
 
 const Store = () => {
-  const storeItems = [
-    {
-      id: 1,
-      name: "Premium Coop",
-      description: "Unlock exclusive premium chicken coops with higher capacity",
-      price: "10 TON",
-      icon: Package,
-    },
-    {
-      id: 2,
-      name: "Speed Boost",
-      description: "Increase egg production speed by 50% for 24 hours",
-      price: "5 TON",
-      icon: Star,
-    },
-    {
-      id: 3,
-      name: "Mega Storage",
-      description: "Double your storage capacity permanently",
-      price: "15 TON",
-      icon: ShoppingBag,
-    },
-  ];
+  const { products, loading } = useStoreProducts();
+  const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  const handleProductClick = (product: StoreProduct) => {
+    setSelectedProduct(product);
+    setDetailDialogOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background p-6 pb-24">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Store</h1>
           <p className="text-muted-foreground">
-            Upgrade your farm with premium items
+            Explora nuestros paquetes especiales
           </p>
         </div>
 
-        <div className="grid gap-4">
-          {storeItems.map((item) => (
-            <Card key={item.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-primary/10 rounded-lg">
-                      <item.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{item.name}</CardTitle>
-                      <CardDescription className="mt-1">
-                        {item.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <p className="text-xl font-bold text-primary">{item.price}</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button>Buy Now</Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Coming soon</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {products.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => handleProductClick(product)}
+                className="w-full rounded-lg overflow-hidden hover:scale-[1.02] transition-transform active:scale-[0.98]"
+              >
+                <img
+                  src={product.store_image_url}
+                  alt={product.name}
+                  className="w-full h-auto object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "https://via.placeholder.com/600x150?text=" + encodeURIComponent(product.name);
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+        )}
 
-        <Card className="border-primary/50 bg-primary/5">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-2">
-              <p className="text-sm font-medium">More items coming soon!</p>
-              <p className="text-xs text-muted-foreground">
-                We're constantly adding new items to help you build the ultimate chicken farm
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <ProductDetailDialog
+          open={detailDialogOpen}
+          onOpenChange={setDetailDialogOpen}
+          product={selectedProduct}
+        />
       </div>
     </div>
   );

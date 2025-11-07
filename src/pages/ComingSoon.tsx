@@ -1,9 +1,30 @@
 import logoChicken from "@/assets/logo-chicken-company.png";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Languages } from "lucide-react";
+import { useState } from "react";
 
 const ComingSoon = () => {
+  const [language, setLanguage] = useState("es");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-primary/10 to-background p-6">
+      {/* Language Selector */}
+      <div className="absolute top-4 right-4">
+        <Select value={language} onValueChange={setLanguage}>
+          <SelectTrigger className="w-32">
+            <Languages className="w-4 h-4 mr-2" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="es">Español</SelectItem>
+            <SelectItem value="en">English</SelectItem>
+            <SelectItem value="fr">Français</SelectItem>
+            <SelectItem value="de">Deutsch</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="max-w-md w-full text-center space-y-8">
         <img 
           src={logoChicken} 
