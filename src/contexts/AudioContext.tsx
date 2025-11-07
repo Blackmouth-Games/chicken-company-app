@@ -70,15 +70,26 @@ export const AudioProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const playMusic = (music: HTMLAudioElement) => {
+    music.volume = musicVolume / 100;
+    music.loop = true;
+    
     if (isMuted) {
       music.pause();
       return;
     }
-    music.volume = musicVolume / 100;
-    music.loop = true;
-    music.play().catch((error) => {
-      console.error("Error playing music:", error);
-    });
+    
+    // Try to play and handle autoplay restrictions
+    const playPromise = music.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("Music playing successfully");
+        })
+        .catch((error) => {
+          // Autoplay was prevented - this is normal on first load
+          console.log("Autoplay prevented, waiting for user interaction:", error);
+        });
+    }
   };
 
   return (

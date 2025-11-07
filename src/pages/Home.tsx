@@ -29,8 +29,9 @@ const Home = () => {
   const [marketOpen, setMarketOpen] = useState(false);
   const [houseOpen, setHouseOpen] = useState(false);
   const { toast } = useToast();
-  const { playMusic } = useAudio();
+  const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
+  const [userInteracted, setUserInteracted] = useState(false);
 
   // Number of available slots
   const TOTAL_SLOTS = 6;
@@ -40,8 +41,16 @@ const Home = () => {
   }, [telegramUser]);
 
   useEffect(() => {
-    musicRef.current = new Audio("/sounds/home-music.mp3");
-    playMusic(musicRef.current);
+    // Initialize music
+    if (!musicRef.current) {
+      musicRef.current = new Audio("/sounds/home-music.mp3");
+      musicRef.current.loop = true;
+    }
+
+    // Try to play music when component mounts or mute state changes
+    if (userInteracted) {
+      playMusic(musicRef.current);
+    }
 
     return () => {
       if (musicRef.current) {
@@ -49,7 +58,29 @@ const Home = () => {
         musicRef.current = null;
       }
     };
-  }, [playMusic]);
+  }, [playMusic, userInteracted, isMuted]);
+
+  // Enable music on first user interaction
+  useEffect(() => {
+    const enableAudio = () => {
+      setUserInteracted(true);
+      if (musicRef.current && !isMuted) {
+        playMusic(musicRef.current);
+      }
+    };
+
+    // Listen for any user interaction
+    const events = ['click', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      document.addEventListener(event, enableAudio, { once: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, enableAudio);
+      });
+    };
+  }, [playMusic, isMuted]);
 
   const loadUserProfile = async () => {
     if (!telegramUser?.id) return;
