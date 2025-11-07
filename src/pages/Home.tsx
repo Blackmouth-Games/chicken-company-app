@@ -277,14 +277,14 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Warehouse and Market - With space between */}
-          <div className="grid grid-cols-2 gap-16 mb-8 relative z-20">
+          {/* Warehouse and Market - With more space between */}
+          <div className="grid grid-cols-2 gap-24 mb-12 relative z-20">
             <button
               onClick={() => setWarehouseOpen(true)}
               className="bg-gradient-to-br from-blue-100 to-blue-50 backdrop-blur-sm border-2 border-blue-400 rounded-lg p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg"
             >
               <div className="flex flex-col items-center">
-                <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold shadow-md">
+                <div className="absolute -top-4 -left-4 bg-blue-600 text-white rounded-full w-11 h-11 flex items-center justify-center text-sm font-bold shadow-md z-10">
                   {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                 </div>
                 <div className="text-6xl mb-2">🏭</div>
@@ -298,7 +298,7 @@ const Home = () => {
               className="bg-gradient-to-br from-amber-100 to-orange-50 backdrop-blur-sm border-2 border-amber-400 rounded-lg p-6 hover:from-amber-200 hover:to-orange-100 transition-all hover:scale-105 relative shadow-lg"
             >
               <div className="flex flex-col items-center">
-                <div className="absolute -top-3 -left-3 bg-amber-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold shadow-md">
+                <div className="absolute -top-4 -left-4 bg-amber-600 text-white rounded-full w-11 h-11 flex items-center justify-center text-sm font-bold shadow-md z-10">
                   {buildings.find(b => b.building_type === 'market')?.level || 1}
                 </div>
                 <div className="text-6xl mb-2">🏪</div>
