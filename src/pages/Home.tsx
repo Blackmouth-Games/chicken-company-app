@@ -165,6 +165,13 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
+  // Sort buildings: corrals first, then by position
+  const sortedBuildings = [...buildings].sort((a, b) => {
+    if (a.building_type === 'corral' && b.building_type !== 'corral') return -1;
+    if (a.building_type !== 'corral' && b.building_type === 'corral') return 1;
+    return a.position_index - b.position_index;
+  });
+
   const handleBuildingClick = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
     setCorralDialogOpen(true);
@@ -280,31 +287,6 @@ const Home = () => {
                       onBuyClick={handleBuyClick}
                       onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
                     />
-                    
-                    {/* Conveyor from this corral to center - moved 50px left */}
-                    {building && building.building_type === 'corral' && building.current_chickens > 0 && (
-                      <div className="absolute top-1/2 left-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0" style={{ marginLeft: '-50px' }}>
-                        <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
-                             style={{
-                               backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                               animation: 'conveyor-right 3s linear infinite'
-                             }}
-                        />
-                        {/* Eggs moving right */}
-                        {Array.from({ length: Math.min(2, Math.ceil(building.current_chickens / 10)) }).map((_, eggIndex) => (
-                          <div
-                            key={`left-egg-${building.id}-${eggIndex}`}
-                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-sm flex items-center justify-center"
-                            style={{
-                              animation: `move-right-short 2s linear infinite`,
-                              animationDelay: `${eggIndex * 1}s`,
-                            }}
-                          >
-                            🥚
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -312,70 +294,76 @@ const Home = () => {
 
             {/* Center Conveyor Belt System */}
             <div className="relative flex-shrink-0 w-12">
-              {/* Main vertical conveyor - height based on total slots */}
-              <div 
-                className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
-                style={{ height: `${TOTAL_SLOTS * 180}px` }}
-              >
-                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                     style={{
-                       backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                       animation: 'conveyor-up 3s linear infinite'
-                     }}
-                />
-                {/* Moving eggs going up */}
-                {buildings
-                  .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
-                  .slice(0, 4)
-                  .map((building, i) => (
-                    <div
-                      key={`center-egg-${building.id}`}
-                      className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
-                      style={{
-                        animation: `move-up-center 5s linear infinite`,
-                        animationDelay: `${i * 1.2}s`,
-                      }}
-                    >
-                      🥚
-                    </div>
-                  ))
-                }
-              </div>
-              
-              {/* Turn/Corner piece to warehouse */}
-              <div className="absolute -top-32 left-0 w-12 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
-                   style={{ borderRadius: '0 0 20px 0' }}>
-                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
-              </div>
-              
-              {/* Horizontal part connecting to warehouse */}
-              <div className="absolute -top-32 left-12 h-12 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
-                   style={{ width: '150px' }}>
-                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
-                     style={{
-                       backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                       animation: 'conveyor-right 3s linear infinite'
-                     }}
-                />
-                {/* Moving eggs on horizontal belt */}
-                {buildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
-                  buildings
-                    .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
-                    .slice(0, 2)
-                    .map((building, i) => (
-                      <div
-                        key={`h-egg-${building.id}`}
-                        className="absolute top-1/2 -translate-y-1/2 w-6 h-6 text-lg flex items-center justify-center"
-                        style={{
-                          animation: `move-right 3s linear infinite`,
-                          animationDelay: `${i * 1.5}s`,
-                        }}
-                      >
-                        🥚
-                      </div>
-                    ))
-                }
-              </div>
+              {/* Main vertical conveyor - height based on corral rows */}
+              {sortedBuildings.filter(b => b.building_type === 'corral').length > 0 && (
+                <>
+                  <div 
+                    className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-b-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
+                    style={{ 
+                      height: `${Math.ceil(sortedBuildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                         style={{
+                           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                           animation: 'conveyor-up 3s linear infinite'
+                         }}
+                    />
+                    {/* Moving eggs going up */}
+                    {sortedBuildings
+                      .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
+                      .slice(0, 4)
+                      .map((building, i) => (
+                        <div
+                          key={`center-egg-${building.id}`}
+                          className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
+                          style={{
+                            animation: `move-up-center 5s linear infinite`,
+                            animationDelay: `${i * 1.2}s`,
+                          }}
+                        >
+                          🥚
+                        </div>
+                      ))
+                    }
+                  </div>
+                  
+                  {/* Turn/Corner piece to warehouse */}
+                  <div className="absolute -top-32 left-0 w-12 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
+                       style={{ borderRadius: '0 0 20px 0' }}>
+                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
+                  </div>
+                  
+                  {/* Horizontal part connecting to warehouse */}
+                  <div className="absolute -top-32 left-12 h-12 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
+                       style={{ width: '150px' }}>
+                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
+                         style={{
+                           backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                           animation: 'conveyor-right 3s linear infinite'
+                         }}
+                    />
+                    {/* Moving eggs on horizontal belt */}
+                    {sortedBuildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
+                      sortedBuildings
+                        .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
+                        .slice(0, 2)
+                        .map((building, i) => (
+                          <div
+                            key={`h-egg-${building.id}`}
+                            className="absolute top-1/2 -translate-y-1/2 w-6 h-6 text-lg flex items-center justify-center"
+                            style={{
+                              animation: `move-right 3s linear infinite`,
+                              animationDelay: `${i * 1.5}s`,
+                            }}
+                          >
+                            🥚
+                          </div>
+                        ))
+                    }
+                  </div>
+                </>
+              )}
 
               <style>{`
                 @keyframes conveyor-up {
@@ -418,22 +406,6 @@ const Home = () => {
                     opacity: 0;
                   }
                 }
-                @keyframes move-right-short {
-                  0% {
-                    left: -10px;
-                    opacity: 0;
-                  }
-                  10% {
-                    opacity: 1;
-                  }
-                  90% {
-                    opacity: 1;
-                  }
-                  100% {
-                    left: calc(100% + 10px);
-                    opacity: 0;
-                  }
-                }
               `}</style>
             </div>
 
@@ -444,31 +416,6 @@ const Home = () => {
                 const building = getBuildingAtPosition(position);
                 return (
                   <div key={position} className="relative">
-                    {/* Conveyor from this corral to center - moved 50px left */}
-                    {building && building.building_type === 'corral' && building.current_chickens > 0 && (
-                      <div className="absolute top-1/2 right-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0" style={{ marginRight: '-50px' }}>
-                        <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
-                             style={{
-                               backgroundImage: 'repeating-linear-gradient(270deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                               animation: 'conveyor-left 3s linear infinite'
-                             }}
-                        />
-                        {/* Eggs moving left */}
-                        {Array.from({ length: Math.min(2, Math.ceil(building.current_chickens / 10)) }).map((_, eggIndex) => (
-                          <div
-                            key={`right-egg-${building.id}-${eggIndex}`}
-                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-sm flex items-center justify-center"
-                            style={{
-                              animation: `move-left-short 2s linear infinite`,
-                              animationDelay: `${eggIndex * 1}s`,
-                            }}
-                          >
-                            🥚
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
                     <BuildingSlot
                       position={position}
                       building={building}
@@ -479,29 +426,6 @@ const Home = () => {
                 );
               })}
             </div>
-
-            <style>{`
-              @keyframes conveyor-left {
-                0% { background-position: 30px 0; }
-                100% { background-position: 0 0; }
-              }
-              @keyframes move-left-short {
-                0% {
-                  right: -10px;
-                  opacity: 0;
-                }
-                10% {
-                  opacity: 1;
-                }
-                90% {
-                  opacity: 1;
-                }
-                100% {
-                  right: calc(100% + 10px);
-                  opacity: 0;
-                }
-              }
-            `}</style>
           </div>
         </div>
       </div>

@@ -93,11 +93,6 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
           {
             address: destination,
             amount: (parseFloat(product.price_ton.toString()) * 1e9).toString(), // Convert TON to nanotons
-            payload: btoa(JSON.stringify({
-              type: "store_purchase",
-              purchaseId: purchase.id,
-              productKey: product.product_key,
-            })),
           },
         ],
       };
