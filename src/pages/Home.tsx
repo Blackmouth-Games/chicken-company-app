@@ -330,45 +330,54 @@ const Home = () => {
               })}
             </div>
 
-            {/* Center Conveyor Belt System */}
-            <div className="relative flex-shrink-0 w-12">
-              {/* Main vertical conveyor - height based on corral rows */}
-              {buildings.filter(b => b.building_type === 'corral').length > 0 && (
-                <>
-                  
-                  <div
-                    className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg"
-                    style={{ 
-                      height: `${Math.ceil(buildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                         style={{
-                           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                           animation: 'conveyor-up 3s linear infinite'
-                         }}
-                    />
-                    {/* Moving eggs going up */}
-                    {buildings
-                      .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
-                      .slice(0, 4)
-                      .map((building, i) => (
-                        <div
-                          key={`center-egg-${building.id}`}
-                          className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
-                          style={{
-                            animation: `move-up-center 5s linear infinite`,
-                            animationDelay: `${i * 1.2}s`,
-                          }}
-                        >
-                          🥚
-                        </div>
-                      ))
-                    }
+            {/* Center Conveyor Belt System - Segmented by rows */}
+            <div className="relative flex-shrink-0 w-12 -mt-5">
+              {/* Vertical segments for each row */}
+              {buildings.filter(b => b.building_type === 'corral').map((building, index) => {
+                const rowIndex = Math.floor(index / 2);
+                const isLeftColumn = building.position_index < 6;
+                
+                return (
+                  <div key={`segment-${building.id}`} className="relative" style={{ height: '180px' }}>
+                    {/* Vertical segment */}
+                    <div className="absolute left-0 top-0 w-12 h-full bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 overflow-hidden shadow-lg">
+                      <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                           style={{
+                             backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                             animation: 'conveyor-up 3s linear infinite'
+                           }}
+                      />
+                    </div>
+                    
+                    {/* Egg with complete journey animation */}
+                    {building.current_chickens > 0 && (
+                      <div
+                        key={`egg-journey-${building.id}`}
+                        className="absolute w-6 h-6 text-lg flex items-center justify-center pointer-events-none z-50"
+                        style={{
+                          animation: `egg-journey-${isLeftColumn ? 'left' : 'right'}-row-${rowIndex} 12s ease-in-out infinite`,
+                          animationDelay: `${index * 1.5}s`,
+                        }}
+                      >
+                        🥚
+                      </div>
+                    )}
                   </div>
-                  
-                </>
-              )}
+                );
+              })}
+
+              {/* Horizontal conveyor from vertical belt to warehouse */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-3 flex items-center pointer-events-none z-40">
+                <div className="h-10 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
+                     style={{ width: 'calc(50vw - 180px)' }}>
+                  <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                       style={{
+                         backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                         animation: 'conveyor-left 3s linear infinite'
+                       }}
+                  />
+                </div>
+              </div>
 
               <style>{`
                 @keyframes conveyor-up {
@@ -383,54 +392,90 @@ const Home = () => {
                   0% { background-position: 0 0; }
                   100% { background-position: 30px 0; }
                 }
-                @keyframes move-up-center {
-                  0% {
-                    bottom: -20px;
-                    opacity: 0;
+                
+                /* Journey animations for left column corrals */
+                ${Array.from({ length: 6 }).map((_, rowIndex) => `
+                  @keyframes egg-journey-left-row-${rowIndex} {
+                    /* Start at corral (left side) */
+                    0% {
+                      left: -120px;
+                      top: ${rowIndex * 180 + 70}px;
+                      opacity: 0;
+                    }
+                    5% {
+                      opacity: 1;
+                    }
+                    
+                    /* Move right on mini horizontal belt */
+                    20% {
+                      left: 24px;
+                      top: ${rowIndex * 180 + 70}px;
+                      opacity: 1;
+                    }
+                    
+                    /* Move up on vertical belt */
+                    50% {
+                      left: 24px;
+                      top: -30px;
+                      opacity: 1;
+                    }
+                    
+                    /* Move left on top horizontal belt to warehouse */
+                    85% {
+                      left: -200px;
+                      top: -30px;
+                      opacity: 1;
+                    }
+                    
+                    95%, 100% {
+                      left: -200px;
+                      top: -30px;
+                      opacity: 0;
+                    }
                   }
-                  5% {
-                    opacity: 1;
+                `).join('\n')}
+                
+                /* Journey animations for right column corrals */
+                ${Array.from({ length: 6 }).map((_, rowIndex) => `
+                  @keyframes egg-journey-right-row-${rowIndex} {
+                    /* Start at corral (right side) */
+                    0% {
+                      left: 72px;
+                      top: ${rowIndex * 180 + 70}px;
+                      opacity: 0;
+                    }
+                    5% {
+                      opacity: 1;
+                    }
+                    
+                    /* Move left on mini horizontal belt */
+                    20% {
+                      left: 24px;
+                      top: ${rowIndex * 180 + 70}px;
+                      opacity: 1;
+                    }
+                    
+                    /* Move up on vertical belt */
+                    50% {
+                      left: 24px;
+                      top: -30px;
+                      opacity: 1;
+                    }
+                    
+                    /* Move left on top horizontal belt to warehouse */
+                    85% {
+                      left: -200px;
+                      top: -30px;
+                      opacity: 1;
+                    }
+                    
+                    95%, 100% {
+                      left: -200px;
+                      top: -30px;
+                      opacity: 0;
+                    }
                   }
-                  95% {
-                    opacity: 1;
-                  }
-                  100% {
-                    bottom: calc(100% + 160px);
-                    opacity: 0;
-                  }
-                }
-                @keyframes move-left {
-                  0% {
-                    right: -20px;
-                    opacity: 0;
-                  }
-                  5% {
-                    opacity: 1;
-                  }
-                  95% {
-                    opacity: 1;
-                  }
-                  100% {
-                    right: calc(100% + 20px);
-                    opacity: 0;
-                  }
-                }
-                @keyframes move-right {
-                  0% {
-                    left: -20px;
-                    opacity: 0;
-                  }
-                  5% {
-                    opacity: 1;
-                  }
-                  95% {
-                    opacity: 1;
-                  }
-                  100% {
-                    left: calc(100% + 20px);
-                    opacity: 0;
-                  }
-                }
+                `).join('\n')}
               `}</style>
             </div>
 
