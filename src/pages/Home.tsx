@@ -36,12 +36,15 @@ const Home = () => {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
 
-  // Dynamic slots: min 5 empty slots, max 6 empty slots
+  // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
-  const MIN_EMPTY_SLOTS = 5;
+  const MIN_EMPTY_SLOTS = 4;
   const MAX_EMPTY_SLOTS = 6;
-  const emptySlots = occupiedSlots === 0 ? MAX_EMPTY_SLOTS : MIN_EMPTY_SLOTS;
-  const TOTAL_SLOTS = occupiedSlots + emptySlots;
+  // Calculate total to always be even
+  let totalSlots = occupiedSlots + MIN_EMPTY_SLOTS;
+  if (totalSlots % 2 !== 0) totalSlots++; // Make it even
+  if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
+  const TOTAL_SLOTS = totalSlots;
 
   useEffect(() => {
     loadUserProfile();
@@ -278,9 +281,9 @@ const Home = () => {
                       onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
                     />
                     
-                    {/* Conveyor from this corral to center */}
+                    {/* Conveyor from this corral to center - moved 50px left */}
                     {building && building.building_type === 'corral' && building.current_chickens > 0 && (
-                      <div className="absolute top-1/2 left-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0">
+                      <div className="absolute top-1/2 left-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0" style={{ marginLeft: '-50px' }}>
                         <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
                              style={{
                                backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
@@ -441,9 +444,9 @@ const Home = () => {
                 const building = getBuildingAtPosition(position);
                 return (
                   <div key={position} className="relative">
-                    {/* Conveyor from this corral to center */}
+                    {/* Conveyor from this corral to center - moved 50px left */}
                     {building && building.building_type === 'corral' && building.current_chickens > 0 && (
-                      <div className="absolute top-1/2 right-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0">
+                      <div className="absolute top-1/2 right-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0" style={{ marginRight: '-50px' }}>
                         <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
                              style={{
                                backgroundImage: 'repeating-linear-gradient(270deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
