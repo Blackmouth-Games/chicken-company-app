@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
 import { getTelegramUser } from "@/lib/telegram";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Settings, Info } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { TutorialDialog } from "@/components/TutorialDialog";
 import { BuildingSlot } from "@/components/BuildingSlot";
 import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const Home = () => {
   const telegramUser = getTelegramUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<number>(0);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -109,8 +111,16 @@ const Home = () => {
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
       
       <div className="relative z-10 p-6">
-        {/* Settings Button */}
-        <div className="absolute top-4 right-4 z-50">
+        {/* Action Buttons */}
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setTutorialOpen(true)}
+            className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+          >
+            <Info className="h-5 w-5" />
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -119,15 +129,6 @@ const Home = () => {
           >
             <Settings className="h-5 w-5" />
           </Button>
-        </div>
-
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">
-            Welcome, {telegramUser?.first_name || 'Guest'}!
-          </h1>
-          <p className="text-white/90 drop-shadow">
-            Start farming your chickens
-          </p>
         </div>
 
         {/* Building Slots Grid */}
@@ -146,6 +147,7 @@ const Home = () => {
       </div>
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <TutorialDialog open={tutorialOpen} onOpenChange={setTutorialOpen} />
       
       <PurchaseBuildingDialog
         open={purchaseDialogOpen}
