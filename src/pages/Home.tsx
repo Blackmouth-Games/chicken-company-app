@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
+import defaultAvatar from "@/assets/default-avatar.png";
 import { getTelegramUser } from "@/lib/telegram";
 import { Button } from "@/components/ui/button";
 import { Settings, Info } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { TutorialDialog } from "@/components/TutorialDialog";
+import { ProfileDialog } from "@/components/ProfileDialog";
 import { BuildingSlot } from "@/components/BuildingSlot";
 import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +16,7 @@ const Home = () => {
   const telegramUser = getTelegramUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<number>(0);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -111,6 +114,20 @@ const Home = () => {
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
       
       <div className="relative z-10 p-6">
+        {/* Profile Avatar */}
+        <div className="absolute top-4 left-4 z-50">
+          <button
+            onClick={() => setProfileOpen(true)}
+            className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
+          >
+            <img
+              src={defaultAvatar}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </button>
+        </div>
+
         {/* Action Buttons */}
         <div className="absolute top-4 right-4 z-50 flex gap-2">
           <Button
@@ -148,6 +165,7 @@ const Home = () => {
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       <TutorialDialog open={tutorialOpen} onOpenChange={setTutorialOpen} />
+      <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
       
       <PurchaseBuildingDialog
         open={purchaseDialogOpen}

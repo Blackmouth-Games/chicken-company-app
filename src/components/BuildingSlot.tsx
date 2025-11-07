@@ -32,19 +32,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
   }
 
   return (
-    <div className="aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg bg-background/50 p-2 flex items-center justify-center">
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => onBuyClick(position)}
-        className={cn(
-          "h-12 w-12 rounded-full",
-          "bg-background/80 hover:bg-background",
-          "border-muted-foreground/50"
-        )}
-      >
+    <div 
+      onClick={() => onBuyClick(position)}
+      className="aspect-square border-2 border-dashed border-muted-foreground/30 rounded-lg bg-background/50 p-2 flex items-center justify-center cursor-pointer hover:bg-background/70 transition-colors"
+    >
+      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-background/80 border border-muted-foreground/50">
         <Plus className="h-6 w-6" />
-      </Button>
+      </div>
     </div>
   );
 };
