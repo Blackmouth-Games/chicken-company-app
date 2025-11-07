@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
@@ -24,6 +23,21 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect-manifest.json";
+
+// Lazy TonConnect provider to avoid blocking render if SDK fails
+const TonProvider = ({ children }: { children: any }) => {
+  const [Provider, setProvider] = useState<any>(null);
+  useEffect(() => {
+    import("@tonconnect/ui-react")
+      .then((mod) => setProvider(() => mod.TonConnectUIProvider))
+      .catch((err) => {
+        console.error("[TonProvider] Failed to load TonConnectUIProvider", err);
+        setProvider(() => (({ children }: any) => <>{children}</>));
+      });
+  }, []);
+  if (!Provider) return <>{children}</>;
+  return <Provider manifestUrl={manifestUrl}>{children}</Provider>;
+};
 
 const AppRoutes = () => {
   const [isFromTelegram, setIsFromTelegram] = useState<boolean | null>(null);
@@ -74,7 +88,7 @@ const AppRoutes = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TonConnectUIProvider manifestUrl={manifestUrl}>
+    <TonProvider>
       <AudioProvider>
         <TooltipProvider>
           <OrientationLock />
@@ -87,7 +101,7 @@ const App = () => (
           <DebugOverlay manifestUrl={manifestUrl} />
         </TooltipProvider>
       </AudioProvider>
-    </TonConnectUIProvider>
+    </TonProvider>
   </QueryClientProvider>
 );
 
