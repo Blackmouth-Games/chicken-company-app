@@ -13,3 +13,9 @@ export const BUILDING_TYPES = {
 } as const;
 
 export type BuildingType = typeof BUILDING_TYPES[keyof typeof BUILDING_TYPES];
+
+// Special position indices for fixed buildings
+export const FIXED_BUILDING_POSITIONS = {
+  WAREHOUSE: -1,
+  MARKET: -2,
+} as const;

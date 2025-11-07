@@ -95,10 +95,58 @@ export const useUserBuildings = (userId: string | undefined) => {
     }
   };
 
+  const upgradeBuilding = async (buildingId: string, currentLevel: number, newCapacity: number) => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Usuario no identificado",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("user_buildings")
+        .update({
+          level: currentLevel + 1,
+          capacity: newCapacity,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", buildingId)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      await fetchBuildings();
+      
+      toast({
+        title: "¡Éxito!",
+        description: "Edificio mejorado exitosamente",
+      });
+
+      return true;
+    } catch (error: any) {
+      console.error("Error upgrading building:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo mejorar el edificio",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const getBuildingByType = (buildingType: string) => {
+    return buildings.find((b) => b.building_type === buildingType);
+  };
+
   return {
     buildings,
     loading,
     purchaseBuilding,
+    upgradeBuilding,
+    getBuildingByType,
     refetch: fetchBuildings,
   };
 };

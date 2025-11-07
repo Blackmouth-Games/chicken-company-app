@@ -173,24 +173,24 @@ const Home = () => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <button
               onClick={() => setWarehouseOpen(true)}
-              className="bg-background/80 backdrop-blur-sm border-2 border-blue-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
+              className="bg-background/80 backdrop-blur-sm border-2 border-blue-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105 relative"
             >
               <div className="flex flex-col items-center">
                 <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                  5
+                  {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                 </div>
-                <div className="text-5xl mb-1">🏪</div>
-                <p className="text-xs font-medium">Almacen</p>
+                <div className="text-5xl mb-1">🏭</div>
+                <p className="text-xs font-medium">Almacén</p>
               </div>
             </button>
 
             <button
               onClick={() => setMarketOpen(true)}
-              className="bg-background/80 backdrop-blur-sm border-2 border-yellow-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
+              className="bg-background/80 backdrop-blur-sm border-2 border-yellow-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105 relative"
             >
               <div className="flex flex-col items-center">
                 <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                  5
+                  {buildings.find(b => b.building_type === 'market')?.level || 1}
                 </div>
                 <div className="text-5xl mb-1">🏪</div>
                 <p className="text-xs font-medium">Market</p>
@@ -226,8 +226,8 @@ const Home = () => {
         onPurchaseComplete={handlePurchaseComplete}
       />
 
-      <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} level={5} />
-      <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} level={5} />
+      <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} userId={userId || undefined} />
+      <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} userId={userId || undefined} />
       <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} />
     </div>
   );
