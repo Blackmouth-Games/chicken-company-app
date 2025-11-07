@@ -80,7 +80,9 @@ export const SkinSelectorDialog = ({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {skins.map((skin) => {
+                {skins
+                  .filter((skin) => skin.is_default || hasItem("skin", skin.skin_key))
+                  .map((skin) => {
                   const isOwned = skin.is_default || hasItem("skin", skin.skin_key);
                   const isSelected = currentSkin === skin.skin_key || (!currentSkin && skin.is_default);
 
@@ -106,33 +108,21 @@ export const SkinSelectorDialog = ({
                         </div>
 
                         {/* Action Button */}
-                        {isOwned ? (
-                          <Button
-                            onClick={() => handleSelectSkin(skin.skin_key)}
-                            disabled={isSelected}
-                            className="w-full"
-                            size="sm"
-                          >
-                            {isSelected ? (
-                              <>
-                                <Check className="w-4 h-4 mr-1" />
-                                Seleccionada
-                              </>
-                            ) : (
-                              "Seleccionar"
-                            )}
-                          </Button>
-                        ) : (
-                          <Button
-                            disabled
-                            variant="outline"
-                            className="w-full"
-                            size="sm"
-                          >
-                            <Lock className="w-4 h-4 mr-1" />
-                            Bloqueada
-                          </Button>
-                        )}
+                        <Button
+                          onClick={() => handleSelectSkin(skin.skin_key)}
+                          disabled={isSelected}
+                          className="w-full"
+                          size="sm"
+                        >
+                          {isSelected ? (
+                            <>
+                              <Check className="w-4 h-4 mr-1" />
+                              Seleccionada
+                            </>
+                          ) : (
+                            "Seleccionar"
+                          )}
+                        </Button>
                       </div>
 
                       {/* Selected Badge */}

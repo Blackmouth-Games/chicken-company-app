@@ -31,8 +31,8 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
           {building.level}
         </div>
 
-        {/* Vertical capacity bar - outside and attached to left */}
-        <div className="absolute -left-3 top-2 bottom-2 flex flex-col items-center gap-1 z-20">
+        {/* Vertical capacity bar - outside and attached to left, below level badge */}
+        <div className="absolute -left-3 top-12 bottom-2 flex flex-col items-center gap-1 z-20">
           <div className="flex-1 w-6 bg-gray-200 rounded-full relative overflow-hidden border-2 border-gray-300 shadow-md">
             {/* Fill indicator */}
             <div 
@@ -71,7 +71,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
   return (
     <div 
       onClick={() => onBuyClick(position)}
-      className="aspect-square border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[160px]"
+      className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[160px]"
     >
       <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
         <Plus className="h-8 w-8 text-amber-600" />

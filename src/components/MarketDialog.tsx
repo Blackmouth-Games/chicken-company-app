@@ -51,15 +51,17 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   <div className="text-9xl">{market?.selected_skin ? "🏬" : "🏪"}</div>
                   
                   {/* Edit Skin Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSkinSelector(true)}
-                    className="border-amber-300 hover:bg-amber-100"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    Cambiar apariencia
-                  </Button>
+                  {market && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSkinSelector(true)}
+                      className="border-amber-300 hover:bg-amber-100"
+                    >
+                      <Palette className="w-4 h-4 mr-2" />
+                      Cambiar apariencia
+                    </Button>
+                  )}
                 </div>
 
                 {/* Current Level */}

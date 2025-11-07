@@ -51,15 +51,17 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   <div className="text-9xl">{warehouse?.selected_skin ? "🏢" : "🏭"}</div>
                   
                   {/* Edit Skin Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowSkinSelector(true)}
-                    className="border-blue-300 hover:bg-blue-100"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    Cambiar apariencia
-                  </Button>
+                  {warehouse && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSkinSelector(true)}
+                      className="border-blue-300 hover:bg-blue-100"
+                    >
+                      <Palette className="w-4 h-4 mr-2" />
+                      Cambiar apariencia
+                    </Button>
+                  )}
                 </div>
 
                 {/* Current Level */}

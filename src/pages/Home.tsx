@@ -311,8 +311,8 @@ const Home = () => {
         {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-3xl mx-auto">
           <div className="flex gap-3 mb-20 relative">
-            {/* Left Column - Bigger slots */}
-            <div className="flex-1 space-y-4">
+            {/* Left Column - Building slots filled by rows */}
+            <div className="flex-1 grid grid-cols-1 gap-4">
               {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
                 const building = getBuildingAtPosition(index);
                 return (
@@ -333,14 +333,8 @@ const Home = () => {
               {/* Main vertical conveyor - height based on corral rows */}
               {buildings.filter(b => b.building_type === 'corral').length > 0 && (
                 <>
-                  {/* Vertical Belt Label */}
-                  <div className="absolute -left-24 top-1/2 -translate-y-1/2 -rotate-90 origin-center">
-                    <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-1 rounded shadow whitespace-nowrap">
-                      Cinta Vertical
-                    </span>
-                  </div>
                   
-                  <div 
+                  <div
                     className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg"
                     style={{ 
                       height: `${Math.ceil(buildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
@@ -418,8 +412,8 @@ const Home = () => {
               `}</style>
             </div>
 
-            {/* Right Column - Bigger slots */}
-            <div className="flex-1 space-y-4">
+            {/* Right Column - Building slots filled by rows */}
+            <div className="flex-1 grid grid-cols-1 gap-4">
               {Array.from({ length: Math.floor(TOTAL_SLOTS / 2) }).map((_, index) => {
                 const position = index + Math.ceil(TOTAL_SLOTS / 2);
                 const building = getBuildingAtPosition(position);
