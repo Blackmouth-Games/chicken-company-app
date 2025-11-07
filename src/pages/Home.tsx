@@ -261,27 +261,53 @@ const Home = () => {
 
         {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-stretch gap-3 mb-20">
+          <div className="flex gap-3 mb-20 relative">
             {/* Left Column - Bigger slots */}
             <div className="flex-1 space-y-4">
               {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
                 const building = getBuildingAtPosition(index);
                 return (
-                  <BuildingSlot
-                    key={index}
-                    position={index}
-                    building={building}
-                    onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
-                  />
+                  <div key={index} className="relative">
+                    <BuildingSlot
+                      position={index}
+                      building={building}
+                      onBuyClick={handleBuyClick}
+                      onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    />
+                    
+                    {/* Conveyor from this corral to center */}
+                    {building && building.building_type === 'corral' && building.current_chickens > 0 && (
+                      <div className="absolute top-1/2 left-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0">
+                        <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
+                             style={{
+                               backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                               animation: 'conveyor-right 3s linear infinite'
+                             }}
+                        />
+                        {/* Eggs moving right */}
+                        {Array.from({ length: Math.min(2, Math.ceil(building.current_chickens / 10)) }).map((_, eggIndex) => (
+                          <div
+                            key={`left-egg-${building.id}-${eggIndex}`}
+                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-sm flex items-center justify-center"
+                            style={{
+                              animation: `move-right-short 2s linear infinite`,
+                              animationDelay: `${eggIndex * 1}s`,
+                            }}
+                          >
+                            🥚
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
 
-            {/* Conveyor Belt System with Turn to Warehouse */}
-            <div className="relative flex-shrink-0">
-              {/* Vertical part of conveyor */}
-              <div className="w-10 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
+            {/* Center Conveyor Belt System */}
+            <div className="relative flex-shrink-0 w-12">
+              {/* Main vertical conveyor */}
+              <div className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
                    style={{ minHeight: 'calc(100vh - 200px)' }}>
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                      style={{
@@ -289,41 +315,33 @@ const Home = () => {
                        animation: 'conveyor-up 3s linear infinite'
                      }}
                 />
-                {/* Moving eggs - only from corrals with chickens */}
+                {/* Moving eggs going up */}
                 {buildings
                   .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
-                  .flatMap((building, buildingIndex) => {
-                    // Generate eggs based on chicken count (1 egg per 10 chickens, max 3 per corral)
-                    const eggCount = Math.min(Math.ceil(building.current_chickens / 10), 3);
-                    // Calculate starting position based on building's position_index
-                    const isLeftColumn = building.position_index < 3;
-                    const rowInColumn = building.position_index % 3;
-                    const startingBottom = rowInColumn * 180; // Spacing between slots
-                    
-                    return Array.from({ length: eggCount }).map((_, eggIndex) => (
-                      <div
-                        key={`egg-${building.id}-${eggIndex}`}
-                        className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
-                        style={{
-                          animation: `move-up-from-${startingBottom} 4s linear infinite`,
-                          animationDelay: `${(buildingIndex * 1.5 + eggIndex * 0.5)}s`,
-                        }}
-                      >
-                        🥚
-                      </div>
-                    ));
-                  })
+                  .slice(0, 4)
+                  .map((building, i) => (
+                    <div
+                      key={`center-egg-${building.id}`}
+                      className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
+                      style={{
+                        animation: `move-up-center 5s linear infinite`,
+                        animationDelay: `${i * 1.2}s`,
+                      }}
+                    >
+                      🥚
+                    </div>
+                  ))
                 }
               </div>
               
-              {/* Turn/Corner piece */}
-              <div className="absolute -top-32 left-0 w-10 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
+              {/* Turn/Corner piece to warehouse */}
+              <div className="absolute -top-32 left-0 w-12 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
                    style={{ borderRadius: '0 0 20px 0' }}>
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
               </div>
               
               {/* Horizontal part connecting to warehouse */}
-              <div className="absolute -top-32 left-10 h-10 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
+              <div className="absolute -top-32 left-12 h-12 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
                    style={{ width: '150px' }}>
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
                      style={{
@@ -331,7 +349,7 @@ const Home = () => {
                        animation: 'conveyor-right 3s linear infinite'
                      }}
                 />
-                {/* Moving eggs on horizontal belt - only if there are corrals with chickens */}
+                {/* Moving eggs on horizontal belt */}
                 {buildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
                   buildings
                     .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
@@ -360,41 +378,9 @@ const Home = () => {
                   0% { background-position: 0 0; }
                   100% { background-position: 30px 0; }
                 }
-                @keyframes move-up-from-0 {
+                @keyframes move-up-center {
                   0% {
-                    bottom: 0px;
-                    opacity: 0;
-                  }
-                  5% {
-                    opacity: 1;
-                  }
-                  95% {
-                    opacity: 1;
-                  }
-                  100% {
-                    bottom: calc(100% + 160px);
-                    opacity: 0;
-                  }
-                }
-                @keyframes move-up-from-180 {
-                  0% {
-                    bottom: 180px;
-                    opacity: 0;
-                  }
-                  5% {
-                    opacity: 1;
-                  }
-                  95% {
-                    opacity: 1;
-                  }
-                  100% {
-                    bottom: calc(100% + 160px);
-                    opacity: 0;
-                  }
-                }
-                @keyframes move-up-from-360 {
-                  0% {
-                    bottom: 360px;
+                    bottom: -20px;
                     opacity: 0;
                   }
                   5% {
@@ -424,6 +410,22 @@ const Home = () => {
                     opacity: 0;
                   }
                 }
+                @keyframes move-right-short {
+                  0% {
+                    left: -10px;
+                    opacity: 0;
+                  }
+                  10% {
+                    opacity: 1;
+                  }
+                  90% {
+                    opacity: 1;
+                  }
+                  100% {
+                    left: calc(100% + 10px);
+                    opacity: 0;
+                  }
+                }
               `}</style>
             </div>
 
@@ -433,16 +435,65 @@ const Home = () => {
                 const position = index + Math.ceil(TOTAL_SLOTS / 2);
                 const building = getBuildingAtPosition(position);
                 return (
-                  <BuildingSlot
-                    key={position}
-                    position={position}
-                    building={building}
-                    onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
-                  />
+                  <div key={position} className="relative">
+                    {/* Conveyor from this corral to center */}
+                    {building && building.building_type === 'corral' && building.current_chickens > 0 && (
+                      <div className="absolute top-1/2 right-full w-12 h-3 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-y border-amber-700 overflow-hidden -translate-y-1/2 z-0">
+                        <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
+                             style={{
+                               backgroundImage: 'repeating-linear-gradient(270deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                               animation: 'conveyor-left 3s linear infinite'
+                             }}
+                        />
+                        {/* Eggs moving left */}
+                        {Array.from({ length: Math.min(2, Math.ceil(building.current_chickens / 10)) }).map((_, eggIndex) => (
+                          <div
+                            key={`right-egg-${building.id}-${eggIndex}`}
+                            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 text-sm flex items-center justify-center"
+                            style={{
+                              animation: `move-left-short 2s linear infinite`,
+                              animationDelay: `${eggIndex * 1}s`,
+                            }}
+                          >
+                            🥚
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <BuildingSlot
+                      position={position}
+                      building={building}
+                      onBuyClick={handleBuyClick}
+                      onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    />
+                  </div>
                 );
               })}
             </div>
+
+            <style>{`
+              @keyframes conveyor-left {
+                0% { background-position: 30px 0; }
+                100% { background-position: 0 0; }
+              }
+              @keyframes move-left-short {
+                0% {
+                  right: -10px;
+                  opacity: 0;
+                }
+                10% {
+                  opacity: 1;
+                }
+                90% {
+                  opacity: 1;
+                }
+                100% {
+                  right: calc(100% + 10px);
+                  opacity: 0;
+                }
+              }
+            `}</style>
           </div>
         </div>
       </div>
