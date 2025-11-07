@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useAudio } from "@/contexts/AudioContext";
+import { X } from "lucide-react";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -33,12 +34,20 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md md:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">SETTINGS</DialogTitle>
+      <DialogContent className="max-w-md h-[90vh] flex flex-col p-0" hideCloseButton>
+        <DialogHeader className="border-b p-4 flex-row items-center justify-between space-y-0">
+          <DialogTitle className="text-xl">SETTINGS</DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+            className="h-8 w-8 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Audio Controls */}
           <div className="space-y-4 border border-border rounded-lg p-4">
             <div className="space-y-2">
@@ -110,16 +119,15 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <div className="text-center text-sm text-muted-foreground italic">
             Version {APP_VERSION}
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={handleDisconnect}>
-              Disconnect
-            </Button>
-            <Button variant="default" className="flex-1" onClick={() => onOpenChange(false)}>
-              Go back
-            </Button>
-          </div>
+        <div className="border-t p-4 flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={handleDisconnect}>
+            Disconnect
+          </Button>
+          <Button variant="default" className="flex-1" onClick={() => onOpenChange(false)}>
+            Go back
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
