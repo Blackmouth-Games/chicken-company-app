@@ -12,6 +12,7 @@ import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
+import { CorralDialog } from "@/components/CorralDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
@@ -28,13 +29,16 @@ const Home = () => {
   const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [houseOpen, setHouseOpen] = useState(false);
+  const [corralDialogOpen, setCorralDialogOpen] = useState(false);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
   const { toast } = useToast();
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
 
-  // Number of available slots
-  const TOTAL_SLOTS = 6;
+  // Dynamic slots: min 5 available, max 6 total
+  const occupiedSlots = buildings.length;
+  const TOTAL_SLOTS = Math.min(6, Math.max(5, occupiedSlots + 1));
 
   useEffect(() => {
     loadUserProfile();
@@ -155,6 +159,11 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
+  const handleBuildingClick = (buildingId: string) => {
+    setSelectedBuildingId(buildingId);
+    setCorralDialogOpen(true);
+  };
+
   return (
     <div 
       className="min-h-screen w-full bg-repeat relative"
@@ -255,14 +264,18 @@ const Home = () => {
           <div className="flex items-stretch gap-3 mb-20">
             {/* Left Column - Bigger slots */}
             <div className="flex-1 space-y-4">
-              {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
-                <BuildingSlot
-                  key={index}
-                  position={index}
-                  building={getBuildingAtPosition(index)}
-                  onBuyClick={handleBuyClick}
-                />
-              ))}
+              {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
+                const building = getBuildingAtPosition(index);
+                return (
+                  <BuildingSlot
+                    key={index}
+                    position={index}
+                    building={building}
+                    onBuyClick={handleBuyClick}
+                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                  />
+                );
+              })}
             </div>
 
             {/* Conveyor Belt System with Turn to Warehouse */}
@@ -282,12 +295,17 @@ const Home = () => {
                   .flatMap((building, buildingIndex) => {
                     // Generate eggs based on chicken count (1 egg per 10 chickens, max 3 per corral)
                     const eggCount = Math.min(Math.ceil(building.current_chickens / 10), 3);
+                    // Calculate starting position based on building's position_index
+                    const isLeftColumn = building.position_index < 3;
+                    const rowInColumn = building.position_index % 3;
+                    const startingBottom = rowInColumn * 180; // Spacing between slots
+                    
                     return Array.from({ length: eggCount }).map((_, eggIndex) => (
                       <div
                         key={`egg-${building.id}-${eggIndex}`}
                         className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
                         style={{
-                          animation: `move-up 4s linear infinite`,
+                          animation: `move-up-from-${startingBottom} 4s linear infinite`,
                           animationDelay: `${(buildingIndex * 1.5 + eggIndex * 0.5)}s`,
                         }}
                       >
@@ -342,9 +360,41 @@ const Home = () => {
                   0% { background-position: 0 0; }
                   100% { background-position: 30px 0; }
                 }
-                @keyframes move-up {
+                @keyframes move-up-from-0 {
                   0% {
-                    bottom: -20px;
+                    bottom: 0px;
+                    opacity: 0;
+                  }
+                  5% {
+                    opacity: 1;
+                  }
+                  95% {
+                    opacity: 1;
+                  }
+                  100% {
+                    bottom: calc(100% + 160px);
+                    opacity: 0;
+                  }
+                }
+                @keyframes move-up-from-180 {
+                  0% {
+                    bottom: 180px;
+                    opacity: 0;
+                  }
+                  5% {
+                    opacity: 1;
+                  }
+                  95% {
+                    opacity: 1;
+                  }
+                  100% {
+                    bottom: calc(100% + 160px);
+                    opacity: 0;
+                  }
+                }
+                @keyframes move-up-from-360 {
+                  0% {
+                    bottom: 360px;
                     opacity: 0;
                   }
                   5% {
@@ -379,14 +429,19 @@ const Home = () => {
 
             {/* Right Column - Bigger slots */}
             <div className="flex-1 space-y-4">
-              {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
-                <BuildingSlot
-                  key={index + TOTAL_SLOTS / 2}
-                  position={index + TOTAL_SLOTS / 2}
-                  building={getBuildingAtPosition(index + TOTAL_SLOTS / 2)}
-                  onBuyClick={handleBuyClick}
-                />
-              ))}
+              {Array.from({ length: Math.floor(TOTAL_SLOTS / 2) }).map((_, index) => {
+                const position = index + Math.ceil(TOTAL_SLOTS / 2);
+                const building = getBuildingAtPosition(position);
+                return (
+                  <BuildingSlot
+                    key={position}
+                    position={position}
+                    building={building}
+                    onBuyClick={handleBuyClick}
+                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -407,6 +462,12 @@ const Home = () => {
       <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} userId={userId || undefined} />
       <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} userId={userId || undefined} />
       <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} />
+      <CorralDialog 
+        open={corralDialogOpen} 
+        onOpenChange={setCorralDialogOpen} 
+        userId={userId || undefined}
+        buildingId={selectedBuildingId}
+      />
     </div>
   );
 };
