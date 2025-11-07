@@ -33,19 +33,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             {building.level}
           </div>
 
-          {/* Vertical capacity bar - outside and attached to left, below level badge */}
-          <div className="absolute -left-3 top-12 bottom-2 flex flex-col items-center gap-1 z-20">
-            <div className="flex-1 w-6 bg-gray-200 rounded-full relative overflow-hidden border-2 border-gray-300 shadow-md">
-              {/* Fill indicator */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-red-500 to-red-400 transition-all duration-300"
-                style={{ height: `${fillPercentage}%` }}
-              />
-            </div>
-            {/* Chicken count */}
-            <div className="text-xs font-bold text-center whitespace-nowrap bg-white/90 px-1 rounded">
-              {building.current_chickens}/{building.capacity}
-            </div>
+          {/* Chicken count in circle - Bottom Right */}
+          <div className="absolute -bottom-3 -right-3 bg-purple-600 text-white rounded-full w-14 h-14 flex flex-col items-center justify-center text-xs font-bold shadow-lg border-2 border-white z-10">
+            <span className="text-lg">{building.current_chickens}</span>
+            <span className="text-[10px] opacity-90">/{building.capacity}</span>
           </div>
 
           <div className="flex h-full p-3">

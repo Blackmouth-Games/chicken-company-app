@@ -144,7 +144,7 @@ export const UpgradeBuildingDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Subir de nivel</DialogTitle>
           </DialogHeader>

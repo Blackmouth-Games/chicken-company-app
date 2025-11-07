@@ -278,7 +278,7 @@ const Home = () => {
           </div>
 
           {/* Warehouse and Market - With space between */}
-          <div className="grid grid-cols-2 gap-16 mb-8 relative">
+          <div className="grid grid-cols-2 gap-16 mb-8 relative z-20">
             <button
               onClick={() => setWarehouseOpen(true)}
               className="bg-gradient-to-br from-blue-100 to-blue-50 backdrop-blur-sm border-2 border-blue-400 rounded-lg p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg"
@@ -331,7 +331,7 @@ const Home = () => {
             </div>
 
             {/* Center Conveyor Belt System - Segmented by rows */}
-            <div className="relative flex-shrink-0 w-12 -mt-5 z-0">
+            <div className="relative flex-shrink-0 w-16 -mt-5 z-0">
               {/* Vertical segments for each row */}
               {buildings.filter(b => b.building_type === 'corral').map((building, index) => {
                 const rowIndex = Math.floor(index / 2);
@@ -340,7 +340,7 @@ const Home = () => {
                 return (
                   <div key={`segment-${building.id}`} className="relative" style={{ height: '180px' }}>
                     {/* Vertical segment */}
-                    <div className="absolute left-0 top-0 w-12 h-full bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 overflow-hidden shadow-lg">
+                    <div className="absolute left-0 top-0 w-16 h-full bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 overflow-hidden shadow-lg">
                       <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                            style={{
                              backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
@@ -367,8 +367,8 @@ const Home = () => {
               })}
 
               {/* Horizontal conveyor (larga) from vertical belt to warehouse */}
-              <div className="absolute -top-3 pointer-events-none z-0" style={{ right: '24px', width: 'calc(50vw - 120px)' }}>
-                <div className="h-10 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg w-full">
+              <div className="absolute -top-3 pointer-events-none z-0" style={{ right: '32px', width: 'calc(50vw - 120px)' }}>
+                <div className="h-14 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg w-full">
                   <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                        style={{
                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
@@ -380,7 +380,7 @@ const Home = () => {
 
               {/* Vertical conveyor (corta) at warehouse center - enters warehouse */}
               <div className="absolute pointer-events-none z-0" style={{ right: 'calc(50vw - 120px)', top: '-50px' }}>
-                <div className="w-10 h-24 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg">
+                <div className="w-14 h-32 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg">
                   <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                        style={{
                          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
