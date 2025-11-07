@@ -322,6 +322,7 @@ const Home = () => {
                       building={building}
                       onBuyClick={handleBuyClick}
                       onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                      isLeftColumn={true}
                     />
                   </div>
                 );
@@ -424,6 +425,7 @@ const Home = () => {
                       building={building}
                       onBuyClick={handleBuyClick}
                       onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                      isLeftColumn={false}
                     />
                   </div>
                 );

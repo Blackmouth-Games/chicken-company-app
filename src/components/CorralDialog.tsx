@@ -7,6 +7,7 @@ import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
+import { cn } from "@/lib/utils";
 
 interface CorralDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface CorralDialogProps {
 export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralDialogProps) => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
+  const [selectedMultiplier, setSelectedMultiplier] = useState<1 | 5 | 10>(1);
   const { buildings, refetch } = useUserBuildings(userId);
   const { prices } = useBuildingPrices();
 
@@ -40,6 +42,11 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
     setShowUpgrade(false);
     // Close dialog to allow reordering to be visible
     setTimeout(() => onOpenChange(false), 500);
+  };
+
+  const handleStakeChickens = () => {
+    // TODO: Implement staking logic with selectedMultiplier
+    console.log(`Staking chickens with multiplier: x${selectedMultiplier}`);
   };
 
   return (
@@ -74,11 +81,45 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
           <div className="bg-white rounded-lg p-4 border-2 border-border space-y-3">
             <div className="flex items-center gap-3 mb-3">
               <div className="text-4xl">🐔</div>
-              <div className="flex gap-2 items-center">
-                <button className="px-3 py-1 border border-border rounded text-sm">x1</button>
-                <button className="px-3 py-1 border border-border rounded text-sm">x5</button>
-                <button className="px-3 py-1 border border-border rounded text-sm">x10</button>
-                <Button size="sm" className="bg-green-500 hover:bg-green-600">
+              <div className="flex gap-2 items-center flex-wrap">
+                <button 
+                  onClick={() => setSelectedMultiplier(1)}
+                  className={cn(
+                    "px-3 py-1 border rounded text-sm transition-colors",
+                    selectedMultiplier === 1 
+                      ? "border-green-500 bg-green-100 text-green-700 font-bold" 
+                      : "border-border hover:border-green-300"
+                  )}
+                >
+                  x1
+                </button>
+                <button 
+                  onClick={() => setSelectedMultiplier(5)}
+                  className={cn(
+                    "px-3 py-1 border rounded text-sm transition-colors",
+                    selectedMultiplier === 5 
+                      ? "border-green-500 bg-green-100 text-green-700 font-bold" 
+                      : "border-border hover:border-green-300"
+                  )}
+                >
+                  x5
+                </button>
+                <button 
+                  onClick={() => setSelectedMultiplier(10)}
+                  className={cn(
+                    "px-3 py-1 border rounded text-sm transition-colors",
+                    selectedMultiplier === 10 
+                      ? "border-green-500 bg-green-100 text-green-700 font-bold" 
+                      : "border-border hover:border-green-300"
+                  )}
+                >
+                  x10
+                </button>
+                <Button 
+                  size="sm" 
+                  className="bg-green-500 hover:bg-green-600"
+                  onClick={handleStakeChickens}
+                >
                   stake gallinas
                 </Button>
               </div>
