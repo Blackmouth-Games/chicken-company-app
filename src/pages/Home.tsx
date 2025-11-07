@@ -36,9 +36,12 @@ const Home = () => {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
 
-  // Dynamic slots: min 5 available, max 6 total
+  // Dynamic slots: min 5 empty slots, max 6 empty slots
   const occupiedSlots = buildings.length;
-  const TOTAL_SLOTS = Math.min(6, Math.max(5, occupiedSlots + 1));
+  const MIN_EMPTY_SLOTS = 5;
+  const MAX_EMPTY_SLOTS = 6;
+  const emptySlots = occupiedSlots === 0 ? MAX_EMPTY_SLOTS : MIN_EMPTY_SLOTS;
+  const TOTAL_SLOTS = occupiedSlots + emptySlots;
 
   useEffect(() => {
     loadUserProfile();
@@ -306,9 +309,11 @@ const Home = () => {
 
             {/* Center Conveyor Belt System */}
             <div className="relative flex-shrink-0 w-12">
-              {/* Main vertical conveyor */}
-              <div className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
-                   style={{ minHeight: 'calc(100vh - 200px)' }}>
+              {/* Main vertical conveyor - height based on total slots */}
+              <div 
+                className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
+                style={{ height: `${TOTAL_SLOTS * 180}px` }}
+              >
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                      style={{
                        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
