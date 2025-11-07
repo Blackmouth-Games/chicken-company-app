@@ -375,6 +375,10 @@ const Home = () => {
                   0% { background-position: 0 30px; }
                   100% { background-position: 0 0; }
                 }
+                @keyframes conveyor-left {
+                  0% { background-position: 30px 0; }
+                  100% { background-position: 0 0; }
+                }
                 @keyframes conveyor-right {
                   0% { background-position: 0 0; }
                   100% { background-position: 30px 0; }
@@ -392,6 +396,22 @@ const Home = () => {
                   }
                   100% {
                     bottom: calc(100% + 160px);
+                    opacity: 0;
+                  }
+                }
+                @keyframes move-left {
+                  0% {
+                    right: -20px;
+                    opacity: 0;
+                  }
+                  5% {
+                    opacity: 1;
+                  }
+                  95% {
+                    opacity: 1;
+                  }
+                  100% {
+                    right: calc(100% + 20px);
                     opacity: 0;
                   }
                 }
