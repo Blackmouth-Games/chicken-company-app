@@ -6,7 +6,7 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Pencil } from "lucide-react";
+import { Palette } from "lucide-react";
 
 interface MarketDialogProps {
   open: boolean;
@@ -47,19 +47,18 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
             <div className="flex-1 overflow-y-auto">
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Market Image */}
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-3">
                   <div className="text-9xl">{market?.selected_skin ? "🏬" : "🏪"}</div>
-                </div>
-
-                {/* Edit Skin Button - positioned near the icon */}
-                <div className="flex justify-center relative">
+                  
+                  {/* Edit Skin Button */}
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="outline"
+                    size="sm"
                     onClick={() => setShowSkinSelector(true)}
-                    className="absolute -right-2 -top-2 bg-amber-200 hover:bg-amber-300 rounded-full"
+                    className="border-amber-300 hover:bg-amber-100"
                   >
-                    <Pencil className="w-4 h-4 text-amber-900" />
+                    <Palette className="w-4 h-4 mr-2" />
+                    Cambiar apariencia
                   </Button>
                 </div>
 
