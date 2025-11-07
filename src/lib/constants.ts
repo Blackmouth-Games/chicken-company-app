@@ -1,6 +1,6 @@
 // TON Wallet Configuration
-// Merchant wallet address in bounceable format
-export const TON_RECEIVER_WALLET = "EQBLTGjBkVr7kMNlxfaTZmWC5mk4ADKb8PvcgaM_NzQMQpMn";
+// Merchant wallet address in bounceable format (Chicken Company)
+export const TON_RECEIVER_WALLET = "UQBLTGjBkVr7kMNlxfaTZmWC5mk4ADKb8PvcgaM_NzQMQpMn";
 
 // Transaction timeout in seconds
 export const TRANSACTION_TIMEOUT = 60;
