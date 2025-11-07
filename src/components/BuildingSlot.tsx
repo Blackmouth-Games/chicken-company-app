@@ -67,7 +67,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
         {/* Mini horizontal conveyor belt to connect to vertical belt - improved visual */}
         <div 
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-8 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 shadow-lg z-0 flex items-center justify-center border-2 border-amber-700 overflow-hidden",
+            "absolute top-1/2 -translate-y-1/2 h-8 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 shadow-lg z-30 flex items-center justify-center border-2 border-amber-700 overflow-hidden",
             isLeftColumn ? "-right-10 w-10 rounded-r-lg" : "-left-10 w-10 rounded-l-lg"
           )}
         >
