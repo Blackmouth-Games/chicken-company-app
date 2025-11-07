@@ -163,10 +163,10 @@ const Home = () => {
         backgroundSize: '200px 200px'
       }}
     >
-      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+      {/* Background overlay removed to prevent white screen */}
       
       {/* Floating Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-md border-b border-white/10 shadow-lg">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
         <div className="flex items-center justify-between p-4">
           {/* Profile Avatar */}
           <button
@@ -265,9 +265,9 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Conveyor Belt - Narrower and taller */}
-            <div className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg flex-shrink-0" 
-                 style={{ minHeight: '600px' }}>
+            {/* Infinite Conveyor Belt - extends to bottom, animation goes UP */}
+            <div className="w-10 -mt-32 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg flex-shrink-0" 
+                 style={{ minHeight: 'calc(100vh + 100px)' }}>
               <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                    style={{
                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
@@ -276,8 +276,8 @@ const Home = () => {
               />
               <style>{`
                 @keyframes conveyor {
-                  0% { background-position: 0 0; }
-                  100% { background-position: 0 30px; }
+                  0% { background-position: 0 30px; }
+                  100% { background-position: 0 0; }
                 }
               `}</style>
             </div>

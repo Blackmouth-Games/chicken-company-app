@@ -12,7 +12,7 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const APP_VERSION = "1.0";
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || new Date().toISOString().split('T')[0];
 
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
@@ -33,7 +33,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border" hideCloseButton>
+      <DialogContent className="sm:max-w-md md:max-w-md w-full h-full md:h-auto bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">SETTINGS</DialogTitle>
         </DialogHeader>

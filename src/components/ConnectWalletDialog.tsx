@@ -18,6 +18,15 @@ export const ConnectWalletDialog = ({
   open,
   onOpenChange,
 }: ConnectWalletDialogProps) => {
+  const [tonConnectUI] = useTonConnectUI();
+  
+  const handleConnect = () => {
+    onOpenChange(false);
+    setTimeout(() => {
+      tonConnectUI.openModal();
+    }, 100);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -39,7 +48,9 @@ export const ConnectWalletDialog = ({
           </p>
 
           <div className="flex justify-center">
-            <TonConnectButton />
+            <Button size="lg" onClick={handleConnect}>
+              Conectar Wallet TON
+            </Button>
           </div>
         </div>
       </DialogContent>

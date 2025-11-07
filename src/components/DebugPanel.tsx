@@ -58,7 +58,7 @@ const DebugPanel = () => {
         onClick={() => setIsOpen(true)}
         size="icon"
         variant="outline"
-        className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg"
+        className="fixed bottom-20 right-4 z-40 rounded-full shadow-lg"
         title="Open Debug Panel"
       >
         <Bug className="h-4 w-4" />
