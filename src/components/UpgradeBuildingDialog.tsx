@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Info } from "lucide-react";
+import { X } from "lucide-react";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -145,14 +145,22 @@ export const UpgradeBuildingDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm sm:max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
-          <DialogHeader>
-            <DialogTitle className="text-center text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <DialogContent className="max-w-md h-[90vh] flex flex-col p-0" hideCloseButton>
+          <DialogHeader className="border-b p-4 flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-xl bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               ⬆️ Subir de nivel
             </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Building comparison with animation */}
             <div className="relative flex items-center justify-center gap-6 p-6 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl">
               {/* Current Level - Fade out effect */}
@@ -203,7 +211,9 @@ export const UpgradeBuildingDialog = ({
                 </span>
               </div>
             </div>
+          </div>
 
+          <div className="border-t p-4">
             {/* Price button with gradient and animation */}
             <Button
               onClick={handleUpgrade}
