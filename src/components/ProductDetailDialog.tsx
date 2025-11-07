@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { useAudio } from "@/contexts/AudioContext";
+import { TON_RECEIVER_WALLET } from "@/lib/constants";
+import { normalizeTonAddress } from "@/lib/ton";
 
 interface ProductDetailDialogProps {
   open: boolean;

@@ -13,6 +13,7 @@ import { useTonConnectUI } from "@tonconnect/ui-react";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { TON_RECEIVER_WALLET, TRANSACTION_TIMEOUT } from "@/lib/constants";
+import { normalizeTonAddress } from "@/lib/ton";
 import { useAudio } from "@/contexts/AudioContext";
 
 interface PurchaseBuildingDialogProps {
@@ -83,16 +84,17 @@ export const PurchaseBuildingDialog = ({
       });
 
       // Send TON transaction
+      const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
+      console.log("Sending TON to:", destination);
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + TRANSACTION_TIMEOUT,
         messages: [
           {
-            address: TON_RECEIVER_WALLET,
+            address: destination,
             amount: (CORRAL_PRICE * 1e9).toString(), // Convert TON to nanoTON
           },
         ],
       };
-
       const result = await tonConnectUI.sendTransaction(transaction);
 
       // Insert building into database

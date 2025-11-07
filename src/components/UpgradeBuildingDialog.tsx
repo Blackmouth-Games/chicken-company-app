@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TON_RECEIVER_WALLET } from "@/lib/constants";
+import { normalizeTonAddress } from "@/lib/ton";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
 import { useAudio } from "@/contexts/AudioContext";
 
@@ -67,16 +68,17 @@ export const UpgradeBuildingDialog = ({
       if (purchaseError) throw purchaseError;
 
       // Send TON transaction
+      const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
+      console.log("Upgrading - sending TON to:", destination);
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 60,
         messages: [
           {
-            address: TON_RECEIVER_WALLET,
+            address: destination,
             amount: (upgradePrice * 1e9).toString(),
           },
         ],
       };
-
       const result = await tonConnectUI.sendTransaction(transaction);
 
       // Update building
