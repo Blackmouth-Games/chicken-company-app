@@ -33,7 +33,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent hideCloseButton className="w-[92vw] max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-blue-50 to-slate-50 border-2 border-blue-300">
+        <DialogContent hideCloseButton className="w-full h-full md:w-[92vw] md:h-auto md:max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-blue-50 to-slate-50 border-2 border-blue-300">
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100/50">

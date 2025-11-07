@@ -265,19 +265,44 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Infinite Conveyor Belt - extends to bottom, animation goes UP */}
-            <div className="w-10 -mt-32 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg flex-shrink-0" 
-                 style={{ minHeight: 'calc(100vh + 100px)' }}>
-              <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                   style={{
-                     backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                     animation: 'conveyor 3s linear infinite'
-                   }}
-              />
+            {/* Conveyor Belt System with Turn to Warehouse */}
+            <div className="relative flex-shrink-0">
+              {/* Vertical part of conveyor */}
+              <div className="w-10 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
+                   style={{ minHeight: 'calc(100vh - 200px)' }}>
+                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                     style={{
+                       backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                       animation: 'conveyor-up 3s linear infinite'
+                     }}
+                />
+              </div>
+              
+              {/* Turn/Corner piece */}
+              <div className="absolute -top-32 left-0 w-10 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg"
+                   style={{ borderRadius: '0 0 20px 0' }}>
+                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
+              </div>
+              
+              {/* Horizontal part connecting to warehouse */}
+              <div className="absolute -top-32 left-10 h-10 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg"
+                   style={{ width: '150px' }}>
+                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
+                     style={{
+                       backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                       animation: 'conveyor-right 3s linear infinite'
+                     }}
+                />
+              </div>
+
               <style>{`
-                @keyframes conveyor {
+                @keyframes conveyor-up {
                   0% { background-position: 0 30px; }
                   100% { background-position: 0 0; }
+                }
+                @keyframes conveyor-right {
+                  0% { background-position: 0 0; }
+                  100% { background-position: 30px 0; }
                 }
               `}</style>
             </div>

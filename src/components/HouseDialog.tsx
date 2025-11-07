@@ -9,7 +9,7 @@ interface HouseDialogProps {
 export const HouseDialog = ({ open, onOpenChange }: HouseDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-full h-full md:max-w-md md:h-auto">
         <DialogHeader>
           <DialogTitle>Masia</DialogTitle>
         </DialogHeader>

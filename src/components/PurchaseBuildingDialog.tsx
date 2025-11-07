@@ -150,7 +150,7 @@ export const PurchaseBuildingDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-full h-full md:max-w-md md:h-auto">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-bold">
               Adquiere Corral
