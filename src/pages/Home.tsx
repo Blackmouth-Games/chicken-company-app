@@ -9,6 +9,9 @@ import { TutorialDialog } from "@/components/TutorialDialog";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { BuildingSlot } from "@/components/BuildingSlot";
 import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
+import { WarehouseDialog } from "@/components/WarehouseDialog";
+import { MarketDialog } from "@/components/MarketDialog";
+import { HouseDialog } from "@/components/HouseDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +24,9 @@ const Home = () => {
   const [selectedPosition, setSelectedPosition] = useState<number>(0);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [warehouseOpen, setWarehouseOpen] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
+  const [houseOpen, setHouseOpen] = useState(false);
   const { toast } = useToast();
 
   // Number of available slots
@@ -148,6 +154,51 @@ const Home = () => {
           </Button>
         </div>
 
+        {/* Fixed Buildings */}
+        <div className="max-w-2xl mx-auto mb-8">
+          {/* House - Centered at top */}
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => setHouseOpen(true)}
+              className="bg-background/80 backdrop-blur-sm border-2 border-primary/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
+            >
+              <div className="flex flex-col items-center">
+                <div className="text-5xl mb-1">🏠</div>
+                <p className="text-xs font-medium">Farms house</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Warehouse and Market - Left and Right */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <button
+              onClick={() => setWarehouseOpen(true)}
+              className="bg-background/80 backdrop-blur-sm border-2 border-blue-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
+            >
+              <div className="flex flex-col items-center">
+                <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  5
+                </div>
+                <div className="text-5xl mb-1">🏪</div>
+                <p className="text-xs font-medium">Almacen</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setMarketOpen(true)}
+              className="bg-background/80 backdrop-blur-sm border-2 border-yellow-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
+            >
+              <div className="flex flex-col items-center">
+                <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                  5
+                </div>
+                <div className="text-5xl mb-1">🏪</div>
+                <p className="text-xs font-medium">Market</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Building Slots Grid */}
         <div className="max-w-2xl mx-auto">
           <div className="grid grid-cols-2 gap-4 mb-20">
@@ -174,6 +225,10 @@ const Home = () => {
         userId={userId}
         onPurchaseComplete={handlePurchaseComplete}
       />
+
+      <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} level={5} />
+      <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} level={5} />
+      <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} />
     </div>
   );
 };

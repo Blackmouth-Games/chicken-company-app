@@ -123,8 +123,9 @@ const Wallet = () => {
           </Card>
         )}
 
-        {/* Transactions Section */}
-        <Card>
+        {/* Transactions Section - Only show when wallet is connected */}
+        {wallet && (
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ArrowUpDown className="w-5 h-5" />
@@ -179,6 +180,7 @@ const Wallet = () => {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
