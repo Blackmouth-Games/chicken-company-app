@@ -33,8 +33,8 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="fixed inset-0 max-w-none w-full h-[100dvh] m-0 p-0 rounded-none border-0 bg-background z-[9999] sm:max-w-none" hideCloseButton>
-          <div className="flex flex-col h-full w-full">
+        <DialogContent className="fixed inset-0 max-w-none w-full h-full m-0 p-0 rounded-none border-0 bg-background z-[100]">
+          <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-2xl font-bold">Market</h2>
