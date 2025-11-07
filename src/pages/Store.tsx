@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStoreProducts } from "@/hooks/useStoreProducts";
 import { ProductDetailDialog } from "@/components/ProductDetailDialog";
 import { StoreProduct } from "@/hooks/useStoreProducts";
 import { Loader2 } from "lucide-react";
+import { updateStoreProducts } from "@/scripts/updateStoreProducts";
 
 const Store = () => {
-  const { products, loading } = useStoreProducts();
+  const { products, loading, refetch } = useStoreProducts();
   const [selectedProduct, setSelectedProduct] = useState<StoreProduct | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+
+  // Update products on mount (run once to fix images)
+  useEffect(() => {
+    const initProducts = async () => {
+      await updateStoreProducts();
+      refetch();
+    };
+    initProducts();
+  }, []);
 
   const handleProductClick = (product: StoreProduct) => {
     setSelectedProduct(product);
