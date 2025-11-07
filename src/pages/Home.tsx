@@ -249,17 +249,52 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Building Slots Grid */}
+        {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-2xl mx-auto">
-          <div className="grid grid-cols-2 gap-4 mb-20">
-            {Array.from({ length: TOTAL_SLOTS }).map((_, index) => (
-              <BuildingSlot
-                key={index}
-                position={index}
-                building={getBuildingAtPosition(index)}
-                onBuyClick={handleBuyClick}
+          <div className="flex gap-8 mb-20">
+            {/* Left Column */}
+            <div className="flex-1 space-y-4">
+              {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
+                <BuildingSlot
+                  key={index}
+                  position={index}
+                  building={getBuildingAtPosition(index)}
+                  onBuyClick={handleBuyClick}
+                />
+              ))}
+            </div>
+
+            {/* Conveyor Belt */}
+            <div className="w-16 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-lg border-2 border-amber-700 py-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                   style={{
+                     backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px)',
+                     animation: 'conveyor 2s linear infinite'
+                   }}
               />
-            ))}
+              <div className="text-2xl z-10">🐔</div>
+              <div className="text-2xl z-10">🥚</div>
+              <div className="text-2xl z-10">🐔</div>
+              <div className="text-2xl z-10">🥚</div>
+              <style>{`
+                @keyframes conveyor {
+                  0% { background-position: 0 0; }
+                  100% { background-position: 0 20px; }
+                }
+              `}</style>
+            </div>
+
+            {/* Right Column */}
+            <div className="flex-1 space-y-4">
+              {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
+                <BuildingSlot
+                  key={index + TOTAL_SLOTS / 2}
+                  position={index + TOTAL_SLOTS / 2}
+                  building={getBuildingAtPosition(index + TOTAL_SLOTS / 2)}
+                  onBuyClick={handleBuyClick}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
