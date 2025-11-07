@@ -13,6 +13,7 @@ import { useTonConnectUI } from "@tonconnect/ui-react";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { TON_RECEIVER_WALLET, TRANSACTION_TIMEOUT } from "@/lib/constants";
+import { useAudio } from "@/contexts/AudioContext";
 
 interface PurchaseBuildingDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export const PurchaseBuildingDialog = ({
   const { toast } = useToast();
   const [tonConnectUI] = useTonConnectUI();
   const { getPrice } = useBuildingPrices();
+  const { playSound } = useAudio();
 
   const buildingPrice = getPrice("corral", 1);
   const CORRAL_PRICE = buildingPrice?.price_ton || 0.1;
@@ -119,6 +121,10 @@ export const PurchaseBuildingDialog = ({
           transaction_hash: result.boc,
         })
         .eq("id", purchaseRecord.id);
+
+      // Play purchase sound
+      const purchaseSound = new Audio("/sounds/purchase.mp3");
+      playSound(purchaseSound);
 
       toast({
         title: "¡Corral comprado!",

@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TON_RECEIVER_WALLET } from "@/lib/constants";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
+import { useAudio } from "@/contexts/AudioContext";
 
 interface UpgradeBuildingDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export const UpgradeBuildingDialog = ({
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const { toast } = useToast();
+  const { playSound } = useAudio();
 
   const handleUpgrade = async () => {
     if (!tonConnectUI.connected) {
@@ -99,6 +101,10 @@ export const UpgradeBuildingDialog = ({
           completed_at: new Date().toISOString(),
         })
         .eq("id", purchaseData.id);
+
+      // Play upgrade sound
+      const upgradeSound = new Audio("/sounds/upgrade.mp3");
+      playSound(upgradeSound);
 
       toast({
         title: "¡Éxito!",
