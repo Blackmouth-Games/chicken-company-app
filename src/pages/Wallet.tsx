@@ -4,6 +4,7 @@ import { Wallet as WalletIcon, ArrowUpDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
+import { normalizeTonAddress } from "@/lib/ton";
 
 const Wallet = () => {
   const wallet = useTonWallet();
@@ -94,7 +95,7 @@ const Wallet = () => {
               <div className="p-4 bg-primary/10 rounded-lg">
                 <p className="text-sm font-medium mb-2">Wallet Info:</p>
                 <p className="text-xs text-muted-foreground break-all">
-                  {wallet.account.address}
+                  {normalizeTonAddress(wallet.account.address)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
                   Chain: {wallet.account.chain}
