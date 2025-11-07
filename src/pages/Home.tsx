@@ -276,16 +276,38 @@ const Home = () => {
                        animation: 'conveyor-up 3s linear infinite'
                      }}
                 />
+                {/* Moving items on vertical belt */}
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={`v-item-${i}`}
+                    className="absolute left-1/2 -translate-x-1/2 w-6 h-6 text-lg flex items-center justify-center"
+                    style={{
+                      animation: `move-up 4s linear infinite`,
+                      animationDelay: `${i * 1}s`,
+                    }}
+                  >
+                    🥚
+                  </div>
+                ))}
               </div>
               
               {/* Turn/Corner piece */}
-              <div className="absolute -top-32 left-0 w-10 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg"
+              <div className="absolute -top-32 left-0 w-10 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
                    style={{ borderRadius: '0 0 20px 0' }}>
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
+                {/* Item turning corner */}
+                <div
+                  className="absolute w-6 h-6 text-lg flex items-center justify-center"
+                  style={{
+                    animation: `turn-corner 4s linear infinite`,
+                  }}
+                >
+                  🥚
+                </div>
               </div>
               
               {/* Horizontal part connecting to warehouse */}
-              <div className="absolute -top-32 left-10 h-10 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg"
+              <div className="absolute -top-32 left-10 h-10 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
                    style={{ width: '150px' }}>
                 <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
                      style={{
@@ -293,6 +315,19 @@ const Home = () => {
                        animation: 'conveyor-right 3s linear infinite'
                      }}
                 />
+                {/* Moving items on horizontal belt */}
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={`h-item-${i}`}
+                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 text-lg flex items-center justify-center"
+                    style={{
+                      animation: `move-right 3s linear infinite`,
+                      animationDelay: `${i * 1}s`,
+                    }}
+                  >
+                    🥚
+                  </div>
+                ))}
               </div>
 
               <style>{`
@@ -303,6 +338,57 @@ const Home = () => {
                 @keyframes conveyor-right {
                   0% { background-position: 0 0; }
                   100% { background-position: 30px 0; }
+                }
+                @keyframes move-up {
+                  0% {
+                    bottom: -20px;
+                    opacity: 0;
+                  }
+                  5% {
+                    opacity: 1;
+                  }
+                  95% {
+                    opacity: 1;
+                  }
+                  100% {
+                    bottom: calc(100% + 160px);
+                    opacity: 0;
+                  }
+                }
+                @keyframes move-right {
+                  0% {
+                    left: -20px;
+                    opacity: 0;
+                  }
+                  5% {
+                    opacity: 1;
+                  }
+                  95% {
+                    opacity: 1;
+                  }
+                  100% {
+                    left: calc(100% + 20px);
+                    opacity: 0;
+                  }
+                }
+                @keyframes turn-corner {
+                  0%, 95% {
+                    opacity: 0;
+                  }
+                  96% {
+                    bottom: 0;
+                    left: 50%;
+                    opacity: 1;
+                  }
+                  98% {
+                    bottom: 50%;
+                    left: 50%;
+                  }
+                  100% {
+                    bottom: 100%;
+                    left: 100%;
+                    opacity: 0;
+                  }
                 }
               `}</style>
             </div>
