@@ -278,7 +278,7 @@ const Home = () => {
           </div>
 
           {/* Warehouse and Market - With more space between */}
-          <div className="grid grid-cols-2 gap-24 mb-12 relative z-20">
+          <div className="grid grid-cols-2 gap-24 mb-20 relative z-20">
             <button
               onClick={() => setWarehouseOpen(true)}
               className="bg-gradient-to-br from-blue-100 to-blue-50 backdrop-blur-sm border-2 border-blue-400 rounded-lg p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg"
@@ -331,7 +331,7 @@ const Home = () => {
             </div>
 
             {/* Center Conveyor Belt System - Segmented by rows */}
-            <div className="relative flex-shrink-0 w-10 -mt-5 z-0">
+            <div className="relative flex-shrink-0 w-10 -mt-20 z-0">
               {/* Vertical segments for each row */}
               {buildings.filter(b => b.building_type === 'corral').map((building, index) => {
                 const rowIndex = Math.floor(index / 2);
