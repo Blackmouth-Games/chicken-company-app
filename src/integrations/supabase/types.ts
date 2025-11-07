@@ -393,6 +393,48 @@ export type Database = {
         }
         Relationships: []
       }
+      store_purchases: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          price_ton: number
+          product_id: string
+          product_key: string
+          status: string
+          transaction_hash: string | null
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          price_ton: number
+          product_id: string
+          product_key: string
+          status?: string
+          transaction_hash?: string | null
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          price_ton?: number
+          product_id?: string
+          product_key?: string
+          status?: string
+          transaction_hash?: string | null
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
       user_buildings: {
         Row: {
           building_type: Database["public"]["Enums"]["building_type"]
