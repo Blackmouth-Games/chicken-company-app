@@ -5,7 +5,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { TonConnectButton } from "@tonconnect/ui-react";
+import { Button } from "@/components/ui/button";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 import { Wallet } from "lucide-react";
 
 interface ConnectWalletDialogProps {
