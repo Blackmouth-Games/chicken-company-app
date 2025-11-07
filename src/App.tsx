@@ -21,7 +21,7 @@ import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 
 const queryClient = new QueryClient();
-const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL;
+const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect-manifest.json";
 
 const AppRoutes = () => {
   const [isFromTelegram, setIsFromTelegram] = useState<boolean | null>(null);
@@ -33,6 +33,7 @@ const AppRoutes = () => {
   useEffect(() => {
     initTelegramWebApp();
     const telegramStatus: boolean = isTelegramWebApp();
+    console.log("[AppRoutes] init", { telegramStatus, manifestUrl });
     setIsFromTelegram(telegramStatus);
   }, []);
 
