@@ -33,8 +33,8 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="fixed inset-0 max-w-none w-full h-full m-0 p-0 rounded-none border-0 bg-background z-[100]">
-          <div className="flex flex-col h-full">
+        <DialogContent className="w-[92vw] max-w-2xl p-0 sm:rounded-lg">
+          <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-2xl font-bold">Almacén</h2>

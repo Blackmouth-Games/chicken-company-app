@@ -103,17 +103,6 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
-  /* Lock orientation to portrait on mobile devices */
-  @media screen and (orientation: landscape) and (max-width: 768px) {
-    body {
-      transform: rotate(90deg);
-      transform-origin: left top;
-      width: 100vh;
-      height: 100vw;
-      overflow-x: hidden;
-      position: absolute;
-      top: 100%;
-      left: 0;
-    }
-  }
+  /* Orientation lock is handled by the OrientationLock component.
+     Removed body rotation to avoid breaking fixed-position dialogs and centering. */
 }
