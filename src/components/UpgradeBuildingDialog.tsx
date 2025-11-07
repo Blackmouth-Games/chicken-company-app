@@ -69,7 +69,12 @@ export const UpgradeBuildingDialog = ({
 
       // Send TON transaction
       const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
-      console.log("Upgrading - sending TON to:", destination);
+      console.log("[UpgradeBuildingDialog] Sending TON transaction", {
+        destination,
+        amount: upgradePrice,
+        buildingId,
+        purchaseId: purchaseData.id,
+      });
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 60,
         messages: [

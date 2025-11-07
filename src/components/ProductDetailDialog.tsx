@@ -80,11 +80,18 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
       console.log("Purchase record created:", purchase.id);
 
       // 3. Send TON transaction
+      const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
+      console.log("[ProductDetailDialog] Sending TON transaction", {
+        destination,
+        amount: parseFloat(product.price_ton.toString()),
+        purchaseId: purchase.id,
+      });
+      
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
         messages: [
           {
-            address: "EQBLTGjBkVr7kMNlxfaTZmWC5mk4ADKb8PvcgaM_NzQMQpMn", // Merchant wallet address in bounceable format
+            address: destination,
             amount: (parseFloat(product.price_ton.toString()) * 1e9).toString(), // Convert TON to nanotons
             payload: btoa(JSON.stringify({
               type: "store_purchase",

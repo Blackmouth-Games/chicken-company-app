@@ -15,6 +15,7 @@ export const DebugOverlay = ({ manifestUrl }: DebugOverlayProps) => {
   const enabled = params.get("debug") === "1";
   const [logs, setLogs] = useState<Array<{ level: string; args: any[]; ts: number }>>(window.__APP_LOGS || []);
   const [errors, setErrors] = useState<string[]>([]);
+  const [txErrors, setTxErrors] = useState<Array<{ ts: number; msg: string }>>([]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -38,8 +39,23 @@ export const DebugOverlay = ({ manifestUrl }: DebugOverlayProps) => {
     console.warn = wrap("warn");
     console.error = wrap("error");
 
-    const onErr = (ev: ErrorEvent) => setErrors((e) => [...e, `${ev.message} @ ${ev.filename}:${ev.lineno}`]);
-    const onRej = (ev: PromiseRejectionEvent) => setErrors((e) => [...e, `Unhandled rejection: ${String(ev.reason)}`]);
+    const onErr = (ev: ErrorEvent) => {
+      const errMsg = `${ev.message} @ ${ev.filename}:${ev.lineno}`;
+      setErrors((e) => [...e, errMsg]);
+      // Detect TON transaction errors
+      if (ev.message?.includes("TON_CONNECT") || ev.message?.includes("SendTransaction")) {
+        setTxErrors((tx) => [...tx, { ts: Date.now(), msg: ev.message }]);
+      }
+    };
+    const onRej = (ev: PromiseRejectionEvent) => {
+      const rejMsg = `Unhandled rejection: ${String(ev.reason)}`;
+      setErrors((e) => [...e, rejMsg]);
+      // Detect TON transaction errors
+      const reasonStr = String(ev.reason);
+      if (reasonStr.includes("TON_CONNECT") || reasonStr.includes("SendTransaction") || reasonStr.includes("address")) {
+        setTxErrors((tx) => [...tx, { ts: Date.now(), msg: reasonStr }]);
+      }
+    };
     window.addEventListener("error", onErr);
     window.addEventListener("unhandledrejection", onRej);
 
@@ -73,6 +89,14 @@ export const DebugOverlay = ({ manifestUrl }: DebugOverlayProps) => {
             <div>isTelegramWebApp: {String(tg)}</div>
             <div>User ID: {tgUser?.id ?? "-"}</div>
             <div>Username: {tgUser?.username ?? "-"}</div>
+          </div>
+          <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
+            <div className="font-semibold mb-1">TON Transaction Errors</div>
+            {txErrors.length === 0 ? <div className="opacity-70">No TX errors</div> : (
+              <ul className="space-y-1 list-disc list-inside text-xs">
+                {txErrors.map((e, i) => (<li key={i}>[{new Date(e.ts).toLocaleTimeString()}] {e.msg}</li>))}
+              </ul>
+            )}
           </div>
           <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
             <div className="font-semibold mb-1">Errors</div>

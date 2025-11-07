@@ -85,7 +85,11 @@ export const PurchaseBuildingDialog = ({
 
       // Send TON transaction
       const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
-      console.log("Sending TON to:", destination);
+      console.log("[PurchaseBuildingDialog] Sending TON transaction", {
+        destination,
+        amount: CORRAL_PRICE,
+        purchaseId: purchaseRecord.id,
+      });
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + TRANSACTION_TIMEOUT,
         messages: [
