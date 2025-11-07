@@ -16,9 +16,10 @@ interface ProductDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: StoreProduct | null;
+  isPurchased?: boolean;
 }
 
-export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDetailDialogProps) => {
+export const ProductDetailDialog = ({ open, onOpenChange, product, isPurchased = false }: ProductDetailDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
@@ -29,6 +30,16 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
   if (!product) return null;
 
   const handlePurchase = async () => {
+    // Check if already purchased
+    if (isPurchased) {
+      toast({
+        title: "Ya adquirido",
+        description: "Ya has comprado este producto anteriormente",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check wallet connection
     if (!tonConnectUI.connected) {
       onOpenChange(false);
@@ -230,14 +241,20 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
             </div>
 
             {/* Purchase Button with TON payment */}
-            <Button 
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700" 
-              size="lg" 
-              onClick={handlePurchase}
-              disabled={isPurchasing}
-            >
-              {isPurchasing ? "Procesando compra..." : `Comprar - ${product.price_ton} TON`}
-            </Button>
+            {isPurchased ? (
+              <div className="w-full bg-green-600 text-white rounded-lg p-4 text-center font-bold">
+                ✓ Ya adquirido
+              </div>
+            ) : (
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700" 
+                size="lg" 
+                onClick={handlePurchase}
+                disabled={isPurchasing}
+              >
+                {isPurchasing ? "Procesando compra..." : `Comprar - ${product.price_ton} TON`}
+              </Button>
+            )}
 
             {!tonConnectUI.connected && (
               <p className="text-xs text-center text-muted-foreground">
