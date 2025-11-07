@@ -331,7 +331,7 @@ const Home = () => {
             </div>
 
             {/* Center Conveyor Belt System - Segmented by rows */}
-            <div className="relative flex-shrink-0 w-12 -mt-5">
+            <div className="relative flex-shrink-0 w-12 -mt-5 z-0">
               {/* Vertical segments for each row */}
               {buildings.filter(b => b.building_type === 'corral').map((building, index) => {
                 const rowIndex = Math.floor(index / 2);

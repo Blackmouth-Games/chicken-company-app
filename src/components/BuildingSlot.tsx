@@ -23,7 +23,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     const fillPercentage = (building.current_chickens / building.capacity) * 100;
 
     return (
-      <div className="relative">
+      <div className="relative z-10">
         <div
           onClick={onBuildingClick}
           className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[160px] overflow-hidden"
@@ -82,12 +82,14 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   }
 
   return (
-    <div 
-      onClick={() => onBuyClick(position)}
-      className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[160px]"
-    >
-      <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
-        <Plus className="h-8 w-8 text-amber-600" />
+    <div className="relative z-10">
+      <div 
+        onClick={() => onBuyClick(position)}
+        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[160px]"
+      >
+        <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
+          <Plus className="h-8 w-8 text-amber-600" />
+        </div>
       </div>
     </div>
   );
