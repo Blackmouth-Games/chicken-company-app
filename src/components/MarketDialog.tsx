@@ -7,6 +7,7 @@ import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette } from "lucide-react";
+import { getBuildingImage } from "@/lib/buildingImages";
 
 interface MarketDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Market Image */}
                 <div className="flex flex-col items-center gap-3">
-                  <div className="text-9xl">{market?.selected_skin ? "🏬" : "🏪"}</div>
+                  <div className="text-9xl">{market?.selected_skin || getBuildingImage('market', currentLevel)}</div>
                   
                   {/* Edit Skin Button */}
                   {market && (

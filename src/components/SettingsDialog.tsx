@@ -33,7 +33,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md md:max-w-md w-full h-full md:h-auto bg-card border-border">
+      <DialogContent className="sm:max-w-md md:max-w-md bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">SETTINGS</DialogTitle>
         </DialogHeader>

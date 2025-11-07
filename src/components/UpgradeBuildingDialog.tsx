@@ -9,6 +9,7 @@ import { TON_RECEIVER_WALLET } from "@/lib/constants";
 import { normalizeTonAddress } from "@/lib/ton";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
 import { useAudio } from "@/contexts/AudioContext";
+import { getBuildingImage, BuildingType } from "@/lib/buildingImages";
 
 interface UpgradeBuildingDialogProps {
   open: boolean;
@@ -153,14 +154,14 @@ export const UpgradeBuildingDialog = ({
             {/* Building comparison */}
             <div className="flex items-center justify-center gap-4">
               <div className="flex flex-col items-center">
-                <div className="text-6xl mb-1">{info.emoji}</div>
+                <div className="text-6xl mb-1">{getBuildingImage(buildingType as BuildingType, currentLevel)}</div>
                 <div className="text-xs text-muted-foreground">Nivel {currentLevel}</div>
               </div>
               
               <div className="text-2xl text-muted-foreground">→</div>
               
               <div className="flex flex-col items-center">
-                <div className="text-6xl mb-1">{info.emoji}</div>
+                <div className="text-6xl mb-1">{getBuildingImage(buildingType as BuildingType, nextLevel)}</div>
                 <div className="text-xs text-muted-foreground">Nivel {nextLevel}</div>
               </div>
             </div>

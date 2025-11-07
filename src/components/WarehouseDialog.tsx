@@ -7,6 +7,7 @@ import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette } from "lucide-react";
+import { getBuildingImage } from "@/lib/buildingImages";
 
 interface WarehouseDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Warehouse Image */}
                 <div className="flex flex-col items-center gap-3">
-                  <div className="text-9xl">{warehouse?.selected_skin ? "🏢" : "🏭"}</div>
+                  <div className="text-9xl">{warehouse?.selected_skin || getBuildingImage('warehouse', currentLevel)}</div>
                   
                   {/* Edit Skin Button */}
                   {warehouse && (
