@@ -45,7 +45,9 @@ export const PurchaseBuildingDialog = ({
 
       // Show connect dialog only if wallet is NOT connected
       if (!tonConnectUI.connected) {
-        setShowConnectWallet(true);
+        // Cierra este modal antes de abrir el de conectar wallet para evitar capas que bloqueen clics
+        onOpenChange(false);
+        setTimeout(() => setShowConnectWallet(true), 0);
         setIsPurchasing(false);
         return;
       }

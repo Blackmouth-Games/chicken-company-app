@@ -39,7 +39,9 @@ export const UpgradeBuildingDialog = ({
 
   const handleUpgrade = async () => {
     if (!tonConnectUI.connected) {
-      setShowConnectWallet(true);
+      // Cierra este modal antes de abrir el de conectar wallet para evitar capas que bloqueen clics
+      onOpenChange(false);
+      setTimeout(() => setShowConnectWallet(true), 0);
       return;
     }
 
