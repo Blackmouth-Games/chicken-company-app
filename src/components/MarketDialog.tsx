@@ -99,7 +99,6 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                       size="lg"
                       onClick={() => {
                         setShowUpgrade(true);
-                        setTimeout(() => onOpenChange(false), 100);
                       }}
                       disabled={pricesLoading}
                     >

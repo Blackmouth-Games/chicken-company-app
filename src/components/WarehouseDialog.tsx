@@ -99,7 +99,6 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                       size="lg"
                       onClick={() => {
                         setShowUpgrade(true);
-                        setTimeout(() => onOpenChange(false), 100);
                       }}
                       disabled={pricesLoading}
                     >
