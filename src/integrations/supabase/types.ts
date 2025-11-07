@@ -101,6 +101,42 @@ export type Database = {
           },
         ]
       }
+      building_skins: {
+        Row: {
+          building_type: string
+          created_at: string
+          id: string
+          image_url: string
+          is_default: boolean
+          name: string
+          rarity: string | null
+          skin_key: string
+          updated_at: string
+        }
+        Insert: {
+          building_type: string
+          created_at?: string
+          id?: string
+          image_url: string
+          is_default?: boolean
+          name: string
+          rarity?: string | null
+          skin_key: string
+          updated_at?: string
+        }
+        Update: {
+          building_type?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          is_default?: boolean
+          name?: string
+          rarity?: string | null
+          skin_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_metrics: {
         Row: {
           created_at: string | null
@@ -322,6 +358,7 @@ export type Database = {
           id: string
           level: number
           position_index: number
+          selected_skin: string | null
           updated_at: string
           user_id: string
         }
@@ -333,6 +370,7 @@ export type Database = {
           id?: string
           level?: number
           position_index: number
+          selected_skin?: string | null
           updated_at?: string
           user_id: string
         }
@@ -344,6 +382,7 @@ export type Database = {
           id?: string
           level?: number
           position_index?: number
+          selected_skin?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -356,6 +395,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_items: {
+        Row: {
+          acquired_at: string
+          id: string
+          item_key: string
+          item_type: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          item_key: string
+          item_type: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          item_key?: string
+          item_type?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       user_sessions: {
         Row: {

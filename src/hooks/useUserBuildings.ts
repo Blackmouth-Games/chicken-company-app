@@ -10,6 +10,7 @@ interface Building {
   position_index: number;
   capacity: number;
   current_chickens: number;
+  selected_skin: string | null;
   created_at: string;
   updated_at: string;
 }
