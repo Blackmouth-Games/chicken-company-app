@@ -311,14 +311,15 @@ const Home = () => {
         {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-3xl mx-auto">
           <div className="flex gap-3 mb-20 relative">
-            {/* Left Column - Building slots filled by rows */}
+            {/* Left Column - Filled first */}
             <div className="flex-1 grid grid-cols-1 gap-4">
-              {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
-                const building = getBuildingAtPosition(index);
+              {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, rowIndex) => {
+                const position = rowIndex * 2; // 0, 2, 4, 6, 8, 10...
+                const building = getBuildingAtPosition(position);
                 return (
-                  <div key={index} className="relative">
+                  <div key={position} className="relative">
                     <BuildingSlot
-                      position={index}
+                      position={position}
                       building={building}
                       onBuyClick={handleBuyClick}
                       onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
@@ -413,10 +414,10 @@ const Home = () => {
               `}</style>
             </div>
 
-            {/* Right Column - Building slots filled by rows */}
+            {/* Right Column - Filled second */}
             <div className="flex-1 grid grid-cols-1 gap-4">
-              {Array.from({ length: Math.floor(TOTAL_SLOTS / 2) }).map((_, index) => {
-                const position = index + Math.ceil(TOTAL_SLOTS / 2);
+              {Array.from({ length: Math.floor(TOTAL_SLOTS / 2) }).map((_, rowIndex) => {
+                const position = rowIndex * 2 + 1; // 1, 3, 5, 7, 9, 11...
                 const building = getBuildingAtPosition(position);
                 return (
                   <div key={position} className="relative">
