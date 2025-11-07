@@ -251,7 +251,7 @@ const Home = () => {
 
         {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-2xl mx-auto">
-          <div className="flex gap-8 mb-20">
+          <div className="flex gap-4 mb-20">
             {/* Left Column */}
             <div className="flex-1 space-y-4">
               {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
@@ -265,7 +265,7 @@ const Home = () => {
             </div>
 
             {/* Conveyor Belt */}
-            <div className="w-16 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-lg border-2 border-amber-700 py-4 relative overflow-hidden">
+            <div className="w-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-lg border-2 border-amber-700 py-4 relative overflow-hidden shadow-lg">
               <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                    style={{
                      backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px)',
