@@ -31,24 +31,23 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
           {building.level}
         </div>
 
-        <div className="flex h-full p-3 gap-2">
-          {/* Left side - Vertical capacity bar */}
-          <div className="flex flex-col items-center gap-1 w-8">
-            <div className="flex-1 w-6 bg-gray-200 rounded-full relative overflow-hidden border-2 border-gray-300">
-              {/* Fill indicator */}
-              <div 
-                className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-red-500 to-red-400 transition-all duration-300"
-                style={{ height: `${fillPercentage}%` }}
-              />
-            </div>
-            {/* Chicken count */}
-            <div className="text-xs font-bold text-center whitespace-nowrap">
-              {building.current_chickens}/{building.capacity}
-            </div>
-            <div className="text-lg">🐔</div>
+        {/* Vertical capacity bar - outside and attached to left */}
+        <div className="absolute -left-3 top-2 bottom-2 flex flex-col items-center gap-1 z-20">
+          <div className="flex-1 w-6 bg-gray-200 rounded-full relative overflow-hidden border-2 border-gray-300 shadow-md">
+            {/* Fill indicator */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-red-500 to-red-400 transition-all duration-300"
+              style={{ height: `${fillPercentage}%` }}
+            />
           </div>
+          {/* Chicken count */}
+          <div className="text-xs font-bold text-center whitespace-nowrap bg-white/90 px-1 rounded">
+            {building.current_chickens}/{building.capacity}
+          </div>
+        </div>
 
-          {/* Right side - Building and chickens */}
+        <div className="flex h-full p-3">
+          {/* Building and chickens */}
           <div className="flex-1 flex flex-col">
             {/* Building image - top right */}
             <div className="flex justify-end mb-2">

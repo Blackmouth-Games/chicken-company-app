@@ -142,12 +142,15 @@ const Home = () => {
       
       // Sort buildings: corrals by level (desc), then others by position
       const sorted = (data || []).sort((a, b) => {
+        const isACorral = a.building_type === 'corral';
+        const isBCorral = b.building_type === 'corral';
+        
         // Corrals first
-        if (a.building_type === 'corral' && b.building_type !== 'corral') return -1;
-        if (a.building_type !== 'corral' && b.building_type === 'corral') return 1;
+        if (isACorral && !isBCorral) return -1;
+        if (!isACorral && isBCorral) return 1;
         
         // Both corrals: sort by level descending
-        if (a.building_type === 'corral' && b.building_type === 'corral') {
+        if (isACorral && isBCorral) {
           return b.level - a.level;
         }
         
@@ -338,7 +341,7 @@ const Home = () => {
                   </div>
                   
                   <div 
-                    className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-b-lg border-2 border-amber-700 relative overflow-hidden shadow-lg"
+                    className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg"
                     style={{ 
                       height: `${Math.ceil(buildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
                     }}
@@ -368,53 +371,6 @@ const Home = () => {
                     }
                   </div>
                   
-                  {/* Turn/Corner piece to warehouse */}
-                  <div className="absolute -top-32 left-0 w-12 h-32 bg-gradient-to-b from-amber-800 to-amber-900 border-2 border-amber-700 shadow-lg overflow-hidden"
-                       style={{ borderRadius: '0 0 20px 0' }}>
-                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" />
-                    {/* Corner Label */}
-                    <div className="absolute -left-20 top-1/2 -translate-y-1/2">
-                      <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-1 rounded shadow whitespace-nowrap">
-                        Esquina
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Horizontal part connecting to warehouse */}
-                  <div className="absolute -top-32 left-12 h-12 bg-gradient-to-r from-amber-900 via-amber-800 to-amber-900 border-2 border-amber-700 rounded-r-lg shadow-lg overflow-hidden"
-                       style={{ width: '150px' }}>
-                    {/* Horizontal Belt Label */}
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-                      <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-1 rounded shadow whitespace-nowrap">
-                        Cinta Horizontal
-                      </span>
-                    </div>
-                    
-                    <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20"
-                         style={{
-                           backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                           animation: 'conveyor-right 3s linear infinite'
-                         }}
-                    />
-                    {/* Moving eggs on horizontal belt */}
-                    {buildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
-                      buildings
-                        .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
-                        .slice(0, 2)
-                        .map((building, i) => (
-                          <div
-                            key={`h-egg-${building.id}`}
-                            className="absolute top-1/2 -translate-y-1/2 w-6 h-6 text-lg flex items-center justify-center"
-                            style={{
-                              animation: `move-right 3s linear infinite`,
-                              animationDelay: `${i * 1.5}s`,
-                            }}
-                          >
-                            🥚
-                          </div>
-                        ))
-                    }
-                  </div>
                 </>
               )}
 
