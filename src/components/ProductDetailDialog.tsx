@@ -82,7 +82,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
         messages: [
           {
-            address: "UQBvQNbjNHQto_371ussKz6VL3dpqu6kJKEQSOTjLBPN98Q8", // Replace with actual merchant wallet
+            address: "UQBLTGjBkVr7kMNlxfaTZmWC5mk4ADKb8PvcgaM_NzQMQpMn", // Merchant wallet address
             amount: (parseFloat(product.price_ton.toString()) * 1e9).toString(), // Convert TON to nanotons
             payload: btoa(JSON.stringify({
               type: "store_purchase",

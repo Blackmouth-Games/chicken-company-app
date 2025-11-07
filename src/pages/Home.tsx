@@ -165,13 +165,13 @@ const Home = () => {
     >
       {/* Background overlay removed to prevent white screen */}
       
-      {/* Floating Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border shadow-lg">
+      {/* Floating Header - Transparent with visible buttons */}
+      <div className="fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between p-4">
           {/* Profile Avatar */}
           <button
             onClick={() => setProfileOpen(true)}
-            className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/40 hover:border-primary transition-all hover:scale-105 bg-background shadow-lg"
           >
             <img
               src={defaultAvatar}
@@ -186,7 +186,7 @@ const Home = () => {
               variant="outline"
               size="icon"
               onClick={() => setTutorialOpen(true)}
-              className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+              className="bg-background/95 backdrop-blur-sm border-border hover:bg-accent shadow-lg"
             >
               <Info className="h-5 w-5" />
             </Button>
@@ -194,7 +194,7 @@ const Home = () => {
               variant="outline"
               size="icon"
               onClick={() => setSettingsOpen(true)}
-              className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+              className="bg-background/95 backdrop-blur-sm border-border hover:bg-accent shadow-lg"
             >
               <Settings className="h-5 w-5" />
             </Button>
