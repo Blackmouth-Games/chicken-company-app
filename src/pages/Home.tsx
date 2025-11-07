@@ -119,12 +119,13 @@ const Home = () => {
     >
       <div className="absolute inset-0 bg-black/20 pointer-events-none" />
       
-      <div className="relative z-10 p-6">
-        {/* Profile Avatar */}
-        <div className="absolute top-4 left-4 z-50">
+      {/* Floating Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-md border-b border-white/10 shadow-lg">
+        <div className="flex items-center justify-between p-4">
+          {/* Profile Avatar */}
           <button
             onClick={() => setProfileOpen(true)}
-            className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
+            className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 hover:border-white/40 transition-all hover:scale-105"
           >
             <img
               src={defaultAvatar}
@@ -132,27 +133,30 @@ const Home = () => {
               className="w-full h-full object-cover"
             />
           </button>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTutorialOpen(true)}
-            className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
-          >
-            <Info className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setSettingsOpen(true)}
-            className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTutorialOpen(true)}
+              className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+            >
+              <Info className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSettingsOpen(true)}
+              className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 text-white"
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
+      </div>
+
+      <div className="relative z-10 p-6 pt-24">
 
         {/* Fixed Buildings */}
         <div className="max-w-2xl mx-auto mb-8">

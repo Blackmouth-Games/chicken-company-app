@@ -37,7 +37,9 @@ export const ConnectWalletDialog = ({
             Conecta tu wallet de Telegram para poder comprar corrales y gestionar tus gallinas
           </p>
 
-          <TonConnectButton className="ton-connect-page__button" />
+          <div className="flex justify-center">
+            <TonConnectButton />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
