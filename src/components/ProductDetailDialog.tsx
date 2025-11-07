@@ -5,7 +5,7 @@ import { StoreProduct } from "@/hooks/useStoreProducts";
 import { useState } from "react";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
 import { ConnectWalletDialog } from "./ConnectWalletDialog";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { useAudio } from "@/contexts/AudioContext";
@@ -21,6 +21,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
   const [tonConnectUI] = useTonConnectUI();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const { toast } = useToast();
   const telegramUser = getTelegramUser();
   const { playSound } = useAudio();
 
@@ -33,18 +34,17 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
       return;
     }
 
-    // Check telegram user
+    // Get user profile
     if (!telegramUser?.id) {
       toast({
         title: "Error",
-        description: "No se pudo identificar al usuario de Telegram",
+        description: "No se pudo identificar el usuario",
         variant: "destructive",
       });
       return;
     }
 
     setIsPurchasing(true);
-
     try {
       // 1. Get user profile ID
       const { data: profile } = await supabase
@@ -54,11 +54,10 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
         .single();
 
       if (!profile) {
-        throw new Error("Perfil de usuario no encontrado");
+        throw new Error("Profile not found");
       }
 
       const userId = profile.id;
-      const walletAddress = wallet.account.address;
 
       // 2. Create pending purchase record
       const { data: purchase, error: purchaseError } = await supabase
@@ -68,107 +67,111 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
           product_id: product.id,
           product_key: product.product_key,
           price_ton: product.price_ton,
-          status: 'pending',
-          wallet_address: walletAddress,
-          metadata: {
-            product_name: product.name,
-            content_items: product.content_items,
-          }
+          status: "pending",
+          wallet_address: wallet.account.address,
         })
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      console.log('Purchase record created:', purchase);
+      console.log("Purchase record created:", purchase.id);
 
       // 3. Send TON transaction
       const transaction = {
         validUntil: Math.floor(Date.now() / 1000) + 600, // 10 minutes
         messages: [
           {
-            address: "UQBvRWKNrLLS9xG_YW2Qxn41lQS7k5fTfJcvahKmgjy3nYvT", // Company wallet
-            amount: String(Math.floor(Number(product.price_ton) * 1000000000)), // Convert to nanotons
+            address: "UQBvQNbjNHQto_371ussKz6VL3dpqu6kJKEQSOTjLBPN98Q8", // Replace with actual merchant wallet
+            amount: (parseFloat(product.price_ton.toString()) * 1e9).toString(), // Convert TON to nanotons
             payload: btoa(JSON.stringify({
-              type: 'store_purchase',
-              purchase_id: purchase.id,
-              product_key: product.product_key,
+              type: "store_purchase",
+              purchaseId: purchase.id,
+              productKey: product.product_key,
             })),
           },
         ],
       };
 
-      console.log('Sending transaction:', transaction);
       const result = await tonConnectUI.sendTransaction(transaction);
-      console.log('Transaction result:', result);
+      console.log("Transaction sent:", result);
 
-      // 4. Update purchase with transaction hash
-      const { error: updateError } = await supabase
-        .from("store_purchases")
-        .update({
-          status: 'completed',
-          transaction_hash: result.boc || 'unknown',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', purchase.id);
-
-      if (updateError) throw updateError;
-
-      // 5. Add items to user inventory if product has content
+      // 4. Parse content items and add to user inventory
       if (product.content_items && product.content_items.length > 0) {
-        const itemsToInsert = product.content_items.map(item => ({
-          user_id: userId,
-          item_type: 'store_product',
-          item_key: `${product.product_key}_${Date.now()}`,
-          quantity: 1,
-          metadata: {
-            product_id: product.id,
-            product_name: product.name,
-            content_item: item,
-            purchase_id: purchase.id,
+        const itemsToInsert = product.content_items.map((itemDesc: string) => {
+          // Parse item description to extract type and quantity
+          // Format examples: "Subida de nivel de Maria la Pollera a nivel 2", "Nuevo corral", "Nuevo Granjero Juan"
+          let itemType = "pack_item";
+          let itemKey = product.product_key;
+          
+          if (itemDesc.toLowerCase().includes("corral")) {
+            itemType = "building";
+            itemKey = "corral";
+          } else if (itemDesc.toLowerCase().includes("granjero")) {
+            itemType = "character";
+            itemKey = "farmer";
+          } else if (itemDesc.toLowerCase().includes("nivel")) {
+            itemType = "upgrade";
+            itemKey = "level_boost";
           }
-        }));
+
+          return {
+            user_id: userId,
+            item_type: itemType,
+            item_key: itemKey,
+            quantity: 1,
+          };
+        });
 
         const { error: itemsError } = await supabase
           .from("user_items")
           .insert(itemsToInsert);
 
         if (itemsError) {
-          console.error('Error adding items to inventory:', itemsError);
-          // Don't throw - purchase was successful even if items failed
+          console.error("Error adding items to inventory:", itemsError);
         }
       }
 
-      // 6. Play success sound and show confirmation
+      // 5. Update purchase as completed
+      const { error: updateError } = await supabase
+        .from("store_purchases")
+        .update({
+          status: "completed",
+          transaction_hash: result.boc,
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", purchase.id);
+
+      if (updateError) throw updateError;
+
+      // 6. Play success sound
       const purchaseSound = new Audio("/sounds/purchase.mp3");
       playSound(purchaseSound);
 
+      // 7. Show success message
       toast({
-        title: "¡Compra exitosa!",
-        description: `Has adquirido ${product.name}`,
+        title: "¡Compra exitosa! 🎉",
+        description: `Has adquirido ${product.name}. Los artículos se han añadido a tu inventario.`,
       });
 
-      // Close dialog after success
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1500);
+      // 8. Close dialog
+      onOpenChange(false);
 
     } catch (error: any) {
       console.error("Purchase error:", error);
       
-      // Handle user rejection
-      if (error?.message?.includes('reject') || error?.message?.includes('cancel')) {
-        toast({
-          title: "Compra cancelada",
-          description: "Has cancelado la transacción",
-        });
-      } else {
-        toast({
-          title: "Error en la compra",
-          description: error?.message || "No se pudo completar la compra. Intenta de nuevo.",
-          variant: "destructive",
-        });
+      let errorMessage = "No se pudo completar la compra";
+      if (error?.message?.includes("User rejects")) {
+        errorMessage = "Transacción cancelada";
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
+
+      toast({
+        title: "Error en la compra",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -218,7 +221,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Precio</p>
               <p className="text-xl font-bold text-green-600">
-                {product.price_ton} TON
+                {product.price_ton} $ABCD
               </p>
             </div>
 
@@ -229,13 +232,12 @@ export const ProductDetailDialog = ({ open, onOpenChange, product }: ProductDeta
               onClick={handlePurchase}
               disabled={isPurchasing}
             >
-              {isPurchasing ? "Procesando..." : `Comprar - ${product.price_ton} TON`}
+              {isPurchasing ? "Procesando compra..." : `Comprar - ${product.price_ton} TON`}
             </Button>
 
-            {/* Wallet status indicator */}
             {!wallet && (
               <p className="text-xs text-center text-muted-foreground">
-                Necesitas conectar tu wallet TON para comprar
+                Necesitas conectar tu wallet TON para realizar la compra
               </p>
             )}
           </div>
