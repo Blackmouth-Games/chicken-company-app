@@ -98,8 +98,8 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                       className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg" 
                       size="lg"
                       onClick={() => {
-                        onOpenChange(false);
                         setShowUpgrade(true);
+                        setTimeout(() => onOpenChange(false), 50);
                       }}
                       disabled={pricesLoading}
                     >

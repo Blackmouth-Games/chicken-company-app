@@ -98,8 +98,8 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg" 
                       size="lg"
                       onClick={() => {
-                        onOpenChange(false);
                         setShowUpgrade(true);
+                        setTimeout(() => onOpenChange(false), 50);
                       }}
                       disabled={pricesLoading}
                     >
