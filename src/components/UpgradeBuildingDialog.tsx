@@ -145,51 +145,86 @@ export const UpgradeBuildingDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm sm:max-w-md">
+        <DialogContent className="max-w-sm sm:max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
           <DialogHeader>
-            <DialogTitle>Subir de nivel</DialogTitle>
+            <DialogTitle className="text-center text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              ⬆️ Subir de nivel
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Building comparison */}
-            <div className="flex items-center justify-center gap-4">
-              <div className="flex flex-col items-center">
-                <div className="text-6xl mb-1">{getBuildingImage(buildingType as BuildingType, currentLevel)}</div>
-                <div className="text-xs text-muted-foreground">Nivel {currentLevel}</div>
+          <div className="space-y-6 py-4">
+            {/* Building comparison with animation */}
+            <div className="relative flex items-center justify-center gap-6 p-6 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl">
+              {/* Current Level - Fade out effect */}
+              <div className="flex flex-col items-center animate-in fade-in slide-in-from-left-5 duration-500">
+                <div className="text-7xl mb-2 transform transition-transform duration-300 hover:scale-110">
+                  {getBuildingImage(buildingType as BuildingType, currentLevel)}
+                </div>
+                <div className="px-3 py-1 bg-muted rounded-full">
+                  <span className="text-xs font-semibold text-muted-foreground">Nivel {currentLevel}</span>
+                </div>
               </div>
               
-              <div className="text-2xl text-muted-foreground">→</div>
+              {/* Arrow with pulse animation */}
+              <div className="text-3xl animate-pulse text-primary">
+                →
+              </div>
               
-              <div className="flex flex-col items-center">
-                <div className="text-6xl mb-1">{getBuildingImage(buildingType as BuildingType, nextLevel)}</div>
-                <div className="text-xs text-muted-foreground">Nivel {nextLevel}</div>
+              {/* Next Level - Emphasize with glow */}
+              <div className="flex flex-col items-center animate-in fade-in slide-in-from-right-5 duration-500 delay-150">
+                <div className="text-7xl mb-2 transform transition-transform duration-300 hover:scale-110 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                  {getBuildingImage(buildingType as BuildingType, nextLevel)}
+                </div>
+                <div className="px-3 py-1 bg-primary/20 rounded-full border-2 border-primary/50">
+                  <span className="text-xs font-bold text-primary">Nivel {nextLevel}</span>
+                </div>
               </div>
             </div>
 
-            {/* Stats */}
-            <div className="space-y-2 bg-muted/50 rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm font-medium">Nivel:</span>
-                <span className="text-sm ml-auto">{currentLevel} → {nextLevel}</span>
+            {/* Stats Card - Improved design */}
+            <div className="space-y-3 bg-gradient-to-br from-accent/50 to-accent/20 rounded-xl p-5 border border-border/50 shadow-inner">
+              <div className="flex items-center justify-between p-3 bg-background/80 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                  <span className="text-sm font-medium">Nivel</span>
+                </div>
+                <span className="text-sm font-bold">
+                  {currentLevel} <span className="text-primary">→</span> {nextLevel}
+                </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-sm font-medium">{info.capacityLabel}</span>
-                <span className="text-sm ml-auto">
-                  {buildingType === 'market' ? '0.000' : newCapacity.toLocaleString()} → {buildingType === 'market' ? '0.000' : newCapacity.toLocaleString()}
+              <div className="flex items-center justify-between p-3 bg-background/80 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium">{info.capacityLabel}</span>
+                </div>
+                <span className="text-sm font-bold text-green-600">
+                  {buildingType === 'market' ? '0.000' : newCapacity.toLocaleString()}
                 </span>
               </div>
             </div>
 
-            {/* Price button */}
+            {/* Price button with gradient and animation */}
             <Button
               onClick={handleUpgrade}
               disabled={isUpgrading}
-              className="w-full bg-green-500 hover:bg-green-600 text-base py-6"
+              className="w-full bg-gradient-to-r from-green-500 via-green-600 to-green-500 hover:from-green-600 hover:via-green-700 hover:to-green-600 text-white text-lg py-7 shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
-              {isUpgrading ? "Procesando..." : `${upgradePrice.toFixed(3)} $ABCD`}
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+              
+              <span className="relative flex items-center justify-center gap-2 font-bold">
+                {isUpgrading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    💎 {upgradePrice.toFixed(3)} TON
+                  </>
+                )}
+              </span>
             </Button>
           </div>
         </DialogContent>

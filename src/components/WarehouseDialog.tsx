@@ -95,15 +95,15 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg" 
+                      className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl" 
                       size="lg"
                       onClick={() => {
                         setShowUpgrade(true);
-                        setTimeout(() => onOpenChange(false), 50);
+                        setTimeout(() => onOpenChange(false), 100);
                       }}
                       disabled={pricesLoading}
                     >
-                      Subir de nivel - {nextLevelPrice?.price_ton} TON
+                      <span className="text-base font-bold">⬆️ Subir de nivel - {nextLevelPrice?.price_ton} TON</span>
                     </Button>
                   </div>
                 )}

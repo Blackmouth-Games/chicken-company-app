@@ -95,15 +95,15 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg" 
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl" 
                       size="lg"
                       onClick={() => {
                         setShowUpgrade(true);
-                        setTimeout(() => onOpenChange(false), 50);
+                        setTimeout(() => onOpenChange(false), 100);
                       }}
                       disabled={pricesLoading}
                     >
-                      Subir de nivel - {nextLevelPrice?.price_ton} TON
+                      <span className="text-base font-bold">⬆️ Subir de nivel - {nextLevelPrice?.price_ton} TON</span>
                     </Button>
                   </div>
                 )}
