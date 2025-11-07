@@ -1,6 +1,6 @@
 // TON Wallet Configuration
-// TODO: Replace with your actual TON wallet address
-export const TON_RECEIVER_WALLET = "UQD5D_QOx3KxNVGcXPLp15j_pJvA2Z5BCjJWIYVHHPLvQ3K8";
+// Merchant wallet address in bounceable format
+export const TON_RECEIVER_WALLET = "EQBLTGjBkVr7kMNlxfaTZmWC5mk4ADKb8PvcgaM_NzQMQpMn";
 
 // Transaction timeout in seconds
 export const TRANSACTION_TIMEOUT = 60;
