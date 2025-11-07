@@ -20,14 +20,14 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
     return (
       <div
         onClick={onBuildingClick}
-        className="aspect-square border-2 border-green-500 rounded-lg bg-gradient-to-br from-green-100 to-green-50 p-2 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-lg relative"
+        className="aspect-square border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-4 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[140px]"
       >
-        <div className="absolute -top-2 -left-2 bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-md z-10">
+        <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-base font-bold shadow-lg z-10">
           {building.level}
         </div>
         <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-4xl mb-1">🏠</div>
-          <p className="text-xs font-medium text-green-900">{building.current_chickens}/{building.capacity} 🐔</p>
+          <div className="text-5xl mb-2">🏠</div>
+          <p className="text-sm font-bold text-green-900">{building.current_chickens}/{building.capacity} 🐔</p>
         </div>
       </div>
     );
@@ -36,10 +36,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick }
   return (
     <div 
       onClick={() => onBuyClick(position)}
-      className="aspect-square border-2 border-dashed border-amber-300 rounded-lg bg-gradient-to-br from-amber-50 to-yellow-50 p-2 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-md"
+      className="aspect-square border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[140px]"
     >
-      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-white/80 border-2 border-amber-400 hover:border-amber-500 transition-colors">
-        <Plus className="h-6 w-6 text-amber-600" />
+      <div className="flex items-center justify-center h-14 w-14 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
+        <Plus className="h-7 w-7 text-amber-600" />
       </div>
     </div>
   );

@@ -205,9 +205,9 @@ const Home = () => {
       <div className="relative z-10 p-6 pt-24">
 
         {/* Fixed Buildings */}
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-3xl mx-auto mb-8">
           {/* House - Centered at top */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-8">
             <button
               onClick={() => setHouseOpen(true)}
               className="bg-background/80 backdrop-blur-sm border-2 border-primary/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105"
@@ -219,40 +219,41 @@ const Home = () => {
             </button>
           </div>
 
-          {/* Warehouse and Market - Left and Right */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Warehouse and Market - With space between */}
+          <div className="grid grid-cols-2 gap-16 mb-8">
             <button
               onClick={() => setWarehouseOpen(true)}
-              className="bg-background/80 backdrop-blur-sm border-2 border-blue-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105 relative"
+              className="bg-gradient-to-br from-blue-100 to-blue-50 backdrop-blur-sm border-2 border-blue-400 rounded-lg p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg"
             >
               <div className="flex flex-col items-center">
-                <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold shadow-md">
                   {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                 </div>
-                <div className="text-5xl mb-1">🏭</div>
-                <p className="text-xs font-medium">Almacén</p>
+                <div className="text-6xl mb-2">🏭</div>
+                <p className="text-sm font-bold text-blue-900">Almacén</p>
               </div>
             </button>
 
+            {/* Space for future vehicle */}
             <button
               onClick={() => setMarketOpen(true)}
-              className="bg-background/80 backdrop-blur-sm border-2 border-yellow-500/30 rounded-lg p-4 hover:bg-background/90 transition-all hover:scale-105 relative"
+              className="bg-gradient-to-br from-amber-100 to-orange-50 backdrop-blur-sm border-2 border-amber-400 rounded-lg p-6 hover:from-amber-200 hover:to-orange-100 transition-all hover:scale-105 relative shadow-lg"
             >
               <div className="flex flex-col items-center">
-                <div className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                <div className="absolute -top-3 -left-3 bg-amber-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold shadow-md">
                   {buildings.find(b => b.building_type === 'market')?.level || 1}
                 </div>
-                <div className="text-5xl mb-1">🏪</div>
-                <p className="text-xs font-medium">Market</p>
+                <div className="text-6xl mb-2">🏪</div>
+                <p className="text-sm font-bold text-amber-900">Market</p>
               </div>
             </button>
           </div>
         </div>
 
         {/* Building Slots Grid with Conveyor Belt */}
-        <div className="max-w-2xl mx-auto">
-          <div className="flex gap-4 mb-20">
-            {/* Left Column */}
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-stretch gap-3 mb-20">
+            {/* Left Column - Bigger slots */}
             <div className="flex-1 space-y-4">
               {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
                 <BuildingSlot
@@ -264,27 +265,24 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Conveyor Belt */}
-            <div className="w-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-amber-800 to-amber-900 rounded-lg border-2 border-amber-700 py-4 relative overflow-hidden shadow-lg">
+            {/* Conveyor Belt - Narrower and taller */}
+            <div className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg flex-shrink-0" 
+                 style={{ minHeight: '600px' }}>
               <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                    style={{
-                     backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px)',
-                     animation: 'conveyor 2s linear infinite'
+                     backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                     animation: 'conveyor 3s linear infinite'
                    }}
               />
-              <div className="text-2xl z-10">🐔</div>
-              <div className="text-2xl z-10">🥚</div>
-              <div className="text-2xl z-10">🐔</div>
-              <div className="text-2xl z-10">🥚</div>
               <style>{`
                 @keyframes conveyor {
                   0% { background-position: 0 0; }
-                  100% { background-position: 0 20px; }
+                  100% { background-position: 0 30px; }
                 }
               `}</style>
             </div>
 
-            {/* Right Column */}
+            {/* Right Column - Bigger slots */}
             <div className="flex-1 space-y-4">
               {Array.from({ length: TOTAL_SLOTS / 2 }).map((_, index) => (
                 <BuildingSlot
