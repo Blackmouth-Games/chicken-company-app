@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          level: string
+          message: string
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          level: string
+          message: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       building_prices: {
         Row: {
           building_type: string
@@ -585,6 +629,18 @@ export type Database = {
           p_metric_type: Database["public"]["Enums"]["metric_type"]
         }
         Returns: undefined
+      }
+      log_error: {
+        Args: {
+          p_context?: Json
+          p_level: string
+          p_message: string
+          p_stack_trace?: string
+          p_url?: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       record_metric_event: {
         Args: {
