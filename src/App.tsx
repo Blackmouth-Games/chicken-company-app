@@ -16,6 +16,7 @@ import ComingSoon from "./pages/ComingSoon";
 import Home from "./pages/Home";
 import Wallet from "./pages/Wallet";
 import Friends from "./pages/Friends";
+import Store from "./pages/Store";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 
@@ -57,6 +58,7 @@ const AppRoutes = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/wallet" element={<Wallet />} />
+          <Route path="/store" element={<Store />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

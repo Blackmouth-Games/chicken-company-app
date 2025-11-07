@@ -1,4 +1,4 @@
-import { Home, Wallet, Users } from "lucide-react";
+import { Home, Wallet, Users, Store as StoreIcon } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,19 @@ const BottomNav = () => {
             <>
               <Wallet className={cn("w-5 h-5", isActive && "fill-current")} />
               <span className="text-xs mt-1">Wallet</span>
+            </>
+          )}
+        </NavLink>
+        
+        <NavLink
+          to="/store"
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground transition-colors"
+          activeClassName="text-primary"
+        >
+          {({ isActive }) => (
+            <>
+              <StoreIcon className={cn("w-5 h-5", isActive && "fill-current")} />
+              <span className="text-xs mt-1">Store</span>
             </>
           )}
         </NavLink>
