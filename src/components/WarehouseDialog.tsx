@@ -96,7 +96,10 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                     <Button 
                       className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg" 
                       size="lg"
-                      onClick={() => setShowUpgrade(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowUpgrade(true);
+                      }}
                       disabled={pricesLoading}
                     >
                       Subir de nivel - {nextLevelPrice?.price_ton} TON
@@ -118,7 +121,12 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       {warehouse && showUpgrade && nextLevelPrice && (
         <UpgradeBuildingDialog
           open={showUpgrade}
-          onOpenChange={setShowUpgrade}
+          onOpenChange={(open) => {
+            setShowUpgrade(open);
+            if (!open) {
+              onOpenChange(true);
+            }
+          }}
           buildingId={warehouse.id}
           buildingType={BUILDING_TYPES.WAREHOUSE}
           currentLevel={currentLevel}

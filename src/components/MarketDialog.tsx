@@ -96,7 +96,10 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                     <Button 
                       className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg" 
                       size="lg"
-                      onClick={() => setShowUpgrade(true)}
+                      onClick={() => {
+                        onOpenChange(false);
+                        setShowUpgrade(true);
+                      }}
                       disabled={pricesLoading}
                     >
                       Subir de nivel - {nextLevelPrice?.price_ton} TON
@@ -118,7 +121,12 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       {market && showUpgrade && nextLevelPrice && (
         <UpgradeBuildingDialog
           open={showUpgrade}
-          onOpenChange={setShowUpgrade}
+          onOpenChange={(open) => {
+            setShowUpgrade(open);
+            if (!open) {
+              onOpenChange(true);
+            }
+          }}
           buildingId={market.id}
           buildingType={BUILDING_TYPES.MARKET}
           currentLevel={currentLevel}
