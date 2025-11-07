@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
 import defaultAvatar from "@/assets/default-avatar.png";
 import { getTelegramUser } from "@/lib/telegram";
@@ -14,6 +14,7 @@ import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAudio } from "@/contexts/AudioContext";
 
 const Home = () => {
   const telegramUser = getTelegramUser();
@@ -28,6 +29,8 @@ const Home = () => {
   const [marketOpen, setMarketOpen] = useState(false);
   const [houseOpen, setHouseOpen] = useState(false);
   const { toast } = useToast();
+  const { playMusic } = useAudio();
+  const musicRef = useRef<HTMLAudioElement | null>(null);
 
   // Number of available slots
   const TOTAL_SLOTS = 6;
@@ -35,6 +38,18 @@ const Home = () => {
   useEffect(() => {
     loadUserProfile();
   }, [telegramUser]);
+
+  useEffect(() => {
+    musicRef.current = new Audio("/sounds/home-music.mp3");
+    playMusic(musicRef.current);
+
+    return () => {
+      if (musicRef.current) {
+        musicRef.current.pause();
+        musicRef.current = null;
+      }
+    };
+  }, [playMusic]);
 
   const loadUserProfile = async () => {
     if (!telegramUser?.id) return;
