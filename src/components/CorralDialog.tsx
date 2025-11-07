@@ -52,7 +52,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="w-full h-full max-w-full">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />

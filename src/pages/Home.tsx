@@ -278,7 +278,7 @@ const Home = () => {
           </div>
 
           {/* Warehouse and Market - With space between */}
-          <div className="grid grid-cols-2 gap-16 mb-8">
+          <div className="grid grid-cols-2 gap-16 mb-8 relative">
             <button
               onClick={() => setWarehouseOpen(true)}
               className="bg-gradient-to-br from-blue-100 to-blue-50 backdrop-blur-sm border-2 border-blue-400 rounded-lg p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg"
@@ -289,6 +289,16 @@ const Home = () => {
                 </div>
                 <div className="text-6xl mb-2">🏭</div>
                 <p className="text-sm font-bold text-blue-900">Almacén</p>
+              </div>
+
+              {/* Bottom conveyor belt on warehouse */}
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-6 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 overflow-hidden shadow-lg">
+                <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                     style={{
+                       backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                       animation: 'conveyor-left 3s linear infinite'
+                     }}
+                />
               </div>
             </button>
 
@@ -311,10 +321,10 @@ const Home = () => {
         {/* Building Slots Grid with Conveyor Belt */}
         <div className="max-w-3xl mx-auto">
           <div className="flex gap-3 mb-20 relative">
-            {/* Left Column - Positions 0-5 */}
+            {/* Left Column - Even positions (0,2,4,6,8,10) */}
             <div className="flex-1 grid grid-cols-1 gap-4">
               {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
-                const position = index;
+                const position = index * 2; // 0, 2, 4, 6, 8, 10...
                 const building = getBuildingAtPosition(position);
                 return (
                   <div key={position} className="relative">
@@ -369,11 +379,23 @@ const Home = () => {
               {/* Horizontal conveyor from vertical belt to warehouse */}
               <div className="absolute left-1/2 -translate-x-1/2 -top-3 flex items-center pointer-events-none z-40">
                 <div className="h-10 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
-                     style={{ width: 'calc(50vw - 180px)' }}>
+                     style={{ width: 'calc(50vw - 100px)' }}>
                   <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
                        style={{
                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
                          animation: 'conveyor-left 3s linear infinite'
+                       }}
+                  />
+                </div>
+              </div>
+
+              {/* Vertical conveyor connecting to warehouse center */}
+              <div className="absolute -top-3 pointer-events-none z-40" style={{ left: 'calc(50vw - 100px)' }}>
+                <div className="w-10 h-32 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg">
+                  <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
+                       style={{
+                         backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
+                         animation: 'conveyor-up 3s linear infinite'
                        }}
                   />
                 </div>
@@ -479,10 +501,10 @@ const Home = () => {
               `}</style>
             </div>
 
-            {/* Right Column - Positions 6-11 */}
+            {/* Right Column - Odd positions (1,3,5,7,9,11) */}
             <div className="flex-1 grid grid-cols-1 gap-4">
               {Array.from({ length: Math.floor(TOTAL_SLOTS / 2) }).map((_, index) => {
-                const position = index + Math.ceil(TOTAL_SLOTS / 2);
+                const position = index * 2 + 1; // 1, 3, 5, 7, 9, 11...
                 const building = getBuildingAtPosition(position);
                 return (
                   <div key={position} className="relative">
