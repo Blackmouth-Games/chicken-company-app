@@ -139,7 +139,40 @@ const Home = () => {
         .order("position_index");
 
       if (error) throw error;
-      setBuildings(data || []);
+      
+      // Sort buildings: corrals by level (desc), then others by position
+      const sorted = (data || []).sort((a, b) => {
+        // Corrals first
+        if (a.building_type === 'corral' && b.building_type !== 'corral') return -1;
+        if (a.building_type !== 'corral' && b.building_type === 'corral') return 1;
+        
+        // Both corrals: sort by level descending
+        if (a.building_type === 'corral' && b.building_type === 'corral') {
+          return b.level - a.level;
+        }
+        
+        // Others by position
+        return a.position_index - b.position_index;
+      });
+      
+      // Reassign position_index based on sorted order
+      const updates = sorted.map((building, index) => ({
+        id: building.id,
+        position_index: index
+      }));
+      
+      // Update positions in database if changed
+      for (const update of updates) {
+        const original = data?.find(b => b.id === update.id);
+        if (original && original.position_index !== update.position_index) {
+          await supabase
+            .from("user_buildings")
+            .update({ position_index: update.position_index })
+            .eq("id", update.id);
+        }
+      }
+      
+      setBuildings(sorted);
     } catch (error) {
       console.error("Error loading buildings:", error);
       toast({
@@ -165,12 +198,12 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
-  // Sort buildings: corrals first, then by position
-  const sortedBuildings = [...buildings].sort((a, b) => {
-    if (a.building_type === 'corral' && b.building_type !== 'corral') return -1;
-    if (a.building_type !== 'corral' && b.building_type === 'corral') return 1;
-    return a.position_index - b.position_index;
-  });
+  const handleUpgradeComplete = () => {
+    if (userId) {
+      // Reload and reorder buildings after upgrade
+      loadBuildings(userId);
+    }
+  };
 
   const handleBuildingClick = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
@@ -295,12 +328,12 @@ const Home = () => {
             {/* Center Conveyor Belt System */}
             <div className="relative flex-shrink-0 w-12">
               {/* Main vertical conveyor - height based on corral rows */}
-              {sortedBuildings.filter(b => b.building_type === 'corral').length > 0 && (
+              {buildings.filter(b => b.building_type === 'corral').length > 0 && (
                 <>
                   <div 
                     className="w-12 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-b-lg border-2 border-amber-700 relative overflow-hidden shadow-lg" 
                     style={{ 
-                      height: `${Math.ceil(sortedBuildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
+                      height: `${Math.ceil(buildings.filter(b => b.building_type === 'corral').length / 2) * 180}px`
                     }}
                   >
                     <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
@@ -310,7 +343,7 @@ const Home = () => {
                          }}
                     />
                     {/* Moving eggs going up */}
-                    {sortedBuildings
+                    {buildings
                       .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
                       .slice(0, 4)
                       .map((building, i) => (
@@ -344,8 +377,8 @@ const Home = () => {
                          }}
                     />
                     {/* Moving eggs on horizontal belt */}
-                    {sortedBuildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
-                      sortedBuildings
+                    {buildings.some(b => b.building_type === 'corral' && b.current_chickens > 0) &&
+                      buildings
                         .filter(b => b.building_type === 'corral' && b.current_chickens > 0)
                         .slice(0, 2)
                         .map((building, i) => (

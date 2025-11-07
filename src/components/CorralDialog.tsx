@@ -38,6 +38,8 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const handleUpgradeComplete = () => {
     refetch();
     setShowUpgrade(false);
+    // Close dialog to allow reordering to be visible
+    setTimeout(() => onOpenChange(false), 500);
   };
 
   return (
