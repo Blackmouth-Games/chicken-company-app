@@ -1,5 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
+import { Info } from "lucide-react";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -40,9 +41,17 @@ export const UpgradeBuildingDialog = ({
   const { toast } = useToast();
   const { playSound } = useAudio();
 
+  // Building emojis and labels
+  const buildingInfo: Record<string, { emoji: string; label: string; capacityLabel: string }> = {
+    corral: { emoji: "🏠", label: "Corral", capacityLabel: "Max. Capacity:" },
+    warehouse: { emoji: "🏭", label: "Almacén", capacityLabel: "Max. Capacity:" },
+    market: { emoji: "🏪", label: "Market", capacityLabel: "Velocidad in" },
+  };
+
+  const info = buildingInfo[buildingType] || buildingInfo.corral;
+
   const handleUpgrade = async () => {
     if (!tonConnectUI.connected) {
-      // Cierra este modal antes de abrir el de conectar wallet para evitar capas que bloqueen clics
       onOpenChange(false);
       setTimeout(() => setShowConnectWallet(true), 0);
       return;
@@ -115,7 +124,7 @@ export const UpgradeBuildingDialog = ({
 
       toast({
         title: "¡Éxito!",
-        description: `${buildingType === "warehouse" ? "Almacén" : "Market"} mejorado a nivel ${nextLevel}`,
+        description: `${info.label} mejorado a nivel ${nextLevel}`,
       });
 
       onUpgradeComplete();
@@ -135,46 +144,52 @@ export const UpgradeBuildingDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>
-              Mejorar {buildingType === "warehouse" ? "Almacén" : "Market"}
-            </DialogTitle>
+            <DialogTitle>Subir de nivel</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Nivel actual:</span>
-                <span className="font-semibold">Nivel {currentLevel}</span>
+          <div className="space-y-4 py-2">
+            {/* Building comparison */}
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-col items-center">
+                <div className="text-6xl mb-1">{info.emoji}</div>
+                <div className="text-xs text-muted-foreground">Nivel {currentLevel}</div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Nuevo nivel:</span>
-                <span className="font-semibold text-primary">Nivel {nextLevel}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Nueva capacidad:</span>
-                <span className="font-semibold">{newCapacity.toLocaleString()}</span>
+              
+              <div className="text-2xl text-muted-foreground">→</div>
+              
+              <div className="flex flex-col items-center">
+                <div className="text-6xl mb-1">{info.emoji}</div>
+                <div className="text-xs text-muted-foreground">Nivel {nextLevel}</div>
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-semibold">Precio:</span>
-                <span className="text-2xl font-bold text-primary">
-                  {upgradePrice} TON
+            {/* Stats */}
+            <div className="space-y-2 bg-muted/50 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm font-medium">Nivel:</span>
+                <span className="text-sm ml-auto">{currentLevel} → {nextLevel}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-sm font-medium">{info.capacityLabel}</span>
+                <span className="text-sm ml-auto">
+                  {buildingType === 'market' ? '0.000' : newCapacity.toLocaleString()} → {buildingType === 'market' ? '0.000' : newCapacity.toLocaleString()}
                 </span>
               </div>
-
-              <Button
-                onClick={handleUpgrade}
-                disabled={isUpgrading}
-                className="w-full"
-                size="lg"
-              >
-                {isUpgrading ? "Procesando..." : "Mejorar Edificio"}
-              </Button>
             </div>
+
+            {/* Price button */}
+            <Button
+              onClick={handleUpgrade}
+              disabled={isUpgrading}
+              className="w-full bg-green-500 hover:bg-green-600 text-base py-6"
+            >
+              {isUpgrading ? "Procesando..." : `${upgradePrice.toFixed(3)} $ABCD`}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
