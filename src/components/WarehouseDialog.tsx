@@ -115,7 +115,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         </DialogContent>
       </Dialog>
 
-      {warehouse && nextLevelPrice && (
+      {warehouse && showUpgrade && nextLevelPrice && (
         <UpgradeBuildingDialog
           open={showUpgrade}
           onOpenChange={setShowUpgrade}

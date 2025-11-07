@@ -115,7 +115,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         </DialogContent>
       </Dialog>
 
-      {market && nextLevelPrice && (
+      {market && showUpgrade && nextLevelPrice && (
         <UpgradeBuildingDialog
           open={showUpgrade}
           onOpenChange={setShowUpgrade}
