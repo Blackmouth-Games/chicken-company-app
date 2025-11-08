@@ -265,7 +265,7 @@ const Home = () => {
           </button>
         </div>
 
-        {/* Grid Container - Responsive CSS Grid with fine grid overlay */}
+        {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
         <div className="max-w-6xl mx-auto relative">
           {/* Fine grid overlay */}
           <div 
@@ -275,20 +275,21 @@ const Home = () => {
               backgroundSize: '20px 20px'
             }}
           />
-          {/* Grid with 21 columns (each building/belt element spans multiple): Warehouse(3) | Left Corrals(3) | Belt(3) | Belt(3) | Right Corrals(3) | Belt(3) | Market(3) */}
+          {/* Grid: 25 columns total - Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
           <div 
-            className="grid gap-2 md:gap-3 auto-rows-fr items-center relative"
+            className="grid gap-0 auto-rows-fr items-stretch relative"
             style={{
-              gridTemplateColumns: 'repeat(21, 1fr)'
+              gridTemplateColumns: 'repeat(25, 1fr)',
+              minHeight: '600px'
             }}
           >
             
-            {/* WAREHOUSE - Columns 1-3, spans multiple rows */}
+            {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
               className="flex items-center justify-center"
               style={{ 
-                gridColumn: '1 / 4',
-                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
+                gridColumn: '1 / 7',
+                gridRow: '1 / 4'
               }}
             >
               <button
@@ -305,90 +306,12 @@ const Home = () => {
               </button>
             </div>
 
-            {/* LEFT CORRALS - Columns 4-6, each spans 3 columns and 1 row */}
-            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
-              const position = index * 2;
-              const building = getBuildingAtPosition(position);
-              return (
-                <div 
-                  key={`left-${position}`}
-                  className="hidden sm:block"
-                  style={{ 
-                    gridColumn: '4 / 7',
-                    gridRow: index + 1 
-                  }}
-                >
-                  <BuildingSlot
-                    position={position}
-                    building={building}
-                    onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
-                    isLeftColumn={true}
-                  />
-                </div>
-              );
-            })}
-
-            {/* VERTICAL CONVEYOR BELT - Columns 7-12, spans all rows + extends to warehouse */}
-            <div 
-              className="flex justify-center relative"
-              style={{ 
-                gridColumn: '7 / 13',
-                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
-              }}
-            >
-              <div className="w-8 md:w-10 h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
-                {/* Belt pattern */}
-                <div className="h-full w-full flex flex-col items-center justify-evenly">
-                  {Array.from({ length: 20 }).map((_, i) => (
-                    <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
-                  ))}
-                </div>
-                {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-              </div>
-              
-              {/* Horizontal belt extension to warehouse (left side) - connects to bottom of warehouse */}
-              <div className="absolute left-0 bottom-0 h-8 md:h-10 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 shadow-lg border-y-2 border-pink-600 overflow-hidden"
-                   style={{ width: 'calc(50vw - 50%)', transform: 'translateX(-100%)' }}>
-                <div className="h-full w-full flex items-center justify-evenly">
-                  {Array.from({ length: 30 }).map((_, i) => (
-                    <div key={i} className="w-0.5 h-3 bg-pink-700 rounded-full shadow-inner" />
-                  ))}
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              </div>
-            </div>
-
-            {/* RIGHT CORRALS - Columns 13-15, each spans 3 columns and 1 row */}
-            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
-              const position = index * 2 + 1;
-              const building = getBuildingAtPosition(position);
-              return (
-                <div 
-                  key={`right-${position}`}
-                  style={{ 
-                    gridColumn: '13 / 16',
-                    gridRow: index + 1 
-                  }}
-                >
-                  <BuildingSlot
-                    position={position}
-                    building={building}
-                    onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
-                    isLeftColumn={false}
-                  />
-                </div>
-              );
-            })}
-
-            {/* MARKET - Columns 19-21, spans multiple rows */}
+            {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             <div 
               className="flex items-center justify-center"
               style={{ 
-                gridColumn: '19 / 22',
-                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
+                gridColumn: '20 / 26',
+                gridRow: '1 / 4'
               }}
             >
               <button
@@ -404,6 +327,72 @@ const Home = () => {
                 </div>
               </button>
             </div>
+
+            {/* VERTICAL CONVEYOR BELT - Center: Column 13, Rows 1 to end */}
+            <div 
+              className="flex justify-center relative"
+              style={{ 
+                gridColumn: '13 / 14',
+                gridRow: `1 / span ${Math.max(6, Math.ceil(TOTAL_SLOTS / 2) + 3)}`
+              }}
+            >
+              <div className="w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
+                {/* Belt pattern */}
+                <div className="h-full w-full flex flex-col items-center justify-evenly">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
+                  ))}
+                </div>
+                {/* Shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              </div>
+            </div>
+
+            {/* LEFT CORRALS - Columns 1-6, starting from row 4, vertical stack */}
+            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
+              const position = index * 2;
+              const building = getBuildingAtPosition(position);
+              return (
+                <div 
+                  key={`left-${position}`}
+                  style={{ 
+                    gridColumn: '1 / 7',
+                    gridRow: 4 + index
+                  }}
+                >
+                  <BuildingSlot
+                    position={position}
+                    building={building}
+                    onBuyClick={handleBuyClick}
+                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    isLeftColumn={true}
+                  />
+                </div>
+              );
+            })}
+
+            {/* RIGHT CORRALS - Columns 20-25, starting from row 4, vertical stack */}
+            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
+              const position = index * 2 + 1;
+              const building = getBuildingAtPosition(position);
+              return (
+                <div 
+                  key={`right-${position}`}
+                  style={{ 
+                    gridColumn: '20 / 26',
+                    gridRow: 4 + index
+                  }}
+                >
+                  <BuildingSlot
+                    position={position}
+                    building={building}
+                    onBuyClick={handleBuyClick}
+                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    isLeftColumn={false}
+                  />
+                </div>
+              );
+            })}
 
           </div>
         </div>
