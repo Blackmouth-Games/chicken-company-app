@@ -72,13 +72,35 @@ const Home = () => {
   const gridRef = useRef<HTMLDivElement>(null);
   
   const TOTAL_COLUMNS = 25;
-  const GRID_GAP = 20;
+  
+  const getTotalRows = () => {
+    let rows = 0;
+    try {
+      layoutConfig.belts?.forEach((belt) => {
+        const parts = belt.gridRow.split('/').map((p) => p.trim());
+        const start = parseInt(parts[0]) || 1;
+        const second = parts[1] || '';
+        if (second.startsWith('span')) {
+          const span = parseInt(second.replace('span', '').trim()) || 1;
+          rows = Math.max(rows, span);
+        } else {
+          const end = parseInt(second) || start + 1;
+          rows = Math.max(rows, end - start);
+        }
+      });
+    } catch {}
+    if (!rows) {
+      // Fallback: use corrales height heuristic
+      rows = Math.max(6, Math.ceil(TOTAL_SLOTS / 2) + 3);
+    }
+    return rows;
+  };
   
   const saveLayoutToStorage = (config: LayoutConfig) => {
     localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
   };
 
-  // Convert pixel position to grid coordinates
+  // Convert pixel position to grid coordinates (snap-to-grid)
   const pixelToGrid = (x: number, y: number) => {
     if (!gridRef.current) return { col: 1, row: 1 };
     
@@ -86,15 +108,16 @@ const Home = () => {
     const relativeX = x - rect.left;
     const relativeY = y - rect.top;
     
-    const columnWidth = (rect.width - (GRID_GAP * (TOTAL_COLUMNS - 1))) / TOTAL_COLUMNS;
-    const rowHeight = 100; // Approximate row height
+    const columns = TOTAL_COLUMNS;
+    const rows = getTotalRows();
+    const columnWidth = rect.width / columns;
+    const rowHeight = rect.height / rows;
     
-    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.round(relativeX / (columnWidth + GRID_GAP)) + 1));
-    const row = Math.max(1, Math.round(relativeY / (rowHeight + GRID_GAP)) + 1);
+    const col = Math.max(1, Math.min(columns, Math.floor(relativeX / columnWidth) + 1));
+    const row = Math.max(1, Math.min(rows, Math.floor(relativeY / rowHeight) + 1));
     
     return { col, row };
   };
-
   // Parse grid notation like "1 / 7" or "1 / span 6"
   const parseGridNotation = (notation: string) => {
     const parts = notation.split('/').map(p => p.trim());
