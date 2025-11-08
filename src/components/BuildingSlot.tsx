@@ -33,14 +33,14 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             {building.level}
           </div>
 
-          <div className="flex flex-col h-full p-4 pt-6">
+          <div className="flex flex-col h-full p-4 pt-6 pb-3">
             {/* Building image - top right */}
             <div className="flex justify-end mb-2">
               <div className="text-5xl">🏠</div>
             </div>
             
             {/* Chickens area - show chickens walking around */}
-            <div className="flex-1 flex flex-wrap gap-1 content-start mb-3">
+            <div className="flex-1 flex flex-wrap gap-1 content-start mb-2">
               {Array.from({ length: visibleChickens }).map((_, i) => (
                 <div key={i} className="text-2xl animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>
                   🐔
@@ -48,13 +48,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               ))}
             </div>
 
-            {/* Progress bar at bottom */}
-            <div className="space-y-1">
+            {/* Progress bar at bottom - more compact */}
+            <div className="space-y-0.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-semibold text-green-700">🐔 {building.current_chickens}</span>
                 <span className="text-green-600">Max: {building.capacity}</span>
               </div>
-              <div className="w-full h-3 bg-green-200/50 rounded-full overflow-hidden border border-green-400">
+              <div className="w-full h-2.5 bg-green-200/50 rounded-full overflow-hidden border border-green-400">
                 <div 
                   className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
                   style={{ width: `${fillPercentage}%` }}

@@ -349,18 +349,23 @@ const Home = () => {
                       />
                     </div>
                     
-                    {/* Egg with complete journey animation */}
+                    {/* Animated eggs flowing through the belt */}
                     {building.current_chickens > 0 && (
-                      <div
-                        key={`egg-journey-${building.id}`}
-                        className="absolute w-6 h-6 text-lg flex items-center justify-center pointer-events-none z-50"
-                        style={{
-                          animation: `egg-journey-${isLeftColumn ? 'left' : 'right'}-row-${rowIndex} 12s ease-in-out infinite`,
-                          animationDelay: `${index * 1.5}s`,
-                        }}
-                      >
-                        🥚
-                      </div>
+                      <>
+                        {/* Multiple eggs at different stages */}
+                        {[0, 1, 2].map((eggIndex) => (
+                          <div
+                            key={`egg-${building.id}-${eggIndex}`}
+                            className="absolute w-6 h-6 text-base flex items-center justify-center pointer-events-none z-50"
+                            style={{
+                              animation: `egg-journey-${isLeftColumn ? 'left' : 'right'}-row-${rowIndex} 8s ease-in-out infinite`,
+                              animationDelay: `${index * 2 + eggIndex * 2.5}s`,
+                            }}
+                          >
+                            🥚
+                          </div>
+                        ))}
+                      </>
                     )}
                   </div>
                 );
@@ -412,36 +417,49 @@ const Home = () => {
                       left: -120px;
                       top: ${rowIndex * 180 + 70}px;
                       opacity: 0;
+                      transform: scale(1);
                     }
-                    5% {
+                    3% {
                       opacity: 1;
                     }
                     
-                    /* Move right on mini horizontal belt */
-                    20% {
-                      left: 24px;
+                    /* Move right on mini horizontal belt to central belt */
+                    15% {
+                      left: 20px;
                       top: ${rowIndex * 180 + 70}px;
                       opacity: 1;
+                      transform: scale(1);
                     }
                     
                     /* Move up on vertical belt */
-                    50% {
-                      left: 24px;
-                      top: -30px;
+                    45% {
+                      left: 20px;
+                      top: 175px;
                       opacity: 1;
+                      transform: scale(1);
                     }
                     
-                    /* Move left on top horizontal belt to warehouse */
-                    85% {
-                      left: -200px;
-                      top: -30px;
+                    /* Move left on top horizontal belt toward warehouse */
+                    75% {
+                      left: calc(-50vw + 80px);
+                      top: 175px;
                       opacity: 1;
+                      transform: scale(1);
+                    }
+                    
+                    /* Move down into warehouse */
+                    90% {
+                      left: calc(-50vw + 80px);
+                      top: 225px;
+                      opacity: 1;
+                      transform: scale(0.8);
                     }
                     
                     95%, 100% {
-                      left: -200px;
-                      top: -30px;
+                      left: calc(-50vw + 80px);
+                      top: 225px;
                       opacity: 0;
+                      transform: scale(0.5);
                     }
                   }
                 `).join('\n')}
@@ -454,36 +472,49 @@ const Home = () => {
                       left: 72px;
                       top: ${rowIndex * 180 + 70}px;
                       opacity: 0;
+                      transform: scale(1);
                     }
-                    5% {
+                    3% {
                       opacity: 1;
                     }
                     
-                    /* Move left on mini horizontal belt */
-                    20% {
-                      left: 24px;
+                    /* Move left on mini horizontal belt to central belt */
+                    15% {
+                      left: 20px;
                       top: ${rowIndex * 180 + 70}px;
                       opacity: 1;
+                      transform: scale(1);
                     }
                     
                     /* Move up on vertical belt */
-                    50% {
-                      left: 24px;
-                      top: -30px;
+                    45% {
+                      left: 20px;
+                      top: 175px;
                       opacity: 1;
+                      transform: scale(1);
                     }
                     
-                    /* Move left on top horizontal belt to warehouse */
-                    85% {
-                      left: -200px;
-                      top: -30px;
+                    /* Move left on top horizontal belt toward warehouse */
+                    75% {
+                      left: calc(-50vw + 80px);
+                      top: 175px;
                       opacity: 1;
+                      transform: scale(1);
+                    }
+                    
+                    /* Move down into warehouse */
+                    90% {
+                      left: calc(-50vw + 80px);
+                      top: 225px;
+                      opacity: 1;
+                      transform: scale(0.8);
                     }
                     
                     95%, 100% {
-                      left: -200px;
-                      top: -30px;
+                      left: calc(-50vw + 80px);
+                      top: 225px;
                       opacity: 0;
+                      transform: scale(0.5);
                     }
                   }
                 `).join('\n')}
