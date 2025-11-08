@@ -69,8 +69,8 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           className={cn(
             "absolute top-1/2 -translate-y-1/2 h-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 z-30 shadow-lg border-y border-gray-800 overflow-hidden",
             isLeftColumn 
-              ? "-right-8 w-8 rounded-r-md" 
-              : "-left-8 w-8 rounded-l-md"
+              ? "-right-8 w-8" 
+              : "-left-8 w-8"
           )}
         >
           {/* Belt rollers */}
@@ -81,27 +81,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
           {/* Metallic shine effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-400/30 to-transparent" />
-          {/* Moving stripes effect */}
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: isLeftColumn 
-                ? 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(0,0,0,0.3) 8px, rgba(0,0,0,0.3) 16px)'
-                : 'repeating-linear-gradient(270deg, transparent, transparent 8px, rgba(0,0,0,0.3) 8px, rgba(0,0,0,0.3) 16px)',
-              animation: isLeftColumn ? 'belt-move-right 1s linear infinite' : 'belt-move-left 1s linear infinite'
-            }}
-          />
         </div>
-        <style>{`
-          @keyframes belt-move-right {
-            0% { background-position: 0 0; }
-            100% { background-position: 16px 0; }
-          }
-          @keyframes belt-move-left {
-            0% { background-position: 0 0; }
-            100% { background-position: -16px 0; }
-          }
-        `}</style>
       </div>
     );
   }

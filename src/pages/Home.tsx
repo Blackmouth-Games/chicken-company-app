@@ -340,23 +340,15 @@ const Home = () => {
                 return (
                   <div key={`segment-${building.id}`} className="relative" style={{ height: '180px' }}>
                     {/* Vertical segment with improved graphics and animation */}
-                    <div className="absolute left-0 top-0 w-10 h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-lg overflow-hidden shadow-lg border-x border-gray-800">
+                    <div className="absolute left-0 top-0 w-10 h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 overflow-hidden shadow-lg border-x border-gray-800">
                       {/* Animated belt rollers */}
-                      <div className="h-full w-full flex flex-col items-center justify-evenly animate-belt-vertical">
+                      <div className="h-full w-full flex flex-col items-center justify-evenly">
                         {Array.from({ length: 8 }).map((_, i) => (
                           <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
                         ))}
                       </div>
                       {/* Metallic shine effect */}
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
-                      {/* Moving stripes effect */}
-                      <div 
-                        className="absolute inset-0 opacity-20"
-                        style={{
-                          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px)',
-                          animation: 'belt-move-up 1s linear infinite'
-                        }}
-                      />
                     </div>
                     
                     {/* Animated eggs flowing through the belt */}
@@ -381,16 +373,21 @@ const Home = () => {
                 );
               })}
 
+              {/* Extended vertical belt to reach warehouse bottom */}
+              <div className="absolute left-0 w-10 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 overflow-hidden shadow-lg border-x border-gray-800" 
+                   style={{ 
+                     top: `${buildings.filter(b => b.building_type === 'corral').length * 180}px`,
+                     height: 'calc(100vh - 400px)'
+                   }}>
+                <div className="h-full w-full flex flex-col items-center justify-evenly">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
+                  ))}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
+              </div>
+
               <style>{`
-                @keyframes belt-move-up {
-                  0% { background-position: 0 20px; }
-                  100% { background-position: 0 0; }
-                }
-                
-                @keyframes belt-move-horizontal {
-                  0% { background-position: 20px 0; }
-                  100% { background-position: 0 0; }
-                }
                 
                 
                 /* Journey animations for left column corrals */
