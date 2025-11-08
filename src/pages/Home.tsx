@@ -14,6 +14,7 @@ import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
+import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
@@ -485,6 +486,7 @@ const Home = () => {
         userId={userId || undefined}
         buildingId={selectedBuildingId}
       />
+      <LayoutEditor />
     </div>
   );
 };
