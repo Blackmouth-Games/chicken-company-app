@@ -58,6 +58,23 @@ const Home = () => {
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
+  const [draggedBuilding, setDraggedBuilding] = useState<string | null>(null);
+  const [resizingBuilding, setResizingBuilding] = useState<string | null>(null);
+  
+  const saveLayoutToStorage = (config: LayoutConfig) => {
+    localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
+  };
+
+  const updateBuildingLayout = (building: keyof Pick<LayoutConfig, 'warehouse' | 'market'>, updates: Partial<LayoutConfig['warehouse']>) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        [building]: { ...prev[building], ...updates }
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
@@ -334,7 +351,7 @@ const Home = () => {
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
@@ -357,17 +374,77 @@ const Home = () => {
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
                   {isEditMode && (
-                    <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                      Warehouse
+                    <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
+                      {layoutConfig.warehouse.gridColumn} / {layoutConfig.warehouse.gridRow}
                     </div>
                   )}
                 </div>
               </button>
+              
+              {/* Edit Controls when in Edit Mode */}
+              {isEditMode && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Resize handles */}
+                  <div 
+                    className="absolute top-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('warehouse-nw');
+                    }}
+                  />
+                  <div 
+                    className="absolute top-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('warehouse-ne');
+                    }}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('warehouse-sw');
+                    }}
+                  />
+                  <div 
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('warehouse-se');
+                    }}
+                  />
+                  {/* Edit input overlay */}
+                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-2 text-xs">
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Columns:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.warehouse.gridColumn}
+                          onChange={(e) => updateBuildingLayout('warehouse', { gridColumn: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="1 / 7"
+                        />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Rows:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.warehouse.gridRow}
+                          onChange={(e) => updateBuildingLayout('warehouse', { gridRow: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="1 / 4"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
@@ -390,12 +467,72 @@ const Home = () => {
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
                   {isEditMode && (
-                    <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
-                      Market
+                    <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded font-mono">
+                      {layoutConfig.market.gridColumn} / {layoutConfig.market.gridRow}
                     </div>
                   )}
                 </div>
               </button>
+              
+              {/* Edit Controls when in Edit Mode */}
+              {isEditMode && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Resize handles */}
+                  <div 
+                    className="absolute top-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('market-nw');
+                    }}
+                  />
+                  <div 
+                    className="absolute top-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('market-ne');
+                    }}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('market-sw');
+                    }}
+                  />
+                  <div 
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setResizingBuilding('market-se');
+                    }}
+                  />
+                  {/* Edit input overlay */}
+                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-2 text-xs">
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Columns:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.market.gridColumn}
+                          onChange={(e) => updateBuildingLayout('market', { gridColumn: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="20 / 26"
+                        />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Rows:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.market.gridRow}
+                          onChange={(e) => updateBuildingLayout('market', { gridRow: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="1 / 4"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* VERTICAL CONVEYOR BELT - Center: Column 13, Rows 1 to end */}
