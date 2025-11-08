@@ -45,7 +45,20 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto relative">
+              {/* Conveyor belt at bottom */}
+              <div className="sticky bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 border-t-4 border-amber-700 shadow-lg z-10 overflow-hidden">
+                <div className="absolute inset-0 flex items-center">
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex-shrink-0 w-12 h-1 bg-amber-600 mx-1 animate-[slide-left_3s_linear_infinite]"
+                      style={{ animationDelay: `${i * 0.15}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Warehouse Image */}
                 <div className="flex flex-col items-center gap-3">

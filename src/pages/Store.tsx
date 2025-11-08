@@ -82,7 +82,7 @@ const Store = () => {
                     src={product.store_image_url}
                     alt={product.name}
                     className={`w-full h-auto object-cover ${isPurchased ? 'opacity-60' : ''}`}
-                    style={{ maxHeight: '120px' }}
+                    style={{ maxHeight: '132px' }}
                     onError={(e) => {
                       e.currentTarget.src = "https://via.placeholder.com/600x150?text=" + encodeURIComponent(product.name);
                     }}

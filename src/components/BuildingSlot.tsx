@@ -64,40 +64,6 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
         </div>
 
-        {/* Mini horizontal conveyor belt to connect to vertical belt - improved visual */}
-        <div 
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-8 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 shadow-lg z-30 flex items-center justify-center border-2 border-amber-700 overflow-hidden",
-            isLeftColumn ? "-right-10 w-10 rounded-r-lg" : "-left-10 w-10 rounded-l-lg"
-          )}
-        >
-          {/* Animated conveyor pattern */}
-          <div 
-            className="absolute inset-0 opacity-20" 
-            style={{
-              backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px)',
-              animation: isLeftColumn ? 'conveyor-right 2s linear infinite' : 'conveyor-left 2s linear infinite'
-            }}
-          />
-          {/* Egg moving on belt */}
-          {building.current_chickens > 0 && (
-            <div 
-              className="text-base z-10 relative"
-              style={{
-                animation: 'egg-bounce 1.5s ease-in-out infinite'
-              }}
-            >
-              🥚
-            </div>
-          )}
-        </div>
-
-        <style>{`
-          @keyframes egg-bounce {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-3px); }
-          }
-        `}</style>
       </div>
     );
   }

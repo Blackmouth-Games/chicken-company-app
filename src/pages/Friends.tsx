@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Users, Share2, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
@@ -196,6 +197,15 @@ const Friends = () => {
               <p className="text-xs text-center text-muted-foreground">
                 Por cada 3 amigos con gallina = 1 corral gratis
               </p>
+              
+              {/* Progress bar to next corral */}
+              <div className="mt-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">Progreso al próximo corral</span>
+                  <span className="font-semibold text-green-700">{qualifiedReferrals % 3}/3</span>
+                </div>
+                <Progress value={(qualifiedReferrals % 3) * 33.33} className="h-2" />
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
