@@ -18,6 +18,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
 
+interface LayoutConfig {
+  warehouse: { gridColumn: string; gridRow: string; minHeight: string };
+  market: { gridColumn: string; gridRow: string; minHeight: string };
+  leftCorrals: { gridColumn: string; gap: string; minHeight: string };
+  rightCorrals: { gridColumn: string; gap: string; minHeight: string };
+  belt: { gridColumn: string };
+  grid: { gap: string; maxWidth: string };
+}
+
 const Home = () => {
   const telegramUser = getTelegramUser();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -37,6 +46,16 @@ const Home = () => {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
 
+  // Layout configuration state
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
+    warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '240px' },
+    market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
+    leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
+    rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
+    belt: { gridColumn: '13 / 14' },
+    grid: { gap: '20px', maxWidth: '1600px' },
+  });
+
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
   const MIN_EMPTY_SLOTS = 4;
@@ -46,6 +65,34 @@ const Home = () => {
   if (totalSlots % 2 !== 0) totalSlots++; // Make it even
   if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
   const TOTAL_SLOTS = totalSlots;
+
+  
+  // Listen for layout configuration updates from debug panel
+  useEffect(() => {
+    const handleLayoutUpdate = (event: CustomEvent<LayoutConfig>) => {
+      setLayoutConfig(event.detail);
+      toast({
+        title: "Layout Updated",
+        description: "The layout has been updated from debug panel",
+      });
+    };
+
+    window.addEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
+    
+    // Load saved layout from localStorage if exists
+    const savedLayout = localStorage.getItem('debugLayoutConfig');
+    if (savedLayout) {
+      try {
+        setLayoutConfig(JSON.parse(savedLayout));
+      } catch (e) {
+        console.error('Failed to parse saved layout:', e);
+      }
+    }
+
+    return () => {
+      window.removeEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
+    };
+  }, [toast]);
 
   useEffect(() => {
     loadUserProfile();
@@ -267,7 +314,7 @@ const Home = () => {
         </div>
 
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
-        <div className="max-w-7xl mx-auto relative">
+        <div className="max-w-7xl mx-auto relative" style={{ maxWidth: layoutConfig.grid.maxWidth }}>
           {/* Fine grid overlay */}
           <div 
             className="absolute inset-0 pointer-events-none"
@@ -278,10 +325,11 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
           <div 
-            className="grid gap-4 md:gap-6 auto-rows-fr items-stretch relative"
+            className="grid auto-rows-fr items-stretch relative"
             style={{
               gridTemplateColumns: 'repeat(25, 1fr)',
-              minHeight: '700px'
+              minHeight: '700px',
+              gap: layoutConfig.grid.gap
             }}
           >
             
@@ -289,13 +337,14 @@ const Home = () => {
             <div 
               className="flex items-center justify-center"
               style={{ 
-                gridColumn: '1 / 7',
-                gridRow: '1 / 4'
+                gridColumn: layoutConfig.warehouse.gridColumn,
+                gridRow: layoutConfig.warehouse.gridRow
               }}
             >
               <button
                 onClick={() => setWarehouseOpen(true)}
-                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[240px] md:min-h-[280px] flex items-center justify-center"
+                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full flex items-center justify-center"
+                style={{ minHeight: layoutConfig.warehouse.minHeight }}
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
@@ -314,13 +363,14 @@ const Home = () => {
             <div 
               className="flex items-center justify-center"
               style={{ 
-                gridColumn: '20 / 26',
-                gridRow: '1 / 4'
+                gridColumn: layoutConfig.market.gridColumn,
+                gridRow: layoutConfig.market.gridRow
               }}
             >
               <button
                 onClick={() => setMarketOpen(true)}
-                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[240px] md:min-h-[280px] flex items-center justify-center"
+                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full flex items-center justify-center"
+                style={{ minHeight: layoutConfig.market.minHeight }}
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
@@ -339,7 +389,7 @@ const Home = () => {
             <div 
               className="flex justify-center relative"
               style={{ 
-                gridColumn: '13 / 14',
+                gridColumn: layoutConfig.belt.gridColumn,
                 gridRow: `1 / span ${Math.max(6, Math.ceil(TOTAL_SLOTS / 2) + 3)}`
               }}
             >
@@ -363,8 +413,9 @@ const Home = () => {
                 <div 
                   key={`left-${position}`}
                   style={{ 
-                    gridColumn: '1 / 7',
-                    gridRow: 4 + index
+                    gridColumn: layoutConfig.leftCorrals.gridColumn,
+                    gridRow: 4 + index,
+                    minHeight: layoutConfig.leftCorrals.minHeight
                   }}
                 >
                   <BuildingSlot
@@ -386,8 +437,9 @@ const Home = () => {
                 <div 
                   key={`right-${position}`}
                   style={{ 
-                    gridColumn: '20 / 26',
-                    gridRow: 4 + index
+                    gridColumn: layoutConfig.rightCorrals.gridColumn,
+                    gridRow: 4 + index,
+                    minHeight: layoutConfig.rightCorrals.minHeight
                   }}
                 >
                   <BuildingSlot
