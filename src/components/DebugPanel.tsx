@@ -24,10 +24,21 @@ const DebugPanel = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
+  const [position, setPosition] = useState({ x: 16, y: 80 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const telegramUser = getTelegramUser();
   const wallet = useTonWallet();
   const address = useTonAddress();
   const isFromTelegram = isTelegramWebApp();
+
+  // Load saved position on mount
+  useState(() => {
+    const savedPosition = localStorage.getItem('debugPanelPosition');
+    if (savedPosition) {
+      setPosition(JSON.parse(savedPosition));
+    }
+  });
 
   // Default layout configuration
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
@@ -123,14 +134,55 @@ const DebugPanel = () => {
     });
   };
 
+  // Drag handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging) {
+      const newX = Math.max(0, Math.min(window.innerWidth - 56, e.clientX - dragOffset.x));
+      const newY = Math.max(0, Math.min(window.innerHeight - 56, e.clientY - dragOffset.y));
+      setPosition({ x: newX, y: newY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      localStorage.setItem('debugPanelPosition', JSON.stringify(position));
+    }
+  };
+
+  // Add/remove mouse event listeners
+  useState(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  });
+
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
+        onMouseDown={handleMouseDown}
         size="icon"
         variant="outline"
-        className="fixed bottom-20 right-4 z-40 rounded-full shadow-lg"
-        title="Open Debug Panel"
+        className="fixed z-40 rounded-full shadow-lg cursor-move"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+        title="Debug Panel (Drag to move)"
       >
         <Bug className="h-4 w-4" />
       </Button>
