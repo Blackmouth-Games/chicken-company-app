@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
 import defaultAvatar from "@/assets/default-avatar.png";
 import { getTelegramUser } from "@/lib/telegram";
+import { getBuildingImage, type BuildingType } from "@/lib/buildingImages";
 import { Button } from "@/components/ui/button";
 import { Settings, Info } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -266,7 +267,7 @@ const Home = () => {
         </div>
 
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
-        <div className="max-w-6xl mx-auto relative">
+        <div className="max-w-7xl mx-auto relative">
           {/* Fine grid overlay */}
           <div 
             className="absolute inset-0 pointer-events-none"
@@ -294,14 +295,17 @@ const Home = () => {
             >
               <button
                 onClick={() => setWarehouseOpen(true)}
-                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[120px] flex items-center justify-center"
+                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[180px] flex items-center justify-center"
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-xs md:text-sm font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                   </div>
-                  <div className="text-4xl md:text-6xl mb-1 md:mb-2">🏭</div>
-                  <p className="text-xs md:text-sm font-bold text-blue-900">Almacén</p>
+                  <img 
+                    src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'B')} 
+                    alt="Warehouse" 
+                    className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                  />
                 </div>
               </button>
             </div>
@@ -316,14 +320,17 @@ const Home = () => {
             >
               <button
                 onClick={() => setMarketOpen(true)}
-                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[120px] flex items-center justify-center"
+                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[180px] flex items-center justify-center"
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-xs md:text-sm font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'market')?.level || 1}
                   </div>
-                  <div className="text-4xl md:text-6xl mb-1 md:mb-2">🏪</div>
-                  <p className="text-xs md:text-sm font-bold text-green-900">Market</p>
+                  <img 
+                    src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'B')} 
+                    alt="Market" 
+                    className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                  />
                 </div>
               </button>
             </div>

@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { getBuildingImage, type BuildingType } from "@/lib/buildingImages";
 
 interface BuildingSlotProps {
   position: number;
@@ -26,7 +27,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
       <div className="relative z-10">
         <div
           onClick={onBuildingClick}
-          className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[160px] overflow-visible"
+          className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[200px] overflow-visible"
         >
           {/* Level badge - Positioned outside to avoid clipping */}
           <div className="absolute -top-4 -left-4 bg-green-600 text-white rounded-full w-11 h-11 flex items-center justify-center text-base font-bold shadow-lg z-20 border-2 border-white">
@@ -36,7 +37,11 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           <div className="flex flex-col h-full p-4 pt-6 pb-3">
             {/* Building image - top right */}
             <div className="flex justify-end mb-2">
-              <div className="text-5xl">🏠</div>
+              <img 
+                src={getBuildingImage(building.building_type as BuildingType, building.level, 'A')} 
+                alt={`${building.building_type} nivel ${building.level}`}
+                className="w-24 h-24 object-contain"
+              />
             </div>
             
             {/* Chickens area - show chickens walking around */}
@@ -90,7 +95,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     <div className="relative z-10">
       <div 
         onClick={() => onBuyClick(position)}
-        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[160px]"
+        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[200px]"
       >
         <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
           <Plus className="h-8 w-8 text-amber-600" />
