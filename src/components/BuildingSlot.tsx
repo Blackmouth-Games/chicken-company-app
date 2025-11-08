@@ -64,6 +64,24 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
         </div>
 
+        {/* Mini conveyor belt connecting to central belt */}
+        <div 
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 h-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 z-30 shadow-lg border-y border-gray-800",
+            isLeftColumn 
+              ? "-right-8 w-8 rounded-r-md" 
+              : "-left-8 w-8 rounded-l-md"
+          )}
+        >
+          {/* Belt texture with improved graphics - rollers */}
+          <div className="h-full w-full flex items-center justify-evenly">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="w-0.5 h-3 bg-gray-900 rounded-full shadow-inner" />
+            ))}
+          </div>
+          {/* Metallic shine effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-400/30 to-transparent" />
+        </div>
       </div>
     );
   }
