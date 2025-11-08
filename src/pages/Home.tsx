@@ -19,12 +19,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
 
+interface BeltConfig {
+  id: string;
+  gridColumn: string;
+  gridRow: string;
+}
+
 interface LayoutConfig {
   warehouse: { gridColumn: string; gridRow: string; minHeight: string };
   market: { gridColumn: string; gridRow: string; minHeight: string };
   leftCorrals: { gridColumn: string; gap: string; minHeight: string };
   rightCorrals: { gridColumn: string; gap: string; minHeight: string };
-  belt: { gridColumn: string };
+  belts: BeltConfig[];
   grid: { gap: string; maxWidth: string };
 }
 
@@ -53,13 +59,14 @@ const Home = () => {
     market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
     leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
     rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
-    belt: { gridColumn: '13 / 14' },
+    belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],
     grid: { gap: '20px', maxWidth: '1600px' },
   });
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [draggedBuilding, setDraggedBuilding] = useState<string | null>(null);
-  const [resizingBuilding, setResizingBuilding] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   
   const saveLayoutToStorage = (config: LayoutConfig) => {
     localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
@@ -70,6 +77,52 @@ const Home = () => {
       const newConfig = {
         ...prev,
         [building]: { ...prev[building], ...updates }
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  const addBelt = () => {
+    setLayoutConfig(prev => {
+      const newBelt: BeltConfig = {
+        id: `belt-${Date.now()}`,
+        gridColumn: '13 / 14',
+        gridRow: '1 / span 20'
+      };
+      const newConfig = {
+        ...prev,
+        belts: [...prev.belts, newBelt]
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: "Cinta agregada",
+        description: "Nueva cinta transportadora agregada",
+      });
+      return newConfig;
+    });
+  };
+
+  const removeBelt = (beltId: string) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        belts: prev.belts.filter(b => b.id !== beltId)
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: "Cinta eliminada",
+        description: "Cinta transportadora eliminada",
+      });
+      return newConfig;
+    });
+  };
+
+  const updateBelt = (beltId: string, updates: Partial<BeltConfig>) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        belts: prev.belts.map(b => b.id === beltId ? { ...b, ...updates } : b)
       };
       saveLayoutToStorage(newConfig);
       return newConfig;
@@ -93,13 +146,23 @@ const Home = () => {
       setIsEditMode(event.detail);
     };
 
+    const handleAddBelt = () => {
+      addBelt();
+    };
+
     window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
+    window.addEventListener('addBelt', handleAddBelt as EventListener);
     
     // Load saved layout from localStorage if exists
     const savedLayout = localStorage.getItem('debugLayoutConfig');
     if (savedLayout) {
       try {
-        setLayoutConfig(JSON.parse(savedLayout));
+        const parsed = JSON.parse(savedLayout);
+        // Ensure belts array exists for backward compatibility
+        if (!parsed.belts) {
+          parsed.belts = [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }];
+        }
+        setLayoutConfig(parsed);
       } catch (e) {
         console.error('Failed to parse saved layout:', e);
       }
@@ -107,6 +170,7 @@ const Home = () => {
 
     return () => {
       window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
+      window.removeEventListener('addBelt', handleAddBelt as EventListener);
     };
   }, []);
 
@@ -384,35 +448,6 @@ const Home = () => {
               {/* Edit Controls when in Edit Mode */}
               {isEditMode && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Resize handles */}
-                  <div 
-                    className="absolute top-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('warehouse-nw');
-                    }}
-                  />
-                  <div 
-                    className="absolute top-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('warehouse-ne');
-                    }}
-                  />
-                  <div 
-                    className="absolute bottom-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('warehouse-sw');
-                    }}
-                  />
-                  <div 
-                    className="absolute bottom-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('warehouse-se');
-                    }}
-                  />
                   {/* Edit input overlay */}
                   <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2 text-xs">
@@ -477,35 +512,6 @@ const Home = () => {
               {/* Edit Controls when in Edit Mode */}
               {isEditMode && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {/* Resize handles */}
-                  <div 
-                    className="absolute top-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('market-nw');
-                    }}
-                  />
-                  <div 
-                    className="absolute top-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('market-ne');
-                    }}
-                  />
-                  <div 
-                    className="absolute bottom-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('market-sw');
-                    }}
-                  />
-                  <div 
-                    className="absolute bottom-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2"
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      setResizingBuilding('market-se');
-                    }}
-                  />
                   {/* Edit input overlay */}
                   <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2 text-xs">
@@ -535,25 +541,71 @@ const Home = () => {
               )}
             </div>
 
-            {/* VERTICAL CONVEYOR BELT - Center: Column 13, Rows 1 to end */}
-            <div 
-              className="flex justify-center relative"
-              style={{ 
-                gridColumn: layoutConfig.belt.gridColumn,
-                gridRow: `1 / span ${Math.max(6, Math.ceil(TOTAL_SLOTS / 2) + 3)}`
-              }}
-            >
-              <div className="w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
-                {/* Belt pattern */}
-                <div className="h-full w-full flex flex-col items-center justify-evenly">
-                  {Array.from({ length: 30 }).map((_, i) => (
-                    <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
-                  ))}
+            {/* VERTICAL CONVEYOR BELTS - Dynamic based on config */}
+            {layoutConfig.belts.map((belt, idx) => (
+              <div 
+                key={belt.id}
+                className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-pink-500' : ''}`}
+                style={{ 
+                  gridColumn: belt.gridColumn,
+                  gridRow: belt.gridRow
+                }}
+              >
+                <div className="w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
+                  {/* Belt pattern */}
+                  <div className="h-full w-full flex flex-col items-center justify-evenly">
+                    {Array.from({ length: 30 }).map((_, i) => (
+                      <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
+                    ))}
+                  </div>
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                  
+                  {isEditMode && (
+                    <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono">
+                      Belt {idx + 1}
+                    </div>
+                  )}
                 </div>
-                {/* Shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                
+                {/* Edit Controls */}
+                {isEditMode && (
+                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-pink-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 min-w-[200px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-pink-700">⚙️ Cinta {idx + 1}</span>
+                      <button
+                        onClick={() => removeBelt(belt.id)}
+                        className="text-xs bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                    <div className="flex gap-2 text-xs">
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Column:</span>
+                        <input
+                          type="text"
+                          value={belt.gridColumn}
+                          onChange={(e) => updateBelt(belt.id, { gridColumn: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="13 / 14"
+                        />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-gray-600">Row:</span>
+                        <input
+                          type="text"
+                          value={belt.gridRow}
+                          onChange={(e) => updateBelt(belt.id, { gridRow: e.target.value })}
+                          className="w-full px-2 py-1 border rounded"
+                          placeholder="1 / span 20"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
 
             {/* LEFT CORRALS - Columns 1-6, starting from row 4, vertical stack */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {

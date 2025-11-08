@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Download } from "lucide-react";
+import { Layout, Download, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -19,9 +19,13 @@ const LayoutEditor = () => {
     toast({
       title: newMode ? "Modo Edición Activado" : "Modo Edición Desactivado",
       description: newMode 
-        ? "Arrastra y escala los edificios directamente en el mapa" 
+        ? "Edita las posiciones de edificios y cintas" 
         : "Cambios guardados automáticamente",
     });
+  };
+
+  const addBelt = () => {
+    window.dispatchEvent(new CustomEvent('addBelt'));
   };
 
   const exportLayout = () => {
@@ -98,6 +102,18 @@ const LayoutEditor = () => {
             <Layout className="h-4 w-4" />
             {isEditMode ? "Desactivar Edición" : "Activar Edición"}
           </Button>
+          {isEditMode && (
+            <Button
+              onClick={addBelt}
+              size="sm"
+              variant="outline"
+              className="gap-2"
+              title="Agregar cinta transportadora"
+            >
+              <Plus className="h-4 w-4" />
+              Agregar Cinta
+            </Button>
+          )}
           <Button
             onClick={exportLayout}
             size="sm"
