@@ -302,7 +302,7 @@ const Home = () => {
                     {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                   </div>
                   <img 
-                    src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'B')} 
+                    src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
                     className="w-32 h-32 md:w-40 md:h-40 object-contain"
                   />
@@ -327,7 +327,7 @@ const Home = () => {
                     {buildings.find(b => b.building_type === 'market')?.level || 1}
                   </div>
                   <img 
-                    src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'B')} 
+                    src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
                     className="w-32 h-32 md:w-40 md:h-40 object-contain"
                   />
