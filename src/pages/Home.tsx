@@ -330,27 +330,15 @@ const Home = () => {
               })}
             </div>
 
-            {/* Center Conveyor Belt System - Segmented by rows */}
+            {/* Center space - no belts */}
             <div className="relative flex-shrink-0 w-10 -mt-20 z-0">
-              {/* Vertical segments for each row */}
+              {/* Animated eggs flowing */}
               {buildings.filter(b => b.building_type === 'corral').map((building, index) => {
                 const rowIndex = Math.floor(index / 2);
                 const isLeftColumn = building.position_index < 6;
                 
                 return (
                   <div key={`segment-${building.id}`} className="relative" style={{ height: '180px' }}>
-                    {/* Vertical segment with improved graphics */}
-                    <div className="absolute left-0 top-0 w-10 h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-lg overflow-hidden shadow-lg border-x border-gray-800">
-                      {/* Belt rollers */}
-                      <div className="h-full w-full flex flex-col items-center justify-evenly">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                          <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
-                        ))}
-                      </div>
-                      {/* Metallic shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
-                    </div>
-                    
                     {/* Animated eggs flowing through the belt */}
                     {building.current_chickens > 0 && (
                       <>
