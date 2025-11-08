@@ -559,9 +559,12 @@ const Home = () => {
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
+              const isFirstCorral = index === 0;
+              
               return (
                 <div 
                   key={`left-${position}`}
+                  className={`relative group ${isEditMode && isFirstCorral ? 'ring-2 ring-yellow-500 ring-offset-2' : ''}`}
                   style={{ 
                     gridColumn: layoutConfig.leftCorrals.gridColumn,
                     gridRow: 4 + index,
@@ -575,6 +578,53 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
                     isLeftColumn={true}
                   />
+                  
+                  {/* Show edit controls only on first corral */}
+                  {isEditMode && isFirstCorral && (
+                    <div className="absolute -bottom-24 left-0 right-0 bg-white border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-yellow-700 mb-1">⚙️ Config Corrales Izquierdos</div>
+                      <div className="flex gap-2 text-xs">
+                        <label className="flex-1">
+                          <span className="block text-gray-600">Columns:</span>
+                          <input
+                            type="text"
+                            value={layoutConfig.leftCorrals.gridColumn}
+                            onChange={(e) => {
+                              setLayoutConfig(prev => {
+                                const newConfig = {
+                                  ...prev,
+                                  leftCorrals: { ...prev.leftCorrals, gridColumn: e.target.value }
+                                };
+                                saveLayoutToStorage(newConfig);
+                                return newConfig;
+                              });
+                            }}
+                            className="w-full px-2 py-1 border rounded"
+                            placeholder="1 / 7"
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-gray-600">Min Height:</span>
+                          <input
+                            type="text"
+                            value={layoutConfig.leftCorrals.minHeight}
+                            onChange={(e) => {
+                              setLayoutConfig(prev => {
+                                const newConfig = {
+                                  ...prev,
+                                  leftCorrals: { ...prev.leftCorrals, minHeight: e.target.value }
+                                };
+                                saveLayoutToStorage(newConfig);
+                                return newConfig;
+                              });
+                            }}
+                            className="w-full px-2 py-1 border rounded"
+                            placeholder="260px"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -583,9 +633,12 @@ const Home = () => {
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
+              const isFirstCorral = index === 0;
+              
               return (
                 <div 
                   key={`right-${position}`}
+                  className={`relative group ${isEditMode && isFirstCorral ? 'ring-2 ring-orange-500 ring-offset-2' : ''}`}
                   style={{ 
                     gridColumn: layoutConfig.rightCorrals.gridColumn,
                     gridRow: 4 + index,
@@ -599,6 +652,53 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
                     isLeftColumn={false}
                   />
+                  
+                  {/* Show edit controls only on first corral */}
+                  {isEditMode && isFirstCorral && (
+                    <div className="absolute -bottom-24 left-0 right-0 bg-white border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-orange-700 mb-1">⚙️ Config Corrales Derechos</div>
+                      <div className="flex gap-2 text-xs">
+                        <label className="flex-1">
+                          <span className="block text-gray-600">Columns:</span>
+                          <input
+                            type="text"
+                            value={layoutConfig.rightCorrals.gridColumn}
+                            onChange={(e) => {
+                              setLayoutConfig(prev => {
+                                const newConfig = {
+                                  ...prev,
+                                  rightCorrals: { ...prev.rightCorrals, gridColumn: e.target.value }
+                                };
+                                saveLayoutToStorage(newConfig);
+                                return newConfig;
+                              });
+                            }}
+                            className="w-full px-2 py-1 border rounded"
+                            placeholder="20 / 26"
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-gray-600">Min Height:</span>
+                          <input
+                            type="text"
+                            value={layoutConfig.rightCorrals.minHeight}
+                            onChange={(e) => {
+                              setLayoutConfig(prev => {
+                                const newConfig = {
+                                  ...prev,
+                                  rightCorrals: { ...prev.rightCorrals, minHeight: e.target.value }
+                                };
+                                saveLayoutToStorage(newConfig);
+                                return newConfig;
+                              });
+                            }}
+                            className="w-full px-2 py-1 border rounded"
+                            placeholder="260px"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
