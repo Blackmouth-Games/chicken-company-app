@@ -339,14 +339,16 @@ const Home = () => {
                 
                 return (
                   <div key={`segment-${building.id}`} className="relative" style={{ height: '180px' }}>
-                    {/* Vertical segment */}
-                    <div className="absolute left-0 top-0 w-10 h-full bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 overflow-hidden shadow-lg">
-                      <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                           style={{
-                             backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                             animation: 'conveyor-up 3s linear infinite'
-                           }}
-                      />
+                    {/* Vertical segment with improved graphics */}
+                    <div className="absolute left-0 top-0 w-10 h-full bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-lg overflow-hidden shadow-lg border-x border-gray-800">
+                      {/* Belt rollers */}
+                      <div className="h-full w-full flex flex-col items-center justify-evenly">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
+                        ))}
+                      </div>
+                      {/* Metallic shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
                     </div>
                     
                     {/* Animated eggs flowing through the belt */}
@@ -371,43 +373,35 @@ const Home = () => {
                 );
               })}
 
-              {/* Horizontal conveyor (larga) from vertical belt to warehouse - aligned to warehouse center */}
+              {/* Horizontal conveyor from vertical belt to warehouse - with improved graphics */}
               <div className="absolute pointer-events-none z-0" style={{ right: '20px', top: '175px', width: 'calc(50vw - 100px)' }}>
-                <div className="h-10 bg-gradient-to-r from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg w-full">
-                  <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                       style={{
-                         backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                         animation: 'conveyor-left 3s linear infinite'
-                       }}
-                  />
+                <div className="h-10 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 rounded-lg relative overflow-hidden shadow-lg w-full border-y border-gray-800">
+                  {/* Belt rollers */}
+                  <div className="h-full w-full flex items-center justify-evenly">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="w-0.5 h-3 bg-gray-900 rounded-full shadow-inner" />
+                    ))}
+                  </div>
+                  {/* Metallic shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-400/30 to-transparent" />
                 </div>
               </div>
 
-              {/* Vertical conveyor (corta) at warehouse center - enters warehouse from bottom */}
+              {/* Vertical conveyor at warehouse center - with improved graphics */}
               <div className="absolute pointer-events-none z-0" style={{ right: 'calc(50vw - 100px)', top: '145px' }}>
-                <div className="w-10 h-10 bg-gradient-to-b from-amber-800 via-amber-900 to-amber-800 rounded-lg border-2 border-amber-700 relative overflow-hidden shadow-lg">
-                  <div className="absolute inset-0 bg-repeating-linear-gradient opacity-20" 
-                       style={{
-                         backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(0,0,0,0.3) 15px, rgba(0,0,0,0.3) 30px)',
-                         animation: 'conveyor-up 3s linear infinite'
-                       }}
-                  />
+                <div className="w-10 h-10 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-lg relative overflow-hidden shadow-lg border-x border-gray-800">
+                  {/* Belt rollers */}
+                  <div className="h-full w-full flex flex-col items-center justify-evenly">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
+                    ))}
+                  </div>
+                  {/* Metallic shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
                 </div>
               </div>
 
               <style>{`
-                @keyframes conveyor-up {
-                  0% { background-position: 0 30px; }
-                  100% { background-position: 0 0; }
-                }
-                @keyframes conveyor-left {
-                  0% { background-position: 30px 0; }
-                  100% { background-position: 0 0; }
-                }
-                @keyframes conveyor-right {
-                  0% { background-position: 0 0; }
-                  100% { background-position: 30px 0; }
-                }
                 
                 /* Journey animations for left column corrals */
                 ${Array.from({ length: 6 }).map((_, rowIndex) => `
