@@ -373,33 +373,6 @@ const Home = () => {
                 );
               })}
 
-              {/* Horizontal conveyor from vertical belt to warehouse - with improved graphics */}
-              <div className="absolute pointer-events-none z-0" style={{ right: '20px', top: '175px', width: 'calc(50vw - 100px)' }}>
-                <div className="h-10 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 rounded-lg relative overflow-hidden shadow-lg w-full border-y border-gray-800">
-                  {/* Belt rollers */}
-                  <div className="h-full w-full flex items-center justify-evenly">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="w-0.5 h-3 bg-gray-900 rounded-full shadow-inner" />
-                    ))}
-                  </div>
-                  {/* Metallic shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-400/30 to-transparent" />
-                </div>
-              </div>
-
-              {/* Vertical conveyor at warehouse center - with improved graphics */}
-              <div className="absolute pointer-events-none z-0" style={{ right: 'calc(50vw - 100px)', top: '145px' }}>
-                <div className="w-10 h-10 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 rounded-lg relative overflow-hidden shadow-lg border-x border-gray-800">
-                  {/* Belt rollers */}
-                  <div className="h-full w-full flex flex-col items-center justify-evenly">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="w-3 h-0.5 bg-gray-900 rounded-full shadow-inner" />
-                    ))}
-                  </div>
-                  {/* Metallic shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-400/30 to-transparent" />
-                </div>
-              </div>
 
               <style>{`
                 
