@@ -140,7 +140,11 @@ const Home = () => {
     setLayoutConfig(prev => {
       const newConfig = {
         ...prev,
-        [building]: { ...prev[building], ...updates }
+        [building]: { 
+          minHeight: prev[building].minHeight, // Preserve minHeight
+          ...prev[building], 
+          ...updates 
+        }
       };
       saveLayoutToStorage(newConfig);
       return newConfig;
