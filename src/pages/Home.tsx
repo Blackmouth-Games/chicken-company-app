@@ -18,21 +18,7 @@ import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
-
-interface BeltConfig {
-  id: string;
-  gridColumn: string;
-  gridRow: string;
-}
-
-interface LayoutConfig {
-  warehouse: { gridColumn: string; gridRow: string; minHeight: string };
-  market: { gridColumn: string; gridRow: string; minHeight: string };
-  leftCorrals: { gridColumn: string; gap: string; minHeight: string };
-  rightCorrals: { gridColumn: string; gap: string; minHeight: string };
-  belts: BeltConfig[];
-  grid: { gap: string; maxWidth: string };
-}
+import { useLayoutEditor } from "@/hooks/useLayoutEditor";
 
 const Home = () => {
   const telegramUser = getTelegramUser();
@@ -53,280 +39,25 @@ const Home = () => {
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
 
-  // Layout configuration state
-  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
-    warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '240px' },
-    market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
-    leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
-    rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
-    belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],
-    grid: { gap: '20px', maxWidth: '1600px' },
-  });
-
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [draggedBuilding, setDraggedBuilding] = useState<string | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [resizing, setResizing] = useState<{ building: string; handle: string } | null>(null);
-  const [tempPosition, setTempPosition] = useState<{ col: number; row: number } | null>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  
-  const TOTAL_COLUMNS = 25;
-  
-  const getTotalRows = () => {
-    let rows = 0;
-    try {
-      layoutConfig.belts?.forEach((belt) => {
-        const parts = belt.gridRow.split('/').map((p) => p.trim());
-        const start = parseInt(parts[0]) || 1;
-        const second = parts[1] || '';
-        if (second.startsWith('span')) {
-          const span = parseInt(second.replace('span', '').trim()) || 1;
-          rows = Math.max(rows, span);
-        } else {
-          const end = parseInt(second) || start + 1;
-          rows = Math.max(rows, end - start);
-        }
-      });
-    } catch {}
-    if (!rows) {
-      // Fallback: use corrales height heuristic
-      rows = Math.max(6, Math.ceil(TOTAL_SLOTS / 2) + 3);
-    }
-    return rows;
-  };
-  
-  const saveLayoutToStorage = (config: LayoutConfig) => {
-    localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
-  };
-
-  // Convert pixel position to grid coordinates (snap-to-grid)
-  const pixelToGrid = (x: number, y: number) => {
-    if (!gridRef.current) return { col: 1, row: 1 };
-    
-    const rect = gridRef.current.getBoundingClientRect();
-    const relativeX = x - rect.left;
-    const relativeY = y - rect.top;
-    
-    const columns = TOTAL_COLUMNS;
-    const rows = getTotalRows();
-    const columnWidth = rect.width / columns;
-    const rowHeight = rect.height / rows;
-    
-    const col = Math.max(1, Math.min(columns, Math.floor(relativeX / columnWidth) + 1));
-    const row = Math.max(1, Math.min(rows, Math.floor(relativeY / rowHeight) + 1));
-    
-    return { col, row };
-  };
-  // Parse grid notation like "1 / 7" or "1 / span 6"
-  const parseGridNotation = (notation: string) => {
-    const parts = notation.split('/').map(p => p.trim());
-    const start = parseInt(parts[0]);
-    
-    if (parts[1].includes('span')) {
-      const span = parseInt(parts[1].replace('span', '').trim());
-      return { start, end: start + span };
-    } else {
-      return { start, end: parseInt(parts[1]) };
-    }
-  };
-
-  // Create grid notation
-  const createGridNotation = (start: number, end: number) => {
-    return `${start} / ${end}`;
-  };
-
-  const updateBuildingLayout = (building: keyof Pick<LayoutConfig, 'warehouse' | 'market'>, updates: Partial<LayoutConfig['warehouse']>) => {
-    setLayoutConfig(prev => {
-      const newConfig = {
-        ...prev,
-        [building]: { 
-          minHeight: prev[building].minHeight, // Preserve minHeight
-          ...prev[building], 
-          ...updates 
-        }
-      };
-      saveLayoutToStorage(newConfig);
-      return newConfig;
-    });
-  };
-
-  // Handle mouse drag for buildings
-  const handleBuildingMouseDown = (e: React.MouseEvent, buildingName: string) => {
-    if (!isEditMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setDraggedBuilding(buildingName);
-    setIsDragging(true);
-    
-    const gridPos = pixelToGrid(e.clientX, e.clientY);
-    setDragOffset({
-      x: e.clientX,
-      y: e.clientY
-    });
-    setTempPosition(gridPos);
-  };
-
-  // Handle resize
-  const handleResizeStart = (e: React.MouseEvent, buildingName: string, handle: string) => {
-    if (!isEditMode) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setResizing({ building: buildingName, handle });
-    setDragOffset({
-      x: e.clientX,
-      y: e.clientY
-    });
-  };
-
-  // Mouse move handler
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!gridRef.current) return;
-
-      if (isDragging && draggedBuilding) {
-        const gridPos = pixelToGrid(e.clientX, e.clientY);
-        setTempPosition(gridPos);
-      }
-
-      if (resizing) {
-        const buildingKey = resizing.building as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
-        const currentConfig = layoutConfig[buildingKey];
-        
-        const colPos = parseGridNotation(currentConfig.gridColumn);
-        const rowPos = parseGridNotation(currentConfig.gridRow);
-        
-        const gridPos = pixelToGrid(e.clientX, e.clientY);
-        
-        let newColStart = colPos.start;
-        let newColEnd = colPos.end;
-        let newRowStart = rowPos.start;
-        let newRowEnd = rowPos.end;
-        
-        // Handle different resize directions
-        switch (resizing.handle) {
-          case 'nw':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
-            break;
-          case 'ne':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
-            break;
-          case 'sw':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
-            break;
-          case 'se':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
-            break;
-          case 'n':
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
-            break;
-          case 's':
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
-            break;
-          case 'w':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
-            break;
-          case 'e':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
-            break;
-        }
-        
-        updateBuildingLayout(buildingKey, {
-          gridColumn: createGridNotation(newColStart, newColEnd),
-          gridRow: createGridNotation(newRowStart, newRowEnd)
-        });
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isDragging && draggedBuilding && tempPosition) {
-        const buildingKey = draggedBuilding as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
-        const currentConfig = layoutConfig[buildingKey];
-        
-        const colSpan = parseGridNotation(currentConfig.gridColumn);
-        const rowSpan = parseGridNotation(currentConfig.gridRow);
-        
-        const width = colSpan.end - colSpan.start;
-        const height = rowSpan.end - rowSpan.start;
-        
-        // Update to new position while maintaining size
-        updateBuildingLayout(buildingKey, {
-          gridColumn: createGridNotation(tempPosition.col, tempPosition.col + width),
-          gridRow: createGridNotation(tempPosition.row, tempPosition.row + height)
-        });
-        
-        toast({
-          title: "Edificio movido",
-          description: `${draggedBuilding} movido a columna ${tempPosition.col}, fila ${tempPosition.row}`,
-        });
-      }
-      
-      setIsDragging(false);
-      setDraggedBuilding(null);
-      setResizing(null);
-      setTempPosition(null);
-    };
-
-    if (isDragging || resizing) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, draggedBuilding, resizing, dragOffset, tempPosition, layoutConfig]);
-
-  const addBelt = () => {
-    setLayoutConfig(prev => {
-      const newBelt: BeltConfig = {
-        id: `belt-${Date.now()}`,
-        gridColumn: '13 / 14',
-        gridRow: '1 / span 20'
-      };
-      const newConfig = {
-        ...prev,
-        belts: [...prev.belts, newBelt]
-      };
-      saveLayoutToStorage(newConfig);
-      toast({
-        title: "Cinta agregada",
-        description: "Nueva cinta transportadora agregada",
-      });
-      return newConfig;
-    });
-  };
-
-  const removeBelt = (beltId: string) => {
-    setLayoutConfig(prev => {
-      const newConfig = {
-        ...prev,
-        belts: prev.belts.filter(b => b.id !== beltId)
-      };
-      saveLayoutToStorage(newConfig);
-      toast({
-        title: "Cinta eliminada",
-        description: "Cinta transportadora eliminada",
-      });
-      return newConfig;
-    });
-  };
-
-  const updateBelt = (beltId: string, updates: Partial<BeltConfig>) => {
-    setLayoutConfig(prev => {
-      const newConfig = {
-        ...prev,
-        belts: prev.belts.map(b => b.id === beltId ? { ...b, ...updates } : b)
-      };
-      saveLayoutToStorage(newConfig);
-      return newConfig;
-    });
-  };
+  // Use layout editor hook
+  const {
+    layoutConfig,
+    isEditMode,
+    isDragging,
+    draggedBuilding,
+    resizing,
+    tempPosition,
+    hasCollision,
+    gridRef,
+    getTotalRows,
+    handleBuildingMouseDown,
+    handleResizeStart,
+    updateBuildingLayout,
+    addBelt,
+    removeBelt,
+    updateBelt,
+    setLayoutConfig,
+  } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
@@ -338,46 +69,6 @@ const Home = () => {
   if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
   const TOTAL_SLOTS = totalSlots;
 
-  
-  // Listen for layout edit mode changes and load saved config
-  useEffect(() => {
-    const handleEditModeChange = (event: CustomEvent<boolean>) => {
-      setIsEditMode(event.detail);
-    };
-
-    const handleAddBelt = () => {
-      addBelt();
-    };
-
-    const handleLayoutUpdate = (event: CustomEvent<any>) => {
-      setLayoutConfig(event.detail);
-    };
-
-    window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
-    window.addEventListener('addBelt', handleAddBelt as EventListener);
-    window.addEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
-    
-    // Load saved layout from localStorage if exists
-    const savedLayout = localStorage.getItem('debugLayoutConfig');
-    if (savedLayout) {
-      try {
-        const parsed = JSON.parse(savedLayout);
-        // Ensure belts array exists for backward compatibility
-        if (!parsed.belts) {
-          parsed.belts = [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }];
-        }
-        setLayoutConfig(parsed);
-      } catch (e) {
-        console.error('Failed to parse saved layout:', e);
-      }
-    }
-
-    return () => {
-      window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
-      window.removeEventListener('addBelt', handleAddBelt as EventListener);
-      window.removeEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
-    };
-  }, []);
 
   useEffect(() => {
     loadUserProfile();
@@ -626,7 +317,7 @@ const Home = () => {
             <div 
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
-              }`}
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
@@ -736,7 +427,7 @@ const Home = () => {
             <div 
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
-              }`}
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
@@ -948,7 +639,7 @@ const Home = () => {
                                   ...prev,
                                   leftCorrals: { ...prev.leftCorrals, gridColumn: e.target.value }
                                 };
-                                saveLayoutToStorage(newConfig);
+                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
                                 return newConfig;
                               });
                             }}
@@ -967,7 +658,7 @@ const Home = () => {
                                   ...prev,
                                   leftCorrals: { ...prev.leftCorrals, minHeight: e.target.value }
                                 };
-                                saveLayoutToStorage(newConfig);
+                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
                                 return newConfig;
                               });
                             }}
@@ -1022,7 +713,7 @@ const Home = () => {
                                   ...prev,
                                   rightCorrals: { ...prev.rightCorrals, gridColumn: e.target.value }
                                 };
-                                saveLayoutToStorage(newConfig);
+                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
                                 return newConfig;
                               });
                             }}
@@ -1041,7 +732,7 @@ const Home = () => {
                                   ...prev,
                                   rightCorrals: { ...prev.rightCorrals, minHeight: e.target.value }
                                 };
-                                saveLayoutToStorage(newConfig);
+                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
                                 return newConfig;
                               });
                             }}
