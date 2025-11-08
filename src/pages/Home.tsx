@@ -57,6 +57,8 @@ const Home = () => {
     grid: { gap: '20px', maxWidth: '1600px' },
   });
 
+  const [isEditMode, setIsEditMode] = useState(false);
+
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
   const MIN_EMPTY_SLOTS = 4;
@@ -68,17 +70,13 @@ const Home = () => {
   const TOTAL_SLOTS = totalSlots;
 
   
-  // Listen for layout configuration updates from debug panel
+  // Listen for layout edit mode changes and load saved config
   useEffect(() => {
-    const handleLayoutUpdate = (event: CustomEvent<LayoutConfig>) => {
-      setLayoutConfig(event.detail);
-      toast({
-        title: "Layout Updated",
-        description: "The layout has been updated from debug panel",
-      });
+    const handleEditModeChange = (event: CustomEvent<boolean>) => {
+      setIsEditMode(event.detail);
     };
 
-    window.addEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
+    window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
     
     // Load saved layout from localStorage if exists
     const savedLayout = localStorage.getItem('debugLayoutConfig');
@@ -91,9 +89,9 @@ const Home = () => {
     }
 
     return () => {
-      window.removeEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
+      window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
     };
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     loadUserProfile();
@@ -336,15 +334,17 @@ const Home = () => {
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
-              className="flex items-center justify-center"
+              className={`flex items-center justify-center ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
               }}
             >
               <button
-                onClick={() => setWarehouseOpen(true)}
-                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full flex items-center justify-center"
+                onClick={() => !isEditMode && setWarehouseOpen(true)}
+                className={`bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
+                  isEditMode ? 'cursor-move' : 'hover:from-blue-200 hover:to-blue-100 hover:scale-105'
+                }`}
                 style={{ minHeight: layoutConfig.warehouse.minHeight }}
               >
                 <div className="flex flex-col items-center">
@@ -354,23 +354,30 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
-                    className="w-40 h-40 md:w-52 md:h-52 object-contain"
+                    className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
+                  {isEditMode && (
+                    <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                      Warehouse
+                    </div>
+                  )}
                 </div>
               </button>
             </div>
 
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             <div 
-              className="flex items-center justify-center"
+              className={`flex items-center justify-center ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
               }}
             >
               <button
-                onClick={() => setMarketOpen(true)}
-                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full flex items-center justify-center"
+                onClick={() => !isEditMode && setMarketOpen(true)}
+                className={`bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
+                  isEditMode ? 'cursor-move' : 'hover:from-green-200 hover:to-green-100 hover:scale-105'
+                }`}
                 style={{ minHeight: layoutConfig.market.minHeight }}
               >
                 <div className="flex flex-col items-center">
@@ -380,8 +387,13 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
-                    className="w-40 h-40 md:w-52 md:h-52 object-contain"
+                    className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
+                  {isEditMode && (
+                    <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                      Market
+                    </div>
+                  )}
                 </div>
               </button>
             </div>
