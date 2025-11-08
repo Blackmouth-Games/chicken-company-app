@@ -68,10 +68,49 @@ const Home = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [resizing, setResizing] = useState<{ building: string; handle: string } | null>(null);
+  const [tempPosition, setTempPosition] = useState<{ col: number; row: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  
+  const TOTAL_COLUMNS = 25;
+  const GRID_GAP = 20;
   
   const saveLayoutToStorage = (config: LayoutConfig) => {
     localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
+  };
+
+  // Convert pixel position to grid coordinates
+  const pixelToGrid = (x: number, y: number) => {
+    if (!gridRef.current) return { col: 1, row: 1 };
+    
+    const rect = gridRef.current.getBoundingClientRect();
+    const relativeX = x - rect.left;
+    const relativeY = y - rect.top;
+    
+    const columnWidth = (rect.width - (GRID_GAP * (TOTAL_COLUMNS - 1))) / TOTAL_COLUMNS;
+    const rowHeight = 100; // Approximate row height
+    
+    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.round(relativeX / (columnWidth + GRID_GAP)) + 1));
+    const row = Math.max(1, Math.round(relativeY / (rowHeight + GRID_GAP)) + 1);
+    
+    return { col, row };
+  };
+
+  // Parse grid notation like "1 / 7" or "1 / span 6"
+  const parseGridNotation = (notation: string) => {
+    const parts = notation.split('/').map(p => p.trim());
+    const start = parseInt(parts[0]);
+    
+    if (parts[1].includes('span')) {
+      const span = parseInt(parts[1].replace('span', '').trim());
+      return { start, end: start + span };
+    } else {
+      return { start, end: parseInt(parts[1]) };
+    }
+  };
+
+  // Create grid notation
+  const createGridNotation = (start: number, end: number) => {
+    return `${start} / ${end}`;
   };
 
   const updateBuildingLayout = (building: keyof Pick<LayoutConfig, 'warehouse' | 'market'>, updates: Partial<LayoutConfig['warehouse']>) => {
@@ -92,10 +131,13 @@ const Home = () => {
     e.stopPropagation();
     setDraggedBuilding(buildingName);
     setIsDragging(true);
+    
+    const gridPos = pixelToGrid(e.clientX, e.clientY);
     setDragOffset({
       x: e.clientX,
       y: e.clientY
     });
+    setTempPosition(gridPos);
   };
 
   // Handle resize
@@ -116,27 +158,90 @@ const Home = () => {
       if (!gridRef.current) return;
 
       if (isDragging && draggedBuilding) {
-        // Simple visual feedback - you can enhance this to snap to grid
-        const deltaX = e.clientX - dragOffset.x;
-        const deltaY = e.clientY - dragOffset.y;
-        
-        // You would calculate new grid position here
-        console.log('Dragging', draggedBuilding, deltaX, deltaY);
+        const gridPos = pixelToGrid(e.clientX, e.clientY);
+        setTempPosition(gridPos);
       }
 
       if (resizing) {
-        const deltaX = e.clientX - dragOffset.x;
-        const deltaY = e.clientY - dragOffset.y;
+        const buildingKey = resizing.building as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
+        const currentConfig = layoutConfig[buildingKey];
         
-        // Calculate new size based on drag
-        console.log('Resizing', resizing.building, resizing.handle, deltaX, deltaY);
+        const colPos = parseGridNotation(currentConfig.gridColumn);
+        const rowPos = parseGridNotation(currentConfig.gridRow);
+        
+        const gridPos = pixelToGrid(e.clientX, e.clientY);
+        
+        let newColStart = colPos.start;
+        let newColEnd = colPos.end;
+        let newRowStart = rowPos.start;
+        let newRowEnd = rowPos.end;
+        
+        // Handle different resize directions
+        switch (resizing.handle) {
+          case 'nw':
+            newColStart = Math.min(gridPos.col, colPos.end - 2);
+            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            break;
+          case 'ne':
+            newColEnd = Math.max(gridPos.col, colPos.start + 2);
+            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            break;
+          case 'sw':
+            newColStart = Math.min(gridPos.col, colPos.end - 2);
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            break;
+          case 'se':
+            newColEnd = Math.max(gridPos.col, colPos.start + 2);
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            break;
+          case 'n':
+            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            break;
+          case 's':
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            break;
+          case 'w':
+            newColStart = Math.min(gridPos.col, colPos.end - 2);
+            break;
+          case 'e':
+            newColEnd = Math.max(gridPos.col, colPos.start + 2);
+            break;
+        }
+        
+        updateBuildingLayout(buildingKey, {
+          gridColumn: createGridNotation(newColStart, newColEnd),
+          gridRow: createGridNotation(newRowStart, newRowEnd)
+        });
       }
     };
 
     const handleMouseUp = () => {
+      if (isDragging && draggedBuilding && tempPosition) {
+        const buildingKey = draggedBuilding as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
+        const currentConfig = layoutConfig[buildingKey];
+        
+        const colSpan = parseGridNotation(currentConfig.gridColumn);
+        const rowSpan = parseGridNotation(currentConfig.gridRow);
+        
+        const width = colSpan.end - colSpan.start;
+        const height = rowSpan.end - rowSpan.start;
+        
+        // Update to new position while maintaining size
+        updateBuildingLayout(buildingKey, {
+          gridColumn: createGridNotation(tempPosition.col, tempPosition.col + width),
+          gridRow: createGridNotation(tempPosition.row, tempPosition.row + height)
+        });
+        
+        toast({
+          title: "Edificio movido",
+          description: `${draggedBuilding} movido a columna ${tempPosition.col}, fila ${tempPosition.row}`,
+        });
+      }
+      
       setIsDragging(false);
       setDraggedBuilding(null);
       setResizing(null);
+      setTempPosition(null);
     };
 
     if (isDragging || resizing) {
@@ -148,7 +253,7 @@ const Home = () => {
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, draggedBuilding, resizing, dragOffset]);
+  }, [isDragging, draggedBuilding, resizing, dragOffset, tempPosition, layoutConfig]);
 
   const addBelt = () => {
     setLayoutConfig(prev => {
@@ -486,7 +591,9 @@ const Home = () => {
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''}`}
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
+                isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
+              }`}
               style={{ 
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
@@ -510,9 +617,16 @@ const Home = () => {
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
                   {isEditMode && (
-                    <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
-                      {layoutConfig.warehouse.gridColumn} / {layoutConfig.warehouse.gridRow}
-                    </div>
+                    <>
+                      <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
+                        {layoutConfig.warehouse.gridColumn} / {layoutConfig.warehouse.gridRow}
+                      </div>
+                      {tempPosition && isDragging && draggedBuilding === 'warehouse' && (
+                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
+                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </button>
@@ -587,7 +701,9 @@ const Home = () => {
 
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
+                isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
+              }`}
               style={{ 
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
@@ -611,9 +727,16 @@ const Home = () => {
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
                   {isEditMode && (
-                    <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded font-mono">
-                      {layoutConfig.market.gridColumn} / {layoutConfig.market.gridRow}
-                    </div>
+                    <>
+                      <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded font-mono">
+                        {layoutConfig.market.gridColumn} / {layoutConfig.market.gridRow}
+                      </div>
+                      {tempPosition && isDragging && draggedBuilding === 'market' && (
+                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
+                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </button>
