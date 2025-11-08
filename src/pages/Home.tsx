@@ -265,21 +265,31 @@ const Home = () => {
           </button>
         </div>
 
-        {/* Grid Container - Responsive CSS Grid */}
-        <div className="max-w-6xl mx-auto">
-          {/* Grid with 7 columns on desktop: Warehouse | Left Corrals | Belt | Belt | Right Corrals | Belt | Market */}
+        {/* Grid Container - Responsive CSS Grid with fine grid overlay */}
+        <div className="max-w-6xl mx-auto relative">
+          {/* Fine grid overlay */}
           <div 
-            className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2 md:gap-3 auto-rows-fr items-center relative"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
-              backgroundSize: 'calc(100% / 3) 100%, 100% auto'
+              backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
+              backgroundSize: '20px 20px'
+            }}
+          />
+          {/* Grid with 21 columns (each building/belt element spans multiple): Warehouse(3) | Left Corrals(3) | Belt(3) | Belt(3) | Right Corrals(3) | Belt(3) | Market(3) */}
+          <div 
+            className="grid gap-2 md:gap-3 auto-rows-fr items-center relative"
+            style={{
+              gridTemplateColumns: 'repeat(21, 1fr)'
             }}
           >
             
-            {/* WAREHOUSE - Column 1, spans multiple rows */}
+            {/* WAREHOUSE - Columns 1-3, spans multiple rows */}
             <div 
-              className="col-start-1 row-start-1 row-span-full flex items-center justify-center"
-              style={{ gridRowEnd: `span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` }}
+              className="flex items-center justify-center"
+              style={{ 
+                gridColumn: '1 / 4',
+                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
+              }}
             >
               <button
                 onClick={() => setWarehouseOpen(true)}
@@ -295,15 +305,18 @@ const Home = () => {
               </button>
             </div>
 
-            {/* LEFT CORRALS - Column 2, each in its own row */}
+            {/* LEFT CORRALS - Columns 4-6, each spans 3 columns and 1 row */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
               return (
                 <div 
                   key={`left-${position}`}
-                  className="col-start-2 hidden sm:block"
-                  style={{ gridRow: index + 1 }}
+                  className="hidden sm:block"
+                  style={{ 
+                    gridColumn: '4 / 7',
+                    gridRow: index + 1 
+                  }}
                 >
                   <BuildingSlot
                     position={position}
@@ -316,10 +329,13 @@ const Home = () => {
               );
             })}
 
-            {/* VERTICAL CONVEYOR BELT - Columns 3-4, spans all rows + extends to warehouse */}
+            {/* VERTICAL CONVEYOR BELT - Columns 7-12, spans all rows + extends to warehouse */}
             <div 
-              className="col-start-2 sm:col-start-3 lg:col-span-2 row-start-1 row-span-full flex justify-center relative"
-              style={{ gridRowEnd: `span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` }}
+              className="flex justify-center relative"
+              style={{ 
+                gridColumn: '7 / 13',
+                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
+              }}
             >
               <div className="w-8 md:w-10 h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
                 {/* Belt pattern */}
@@ -332,8 +348,8 @@ const Home = () => {
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
               </div>
               
-              {/* Horizontal belt extension to warehouse (left side) */}
-              <div className="absolute left-0 top-0 h-8 md:h-10 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 shadow-lg border-y-2 border-pink-600 overflow-hidden"
+              {/* Horizontal belt extension to warehouse (left side) - connects to bottom of warehouse */}
+              <div className="absolute left-0 bottom-0 h-8 md:h-10 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 shadow-lg border-y-2 border-pink-600 overflow-hidden"
                    style={{ width: 'calc(50vw - 50%)', transform: 'translateX(-100%)' }}>
                 <div className="h-full w-full flex items-center justify-evenly">
                   {Array.from({ length: 30 }).map((_, i) => (
@@ -344,15 +360,17 @@ const Home = () => {
               </div>
             </div>
 
-            {/* RIGHT CORRALS - Column 5, each in its own row */}
+            {/* RIGHT CORRALS - Columns 13-15, each spans 3 columns and 1 row */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
               return (
                 <div 
                   key={`right-${position}`}
-                  className="col-start-3 sm:col-start-4 lg:col-start-5"
-                  style={{ gridRow: index + 1 }}
+                  style={{ 
+                    gridColumn: '13 / 16',
+                    gridRow: index + 1 
+                  }}
                 >
                   <BuildingSlot
                     position={position}
@@ -365,10 +383,13 @@ const Home = () => {
               );
             })}
 
-            {/* MARKET - Column 7, spans multiple rows */}
+            {/* MARKET - Columns 19-21, spans multiple rows */}
             <div 
-              className="col-start-3 sm:col-start-5 lg:col-start-7 row-start-1 row-span-full flex items-center justify-center"
-              style={{ gridRowEnd: `span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` }}
+              className="flex items-center justify-center"
+              style={{ 
+                gridColumn: '19 / 22',
+                gridRow: `1 / span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` 
+              }}
             >
               <button
                 onClick={() => setMarketOpen(true)}
