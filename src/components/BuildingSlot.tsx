@@ -27,39 +27,39 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
       <div className="relative z-10">
         <div
           onClick={onBuildingClick}
-          className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[200px] overflow-visible"
+          className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative min-h-[260px] md:min-h-[300px] overflow-visible"
         >
           {/* Level badge - Positioned outside to avoid clipping */}
-          <div className="absolute -top-4 -left-4 bg-green-600 text-white rounded-full w-11 h-11 flex items-center justify-center text-base font-bold shadow-lg z-20 border-2 border-white">
+          <div className="absolute -top-4 -left-4 bg-green-600 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-lg md:text-xl font-bold shadow-lg z-20 border-2 border-white">
             {building.level}
           </div>
 
-          <div className="flex flex-col h-full p-4 pt-6 pb-3">
+          <div className="flex flex-col h-full p-5 md:p-6 pt-7 md:pt-8 pb-4">
             {/* Building image - top right */}
             <div className="flex justify-end mb-2">
               <img 
                 src={getBuildingImage(building.building_type as BuildingType, building.level, 'A')} 
                 alt={`${building.building_type} nivel ${building.level}`}
-                className="w-24 h-24 object-contain"
+                className="w-28 h-28 md:w-36 md:h-36 object-contain"
               />
             </div>
             
             {/* Chickens area - show chickens walking around */}
-            <div className="flex-1 flex flex-wrap gap-1 content-start mb-2">
+            <div className="flex-1 flex flex-wrap gap-1.5 content-start mb-3">
               {Array.from({ length: visibleChickens }).map((_, i) => (
-                <div key={i} className="text-2xl animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>
+                <div key={i} className="text-3xl md:text-4xl animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>
                   🐔
                 </div>
               ))}
             </div>
 
             {/* Progress bar at bottom - more compact */}
-            <div className="space-y-0.5">
-              <div className="flex justify-between items-center text-xs">
+            <div className="space-y-1">
+              <div className="flex justify-between items-center text-sm md:text-base">
                 <span className="font-semibold text-green-700">🐔 {building.current_chickens}</span>
                 <span className="text-green-600">Max: {building.capacity}</span>
               </div>
-              <div className="w-full h-2.5 bg-green-200/50 rounded-full overflow-hidden border border-green-400">
+              <div className="w-full h-3 md:h-3.5 bg-green-200/50 rounded-full overflow-hidden border border-green-400">
                 <div 
                   className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
                   style={{ width: `${fillPercentage}%` }}
@@ -72,10 +72,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
         {/* Horizontal conveyor belt connecting to central belt */}
         <div 
           className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-3 md:h-4 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 z-30 shadow-lg border-y-2 border-pink-600 overflow-hidden",
+            "absolute top-1/2 -translate-y-1/2 h-4 md:h-5 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 z-30 shadow-lg border-y-2 border-pink-600 overflow-hidden",
             isLeftColumn 
-              ? "-right-6 md:-right-8 w-6 md:w-8" 
-              : "-left-6 md:-left-8 w-6 md:w-8"
+              ? "-right-8 md:-right-10 w-8 md:w-10" 
+              : "-left-8 md:-left-10 w-8 md:w-10"
           )}
         >
           {/* Belt pattern */}
@@ -95,10 +95,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     <div className="relative z-10">
       <div 
         onClick={() => onBuyClick(position)}
-        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[200px]"
+        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg min-h-[260px] md:min-h-[300px]"
       >
-        <div className="flex items-center justify-center h-16 w-16 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
-          <Plus className="h-8 w-8 text-amber-600" />
+        <div className="flex items-center justify-center h-20 w-20 md:h-24 md:w-24 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
+          <Plus className="h-10 w-10 md:h-12 md:w-12 text-amber-600" />
         </div>
       </div>
     </div>

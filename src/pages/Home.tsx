@@ -278,10 +278,10 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
           <div 
-            className="grid gap-0 auto-rows-fr items-stretch relative"
+            className="grid gap-4 md:gap-6 auto-rows-fr items-stretch relative"
             style={{
               gridTemplateColumns: 'repeat(25, 1fr)',
-              minHeight: '600px'
+              minHeight: '700px'
             }}
           >
             
@@ -295,16 +295,16 @@ const Home = () => {
             >
               <button
                 onClick={() => setWarehouseOpen(true)}
-                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[180px] flex items-center justify-center"
+                className="bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 hover:from-blue-200 hover:to-blue-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[240px] md:min-h-[280px] flex items-center justify-center"
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-xs md:text-sm font-bold shadow-md z-10">
+                  <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                   </div>
                   <img 
                     src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
-                    className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                    className="w-40 h-40 md:w-52 md:h-52 object-contain"
                   />
                 </div>
               </button>
@@ -320,16 +320,16 @@ const Home = () => {
             >
               <button
                 onClick={() => setMarketOpen(true)}
-                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[180px] flex items-center justify-center"
+                className="bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 hover:from-green-200 hover:to-green-100 transition-all hover:scale-105 relative shadow-lg w-full h-full min-h-[240px] md:min-h-[280px] flex items-center justify-center"
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-9 h-9 md:w-11 md:h-11 flex items-center justify-center text-xs md:text-sm font-bold shadow-md z-10">
+                  <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'market')?.level || 1}
                   </div>
                   <img 
                     src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
-                    className="w-32 h-32 md:w-40 md:h-40 object-contain"
+                    className="w-40 h-40 md:w-52 md:h-52 object-contain"
                   />
                 </div>
               </button>
