@@ -67,6 +67,8 @@ const Home = () => {
   const [draggedBuilding, setDraggedBuilding] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [resizing, setResizing] = useState<{ building: string; handle: string } | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   
   const saveLayoutToStorage = (config: LayoutConfig) => {
     localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
@@ -82,6 +84,71 @@ const Home = () => {
       return newConfig;
     });
   };
+
+  // Handle mouse drag for buildings
+  const handleBuildingMouseDown = (e: React.MouseEvent, buildingName: string) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedBuilding(buildingName);
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  // Handle resize
+  const handleResizeStart = (e: React.MouseEvent, buildingName: string, handle: string) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setResizing({ building: buildingName, handle });
+    setDragOffset({
+      x: e.clientX,
+      y: e.clientY
+    });
+  };
+
+  // Mouse move handler
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!gridRef.current) return;
+
+      if (isDragging && draggedBuilding) {
+        // Simple visual feedback - you can enhance this to snap to grid
+        const deltaX = e.clientX - dragOffset.x;
+        const deltaY = e.clientY - dragOffset.y;
+        
+        // You would calculate new grid position here
+        console.log('Dragging', draggedBuilding, deltaX, deltaY);
+      }
+
+      if (resizing) {
+        const deltaX = e.clientX - dragOffset.x;
+        const deltaY = e.clientY - dragOffset.y;
+        
+        // Calculate new size based on drag
+        console.log('Resizing', resizing.building, resizing.handle, deltaX, deltaY);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setDraggedBuilding(null);
+      setResizing(null);
+    };
+
+    if (isDragging || resizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, draggedBuilding, resizing, dragOffset]);
 
   const addBelt = () => {
     setLayoutConfig(prev => {
@@ -394,7 +461,11 @@ const Home = () => {
         </div>
 
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
-        <div className="max-w-7xl mx-auto relative" style={{ maxWidth: layoutConfig.grid.maxWidth }}>
+        <div 
+          ref={gridRef}
+          className="max-w-7xl mx-auto relative" 
+          style={{ maxWidth: layoutConfig.grid.maxWidth }}
+        >
           {/* Fine grid overlay */}
           <div 
             className="absolute inset-0 pointer-events-none"
@@ -422,10 +493,11 @@ const Home = () => {
               }}
             >
               <button
+                onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'warehouse')}
                 onClick={() => !isEditMode && setWarehouseOpen(true)}
                 className={`bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
-                  isEditMode ? 'cursor-move' : 'hover:from-blue-200 hover:to-blue-100 hover:scale-105'
-                }`}
+                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:from-blue-200 hover:to-blue-100 hover:scale-105'
+                } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
                 style={{ minHeight: layoutConfig.warehouse.minHeight }}
               >
                 <div className="flex flex-col items-center">
@@ -448,6 +520,42 @@ const Home = () => {
               {/* Edit Controls when in Edit Mode */}
               {isEditMode && (
                 <div className="absolute inset-0 pointer-events-none">
+                  {/* Resize handles in corners */}
+                  <div 
+                    className="absolute top-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'nw')}
+                  />
+                  <div 
+                    className="absolute top-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'ne')}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'sw')}
+                  />
+                  <div 
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'se')}
+                  />
+                  
+                  {/* Edge resize handles */}
+                  <div 
+                    className="absolute top-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'n')}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 's')}
+                  />
+                  <div 
+                    className="absolute left-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'w')}
+                  />
+                  <div 
+                    className="absolute right-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'e')}
+                  />
+                  
                   {/* Edit input overlay */}
                   <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2 text-xs">
@@ -486,10 +594,11 @@ const Home = () => {
               }}
             >
               <button
+                onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'market')}
                 onClick={() => !isEditMode && setMarketOpen(true)}
                 className={`bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
-                  isEditMode ? 'cursor-move' : 'hover:from-green-200 hover:to-green-100 hover:scale-105'
-                }`}
+                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:from-green-200 hover:to-green-100 hover:scale-105'
+                } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
                 style={{ minHeight: layoutConfig.market.minHeight }}
               >
                 <div className="flex flex-col items-center">
@@ -512,6 +621,42 @@ const Home = () => {
               {/* Edit Controls when in Edit Mode */}
               {isEditMode && (
                 <div className="absolute inset-0 pointer-events-none">
+                  {/* Resize handles in corners */}
+                  <div 
+                    className="absolute top-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'nw')}
+                  />
+                  <div 
+                    className="absolute top-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'ne')}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'sw')}
+                  />
+                  <div 
+                    className="absolute bottom-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'se')}
+                  />
+                  
+                  {/* Edge resize handles */}
+                  <div 
+                    className="absolute top-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'n')}
+                  />
+                  <div 
+                    className="absolute bottom-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 's')}
+                  />
+                  <div 
+                    className="absolute left-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'w')}
+                  />
+                  <div 
+                    className="absolute right-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    onMouseDown={(e) => handleResizeStart(e, 'market', 'e')}
+                  />
+                  
                   {/* Edit input overlay */}
                   <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-2 text-xs">
