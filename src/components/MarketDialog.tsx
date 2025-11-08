@@ -59,7 +59,15 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </Button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    <div className="text-9xl">{market?.selected_skin || getBuildingImage('market', currentLevel)}</div>
+                    {market?.selected_skin ? (
+                      <div className="text-9xl">{market.selected_skin}</div>
+                    ) : (
+                      <img 
+                        src={getBuildingImage('market', currentLevel, 'A')} 
+                        alt="Market" 
+                        className="w-52 h-52 object-contain"
+                      />
+                    )}
                     <div className="text-center">
                       <h3 className="font-bold text-green-900 text-lg">Market</h3>
                       <p className="text-sm text-green-700">Lvl {currentLevel}</p>
