@@ -30,8 +30,8 @@ const LayoutEditor = () => {
 
   const resetLayout = () => {
     const defaultConfig = {
-      warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '240px' },
-      market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
+      warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '120px' },
+      market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '120px' },
       leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
       rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
       belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],

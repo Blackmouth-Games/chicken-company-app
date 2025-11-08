@@ -25,8 +25,8 @@ export interface LayoutConfig {
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
-  warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '240px' },
-  market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
+  warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '120px' },
+  market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '120px' },
   leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
   rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],
@@ -201,35 +201,35 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         let newRowStart = rowPos.start;
         let newRowEnd = rowPos.end;
         
-        // Calculate new dimensions based on handle
+        // Calculate new dimensions based on handle (minimum 1x1)
         switch (resizing.handle) {
           case 'nw':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            newColStart = Math.min(gridPos.col, colPos.end - 1);
+            newRowStart = Math.min(gridPos.row, rowPos.end - 1);
             break;
           case 'ne':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            newColEnd = Math.max(gridPos.col, colPos.start + 1);
+            newRowStart = Math.min(gridPos.row, rowPos.end - 1);
             break;
           case 'sw':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            newColStart = Math.min(gridPos.col, colPos.end - 1);
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 1);
             break;
           case 'se':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            newColEnd = Math.max(gridPos.col, colPos.start + 1);
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 1);
             break;
           case 'n':
-            newRowStart = Math.min(gridPos.row, rowPos.end - 2);
+            newRowStart = Math.min(gridPos.row, rowPos.end - 1);
             break;
           case 's':
-            newRowEnd = Math.max(gridPos.row, rowPos.start + 2);
+            newRowEnd = Math.max(gridPos.row, rowPos.start + 1);
             break;
           case 'w':
-            newColStart = Math.min(gridPos.col, colPos.end - 2);
+            newColStart = Math.min(gridPos.col, colPos.end - 1);
             break;
           case 'e':
-            newColEnd = Math.max(gridPos.col, colPos.start + 2);
+            newColEnd = Math.max(gridPos.col, colPos.start + 1);
             break;
         }
         
