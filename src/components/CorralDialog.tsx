@@ -128,7 +128,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Valor:</span>
-              <span className="text-sm ml-auto">0.000 $ABCD</span>
+              <span className="text-sm ml-auto">0.000 $TON</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -149,13 +149,13 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Total Obtenido:</span>
-              <span className="text-sm ml-auto">0.000 $ABCD</span>
+              <span className="text-sm ml-auto">0.000 $TON</span>
             </div>
 
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium">Earn esperado:</span>
-              <span className="text-sm ml-auto">{earnRate} $ABCD / Day</span>
+              <span className="text-sm ml-auto">{earnRate} $TON / Day</span>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
           {/* Withdraw Section */}
           <div className="flex gap-2">
             <div className="flex-1 bg-muted/50 rounded-lg p-3 border border-border text-center">
-              <div className="text-sm">0.000 $ABCD</div>
+              <div className="text-sm">0.000 $TON</div>
             </div>
             <Button variant="outline" className="px-6">
               WithDraw

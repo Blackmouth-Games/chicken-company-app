@@ -59,7 +59,7 @@ export const BuyBuildingDialog = ({
           <div className="w-full px-4">
             <div className="bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg p-3 text-center">
               <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                0.000 $ABCD
+                0.000 $TON
               </p>
             </div>
           </div>

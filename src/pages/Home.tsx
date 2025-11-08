@@ -268,7 +268,13 @@ const Home = () => {
         {/* Grid Container - Responsive CSS Grid */}
         <div className="max-w-6xl mx-auto">
           {/* Grid with 7 columns on desktop: Warehouse | Left Corrals | Belt | Belt | Right Corrals | Belt | Market */}
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2 md:gap-3 auto-rows-fr items-center">
+          <div 
+            className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-7 gap-2 md:gap-3 auto-rows-fr items-center relative"
+            style={{
+              backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
+              backgroundSize: 'calc(100% / 3) 100%, 100% auto'
+            }}
+          >
             
             {/* WAREHOUSE - Column 1, spans multiple rows */}
             <div 
@@ -310,9 +316,9 @@ const Home = () => {
               );
             })}
 
-            {/* VERTICAL CONVEYOR BELT - Columns 3-4, spans all rows */}
+            {/* VERTICAL CONVEYOR BELT - Columns 3-4, spans all rows + extends to warehouse */}
             <div 
-              className="col-start-2 sm:col-start-3 lg:col-span-2 row-start-1 row-span-full flex justify-center"
+              className="col-start-2 sm:col-start-3 lg:col-span-2 row-start-1 row-span-full flex justify-center relative"
               style={{ gridRowEnd: `span ${Math.max(4, Math.ceil(TOTAL_SLOTS / 2))}` }}
             >
               <div className="w-8 md:w-10 h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
@@ -324,6 +330,17 @@ const Home = () => {
                 </div>
                 {/* Shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+              </div>
+              
+              {/* Horizontal belt extension to warehouse (left side) */}
+              <div className="absolute left-0 top-0 h-8 md:h-10 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 shadow-lg border-y-2 border-pink-600 overflow-hidden"
+                   style={{ width: 'calc(50vw - 50%)', transform: 'translateX(-100%)' }}>
+                <div className="h-full w-full flex items-center justify-evenly">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div key={i} className="w-0.5 h-3 bg-pink-700 rounded-full shadow-inner" />
+                  ))}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               </div>
             </div>
 

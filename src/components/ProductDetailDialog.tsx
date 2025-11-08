@@ -236,7 +236,7 @@ export const ProductDetailDialog = ({ open, onOpenChange, product, isPurchased =
             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-center">
               <p className="text-xs text-muted-foreground mb-1">Precio</p>
               <p className="text-xl font-bold text-green-600">
-                {product.price_ton} $ABCD
+                {product.price_ton} $TON
               </p>
             </div>
 
