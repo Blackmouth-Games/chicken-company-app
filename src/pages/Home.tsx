@@ -345,8 +345,13 @@ const Home = () => {
       addBelt();
     };
 
+    const handleLayoutUpdate = (event: CustomEvent<any>) => {
+      setLayoutConfig(event.detail);
+    };
+
     window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
     window.addEventListener('addBelt', handleAddBelt as EventListener);
+    window.addEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
     
     // Load saved layout from localStorage if exists
     const savedLayout = localStorage.getItem('debugLayoutConfig');
@@ -366,6 +371,7 @@ const Home = () => {
     return () => {
       window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
       window.removeEventListener('addBelt', handleAddBelt as EventListener);
+      window.removeEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
     };
   }, []);
 

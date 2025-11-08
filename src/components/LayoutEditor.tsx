@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Download, Plus } from "lucide-react";
+import { Layout, Download, Plus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -26,6 +26,25 @@ const LayoutEditor = () => {
 
   const addBelt = () => {
     window.dispatchEvent(new CustomEvent('addBelt'));
+  };
+
+  const resetLayout = () => {
+    const defaultConfig = {
+      warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '240px' },
+      market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '240px' },
+      leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
+      rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
+      belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],
+      grid: { gap: '20px', maxWidth: '1600px' },
+    };
+    
+    localStorage.setItem('debugLayoutConfig', JSON.stringify(defaultConfig));
+    window.dispatchEvent(new CustomEvent('layoutConfigUpdate', { detail: defaultConfig }));
+    
+    toast({
+      title: "Layout Restaurado",
+      description: "El layout ha sido restaurado a valores por defecto",
+    });
   };
 
   const exportLayout = () => {
@@ -103,16 +122,28 @@ const LayoutEditor = () => {
             {isEditMode ? "Desactivar Edición" : "Activar Edición"}
           </Button>
           {isEditMode && (
-            <Button
-              onClick={addBelt}
-              size="sm"
-              variant="outline"
-              className="gap-2"
-              title="Agregar cinta transportadora"
-            >
-              <Plus className="h-4 w-4" />
-              Agregar Cinta
-            </Button>
+            <>
+              <Button
+                onClick={addBelt}
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                title="Agregar cinta transportadora"
+              >
+                <Plus className="h-4 w-4" />
+                Cinta
+              </Button>
+              <Button
+                onClick={resetLayout}
+                size="sm"
+                variant="outline"
+                className="gap-2 text-orange-600 hover:text-orange-700"
+                title="Restaurar layout por defecto"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            </>
           )}
           <Button
             onClick={exportLayout}
