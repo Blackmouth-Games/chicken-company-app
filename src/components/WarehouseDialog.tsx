@@ -6,7 +6,7 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Palette } from "lucide-react";
+import { Palette, ExternalLink } from "lucide-react";
 import { getBuildingImage } from "@/lib/buildingImages";
 
 interface WarehouseDialogProps {
@@ -47,22 +47,24 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
             {/* Content */}
             <div className="flex-1 overflow-y-auto relative">
               <div className="max-w-2xl mx-auto p-6 space-y-6">
-                {/* Warehouse Image */}
-                <div className="flex flex-col items-center gap-3">
-                  <div className="text-9xl">{warehouse?.selected_skin || getBuildingImage('warehouse', currentLevel)}</div>
+                {/* Warehouse Card with Edit Button */}
+                <div className="relative border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-6">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowSkinSelector(true)}
+                    className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-200"
+                  >
+                    <ExternalLink className="h-4 w-4 text-blue-700" />
+                  </Button>
                   
-                  {/* Edit Skin Button */}
-                  {warehouse && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowSkinSelector(true)}
-                      className="border-blue-300 hover:bg-blue-100"
-                    >
-                      <Palette className="w-4 h-4 mr-2" />
-                      Cambiar apariencia
-                    </Button>
-                  )}
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="text-9xl">{warehouse?.selected_skin || getBuildingImage('warehouse', currentLevel)}</div>
+                    <div className="text-center">
+                      <h3 className="font-bold text-blue-900 text-lg">Almacén</h3>
+                      <p className="text-sm text-blue-700">Lvl {currentLevel}</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Current Level */}
