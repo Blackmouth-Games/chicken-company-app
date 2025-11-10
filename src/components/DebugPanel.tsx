@@ -22,6 +22,7 @@ const DebugPanel = () => {
   const [layoutText, setLayoutText] = useState<string>("");
   const [beltCount, setBeltCount] = useState<number>(0);
   const [gap, setGap] = useState<string>("20px");
+  const [beltDebugInfo, setBeltDebugInfo] = useState<any>(null);
 
   // Listen to layout changes
   useEffect(() => {
@@ -39,11 +40,14 @@ const DebugPanel = () => {
     refreshLayout();
     const onLayoutUpdate = () => refreshLayout();
     const onEditChange = (e: any) => setIsEditMode(!!e.detail);
+    const onBeltDebugInfo = (e: any) => setBeltDebugInfo(e.detail);
     window.addEventListener('layoutConfigUpdate', onLayoutUpdate as any);
     window.addEventListener('layoutEditModeChange', onEditChange as any);
+    window.addEventListener('beltDebugInfo', onBeltDebugInfo as any);
     return () => {
       window.removeEventListener('layoutConfigUpdate', onLayoutUpdate as any);
       window.removeEventListener('layoutEditModeChange', onEditChange as any);
+      window.removeEventListener('beltDebugInfo', onBeltDebugInfo as any);
     };
   }, []);
 
@@ -332,6 +336,72 @@ const DebugPanel = () => {
                   </pre>
                 </div>
               </div>
+
+              {/* Belt Debug Info */}
+              {beltDebugInfo && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">🔧 Debug de Cintas</h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <div>
+                      <p><strong>Total cintas automáticas:</strong> {beltDebugInfo.totalAutoBelts}</p>
+                      <p><strong>Total cintas manuales:</strong> {beltDebugInfo.manualBelts}</p>
+                      <p><strong>Total cintas:</strong> {beltDebugInfo.totalBelts}</p>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Cintas izquierda:</strong> {beltDebugInfo.leftBelts.count}</p>
+                      {beltDebugInfo.leftBelts.belts.length > 0 && (
+                        <ul className="text-xs mt-1 space-y-1">
+                          {beltDebugInfo.leftBelts.belts.map((b: any, i: number) => (
+                            <li key={i}>- {b.id}: Row {b.row}, Col {b.col}, Dir {b.direction}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Cintas derecha:</strong> {beltDebugInfo.rightBelts.count}</p>
+                      {beltDebugInfo.rightBelts.belts.length > 0 && (
+                        <ul className="text-xs mt-1 space-y-1">
+                          {beltDebugInfo.rightBelts.belts.map((b: any, i: number) => (
+                            <li key={i}>- {b.id}: Row {b.row}, Col {b.col}, Dir {b.direction}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Cintas centro:</strong> {beltDebugInfo.centerBelts.count}</p>
+                      {beltDebugInfo.centerBelts.firstRow && (
+                        <p className="text-xs">Primera fila: {beltDebugInfo.centerBelts.firstRow}, Última fila: {beltDebugInfo.centerBelts.lastRow}</p>
+                      )}
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Configuración:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>Left corrals startRow: {beltDebugInfo.config.leftCorralsStartRow}, rowSpan: {beltDebugInfo.config.leftCorralsRowSpan}</li>
+                        <li>Right corrals startRow: {beltDebugInfo.config.rightCorralsStartRow}, rowSpan: {beltDebugInfo.config.rightCorralsRowSpan}</li>
+                        <li>Slots por lado: {beltDebugInfo.config.slotsPerSide}</li>
+                        <li>Total slots: {beltDebugInfo.config.totalSlots}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(beltDebugInfo, null, 2));
+                          toast({
+                            title: "Info copiada",
+                            description: "Información de cintas copiada al portapapeles",
+                          });
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Copy className="h-3 w-3 mr-2" />
+                        Copiar info de cintas
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

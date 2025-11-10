@@ -511,6 +511,43 @@ const Home = () => {
   const autoCorralBelts = generateCorralBelts();
   const manualBelts = layoutConfig.belts || [];
   const allBelts = [...autoCorralBelts, ...manualBelts];
+  
+  // Debug: Send belt information to DebugPanel
+  useEffect(() => {
+    const leftBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-left-'));
+    const rightBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-right-'));
+    const centerBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-center-'));
+    
+    const beltDebugInfo = {
+      totalAutoBelts: autoCorralBelts.length,
+      leftBelts: {
+        count: leftBelts.length,
+        belts: leftBelts.map(b => ({ id: b.id, row: b.gridRow, col: b.gridColumn, direction: b.direction }))
+      },
+      rightBelts: {
+        count: rightBelts.length,
+        belts: rightBelts.map(b => ({ id: b.id, row: b.gridRow, col: b.gridColumn, direction: b.direction }))
+      },
+      centerBelts: {
+        count: centerBelts.length,
+        firstRow: centerBelts.length > 0 ? centerBelts[0].gridRow : null,
+        lastRow: centerBelts.length > 0 ? centerBelts[centerBelts.length - 1].gridRow : null
+      },
+      config: {
+        leftCorralsStartRow: layoutConfig.leftCorrals.startRow,
+        leftCorralsRowSpan: layoutConfig.leftCorrals.rowSpan,
+        rightCorralsStartRow: layoutConfig.rightCorrals.startRow,
+        rightCorralsRowSpan: layoutConfig.rightCorrals.rowSpan,
+        slotsPerSide: Math.ceil(TOTAL_SLOTS / 2),
+        totalSlots: TOTAL_SLOTS
+      },
+      manualBelts: manualBelts.length,
+      totalBelts: allBelts.length
+    };
+    
+    // Send to DebugPanel via custom event
+    window.dispatchEvent(new CustomEvent('beltDebugInfo', { detail: beltDebugInfo }));
+  }, [autoCorralBelts, allBelts, manualBelts, layoutConfig.leftCorrals.startRow, layoutConfig.rightCorrals.startRow, layoutConfig.leftCorrals.rowSpan, layoutConfig.rightCorrals.rowSpan, TOTAL_SLOTS]);
 
   const handleUpgradeComplete = () => {
     if (userId) {
