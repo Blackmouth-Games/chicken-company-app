@@ -174,8 +174,13 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
-    setResizing({ building: buildingName, handle });
-    setDragOffset({ x: e.clientX, y: e.clientY });
+    
+    // Prevent resizing from triggering on the building itself
+    const target = e.target as HTMLElement;
+    if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
+      setResizing({ building: buildingName, handle });
+      setDragOffset({ x: e.clientX, y: e.clientY });
+    }
   };
 
   // Handle mouse move for drag and resize
@@ -329,6 +334,62 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
+  // Update minHeight for buildings
+  const updateMinHeight = (building: 'warehouse' | 'market', minHeight: string) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        [building]: {
+          ...prev[building],
+          minHeight,
+        },
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  // Handle grid cell click to add belt
+  const handleGridClick = (e: React.MouseEvent) => {
+    if (!isEditMode) return;
+    
+    const gridPos = pixelToGrid(e.clientX, e.clientY);
+    
+    // Show direction picker dialog
+    const direction = window.prompt(
+      `Agregar cinta en Col ${gridPos.col}, Row ${gridPos.row}\n\nEscribe la dirección:\n- "vertical" o "v" para vertical\n- "horizontal" o "h" para horizontal`,
+      "vertical"
+    );
+    
+    if (!direction) return;
+    
+    const isVertical = direction.toLowerCase().startsWith('v');
+    const totalRows = getTotalRows();
+    
+    const newBelt: BeltConfig = {
+      id: `belt-${Date.now()}`,
+      gridColumn: isVertical 
+        ? `${gridPos.col} / ${gridPos.col + 1}` 
+        : `${gridPos.col} / span 6`,
+      gridRow: isVertical 
+        ? `${gridPos.row} / span ${totalRows - gridPos.row + 1}` 
+        : `${gridPos.row} / ${gridPos.row + 1}`,
+    };
+    
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        belts: [...prev.belts, newBelt],
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: "Cinta agregada",
+        description: `Nueva cinta ${isVertical ? 'vertical' : 'horizontal'} en Col ${gridPos.col}, Row ${gridPos.row}`,
+      });
+      return newConfig;
+    });
+  };
+
   // Listen for external events
   useEffect(() => {
     const handleEditModeChange = (event: CustomEvent<boolean>) => {
@@ -370,9 +431,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     handleBuildingMouseDown,
     handleResizeStart,
     updateBuildingLayout,
+    updateMinHeight,
     addBelt,
     removeBelt,
     updateBelt,
     setLayoutConfig,
+    handleGridClick,
   };
 };

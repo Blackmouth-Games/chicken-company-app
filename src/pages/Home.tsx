@@ -53,10 +53,12 @@ const Home = () => {
     handleBuildingMouseDown,
     handleResizeStart,
     updateBuildingLayout,
+    updateMinHeight,
     addBelt,
     removeBelt,
     updateBelt,
     setLayoutConfig,
+    handleGridClick,
   } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
@@ -294,6 +296,7 @@ const Home = () => {
           ref={gridRef}
           className="max-w-7xl mx-auto relative" 
           style={{ maxWidth: layoutConfig.grid.maxWidth }}
+          onClick={handleGridClick}
         >
           {/* Fine grid overlay */}
           <div 
@@ -360,43 +363,43 @@ const Home = () => {
                 <div className="absolute inset-0 pointer-events-none">
                   {/* Resize handles in corners */}
                   <div 
-                    className="absolute top-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'nw')}
                   />
                   <div 
-                    className="absolute top-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'ne')}
                   />
                   <div 
-                    className="absolute bottom-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 left-0 w-4 h-4 bg-blue-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'sw')}
                   />
                   <div 
-                    className="absolute bottom-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-blue-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'se')}
                   />
                   
                   {/* Edge resize handles */}
                   <div 
-                    className="absolute top-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'n')}
                   />
                   <div 
-                    className="absolute bottom-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 left-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 's')}
                   />
                   <div 
-                    className="absolute left-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute left-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'w')}
                   />
                   <div 
-                    className="absolute right-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute right-0 top-1/2 w-4 h-4 bg-blue-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'e')}
                   />
                   
                   {/* Edit input overlay */}
-                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex gap-2 text-xs">
+                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs mb-1">
                       <label className="flex-1">
                         <span className="block text-gray-600">Columns:</span>
                         <input
@@ -418,6 +421,18 @@ const Home = () => {
                         />
                       </label>
                     </div>
+                    <label className="block">
+                      <span className="block text-gray-600 text-xs">Min Height (px):</span>
+                      <input
+                        type="number"
+                        value={parseInt(layoutConfig.warehouse.minHeight)}
+                        onChange={(e) => updateMinHeight('warehouse', `${e.target.value}px`)}
+                        className="w-full px-2 py-1 border rounded text-xs"
+                        placeholder="120"
+                        min="60"
+                        max="500"
+                      />
+                    </label>
                   </div>
                 </div>
               )}
@@ -470,43 +485,43 @@ const Home = () => {
                 <div className="absolute inset-0 pointer-events-none">
                   {/* Resize handles in corners */}
                   <div 
-                    className="absolute top-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'nw')}
                   />
                   <div 
-                    className="absolute top-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'ne')}
                   />
                   <div 
-                    className="absolute bottom-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 left-0 w-4 h-4 bg-green-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'sw')}
                   />
                   <div 
-                    className="absolute bottom-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-green-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'se')}
                   />
                   
                   {/* Edge resize handles */}
                   <div 
-                    className="absolute top-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute top-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'n')}
                   />
                   <div 
-                    className="absolute bottom-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute bottom-0 left-1/2 w-4 h-4 bg-green-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 's')}
                   />
                   <div 
-                    className="absolute left-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute left-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'w')}
                   />
                   <div 
-                    className="absolute right-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform"
+                    className="resize-handle absolute right-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'e')}
                   />
                   
                   {/* Edit input overlay */}
-                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="flex gap-2 text-xs">
+                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs mb-1">
                       <label className="flex-1">
                         <span className="block text-gray-600">Columns:</span>
                         <input
@@ -528,6 +543,18 @@ const Home = () => {
                         />
                       </label>
                     </div>
+                    <label className="block">
+                      <span className="block text-gray-600 text-xs">Min Height (px):</span>
+                      <input
+                        type="number"
+                        value={parseInt(layoutConfig.market.minHeight)}
+                        onChange={(e) => updateMinHeight('market', `${e.target.value}px`)}
+                        className="w-full px-2 py-1 border rounded text-xs"
+                        placeholder="120"
+                        min="60"
+                        max="500"
+                      />
+                    </label>
                   </div>
                 </div>
               )}
@@ -542,6 +569,7 @@ const Home = () => {
                   gridColumn: belt.gridColumn,
                   gridRow: belt.gridRow
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
                   {/* Belt pattern */}
@@ -554,24 +582,27 @@ const Home = () => {
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
                   
                   {isEditMode && (
-                    <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono">
-                      Belt {idx + 1}
-                    </div>
+                    <>
+                      <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono">
+                        Belt {idx + 1}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeBelt(belt.id);
+                        }}
+                        className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 font-bold z-50"
+                        title="Eliminar cinta"
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
                 </div>
                 
                 {/* Edit Controls */}
                 {isEditMode && (
-                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-pink-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 min-w-[200px]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-pink-700">⚙️ Cinta {idx + 1}</span>
-                      <button
-                        onClick={() => removeBelt(belt.id)}
-                        className="text-xs bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600"
-                      >
-                        Eliminar
-                      </button>
-                    </div>
+                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-pink-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 min-w-[200px]">
                     <div className="flex gap-2 text-xs">
                       <label className="flex-1">
                         <span className="block text-gray-600">Column:</span>
@@ -581,6 +612,7 @@ const Home = () => {
                           onChange={(e) => updateBelt(belt.id, { gridColumn: e.target.value })}
                           className="w-full px-2 py-1 border rounded"
                           placeholder="13 / 14"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </label>
                       <label className="flex-1">
@@ -591,6 +623,7 @@ const Home = () => {
                           onChange={(e) => updateBelt(belt.id, { gridRow: e.target.value })}
                           className="w-full px-2 py-1 border rounded"
                           placeholder="1 / span 20"
+                          onClick={(e) => e.stopPropagation()}
                         />
                       </label>
                     </div>
