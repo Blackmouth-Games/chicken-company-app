@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { isTelegramWebApp, getTelegramUser } from "@/lib/telegram";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 // Simple in-memory log store attached to window for persistence across re-renders
 declare global {
