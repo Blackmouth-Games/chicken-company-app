@@ -63,7 +63,18 @@
     "horizontal": "Horizontal",
     "belt": "Belt",
     "moveTo": "Move to",
-    "addBeltPrompt": "Add belt at column {{col}}, row {{row}}. Which direction?"
+    "addBeltPrompt": "Add belt at column {{col}}, row {{row}}. Which direction?",
+    "selectDirection": "Select direction",
+    "selectType": "Select type",
+    "direction_north": "North ↑",
+    "direction_south": "South ↓",
+    "direction_east": "East →",
+    "direction_west": "West ←",
+    "type_straight": "Straight",
+    "type_curve_ne": "Curve NE ↗",
+    "type_curve_nw": "Curve NW ↖",
+    "type_curve_se": "Curve SE ↘",
+    "type_curve_sw": "Curve SW ↙"
   },
   "common": {
     "close": "Close",

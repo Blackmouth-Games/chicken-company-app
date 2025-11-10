@@ -18,6 +18,7 @@ import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
 import { AddBeltDialog } from "@/components/AddBeltDialog";
+import { ConveyorBelt } from "@/components/ConveyorBelt";
 import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -654,85 +655,18 @@ const Home = () => {
               const isBeltDragging = draggedBelt === belt.id;
               
               return (
-                <div 
+                <ConveyorBelt
                   key={belt.id}
-                  className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-pink-500' : ''} ${
-                    isBeltDragging ? 'ring-4 ring-pink-600 ring-offset-4 opacity-50' : ''
-                  }`}
-                  style={{ 
-                    gridColumn: belt.gridColumn,
-                    gridRow: belt.gridRow
-                  }}
-                  onClick={(e) => e.stopPropagation()}
+                  belt={belt}
+                  idx={idx}
+                  isEditMode={isEditMode}
+                  isDragging={isBeltDragging}
+                  tempPosition={beltTempPosition}
                   onMouseDown={(e) => isEditMode && handleBeltMouseDown(e, belt.id)}
-                  data-belt={belt.id}
-                >
-                  <div className={`w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden ${
-                    isEditMode ? 'cursor-move' : ''
-                  }`}>
-                    {/* Belt pattern */}
-                    <div className="h-full w-full flex flex-col items-center justify-evenly">
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
-                      ))}
-                    </div>
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                    
-                    {isEditMode && (
-                      <>
-                        <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono pointer-events-none">
-                          Belt {idx + 1}
-                        </div>
-                        {beltTempPosition && isBeltDragging && (
-                          <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none">
-                            → Col {beltTempPosition.col}, Row {beltTempPosition.row}
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeBelt(belt.id);
-                          }}
-                          className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 font-bold z-50"
-                          title="Eliminar cinta"
-                        >
-                          ✕
-                        </button>
-                      </>
-                    )}
-                  </div>
-                
-                {/* Edit Controls */}
-                {isEditMode && (
-                  <div className="absolute -bottom-20 left-0 right-0 bg-white border-2 border-pink-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 min-w-[200px]">
-                    <div className="flex gap-2 text-xs">
-                      <label className="flex-1">
-                        <span className="block text-gray-600">Column:</span>
-                        <input
-                          type="text"
-                          value={belt.gridColumn}
-                          onChange={(e) => updateBelt(belt.id, { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
-                          placeholder="13 / 14"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </label>
-                      <label className="flex-1">
-                        <span className="block text-gray-600">Row:</span>
-                        <input
-                          type="text"
-                          value={belt.gridRow}
-                          onChange={(e) => updateBelt(belt.id, { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
-                          placeholder="1 / span 20"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  onRemove={() => removeBelt(belt.id)}
+                  onUpdateColumn={(value) => updateBelt(belt.id, { gridColumn: value })}
+                  onUpdateRow={(value) => updateBelt(belt.id, { gridRow: value })}
+                />
               );
             })}
 
@@ -921,9 +855,9 @@ const Home = () => {
         open={addBeltDialogOpen} 
         onOpenChange={setAddBeltDialogOpen}
         gridPosition={beltGridPosition}
-        onAddBelt={(direction) => {
+        onAddBelt={(direction, type) => {
           if (beltGridPosition) {
-            addBeltAtPosition(beltGridPosition.col, beltGridPosition.row, direction);
+            addBeltAtPosition(beltGridPosition.col, beltGridPosition.row, direction, type);
           }
         }}
       />

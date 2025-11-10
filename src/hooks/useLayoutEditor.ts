@@ -14,6 +14,8 @@ interface BeltConfig {
   id: string;
   gridColumn: string;
   gridRow: string;
+  direction: 'north' | 'south' | 'east' | 'west';
+  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
 }
 
 export interface LayoutConfig {
@@ -30,7 +32,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '120px' },
   leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
   rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
-  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20' }],
+  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20', direction: 'south', type: 'straight' }],
   grid: { gap: '20px', maxWidth: '1600px' },
 };
 
@@ -346,6 +348,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         id: `belt-${Date.now()}`,
         gridColumn: '13 / 14',
         gridRow: '1 / span 20',
+        direction: 'south',
+        type: 'straight',
       };
       const newConfig = {
         ...prev,
@@ -422,19 +426,26 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     }));
   };
 
-  // Add belt with specified direction
-  const addBeltAtPosition = (col: number, row: number, direction: 'vertical' | 'horizontal') => {
-    const isVertical = direction === 'vertical';
+  // Add belt with specified direction and type
+  const addBeltAtPosition = (
+    col: number, 
+    row: number, 
+    direction: 'north' | 'south' | 'east' | 'west',
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'
+  ) => {
     const totalRows = getTotalRows();
+    const isVertical = direction === 'north' || direction === 'south';
     
     const newBelt: BeltConfig = {
       id: `belt-${Date.now()}`,
       gridColumn: isVertical 
         ? `${col} / ${col + 1}` 
-        : `${col} / span 6`,
+        : `${col} / span 3`,
       gridRow: isVertical 
-        ? `${row} / span ${totalRows - row + 1}` 
+        ? `${row} / span 3` 
         : `${row} / ${row + 1}`,
+      direction,
+      type,
     };
     
     setLayoutConfig(prev => {
@@ -446,7 +457,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       toast({
         title: t('layoutEditor.beltAdded'),
         description: t('layoutEditor.beltAddedAt', { 
-          direction: isVertical ? t('layoutEditor.vertical') : t('layoutEditor.horizontal'),
+          direction: t(`layoutEditor.direction_${direction}`),
           col: col.toString(), 
           row: row.toString() 
         }),
