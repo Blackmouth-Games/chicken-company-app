@@ -30,7 +30,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative h-full overflow-hidden flex flex-col"
         >
           {/* Level badge - Positioned outside to avoid clipping */}
-          <div className="absolute -top-4 -left-4 bg-green-600 text-white rounded-full w-12 h-12 md:w-14 md:h-14 flex items-center justify-center text-lg md:text-xl font-bold shadow-lg z-20 border-2 border-white">
+          <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center text-xs md:text-sm font-bold shadow-lg z-20 border-2 border-white">
             {building.level}
           </div>
 

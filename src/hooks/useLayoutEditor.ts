@@ -42,11 +42,11 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
   leftCorrals: { gridColumn: '3 / 10', gap: '12px', startRow: 14, rowSpan: 4 },
   rightCorrals: { gridColumn: '16 / 23', gap: '12px', startRow: 14, rowSpan: 4 },
-  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
+  belts: [{ id: 'belt-1', gridColumn: '16 / 17', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
   grid: { gap: '12px', maxWidth: '100vw', totalRows: 40 },
 };
 
-const TOTAL_COLUMNS = 25;
+const TOTAL_COLUMNS = 30;
 const MAX_TOTAL_ROWS = 40;
 
 export const useLayoutEditor = (beltSpanForRows: number = 20) => {

@@ -95,7 +95,7 @@ const Home = () => {
       const el = gridRef.current as HTMLDivElement | null;
       if (!el) return;
 
-      const columns = 25;
+      const columns = 30;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
       const rect = el.getBoundingClientRect();
       const width = rect.width;
@@ -413,7 +413,7 @@ const Home = () => {
             <>
               {/* Column numbers */}
               <div className="absolute -top-6 left-0 right-0 flex pointer-events-none" style={{ gap: layoutConfig.grid.gap }}>
-                {Array.from({ length: 25 }).map((_, i) => (
+                {Array.from({ length: 30 }).map((_, i) => (
                   <div key={`col-${i}`} className="flex-1 text-center text-xs font-mono text-foreground/60">
                     {i + 1}
                   </div>
@@ -437,18 +437,45 @@ const Home = () => {
               backgroundImage: isEditMode 
                 ? 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)' 
                 : 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
-              backgroundSize: `${cellSize}px ${cellSize}px`
+              backgroundSize: `${
+                cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
+              }px ${
+                cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
+              }px`
             }}
           />
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
             className="grid items-stretch relative w-full max-w-[1600px] mx-auto"
             style={{
-              gridTemplateColumns: `repeat(25, ${cellSize}px)`,
+              gridTemplateColumns: `repeat(30, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
             }}
           >
+            {/* Per-cell labels for debugging alignment (columns index at top-left) */}
+            {isEditMode && (
+              <div 
+                className="pointer-events-none contents"
+              >
+                {Array.from({ length: getTotalRows() }).map((_, rowIdx) => {
+                  return Array.from({ length: 30 }).map((__, colIdx) => (
+                    <div
+                      key={`cell-label-${rowIdx}-${colIdx}`}
+                      style={{
+                        gridColumn: `${colIdx + 1} / ${colIdx + 2}`,
+                        gridRow: `${rowIdx + 1} / ${rowIdx + 2}`,
+                      }}
+                      className="relative"
+                    >
+                      <span className="absolute top-0 left-0 text-[10px] leading-3 font-mono text-foreground/50 bg-background/40 px-0.5 rounded">
+                        C{colIdx + 1}
+                      </span>
+                    </div>
+                  ));
+                })}
+              </div>
+            )}
 
             {/* HOUSE - Top Center above everything */}
             <div
@@ -560,7 +587,7 @@ const Home = () => {
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
+                  <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                   </div>
                   <img 
@@ -654,7 +681,7 @@ const Home = () => {
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
+                  <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-10">
                     {buildings.find(b => b.building_type === 'market')?.level || 1}
                   </div>
                   <img 

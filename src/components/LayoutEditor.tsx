@@ -38,7 +38,7 @@ const LayoutEditor = () => {
       boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
       leftCorrals: { gridColumn: '3 / 10', gap: '16px', startRow: 14, rowSpan: 4 },
       rightCorrals: { gridColumn: '16 / 23', gap: '16px', startRow: 14, rowSpan: 4 },
-      belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
+      belts: [{ id: 'belt-1', gridColumn: '16 / 17', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
       grid: { gap: '16px', maxWidth: '1400px', totalRows: 40 },
     };
     
