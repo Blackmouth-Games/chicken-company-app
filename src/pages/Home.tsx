@@ -324,14 +324,14 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
-  // Generate automatic belts in the center between left and right corrals
+  // Generate automatic belts: one belt per corral pointing to center, plus central vertical line
   // IMPORTANT: This generates belts for ALL slots, even empty ones
   // Belts are created automatically when a new farm is purchased
-  // Belts are placed in the center column between corrals, oriented upward (north)
-  const generateCenterBelts = () => {
+  const generateCorralBelts = () => {
     const autoBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
     const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
+    const rightStartRow = layoutConfig.rightCorrals.startRow ?? 1;
     const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
     const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
     const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
@@ -342,46 +342,75 @@ const Home = () => {
     // Center column is the middle one: leftColumns.end + 1
     const centerCol = leftColumns.end + 1; // Center of the 3 columns between corrals
     
-    // Generate belts for each row of slots dynamically
-    // Each slot occupies slotRowSpan rows, with 1 cell space between slots
-    // This loop generates belts for ALL slots, regardless of whether they have buildings
+    // Calculate first and last row of slots
+    const firstSlotRow = Math.min(leftStartRow, rightStartRow);
+    const lastSlotIndex = slotsPerSide - 1;
+    const lastSlotBaseRow = Math.max(
+      leftStartRow + lastSlotIndex * (slotRowSpan + 1),
+      rightStartRow + lastSlotIndex * (slotRowSpan + 1)
+    );
+    const lastSlotRow = lastSlotBaseRow + slotRowSpan - 1;
+    
+    // Generate central vertical line from first row to last row of slots
+    const centerLineStartRow = firstSlotRow;
+    const centerLineEndRow = lastSlotRow + 1; // Extend one row below the last slot
+    
+    if (centerLineStartRow < getTotalRows() && centerCol >= 1 && centerCol <= 30) {
+      autoBelts.push({
+        id: `belt-auto-center-line`,
+        gridColumn: createGridNotation(centerCol, centerCol + 1),
+        gridRow: createGridNotation(centerLineStartRow, centerLineEndRow),
+        direction: 'north' as const,
+        type: 'straight' as const,
+      });
+    }
+    
+    // Generate belts for each corral pointing to center
+    // Left corrals: belts point east (towards center)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      // For each row within the slot, create a belt
-      for (let rowOffset = 0; rowOffset < slotRowSpan; rowOffset++) {
-        const slotRow = baseRow + rowOffset;
-        // Belt should be 3 rows below the slot row: row = slotRow + 3
-        const beltRow = slotRow + 3;
-        
-        // Only create belt if it's within bounds
-        if (beltRow < getTotalRows() && centerCol >= 1 && centerCol <= 30) {
-          // Check if there's already a belt at this position
-          const existingBelt = autoBelts.find(b => {
-            const beltRowNotation = parseGridNotation(b.gridRow);
-            const beltColNotation = parseGridNotation(b.gridColumn);
-            return beltRowNotation.start === beltRow && beltColNotation.start === centerCol;
-          });
-          
-          if (!existingBelt) {
-            autoBelts.push({
-              id: `belt-auto-center-row-${beltRow}-col-${centerCol}`,
-              gridColumn: createGridNotation(centerCol, centerCol + 1),
-              gridRow: createGridNotation(beltRow, beltRow + 1),
-              direction: 'north' as const,
-              type: 'straight' as const,
-            });
-          }
-        }
+      // Belt should be 3 rows below the slot: row = baseRow + slotRowSpan + 3
+      const beltRow = baseRow + slotRowSpan + 3;
+      // Belt column: right edge of left corral (pointing east towards center)
+      const beltCol = leftColumns.end;
+      
+      if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+        autoBelts.push({
+          id: `belt-auto-left-${i}`,
+          gridColumn: createGridNotation(beltCol, beltCol + 1),
+          gridRow: createGridNotation(beltRow, beltRow + 1),
+          direction: 'east' as const,
+          type: 'straight' as const,
+        });
+      }
+    }
+    
+    // Right corrals: belts point west (towards center)
+    for (let i = 0; i < slotsPerSide; i++) {
+      const baseRow = rightStartRow + i * (slotRowSpan + 1);
+      // Belt should be 3 rows below the slot: row = baseRow + slotRowSpan + 3
+      const beltRow = baseRow + slotRowSpan + 3;
+      // Belt column: left edge of right corral (pointing west towards center)
+      const beltCol = rightColumns.start;
+      
+      if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+        autoBelts.push({
+          id: `belt-auto-right-${i}`,
+          gridColumn: createGridNotation(beltCol, beltCol + 1),
+          gridRow: createGridNotation(beltRow, beltRow + 1),
+          direction: 'west' as const,
+          type: 'straight' as const,
+        });
       }
     }
     
     return autoBelts;
   };
 
-  // Combine manual belts with auto-generated center belts
-  const autoCenterBelts = generateCenterBelts();
+  // Combine manual belts with auto-generated corral belts
+  const autoCorralBelts = generateCorralBelts();
   const manualBelts = layoutConfig.belts || [];
-  const allBelts = [...autoCenterBelts, ...manualBelts];
+  const allBelts = [...autoCorralBelts, ...manualBelts];
 
   const handleUpgradeComplete = () => {
     if (userId) {
@@ -907,11 +936,11 @@ const Home = () => {
             </div>
             )}
 
-            {/* CONVEYOR BELTS - Auto-generated center belts + manual belts */}
+            {/* CONVEYOR BELTS - Auto-generated corral belts + manual belts */}
             {allBelts.map((belt, idx) => {
               const isBeltDragging = draggedBelt === belt.id;
-              // Auto-generated belts (belt-auto-center-*) are not editable
-              const isAutoBelt = belt.id.startsWith('belt-auto-center-');
+              // Auto-generated belts (belt-auto-*) are not editable
+              const isAutoBelt = belt.id.startsWith('belt-auto-');
               const isManualBelt = !isAutoBelt && !belt.id.startsWith('belt-center-') && !belt.id.startsWith('belt-left-') && !belt.id.startsWith('belt-right-');
               
               return (
