@@ -401,7 +401,7 @@ const Home = () => {
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
         <div 
           ref={gridRef}
-          className="w-full mx-auto relative" 
+          className="w-full mx-auto relative -mx-4 md:-mx-6" 
           style={{ maxWidth: layoutConfig.grid.maxWidth }}
         >
           {/* Grid numbering overlay - Only in edit mode */}
