@@ -708,6 +708,7 @@ const Home = () => {
                 </div>
               )}
             </div>
+            )}
 
             {/* BOXES - Independent from warehouse */}
             {!hideBuildings && (
