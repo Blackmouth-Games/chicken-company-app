@@ -87,6 +87,23 @@ const Home = () => {
   if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
   const TOTAL_SLOTS = totalSlots;
 
+  // Responsive cell size based on container width and gap
+  const [cellSize, setCellSize] = useState<number>(20);
+  useEffect(() => {
+    const compute = () => {
+      const el = gridRef.current as HTMLDivElement | null;
+      if (!el) return;
+      const columns = 25;
+      const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
+      const width = el.clientWidth;
+      const size = Math.max(8, Math.floor((width - gapVal * (columns - 1)) / columns));
+      if (size !== cellSize) setCellSize(size);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, [gridRef, layoutConfig.grid.gap, cellSize]);
+
   // Generate dynamic belts based on number of slots
   const generateDynamicBelts = () => {
     const dynamicBelts: any[] = [];
@@ -399,16 +416,15 @@ const Home = () => {
               backgroundImage: isEditMode 
                 ? 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)' 
                 : 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
-              backgroundSize: '20px 20px'
+              backgroundSize: `${cellSize}px ${cellSize}px`
             }}
           />
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
             className="grid items-stretch relative w-full max-w-[1600px] mx-auto"
             style={{
-              gridTemplateColumns: 'repeat(25, 1fr)',
-              gridAutoRows: '1fr',
-              aspectRatio: '25 / ' + getTotalRows(),
+              gridTemplateColumns: `repeat(25, ${cellSize}px)`,
+              gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
             }}
           >
