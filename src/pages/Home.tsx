@@ -450,33 +450,33 @@ const Home = () => {
               gap: layoutConfig.grid.gap
             }}
           >
-            {/* Per-cell labels for debugging alignment (columns index at top-left) */}
-            {isEditMode && (
-              <div 
-                className="pointer-events-none contents"
-              >
-                {Array.from({ length: getTotalRows() }).map((_, rowIdx) => {
-                  return Array.from({ length: 30 }).map((__, colIdx) => (
-                    <div
-                      key={`cell-label-${rowIdx}-${colIdx}`}
-                      style={{
-                        gridColumn: `${colIdx + 1} / ${colIdx + 2}`,
-                        gridRow: `${rowIdx + 1} / ${rowIdx + 2}`,
-                      }}
-                      className="relative"
-                    >
-                      <span className="absolute top-0 left-0 text-[10px] leading-3 font-mono text-foreground/50 bg-background/40 px-0.5 rounded">
-                        C{colIdx + 1}
-                      </span>
-                    </div>
-                  ));
-                })}
-              </div>
+            {/* Building placement preview */}
+            {isEditMode && isDragging && draggedBuilding && tempPosition && (
+              (() => {
+                const key = draggedBuilding as 'warehouse' | 'market' | 'house' | 'boxes';
+                const conf = layoutConfig[key];
+                const colSpan = parseGridNotation(conf.gridColumn);
+                const rowSpan = parseGridNotation(conf.gridRow);
+                const width = colSpan.end - colSpan.start;
+                const height = rowSpan.end - rowSpan.start;
+                const startCol = tempPosition.col;
+                const startRow = tempPosition.row;
+                return (
+                  <div
+                    key="preview-building"
+                    style={{
+                      gridColumn: `${startCol} / ${startCol + width}`,
+                      gridRow: `${startRow} / ${startRow + height}`,
+                    }}
+                    className="pointer-events-none border-2 border-dashed border-yellow-400/80 bg-yellow-200/20 rounded-md"
+                  />
+                );
+              })()
             )}
 
             {/* HOUSE - Top Center above everything */}
             <div
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'house' ? 'ring-4 ring-purple-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'house' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -497,7 +497,7 @@ const Home = () => {
                     setHouseOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all ${
+                className={`w-full h-full flex items-center justify-center transition-all overflow-hidden ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'house' ? 'opacity-50 scale-105' : ''}`}
               >
@@ -558,7 +558,7 @@ const Home = () => {
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'warehouse' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -579,7 +579,7 @@ const Home = () => {
                     setWarehouseOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all relative ${
+                className={`w-full h-full flex items-center justify-center transition-all relative overflow-hidden ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
               >
@@ -652,7 +652,7 @@ const Home = () => {
 
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             <div 
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'market' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -673,7 +673,7 @@ const Home = () => {
                     setMarketOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all relative ${
+                className={`w-full h-full flex items-center justify-center transition-all relative overflow-hidden ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
               >
@@ -745,7 +745,7 @@ const Home = () => {
 
             {/* BOXES - Independent from warehouse */}
             <div 
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
               } ${selectedObject?.type === 'building' && selectedObject?.id === 'boxes' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
               style={{ 
@@ -762,7 +762,7 @@ const Home = () => {
                     handleBuildingClick('boxes');
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all ${
+                className={`w-full h-full flex items-center justify-center transition-all overflow-hidden ${
                   isEditMode ? 'cursor-move' : ''
                 } ${isDragging && draggedBuilding === 'boxes' ? 'opacity-50 scale-105' : ''}`}
               >
