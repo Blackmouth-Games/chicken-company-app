@@ -36,12 +36,12 @@ export interface LayoutConfig {
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
-  house: { gridColumn: '19 / 25', gridRow: '2 / 3' },
-  warehouse: { gridColumn: '1 / 8', gridRow: '1 / 8' },
-  market: { gridColumn: '18 / 26', gridRow: '4 / 10' },
-  boxes: { gridColumn: '9 / 12', gridRow: '2 / 3' },
-  leftCorrals: { gridColumn: '1 / 12', gap: '20px', startRow: 7, rowSpan: 12 },
-  rightCorrals: { gridColumn: '15 / 26', gap: '20px', startRow: 7, rowSpan: 12 },
+  house: { gridColumn: '8 / 18', gridRow: '1 / 8' },
+  warehouse: { gridColumn: '1 / 8', gridRow: '8 / 15' },
+  market: { gridColumn: '16 / 25', gridRow: '8 / 15' },
+  boxes: { gridColumn: '8 / 11', gridRow: '11 / 15' },
+  leftCorrals: { gridColumn: '1 / 12', gap: '20px', startRow: 16, rowSpan: 8 },
+  rightCorrals: { gridColumn: '15 / 26', gap: '20px', startRow: 16, rowSpan: 8 },
   belts: [],
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
 };

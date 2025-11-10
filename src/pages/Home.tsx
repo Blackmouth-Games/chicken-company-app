@@ -121,61 +121,22 @@ const Home = () => {
     };
   }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
 
-  // Generate dynamic belts based on number of slots
-  const generateDynamicBelts = () => {
-    const dynamicBelts: any[] = [];
-    const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
-    const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
-    const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
-    const boxesRows = parseGridNotation(layoutConfig.boxes.gridRow);
-    const centralColumn = parseGridNotation(layoutConfig.belts[0]?.gridColumn || '13 / 14');
-    const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
-    const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
-
-    const walkwayStartRow = Math.min(leftStartRow, boxesRows.end);
-    const walkwayEndRow = leftStartRow + slotsPerSide * slotRowSpan;
-
-    for (let row = walkwayStartRow; row < walkwayEndRow; row++) {
-      dynamicBelts.push({
-        id: `belt-center-${row}`,
-        gridColumn: `${centralColumn.start} / ${centralColumn.end}`,
-        gridRow: `${row} / ${row + 1}`,
-        direction: 'north' as const,
-        type: 'straight' as const,
-      });
-    }
-    
-    for (let i = 0; i < slotsPerSide; i++) {
-      const slotRowStart = leftStartRow + i * slotRowSpan;
-      const connectorRow = slotRowStart + Math.floor(slotRowSpan / 2);
-
-      for (let col = leftColumns.end; col < centralColumn.start; col++) {
-        dynamicBelts.push({
-          id: `belt-left-${i}-${col}`,
-          gridColumn: `${col} / ${col + 1}`,
-          gridRow: `${connectorRow} / ${connectorRow + 1}`,
-          direction: 'east' as const,
-          type: 'straight' as const,
-        });
-      }
-
-      for (let col = centralColumn.end; col < rightColumns.start; col++) {
-        dynamicBelts.push({
-          id: `belt-right-${i}-${col}`,
-          gridColumn: `${col} / ${col + 1}`,
-          gridRow: `${connectorRow} / ${connectorRow + 1}`,
-          direction: 'east' as const,
-          type: 'straight' as const,
-        });
-      }
-    }
-    
-    // Merge with manual belts from layoutConfig
-    const manualBelts = layoutConfig.belts.filter(b => !b.id.startsWith('belt-center-') && !b.id.startsWith('belt-left-') && !b.id.startsWith('belt-right-'));
-    return [...dynamicBelts, ...manualBelts];
-  };
+  // Only use manual belts from layoutConfig (no auto-generated belts)
+  const allBelts = layoutConfig.belts || [];
   
-  const allBelts = generateDynamicBelts();
+  // State for hiding buildings and corrals
+  const [hideBuildings, setHideBuildings] = useState(false);
+  
+  useEffect(() => {
+    const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
+      setHideBuildings(event.detail);
+    };
+
+    window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
+    return () => {
+      window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -475,6 +436,7 @@ const Home = () => {
             )}
 
             {/* HOUSE - Top Center above everything */}
+            {!hideBuildings && (
             <div
               className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'house' ? 'ring-4 ring-purple-600 ring-offset-4' : ''
@@ -557,6 +519,7 @@ const Home = () => {
             </div>
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
+            {!hideBuildings && (
             <div 
               className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
@@ -649,8 +612,10 @@ const Home = () => {
                 </div>
               )}
             </div>
+            )}
 
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
+            {!hideBuildings && (
             <div 
               className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
@@ -744,6 +709,7 @@ const Home = () => {
             </div>
 
             {/* BOXES - Independent from warehouse */}
+            {!hideBuildings && (
             <div 
               className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
@@ -818,6 +784,7 @@ const Home = () => {
                 </div>
               )}
             </div>
+            )}
 
             {/* CONVEYOR BELTS - Dynamic 1x1 belts */}
             {allBelts.map((belt, idx) => {
@@ -843,7 +810,7 @@ const Home = () => {
             })}
 
             {/* LEFT CORRALS */}
-            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
+            {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
               const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
@@ -914,7 +881,7 @@ const Home = () => {
             })}
 
             {/* RIGHT CORRALS */}
-            {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
+            {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
               const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);

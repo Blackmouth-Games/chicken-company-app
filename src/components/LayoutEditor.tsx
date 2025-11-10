@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Copy, Plus, RotateCcw } from "lucide-react";
+import { Layout, Copy, Plus, RotateCcw, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const LayoutEditor = () => {
   const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [hideBuildings, setHideBuildings] = useState(false);
   const [position, setPosition] = useState(() => {
     const savedPosition = localStorage.getItem('layoutEditorPosition');
     return savedPosition ? JSON.parse(savedPosition) : { x: 16, y: 200 };
@@ -30,14 +31,20 @@ const LayoutEditor = () => {
     window.dispatchEvent(new CustomEvent('addBelt'));
   };
 
+  const toggleHideBuildings = () => {
+    const newState = !hideBuildings;
+    setHideBuildings(newState);
+    window.dispatchEvent(new CustomEvent('hideBuildingsChange', { detail: newState }));
+  };
+
   const resetLayout = () => {
     const defaultConfig = {
-      house: { gridColumn: '19 / 25', gridRow: '2 / 3' },
-      warehouse: { gridColumn: '1 / 8', gridRow: '1 / 8' },
-      market: { gridColumn: '18 / 26', gridRow: '4 / 10' },
-      boxes: { gridColumn: '9 / 12', gridRow: '2 / 3' },
-      leftCorrals: { gridColumn: '1 / 12', gap: '20px', startRow: 7, rowSpan: 12 },
-      rightCorrals: { gridColumn: '15 / 26', gap: '20px', startRow: 7, rowSpan: 12 },
+      house: { gridColumn: '8 / 18', gridRow: '1 / 8' },
+      warehouse: { gridColumn: '1 / 8', gridRow: '8 / 15' },
+      market: { gridColumn: '16 / 25', gridRow: '8 / 15' },
+      boxes: { gridColumn: '8 / 11', gridRow: '11 / 15' },
+      leftCorrals: { gridColumn: '1 / 12', gap: '20px', startRow: 16, rowSpan: 8 },
+      rightCorrals: { gridColumn: '15 / 26', gap: '20px', startRow: 16, rowSpan: 8 },
       belts: [],
       grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
     };
@@ -169,6 +176,16 @@ const LayoutEditor = () => {
               >
                 <RotateCcw className="h-4 w-4" />
                 {t('layoutEditor.reset')}
+              </Button>
+              <Button
+                onClick={toggleHideBuildings}
+                size="sm"
+                variant={hideBuildings ? "default" : "outline"}
+                className="gap-2"
+                title={hideBuildings ? "Mostrar edificios" : "Ocultar edificios"}
+              >
+                {hideBuildings ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {hideBuildings ? "Mostrar" : "Ocultar"}
               </Button>
               <div className="flex items-center gap-2 bg-background/50 px-2 py-1 rounded border">
                 <label className="text-xs whitespace-nowrap">Gap:</label>
