@@ -312,7 +312,11 @@ const Home = () => {
 
   const handlePurchaseComplete = () => {
     if (userId) {
-      loadBuildings(userId);
+      loadBuildings(userId).then(() => {
+        // Force re-render to update belts after purchase
+        // The belts will be automatically regenerated based on TOTAL_SLOTS
+        // which is calculated from buildings.length
+      });
     }
   };
 
@@ -320,7 +324,9 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
-  // Generate automatic belts for left corrals
+  // Generate automatic belts for left corrals - one belt per row of slots
+  // IMPORTANT: This generates belts for ALL slots, even empty ones
+  // Belts are created automatically when a new farm is purchased
   const generateLeftCorralBelts = () => {
     const autoBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
@@ -328,32 +334,46 @@ const Home = () => {
     const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
     const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
     
-    // For each left corral, create a belt to its right, 3 rows below the top-right corner
+    // Generate belts for each row of slots dynamically
+    // Each slot occupies slotRowSpan rows, with 1 cell space between slots
+    // This loop generates belts for ALL slots, regardless of whether they have buildings
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = leftStartRow + i * slotRowSpan;
-      // Top-right corner is at: column = leftColumns.end, row = baseRow
-      // Belt should be 3 rows below: row = baseRow + 3
-      const beltRow = baseRow + 3;
-      const beltCol = leftColumns.end; // Right edge of the corral
-      
-      // Only create belt if it's within bounds and the corral has a building
-      const position = i * 2;
-      const building = getBuildingAtPosition(position);
-      if (building && beltRow < getTotalRows()) {
-        autoBelts.push({
-          id: `belt-auto-left-${position}`,
-          gridColumn: createGridNotation(beltCol, beltCol + 1),
-          gridRow: createGridNotation(beltRow, beltRow + 1),
-          direction: 'east' as const,
-          type: 'straight' as const,
-        });
+      const baseRow = leftStartRow + i * (slotRowSpan + 1);
+      // For each row within the slot, create a belt
+      for (let rowOffset = 0; rowOffset < slotRowSpan; rowOffset++) {
+        const slotRow = baseRow + rowOffset;
+        // Belt should be 3 rows below the slot row: row = slotRow + 3
+        const beltRow = slotRow + 3;
+        const beltCol = leftColumns.end; // Right edge of the corral
+        
+        // Only create belt if it's within bounds
+        if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+          // Check if there's already a belt at this position
+          const existingBelt = autoBelts.find(b => {
+            const beltRowNotation = parseGridNotation(b.gridRow);
+            const beltColNotation = parseGridNotation(b.gridColumn);
+            return beltRowNotation.start === beltRow && beltColNotation.start === beltCol;
+          });
+          
+          if (!existingBelt) {
+            autoBelts.push({
+              id: `belt-auto-left-row-${beltRow}-col-${beltCol}`,
+              gridColumn: createGridNotation(beltCol, beltCol + 1),
+              gridRow: createGridNotation(beltRow, beltRow + 1),
+              direction: 'east' as const,
+              type: 'straight' as const,
+            });
+          }
+        }
       }
     }
     
     return autoBelts;
   };
 
-  // Generate automatic belts for right corrals
+  // Generate automatic belts for right corrals - one belt per row of slots
+  // IMPORTANT: This generates belts for ALL slots, even empty ones
+  // Belts are created automatically when a new farm is purchased
   const generateRightCorralBelts = () => {
     const autoBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
@@ -361,25 +381,37 @@ const Home = () => {
     const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);
     const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
     
-    // For each right corral, create a belt to its left, 3 rows below the top-left corner
+    // Generate belts for each row of slots dynamically
+    // Each slot occupies slotRowSpan rows, with 1 cell space between slots
+    // This loop generates belts for ALL slots, regardless of whether they have buildings
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = rightStartRow + i * slotRowSpan;
-      // Top-left corner is at: column = rightColumns.start, row = baseRow
-      // Belt should be 3 rows below: row = baseRow + 3
-      const beltRow = baseRow + 3;
-      const beltCol = rightColumns.start - 1; // Left edge of the corral (one column to the left)
-      
-      // Only create belt if it's within bounds and the corral has a building
-      const position = i * 2 + 1; // Right corrals start at position 1, 3, 5, etc.
-      const building = getBuildingAtPosition(position);
-      if (building && beltRow < getTotalRows() && beltCol >= 1) {
-        autoBelts.push({
-          id: `belt-auto-right-${position}`,
-          gridColumn: createGridNotation(beltCol, beltCol + 1),
-          gridRow: createGridNotation(beltRow, beltRow + 1),
-          direction: 'west' as const,
-          type: 'straight' as const,
-        });
+      const baseRow = rightStartRow + i * (slotRowSpan + 1);
+      // For each row within the slot, create a belt
+      for (let rowOffset = 0; rowOffset < slotRowSpan; rowOffset++) {
+        const slotRow = baseRow + rowOffset;
+        // Belt should be 3 rows below the slot row: row = slotRow + 3
+        const beltRow = slotRow + 3;
+        const beltCol = rightColumns.start - 1; // Left edge of the corral (one column to the left)
+        
+        // Only create belt if it's within bounds
+        if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+          // Check if there's already a belt at this position
+          const existingBelt = autoBelts.find(b => {
+            const beltRowNotation = parseGridNotation(b.gridRow);
+            const beltColNotation = parseGridNotation(b.gridColumn);
+            return beltRowNotation.start === beltRow && beltColNotation.start === beltCol;
+          });
+          
+          if (!existingBelt) {
+            autoBelts.push({
+              id: `belt-auto-right-row-${beltRow}-col-${beltCol}`,
+              gridColumn: createGridNotation(beltCol, beltCol + 1),
+              gridRow: createGridNotation(beltRow, beltRow + 1),
+              direction: 'west' as const,
+              type: 'straight' as const,
+            });
+          }
+        }
       }
     }
     
@@ -947,7 +979,8 @@ const Home = () => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
               const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
-              const baseRow = (layoutConfig.leftCorrals.startRow ?? 1) + index * slotRowSpan;
+              // Add 1 cell of vertical space between each slot
+              const baseRow = (layoutConfig.leftCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
               
               return (
                 <div 
@@ -1018,7 +1051,8 @@ const Home = () => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
               const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);
-              const baseRow = (layoutConfig.rightCorrals.startRow ?? 1) + index * slotRowSpan;
+              // Add 1 cell of vertical space between each slot
+              const baseRow = (layoutConfig.rightCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
               
               return (
                 <div 

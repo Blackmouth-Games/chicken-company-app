@@ -62,6 +62,36 @@ export const ConveyorBelt = ({
   const isCurve = belt.type.startsWith('curve-');
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
 
+  // Get gradient for belt animation based on direction
+  const getBeltAnimationGradient = () => {
+    switch (belt.direction) {
+      case 'east':
+        return 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+      case 'west':
+        return 'linear-gradient(270deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+      case 'south':
+        return 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+      case 'north':
+        return 'linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+      default:
+        return 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+    }
+  };
+
+  // Get pattern gradient for additional movement effect
+  const getBeltPatternGradient = () => {
+    switch (belt.direction) {
+      case 'east':
+      case 'west':
+        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+      case 'south':
+      case 'north':
+        return 'repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+      default:
+        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+    }
+  };
+
   return (
     <div 
       className={`flex justify-center relative w-full h-full group ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
@@ -90,6 +120,30 @@ export const ConveyorBelt = ({
             transform: getArrowTransform(),
             width: '100%',
             height: '100%',
+          }}
+        />
+        
+        {/* Animated moving overlay to simulate belt movement */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: getBeltAnimationGradient(),
+            backgroundSize: '200% 200%',
+            animation: `beltMove${belt.direction} 1.5s linear infinite`,
+            opacity: 0.4,
+            mixBlendMode: 'screen',
+          }}
+        />
+        
+        {/* Additional moving pattern for more realistic effect */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: getBeltPatternGradient(),
+            backgroundSize: '100% 20px',
+            animation: `beltMove${belt.direction} 1.5s linear infinite`,
+            opacity: 0.2,
+            mixBlendMode: 'multiply',
           }}
         />
         
@@ -136,20 +190,39 @@ export const ConveyorBelt = ({
     
       
       <style>{`
-        @keyframes beltMove {
+        @keyframes beltMoveeast {
           0% {
-            transform: ${getArrowTransform()} translateY(-10px);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
+            transform: translateX(-100%);
           }
           100% {
-            transform: ${getArrowTransform()} translateY(10px);
-            opacity: 0;
+            transform: translateX(100%);
+          }
+        }
+        
+        @keyframes beltMovewest {
+          0% {
+            transform: translateX(100%);
+          }
+          100% {
+            transform: translateX(-100%);
+          }
+        }
+        
+        @keyframes beltMovesouth {
+          0% {
+            transform: translateY(-100%);
+          }
+          100% {
+            transform: translateY(100%);
+          }
+        }
+        
+        @keyframes beltMovenorth {
+          0% {
+            transform: translateY(100%);
+          }
+          100% {
+            transform: translateY(-100%);
           }
         }
       `}</style>
