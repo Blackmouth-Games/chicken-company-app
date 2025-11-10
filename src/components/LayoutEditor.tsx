@@ -32,14 +32,14 @@ const LayoutEditor = () => {
 
   const resetLayout = () => {
     const defaultConfig = {
-      house: { gridColumn: '10 / 16', gridRow: '1 / 6' },
-      warehouse: { gridColumn: '3 / 10', gridRow: '6 / 14' },
-      market: { gridColumn: '16 / 23', gridRow: '6 / 14' },
-      boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
-      leftCorrals: { gridColumn: '3 / 10', gap: '16px', startRow: 14, rowSpan: 4 },
-      rightCorrals: { gridColumn: '16 / 23', gap: '16px', startRow: 14, rowSpan: 4 },
-      belts: [{ id: 'belt-1', gridColumn: '16 / 17', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
-      grid: { gap: '16px', maxWidth: '1400px', totalRows: 40 },
+      house: { gridColumn: '19 / 25', gridRow: '2 / 3' },
+      warehouse: { gridColumn: '1 / 8', gridRow: '1 / 8' },
+      market: { gridColumn: '18 / 26', gridRow: '4 / 10' },
+      boxes: { gridColumn: '9 / 12', gridRow: '2 / 3' },
+      leftCorrals: { gridColumn: '1 / 12', gap: '20px', startRow: 7, rowSpan: 12 },
+      rightCorrals: { gridColumn: '15 / 26', gap: '20px', startRow: 7, rowSpan: 12 },
+      belts: [],
+      grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
     };
     
     localStorage.setItem('debugLayoutConfig', JSON.stringify(defaultConfig));

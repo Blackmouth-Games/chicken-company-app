@@ -140,7 +140,7 @@ const Home = () => {
         id: `belt-center-${row}`,
         gridColumn: `${centralColumn.start} / ${centralColumn.end}`,
         gridRow: `${row} / ${row + 1}`,
-        direction: 'south' as const,
+        direction: 'north' as const,
         type: 'straight' as const,
       });
     }

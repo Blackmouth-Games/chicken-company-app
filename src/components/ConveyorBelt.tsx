@@ -59,6 +59,9 @@ export const ConveyorBelt = ({
 
   const isCurve = belt.type.startsWith('curve-');
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
+  const isHorizontal = belt.direction === 'east' || belt.direction === 'west';
+  // Check if this is a horizontal connector belt (left or right)
+  const isConnectorBelt = belt.id.startsWith('belt-left-') || belt.id.startsWith('belt-right-');
 
   return (
     <div 
@@ -83,11 +86,14 @@ export const ConveyorBelt = ({
         <img 
           src={beltImage} 
           alt="Conveyor belt" 
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover ${isConnectorBelt ? 'belt-horizontal' : ''}`}
           style={{
             transform: getArrowTransform(),
             width: '100%',
             height: '100%',
+            ...(isConnectorBelt ? {
+              filter: 'hue-rotate(200deg) saturate(0.6) brightness(0.9)',
+            } : {}),
           }}
         />
         
