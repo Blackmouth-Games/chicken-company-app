@@ -29,10 +29,10 @@ export interface LayoutConfig {
   market: { gridColumn: string; gridRow: string };
   house: { gridColumn: string; gridRow: string };
   boxes: { gridColumn: string; gridRow: string };
-  leftCorrals: { gridColumn: string; gap: string; startRow: number };
-  rightCorrals: { gridColumn: string; gap: string; startRow: number };
+  leftCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
+  rightCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
   belts: BeltConfig[];
-  grid: { gap: string; maxWidth: string };
+  grid: { gap: string; maxWidth: string; totalRows?: number };
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
@@ -40,10 +40,10 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   market: { gridColumn: '20 / 26', gridRow: '1 / 4' },
   house: { gridColumn: '11 / 16', gridRow: '1 / 3' },
   boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4 },
-  rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4 },
+  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4, rowSpan: 12 },
+  rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4, rowSpan: 12 },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
-  grid: { gap: '20px', maxWidth: '1600px' },
+  grid: { gap: '20px', maxWidth: '1600px', totalRows: 60 },
 };
 
 const TOTAL_COLUMNS = 25;
@@ -81,11 +81,13 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
             gridColumn: parsed.leftCorrals?.gridColumn || DEFAULT_LAYOUT.leftCorrals.gridColumn,
             gap: parsed.leftCorrals?.gap || DEFAULT_LAYOUT.leftCorrals.gap,
             startRow: parsed.leftCorrals?.startRow || DEFAULT_LAYOUT.leftCorrals.startRow,
+            rowSpan: parsed.leftCorrals?.rowSpan || DEFAULT_LAYOUT.leftCorrals.rowSpan,
           },
           rightCorrals: {
             gridColumn: parsed.rightCorrals?.gridColumn || DEFAULT_LAYOUT.rightCorrals.gridColumn,
             gap: parsed.rightCorrals?.gap || DEFAULT_LAYOUT.rightCorrals.gap,
             startRow: parsed.rightCorrals?.startRow || DEFAULT_LAYOUT.rightCorrals.startRow,
+            rowSpan: parsed.rightCorrals?.rowSpan || DEFAULT_LAYOUT.rightCorrals.rowSpan,
           },
           belts: Array.isArray(parsed.belts) 
             ? parsed.belts.map((belt: any) => ({
@@ -99,6 +101,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           grid: {
             gap: parsed.grid?.gap || DEFAULT_LAYOUT.grid.gap,
             maxWidth: parsed.grid?.maxWidth || DEFAULT_LAYOUT.grid.maxWidth,
+            totalRows: parsed.grid?.totalRows || DEFAULT_LAYOUT.grid.totalRows,
           },
         };
         
@@ -122,16 +125,30 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
-  // Calculate total rows based on belt configuration
   const getTotalRows = (): number => {
-    let rows = 0;
+    let rows = beltSpanForRows; // baseline
     try {
+      // Consider belts
       layoutConfig.belts?.forEach((belt) => {
         const parsed = parseGridNotation(belt.gridRow);
-        rows = Math.max(rows, parsed.end - parsed.start);
+        rows = Math.max(rows, parsed.end);
       });
+      // Consider main buildings
+      const buildings = ['warehouse', 'market', 'house', 'boxes'] as const;
+      buildings.forEach((key) => {
+        // @ts-ignore
+        const row = layoutConfig[key]?.gridRow;
+        if (row) {
+          const r = parseGridNotation(row);
+          rows = Math.max(rows, r.end);
+        }
+      });
+      // Consider corrals start rows + buffer
+      if (layoutConfig.leftCorrals?.startRow) rows = Math.max(rows, layoutConfig.leftCorrals.startRow + 20);
+      if (layoutConfig.rightCorrals?.startRow) rows = Math.max(rows, layoutConfig.rightCorrals.startRow + 20);
     } catch {}
-    return rows || beltSpanForRows;
+    // Ensure a sane minimum
+    return Math.max(rows, beltSpanForRows);
   };
 
   // Save layout to localStorage
@@ -175,8 +192,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         updates.gridRow || layoutConfig[building].gridRow
       );
 
-      // Check bounds
-      if (!isWithinBounds(newArea, TOTAL_COLUMNS, getTotalRows())) {
+      // Allow grid to auto-grow vertically while resizing/moving
+      const dynamicMaxRows = Math.max(getTotalRows(), newArea.rowEnd);
+
+      // Check bounds with dynamic rows
+      if (!isWithinBounds(newArea, TOTAL_COLUMNS, dynamicMaxRows)) {
         toast({
           title: t('layoutEditor.outOfBounds'),
           description: t('layoutEditor.outOfBoundsDesc'),
