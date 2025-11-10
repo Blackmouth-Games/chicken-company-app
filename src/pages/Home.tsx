@@ -87,6 +87,61 @@ const Home = () => {
   if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
   const TOTAL_SLOTS = totalSlots;
 
+  // Generate dynamic belts based on number of slots
+  const generateDynamicBelts = () => {
+    const dynamicBelts: any[] = [];
+    const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
+    const startRow = layoutConfig.leftCorrals.startRow;
+    
+    // Central vertical belts (column 13)
+    for (let i = 0; i < slotsPerSide; i++) {
+      const row = startRow + i;
+      dynamicBelts.push({
+        id: `belt-center-${i}`,
+        gridColumn: '13 / 14',
+        gridRow: `${row} / ${row + 1}`,
+        direction: 'south' as const,
+        type: 'straight' as const,
+      });
+    }
+    
+    // Left side horizontal belts (connecting corrals to center)
+    for (let i = 0; i < slotsPerSide; i++) {
+      const row = startRow + i;
+      // Belts from column 7 to 13 (connecting left corrals to center)
+      for (let col = 7; col < 13; col++) {
+        dynamicBelts.push({
+          id: `belt-left-${i}-${col}`,
+          gridColumn: `${col} / ${col + 1}`,
+          gridRow: `${row} / ${row + 1}`,
+          direction: 'east' as const,
+          type: 'straight' as const,
+        });
+      }
+    }
+    
+    // Right side horizontal belts (connecting corrals to center)
+    for (let i = 0; i < slotsPerSide; i++) {
+      const row = startRow + i;
+      // Belts from column 14 to 20 (connecting center to right corrals)
+      for (let col = 14; col < 20; col++) {
+        dynamicBelts.push({
+          id: `belt-right-${i}-${col}`,
+          gridColumn: `${col} / ${col + 1}`,
+          gridRow: `${row} / ${row + 1}`,
+          direction: 'east' as const,
+          type: 'straight' as const,
+        });
+      }
+    }
+    
+    // Merge with manual belts from layoutConfig
+    const manualBelts = layoutConfig.belts.filter(b => !b.id.startsWith('belt-center-') && !b.id.startsWith('belt-left-') && !b.id.startsWith('belt-right-'));
+    return [...dynamicBelts, ...manualBelts];
+  };
+  
+  const allBelts = generateDynamicBelts();
+
 
   useEffect(() => {
     loadUserProfile();
@@ -782,24 +837,25 @@ const Home = () => {
               )}
             </div>
 
-            {/* VERTICAL CONVEYOR BELTS - Dynamic based on config */}
-            {layoutConfig.belts.map((belt, idx) => {
+            {/* CONVEYOR BELTS - Dynamic 1x1 belts */}
+            {allBelts.map((belt, idx) => {
               const isBeltDragging = draggedBelt === belt.id;
+              const isManualBelt = !belt.id.startsWith('belt-center-') && !belt.id.startsWith('belt-left-') && !belt.id.startsWith('belt-right-');
               
               return (
                 <ConveyorBelt
                   key={belt.id}
                   belt={belt}
                   idx={idx}
-                  isEditMode={isEditMode}
+                  isEditMode={isEditMode && isManualBelt}
                   isDragging={isBeltDragging}
                   isSelected={selectedObject?.type === 'belt' && selectedObject?.id === belt.id}
                   tempPosition={beltTempPosition}
-                  onMouseDown={(e) => isEditMode && handleBeltMouseDown(e, belt.id)}
-                  onClick={() => isEditMode && handleBeltClick(belt.id)}
-                  onRemove={() => removeBelt(belt.id)}
-                  onUpdateColumn={(value) => updateBelt(belt.id, { gridColumn: value })}
-                  onUpdateRow={(value) => updateBelt(belt.id, { gridRow: value })}
+                  onMouseDown={(e) => isEditMode && isManualBelt && handleBeltMouseDown(e, belt.id)}
+                  onClick={() => isEditMode && isManualBelt && handleBeltClick(belt.id)}
+                  onRemove={() => isManualBelt && removeBelt(belt.id)}
+                  onUpdateColumn={(value) => isManualBelt && updateBelt(belt.id, { gridColumn: value })}
+                  onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
                 />
               );
             })}
