@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
 import beltImage from "@/assets/belt_A.png";
 
@@ -18,6 +18,7 @@ interface ConveyorBeltProps {
   onMouseDown: (e: React.MouseEvent) => void;
   onClick: () => void;
   onRemove: () => void;
+  onRotate?: () => void;
   onUpdateColumn: (value: string) => void;
   onUpdateRow: (value: string) => void;
 }
@@ -32,6 +33,7 @@ export const ConveyorBelt = ({
   onMouseDown,
   onClick,
   onRemove,
+  onRotate,
   onUpdateColumn,
   onUpdateRow,
 }: ConveyorBeltProps) => {
@@ -113,6 +115,21 @@ export const ConveyorBelt = ({
             >
               <X className="h-4 w-4" />
             </Button>
+            {isSelected && onRotate && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRotate();
+                }}
+                size="sm"
+                variant="default"
+                className="absolute bottom-2 left-1/2 -translate-x-1/2 h-7 px-2 z-10"
+                title="Rotar cinta"
+              >
+                <RotateCw className="h-4 w-4 mr-1" />
+                Rotar
+              </Button>
+            )}
           </>
         )}
       </div>

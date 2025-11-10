@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Copy, Plus, RotateCcw, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { Layout, Copy, Plus, RotateCcw, Eye, EyeOff, ChevronDown, ChevronUp, Paintbrush } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,13 +8,18 @@ const LayoutEditor = () => {
   const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [hideBuildings, setHideBuildings] = useState(false);
+  const [paintMode, setPaintMode] = useState(false);
   const [isVisible, setIsVisible] = useState(() => {
     const saved = localStorage.getItem('layoutEditorVisible');
     return saved ? JSON.parse(saved) : true;
   });
   const [position, setPosition] = useState(() => {
     const savedPosition = localStorage.getItem('layoutEditorPosition');
-    return savedPosition ? JSON.parse(savedPosition) : { x: 16, y: 200 };
+    if (savedPosition) {
+      const parsed = JSON.parse(savedPosition);
+      return { x: parsed.x || window.innerWidth - 100, y: parsed.y || window.innerHeight / 2 };
+    }
+    return { x: window.innerWidth - 100, y: window.innerHeight / 2 };
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -39,6 +44,18 @@ const LayoutEditor = () => {
     const newState = !hideBuildings;
     setHideBuildings(newState);
     window.dispatchEvent(new CustomEvent('hideBuildingsChange', { detail: newState }));
+  };
+
+  const togglePaintMode = () => {
+    const newState = !paintMode;
+    setPaintMode(newState);
+    window.dispatchEvent(new CustomEvent('paintModeChange', { detail: newState }));
+    toast({
+      title: newState ? 'Modo pintado activado' : 'Modo pintado desactivado',
+      description: newState 
+        ? 'Haz clic en las celdas vacías para colocar cintas'
+        : 'Modo pintado desactivado',
+    });
   };
 
   const toggleVisibility = () => {
@@ -89,7 +106,8 @@ const LayoutEditor = () => {
   };
 
   // Drag handlers for button
-  const handleMouseDown = (e: MouseEvent) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - position.x,
@@ -99,8 +117,11 @@ const LayoutEditor = () => {
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging) {
-      const newX = Math.max(0, Math.min(window.innerWidth - 200, e.clientX - dragOffset.x));
-      const newY = Math.max(0, Math.min(window.innerHeight - 56, e.clientY - dragOffset.y));
+      const toolbarWidth = isEditMode ? 180 : 200;
+      const toolbarHeight = isEditMode ? 400 : 56;
+      // Calculate position from center of toolbar
+      const newX = Math.max(toolbarWidth / 2, Math.min(window.innerWidth - toolbarWidth / 2, e.clientX - dragOffset.x));
+      const newY = Math.max(toolbarHeight / 2, Math.min(window.innerHeight - toolbarHeight / 2, e.clientY - dragOffset.y));
       setPosition({ x: newX, y: newY });
     }
   };
@@ -121,14 +142,16 @@ const LayoutEditor = () => {
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, isEditMode]);
 
   // Keep menu visible: clamp saved position on mount and window resize
   useEffect(() => {
     const clampPosition = () => {
       setPosition((prev) => {
-        const maxX = Math.max(8, window.innerWidth - 200);
-        const maxY = Math.max(8, window.innerHeight - 56);
+        const toolbarWidth = isEditMode ? 180 : 200;
+        const toolbarHeight = isEditMode ? 400 : 56;
+        const maxX = Math.max(8, window.innerWidth - toolbarWidth);
+        const maxY = Math.max(8, window.innerHeight - toolbarHeight);
         const x = Math.min(Math.max(prev.x, 8), maxX);
         const y = Math.min(Math.max(prev.y, 8), maxY);
         if (x !== prev.x || y !== prev.y) {
@@ -141,15 +164,15 @@ const LayoutEditor = () => {
     clampPosition();
     window.addEventListener('resize', clampPosition);
     return () => window.removeEventListener('resize', clampPosition);
-  }, []);
+  }, [isEditMode]);
 
   if (!isVisible) {
     return (
       <div
         className="fixed z-50"
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          right: '16px',
+          top: '16px',
         }}
       >
         <Button
@@ -166,98 +189,170 @@ const LayoutEditor = () => {
     );
   }
 
+  // When edit mode is active, show vertical toolbar
+  if (isEditMode) {
+    return (
+      <div
+        className="fixed z-50"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
+        <div
+          className="cursor-move bg-background/95 backdrop-blur-sm rounded-lg border-2 border-primary shadow-2xl p-3 flex flex-col gap-2 min-w-[180px]"
+          onMouseDown={handleMouseDown}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2 pb-2 border-b">
+            <h3 className="text-sm font-semibold text-primary">Editor</h3>
+            <Button
+              onClick={toggleVisibility}
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              title="Ocultar editor"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Edit Mode Toggle */}
+          <Button
+            onClick={toggleEditMode}
+            size="sm"
+            variant="default"
+            className="gap-2 w-full justify-start"
+          >
+            <Layout className="h-4 w-4" />
+            {t('layoutEditor.deactivateEdit')}
+          </Button>
+
+          {/* Divider */}
+          <div className="h-px bg-border my-1" />
+
+          {/* Hide Buildings */}
+          <Button
+            onClick={toggleHideBuildings}
+            size="sm"
+            variant={hideBuildings ? "default" : "outline"}
+            className="gap-2 w-full justify-start"
+            title={hideBuildings ? "Mostrar edificios" : "Ocultar edificios"}
+          >
+            {hideBuildings ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {hideBuildings ? "Mostrar" : "Ocultar"} Edificios
+          </Button>
+
+          {/* Add Belt */}
+          <Button
+            onClick={addBelt}
+            size="sm"
+            variant="outline"
+            className="gap-2 w-full justify-start"
+            title={t('layoutEditor.addBeltTitle')}
+          >
+            <Plus className="h-4 w-4" />
+            {t('layoutEditor.addBelt')}
+          </Button>
+
+          {/* Paint Mode */}
+          <Button
+            onClick={togglePaintMode}
+            size="sm"
+            variant={paintMode ? "default" : "outline"}
+            className="gap-2 w-full justify-start"
+            title={paintMode ? "Desactivar modo pintado" : "Activar modo pintado"}
+          >
+            <Paintbrush className="h-4 w-4" />
+            {paintMode ? "Pintar ON" : "Modo Pintar"}
+          </Button>
+
+          {/* Divider */}
+          <div className="h-px bg-border my-1" />
+
+          {/* Gap Input */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Gap:</label>
+            <input
+              type="text"
+              defaultValue="1px"
+              onChange={(e) => {
+                const savedLayout = localStorage.getItem('debugLayoutConfig');
+                if (savedLayout) {
+                  const config = JSON.parse(savedLayout);
+                  config.grid.gap = e.target.value;
+                  localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
+                  window.dispatchEvent(new CustomEvent('layoutConfigUpdate', { detail: config }));
+                }
+              }}
+              className="w-full px-2 py-1 text-xs border rounded bg-background"
+              placeholder="1px"
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-border my-1" />
+
+          {/* Reset Layout */}
+          <Button
+            onClick={resetLayout}
+            size="sm"
+            variant="outline"
+            className="gap-2 w-full justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+            title={t('layoutEditor.resetTitle')}
+          >
+            <RotateCcw className="h-4 w-4" />
+            {t('layoutEditor.reset')}
+          </Button>
+
+          {/* Export Layout */}
+          <Button
+            onClick={exportLayout}
+            size="sm"
+            variant="outline"
+            className="gap-2 w-full justify-start"
+            title={t('layoutEditor.copy')}
+          >
+            <Copy className="h-4 w-4" />
+            {t('layoutEditor.copy')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // When edit mode is inactive, show compact button
   return (
     <div
-      className="fixed z-50 flex gap-2"
+      className="fixed z-50"
       style={{
-        left: `${position.x}px`,
+        right: `${position.x}px`,
         top: `${position.y}px`,
       }}
     >
       <div
-        className="cursor-move p-1 bg-background/80 rounded-lg border"
+        className="cursor-move bg-background/95 backdrop-blur-sm rounded-lg border shadow-lg p-2"
         onMouseDown={handleMouseDown}
       >
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
             onClick={toggleVisibility}
             size="sm"
             variant="ghost"
-            className="gap-2 -ml-1 -mr-1"
-            title="Ocultar editor de layout"
+            className="h-8 w-8 p-0"
+            title="Ocultar editor"
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
           <Button
             onClick={toggleEditMode}
             size="sm"
-            variant={isEditMode ? "default" : "outline"}
+            variant="outline"
             className="gap-2"
           >
             <Layout className="h-4 w-4" />
-            {isEditMode ? t('layoutEditor.deactivateEdit') : t('layoutEditor.activateEdit')}
-          </Button>
-          {isEditMode && (
-            <>
-              <Button
-                onClick={addBelt}
-                size="sm"
-                variant="outline"
-                className="gap-2"
-                title={t('layoutEditor.addBeltTitle')}
-              >
-                <Plus className="h-4 w-4" />
-                {t('layoutEditor.addBelt')}
-              </Button>
-              <Button
-                onClick={resetLayout}
-                size="sm"
-                variant="outline"
-                className="gap-2 text-orange-600 hover:text-orange-700"
-                title={t('layoutEditor.resetTitle')}
-              >
-                <RotateCcw className="h-4 w-4" />
-                {t('layoutEditor.reset')}
-              </Button>
-              <Button
-                onClick={toggleHideBuildings}
-                size="sm"
-                variant={hideBuildings ? "default" : "outline"}
-                className="gap-2"
-                title={hideBuildings ? "Mostrar edificios" : "Ocultar edificios"}
-              >
-                {hideBuildings ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {hideBuildings ? "Mostrar" : "Ocultar"}
-              </Button>
-              <div className="flex items-center gap-2 bg-background/50 px-2 py-1 rounded border">
-                <label className="text-xs whitespace-nowrap">Gap:</label>
-                <input
-                  type="text"
-                  defaultValue="20px"
-                  onChange={(e) => {
-                    const savedLayout = localStorage.getItem('debugLayoutConfig');
-                    if (savedLayout) {
-                      const config = JSON.parse(savedLayout);
-                      config.grid.gap = e.target.value;
-                      localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
-                      window.dispatchEvent(new CustomEvent('layoutConfigUpdate', { detail: config }));
-                    }
-                  }}
-                  className="w-16 px-1 py-0.5 text-xs border rounded bg-background"
-                  placeholder="20px"
-                />
-              </div>
-            </>
-          )}
-          <Button
-            onClick={exportLayout}
-            size="sm"
-            variant="outline"
-            className="gap-2"
-            title={t('layoutEditor.copy')}
-          >
-            <Copy className="h-4 w-4" />
-            {t('layoutEditor.copy')}
+            {t('layoutEditor.activateEdit')}
           </Button>
         </div>
       </div>

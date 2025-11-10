@@ -12,7 +12,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { TutorialDialog } from "@/components/TutorialDialog";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { BuildingSlot } from "@/components/BuildingSlot";
-import { parseGridNotation } from "@/lib/layoutCollisions";
+import { parseGridNotation, createGridNotation } from "@/lib/layoutCollisions";
 import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
@@ -120,12 +120,12 @@ const Home = () => {
       if (el && ro) ro.disconnect();
     };
   }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
-
-  // Only use manual belts from layoutConfig (no auto-generated belts)
-  const allBelts = layoutConfig.belts || [];
   
   // State for hiding buildings and corrals
   const [hideBuildings, setHideBuildings] = useState(false);
+  
+  // State for paint mode
+  const [paintMode, setPaintMode] = useState(false);
   
   useEffect(() => {
     const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
@@ -135,6 +135,17 @@ const Home = () => {
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handlePaintModeChange = (event: CustomEvent<boolean>) => {
+      setPaintMode(event.detail);
+    };
+
+    window.addEventListener('paintModeChange', handlePaintModeChange as EventListener);
+    return () => {
+      window.removeEventListener('paintModeChange', handlePaintModeChange as EventListener);
     };
   }, []);
 
@@ -309,6 +320,78 @@ const Home = () => {
     return buildings.find((b) => b.position_index === position);
   };
 
+  // Generate automatic belts for left corrals
+  const generateLeftCorralBelts = () => {
+    const autoBelts: any[] = [];
+    const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
+    const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
+    const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
+    const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
+    
+    // For each left corral, create a belt to its right, 3 rows below the top-right corner
+    for (let i = 0; i < slotsPerSide; i++) {
+      const baseRow = leftStartRow + i * slotRowSpan;
+      // Top-right corner is at: column = leftColumns.end, row = baseRow
+      // Belt should be 3 rows below: row = baseRow + 3
+      const beltRow = baseRow + 3;
+      const beltCol = leftColumns.end; // Right edge of the corral
+      
+      // Only create belt if it's within bounds and the corral has a building
+      const position = i * 2;
+      const building = getBuildingAtPosition(position);
+      if (building && beltRow < getTotalRows()) {
+        autoBelts.push({
+          id: `belt-auto-left-${position}`,
+          gridColumn: createGridNotation(beltCol, beltCol + 1),
+          gridRow: createGridNotation(beltRow, beltRow + 1),
+          direction: 'east' as const,
+          type: 'straight' as const,
+        });
+      }
+    }
+    
+    return autoBelts;
+  };
+
+  // Generate automatic belts for right corrals
+  const generateRightCorralBelts = () => {
+    const autoBelts: any[] = [];
+    const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
+    const rightStartRow = layoutConfig.rightCorrals.startRow ?? 1;
+    const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);
+    const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
+    
+    // For each right corral, create a belt to its left, 3 rows below the top-left corner
+    for (let i = 0; i < slotsPerSide; i++) {
+      const baseRow = rightStartRow + i * slotRowSpan;
+      // Top-left corner is at: column = rightColumns.start, row = baseRow
+      // Belt should be 3 rows below: row = baseRow + 3
+      const beltRow = baseRow + 3;
+      const beltCol = rightColumns.start - 1; // Left edge of the corral (one column to the left)
+      
+      // Only create belt if it's within bounds and the corral has a building
+      const position = i * 2 + 1; // Right corrals start at position 1, 3, 5, etc.
+      const building = getBuildingAtPosition(position);
+      if (building && beltRow < getTotalRows() && beltCol >= 1) {
+        autoBelts.push({
+          id: `belt-auto-right-${position}`,
+          gridColumn: createGridNotation(beltCol, beltCol + 1),
+          gridRow: createGridNotation(beltRow, beltRow + 1),
+          direction: 'west' as const,
+          type: 'straight' as const,
+        });
+      }
+    }
+    
+    return autoBelts;
+  };
+
+  // Combine manual belts with auto-generated belts for both sides
+  const autoLeftBelts = generateLeftCorralBelts();
+  const autoRightBelts = generateRightCorralBelts();
+  const manualBelts = layoutConfig.belts || [];
+  const allBelts = [...autoLeftBelts, ...autoRightBelts, ...manualBelts];
+
   const handleUpgradeComplete = () => {
     if (userId) {
       // Reload and reorder buildings after upgrade
@@ -404,11 +487,56 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
-            className="grid items-stretch relative w-full mx-auto"
+            className={`grid items-stretch relative w-full mx-auto ${paintMode && isEditMode ? 'cursor-crosshair' : ''}`}
             style={{
               gridTemplateColumns: `repeat(30, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
+            }}
+            onClick={(e) => {
+              if (paintMode && isEditMode && !isDragging) {
+                e.stopPropagation();
+                const rect = gridRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                
+                const relativeX = e.clientX - rect.left;
+                const relativeY = e.clientY - rect.top;
+                const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
+                const totalRows = getTotalRows();
+                
+                const totalGapWidth = gapPx * (30 - 1);
+                const totalGapHeight = gapPx * (totalRows - 1);
+                const cellWidth = (rect.width - totalGapWidth) / 30;
+                const cellHeight = (rect.height - totalGapHeight) / totalRows;
+                
+                const col = Math.max(1, Math.min(30, Math.floor(relativeX / (cellWidth + gapPx)) + 1));
+                const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (cellHeight + gapPx)) + 1));
+                
+                // Check if there's already a belt at this position
+                const existingBelt = allBelts.find(belt => {
+                  const beltCol = parseGridNotation(belt.gridColumn);
+                  const beltRow = parseGridNotation(belt.gridRow);
+                  return beltCol.start === col && beltRow.start === row;
+                });
+                
+                // Check if there's a building at this position
+                const hasBuilding = 
+                  (parseGridNotation(layoutConfig.house.gridColumn).start <= col && parseGridNotation(layoutConfig.house.gridColumn).end > col &&
+                   parseGridNotation(layoutConfig.house.gridRow).start <= row && parseGridNotation(layoutConfig.house.gridRow).end > row) ||
+                  (parseGridNotation(layoutConfig.warehouse.gridColumn).start <= col && parseGridNotation(layoutConfig.warehouse.gridColumn).end > col &&
+                   parseGridNotation(layoutConfig.warehouse.gridRow).start <= row && parseGridNotation(layoutConfig.warehouse.gridRow).end > row) ||
+                  (parseGridNotation(layoutConfig.market.gridColumn).start <= col && parseGridNotation(layoutConfig.market.gridColumn).end > col &&
+                   parseGridNotation(layoutConfig.market.gridRow).start <= row && parseGridNotation(layoutConfig.market.gridRow).end > row) ||
+                  (parseGridNotation(layoutConfig.boxes.gridColumn).start <= col && parseGridNotation(layoutConfig.boxes.gridColumn).end > col &&
+                   parseGridNotation(layoutConfig.boxes.gridRow).start <= row && parseGridNotation(layoutConfig.boxes.gridRow).end > row);
+                
+                if (!existingBelt && !hasBuilding) {
+                  addBeltAtPosition(col, row, 'east', 'straight');
+                } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
+                  // Remove belt if clicking on an existing manual belt
+                  removeBelt(existingBelt.id);
+                }
+              }
             }}
           >
             {/* Building placement preview */}
@@ -788,10 +916,12 @@ const Home = () => {
             </div>
             )}
 
-            {/* CONVEYOR BELTS - Dynamic 1x1 belts */}
+            {/* CONVEYOR BELTS - Auto-generated for left corrals + manual belts */}
             {allBelts.map((belt, idx) => {
               const isBeltDragging = draggedBelt === belt.id;
-              const isManualBelt = !belt.id.startsWith('belt-center-') && !belt.id.startsWith('belt-left-') && !belt.id.startsWith('belt-right-');
+              // Auto-generated belts (belt-auto-left-* and belt-auto-right-*) are not editable
+              const isAutoBelt = belt.id.startsWith('belt-auto-left-') || belt.id.startsWith('belt-auto-right-');
+              const isManualBelt = !isAutoBelt && !belt.id.startsWith('belt-center-') && !belt.id.startsWith('belt-left-') && !belt.id.startsWith('belt-right-');
               
               return (
                 <ConveyorBelt
@@ -805,6 +935,7 @@ const Home = () => {
                   onMouseDown={(e) => isEditMode && isManualBelt && handleBeltMouseDown(e, belt.id)}
                   onClick={() => isEditMode && isManualBelt && handleBeltClick(belt.id)}
                   onRemove={() => isManualBelt && removeBelt(belt.id)}
+                  onRotate={() => isManualBelt && rotateSelected()}
                   onUpdateColumn={(value) => isManualBelt && updateBelt(belt.id, { gridColumn: value })}
                   onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
                 />
