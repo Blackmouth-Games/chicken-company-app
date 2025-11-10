@@ -388,7 +388,8 @@ const Home = () => {
       // Belt column: right edge of left corral (pointing east towards center)
       const beltCol = leftColumns.end;
       
-      if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+      // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
+      if (beltRow >= 1 && beltCol >= 1 && beltCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
           const beltRowNotation = parseGridNotation(b.gridRow);
@@ -417,7 +418,8 @@ const Home = () => {
       // Belt column: left edge of right corral (pointing west towards center)
       const beltCol = rightColumns.start;
       
-      if (beltRow < getTotalRows() && beltCol >= 1 && beltCol <= 30) {
+      // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
+      if (beltRow >= 1 && beltCol >= 1 && beltCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
           const beltRowNotation = parseGridNotation(b.gridRow);
