@@ -438,7 +438,7 @@ const Home = () => {
             {/* HOUSE - Top Center above everything */}
             {!hideBuildings && (
             <div
-              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'house' ? 'ring-4 ring-purple-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'house' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -459,7 +459,7 @@ const Home = () => {
                     setHouseOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all overflow-hidden ${
+                className={`w-full h-full flex items-center justify-center transition-all ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'house' ? 'opacity-50 scale-105' : ''}`}
               >
@@ -522,7 +522,7 @@ const Home = () => {
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             {!hideBuildings && (
             <div 
-              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'warehouse' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -543,12 +543,12 @@ const Home = () => {
                     setWarehouseOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all relative overflow-hidden ${
+                className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-10">
+                  <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
                     {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
                   </div>
                   <img 
@@ -618,7 +618,7 @@ const Home = () => {
             {/* MARKET - Top Right: Columns 20-25, Rows 1-3 */}
             {!hideBuildings && (
             <div 
-              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
               } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
                 selectedObject?.type === 'building' && selectedObject?.id === 'market' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
@@ -639,12 +639,12 @@ const Home = () => {
                     setMarketOpen(true);
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all relative overflow-hidden ${
+                className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-10">
+                  <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
                     {buildings.find(b => b.building_type === 'market')?.level || 1}
                   </div>
                   <img 
@@ -713,7 +713,7 @@ const Home = () => {
             {/* BOXES - Independent from warehouse */}
             {!hideBuildings && (
             <div 
-              className={`flex items-center justify-center relative group overflow-hidden ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
               } ${selectedObject?.type === 'building' && selectedObject?.id === 'boxes' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
               style={{ 
@@ -730,7 +730,7 @@ const Home = () => {
                     handleBuildingClick('boxes');
                   }
                 }}
-                className={`w-full h-full flex items-center justify-center transition-all overflow-hidden ${
+                className={`w-full h-full flex items-center justify-center transition-all ${
                   isEditMode ? 'cursor-move' : ''
                 } ${isDragging && draggedBuilding === 'boxes' ? 'opacity-50 scale-105' : ''}`}
               >
