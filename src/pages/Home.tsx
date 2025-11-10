@@ -121,7 +121,16 @@ const Home = () => {
 
     compute();
     window.addEventListener('resize', compute);
-    return () => window.removeEventListener('resize', compute);
+    window.addEventListener('orientationchange', compute);
+    // Reaccionar a cambios del contenedor (p. ej., barras/side-panels)
+    const el = gridRef.current as HTMLDivElement | null;
+    const ro = el ? new ResizeObserver(() => compute()) : null;
+    if (el && ro) ro.observe(el);
+    return () => {
+      window.removeEventListener('resize', compute);
+      window.removeEventListener('orientationchange', compute);
+      if (el && ro) ro.disconnect();
+    };
   }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
 
   // Generate dynamic belts based on number of slots
