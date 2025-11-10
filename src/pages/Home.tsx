@@ -404,9 +404,10 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - House | Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
           <div 
-            className="grid auto-rows-fr items-stretch relative"
+            className="grid items-stretch relative"
             style={{
               gridTemplateColumns: 'repeat(25, 1fr)',
+              gridAutoRows: '20px',
               minHeight: `${getTotalRows() * 20}px`,
               gap: layoutConfig.grid.gap
             }}
@@ -668,19 +669,6 @@ const Home = () => {
                     className="resize-handle absolute right-0 top-1/2 w-4 h-4 bg-green-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'e')}
                   />
-                  
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Rows:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.market.gridRow}
-                          onChange={(e) => updateBuildingLayout('market', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="1 / 4"
-                        />
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -748,11 +736,6 @@ const Home = () => {
                     className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-amber-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'boxes', 'se')}
                   />
-                  
-                        />
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

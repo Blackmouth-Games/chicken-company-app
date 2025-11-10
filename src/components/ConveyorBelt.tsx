@@ -78,14 +78,16 @@ export const ConveyorBelt = ({
     >
       <div className={`w-full h-full relative overflow-hidden ${
         isEditMode ? 'cursor-move' : ''
-      } ${isVertical ? 'min-w-[20px]' : 'min-h-[20px]'}`}>
+      }`}>
         {/* Belt image */}
         <img 
           src={beltImage} 
           alt="Conveyor belt" 
-          className="absolute inset-0 w-full h-full object-cover"
+          className="w-full h-full object-cover"
           style={{
             transform: getArrowTransform(),
+            width: '100%',
+            height: '100%',
           }}
         />
         
