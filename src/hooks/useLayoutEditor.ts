@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   parseGridNotation,
   createGridNotation,
@@ -37,6 +38,7 @@ const TOTAL_COLUMNS = 25;
 
 export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const gridRef = useRef<HTMLDivElement>(null);
   
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(() => {
@@ -121,8 +123,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       // Check bounds
       if (!isWithinBounds(newArea, TOTAL_COLUMNS, getTotalRows())) {
         toast({
-          title: "Fuera de límites",
-          description: "El edificio no puede colocarse fuera del grid",
+          title: t('layoutEditor.outOfBounds'),
+          description: t('layoutEditor.outOfBoundsDesc'),
           variant: "destructive",
         });
         return false;
@@ -132,8 +134,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       const collision = wouldCollide(newArea, layoutConfig, building);
       if (collision.collides) {
         toast({
-          title: "Colisión detectada",
-          description: `No puede superponerse con ${collision.collidingWith}`,
+          title: t('layoutEditor.collisionDetected'),
+          description: t('layoutEditor.collisionDesc', { building: collision.collidingWith || '' }),
           variant: "destructive",
         });
         setHasCollision(true);
@@ -284,8 +286,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
         if (success) {
           toast({
-            title: "Edificio movido",
-            description: `${draggedBuilding} movido a columna ${tempPosition.col}, fila ${tempPosition.row}`,
+            title: t('layoutEditor.buildingMoved'),
+            description: t('layoutEditor.buildingMovedDesc', { 
+              building: draggedBuilding, 
+              col: tempPosition.col.toString(), 
+              row: tempPosition.row.toString() 
+            }),
           });
         }
       }
@@ -305,8 +311,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           });
 
           toast({
-            title: "Cinta movida",
-            description: `Cinta movida a columna ${beltTempPosition.col}, fila ${beltTempPosition.row}`,
+            title: t('layoutEditor.beltMoved'),
+            description: t('layoutEditor.beltMovedDesc', { 
+              col: beltTempPosition.col.toString(), 
+              row: beltTempPosition.row.toString() 
+            }),
           });
         }
       }
@@ -344,8 +353,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       };
       saveLayoutToStorage(newConfig);
       toast({
-        title: "Cinta agregada",
-        description: "Nueva cinta transportadora agregada",
+        title: t('layoutEditor.beltAdded'),
+        description: t('layoutEditor.beltAddedDesc'),
       });
       return newConfig;
     });
@@ -359,8 +368,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       };
       saveLayoutToStorage(newConfig);
       toast({
-        title: "Cinta eliminada",
-        description: "Cinta transportadora eliminada",
+        title: t('layoutEditor.beltRemoved'),
+        description: t('layoutEditor.beltRemovedDesc'),
       });
       return newConfig;
     });
@@ -400,8 +409,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     
     // Show direction picker dialog
     const direction = window.prompt(
-      `Agregar cinta en Col ${gridPos.col}, Row ${gridPos.row}\n\nEscribe la dirección:\n- "vertical" o "v" para vertical\n- "horizontal" o "h" para horizontal`,
-      "vertical"
+      t('layoutEditor.addBeltPrompt', { col: gridPos.col.toString(), row: gridPos.row.toString() }),
+      t('layoutEditor.vertical')
     );
     
     if (!direction) return;
@@ -426,8 +435,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       };
       saveLayoutToStorage(newConfig);
       toast({
-        title: "Cinta agregada",
-        description: `Nueva cinta ${isVertical ? 'vertical' : 'horizontal'} en Col ${gridPos.col}, Row ${gridPos.row}`,
+        title: t('layoutEditor.beltAdded'),
+        description: t('layoutEditor.beltAddedAt', { 
+          direction: isVertical ? t('layoutEditor.vertical') : t('layoutEditor.horizontal'),
+          col: gridPos.col.toString(), 
+          row: gridPos.row.toString() 
+        }),
       });
       return newConfig;
     });

@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useAudio } from "@/contexts/AudioContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { X } from "lucide-react";
 
 interface SettingsDialogProps {
@@ -18,7 +19,7 @@ const APP_VERSION = import.meta.env.VITE_APP_VERSION || new Date().toISOString()
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
   const { soundVolume, musicVolume, isMuted, setSoundVolume, setMusicVolume, setIsMuted } = useAudio();
-  const [language, setLanguage] = useState("es");
+  const { language, setLanguage, t } = useLanguage();
 
   const handleDisconnect = async () => {
     await tonConnectUI.disconnect();
@@ -36,7 +37,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md h-[90vh] flex flex-col p-0" hideCloseButton>
         <DialogHeader className="border-b p-4 flex-row items-center justify-between space-y-0">
-          <DialogTitle className="text-xl">SETTINGS</DialogTitle>
+          <DialogTitle className="text-xl">{t('settings.title').toUpperCase()}</DialogTitle>
           <Button
             variant="ghost"
             size="icon"
@@ -51,7 +52,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           {/* Audio Controls */}
           <div className="space-y-4 border border-border rounded-lg p-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Sound</label>
+              <label className="text-sm font-medium">{t('settings.sound')}</label>
               <Slider
                 value={[soundVolume]}
                 onValueChange={handleSoundVolumeChange}
@@ -62,7 +63,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Music</label>
+              <label className="text-sm font-medium">{t('settings.music')}</label>
               <Slider
                 value={[musicVolume]}
                 onValueChange={handleMusicVolumeChange}
@@ -73,17 +74,17 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Mute</label>
+              <label className="text-sm font-medium">{t('settings.mute')}</label>
               <Switch checked={isMuted} onCheckedChange={setIsMuted} />
             </div>
           </div>
 
           {/* Language Selector */}
           <div className="space-y-2 border border-border rounded-lg p-4">
-            <label className="text-sm font-medium">Language</label>
-            <Select value={language} onValueChange={setLanguage}>
+            <label className="text-sm font-medium">{t('settings.language')}</label>
+            <Select value={language} onValueChange={(value: 'es' | 'en') => setLanguage(value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select language" />
+                <SelectValue placeholder={t('settings.language')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="es">Español</SelectItem>

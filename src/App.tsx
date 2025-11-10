@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { MetricsProvider } from "./components/MetricsProvider";
 import { useReferral } from "./hooks/useReferral";
 import { OrientationLock } from "./components/OrientationLock";
@@ -89,18 +90,20 @@ const AppRoutes = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TonProvider>
-      <AudioProvider>
-        <TooltipProvider>
-          <OrientationLock />
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-          {/* Debug overlay toggled by ?debug=1 */}
-          <DebugOverlay manifestUrl={manifestUrl} />
-        </TooltipProvider>
-      </AudioProvider>
+      <LanguageProvider>
+        <AudioProvider>
+          <TooltipProvider>
+            <OrientationLock />
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+            {/* Debug overlay toggled by ?debug=1 */}
+            <DebugOverlay manifestUrl={manifestUrl} />
+          </TooltipProvider>
+        </AudioProvider>
+      </LanguageProvider>
     </TonProvider>
   </QueryClientProvider>
 );

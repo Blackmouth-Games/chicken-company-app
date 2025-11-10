@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Layout, Download, Plus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const LayoutEditor = () => {
+  const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [position, setPosition] = useState(() => {
     const savedPosition = localStorage.getItem('layoutEditorPosition');
@@ -17,10 +19,10 @@ const LayoutEditor = () => {
     setIsEditMode(newMode);
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
     toast({
-      title: newMode ? "Modo Edición Activado" : "Modo Edición Desactivado",
+      title: newMode ? t('layoutEditor.editModeActivated') : t('layoutEditor.editModeDeactivated'),
       description: newMode 
-        ? "Edita las posiciones de edificios y cintas" 
-        : "Cambios guardados automáticamente",
+        ? t('layoutEditor.editDescription')
+        : t('layoutEditor.changesSaved'),
     });
   };
 
@@ -42,8 +44,8 @@ const LayoutEditor = () => {
     window.dispatchEvent(new CustomEvent('layoutConfigUpdate', { detail: defaultConfig }));
     
     toast({
-      title: "Layout Restaurado",
-      description: "El layout ha sido restaurado a valores por defecto",
+      title: t('layoutEditor.layoutRestored'),
+      description: t('layoutEditor.layoutRestoredDesc'),
     });
   };
 
@@ -58,8 +60,8 @@ const LayoutEditor = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast({
-        title: "Layout exportado",
-        description: "Configuración descargada correctamente",
+        title: t('layoutEditor.layoutExported'),
+        description: t('layoutEditor.layoutExportedDesc'),
       });
     }
   };
@@ -119,7 +121,7 @@ const LayoutEditor = () => {
             className="gap-2"
           >
             <Layout className="h-4 w-4" />
-            {isEditMode ? "Desactivar Edición" : "Activar Edición"}
+            {isEditMode ? t('layoutEditor.deactivateEdit') : t('layoutEditor.activateEdit')}
           </Button>
           {isEditMode && (
             <>
@@ -128,20 +130,20 @@ const LayoutEditor = () => {
                 size="sm"
                 variant="outline"
                 className="gap-2"
-                title="Agregar cinta transportadora"
+                title={t('layoutEditor.addBeltTitle')}
               >
                 <Plus className="h-4 w-4" />
-                Cinta
+                {t('layoutEditor.addBelt')}
               </Button>
               <Button
                 onClick={resetLayout}
                 size="sm"
                 variant="outline"
                 className="gap-2 text-orange-600 hover:text-orange-700"
-                title="Restaurar layout por defecto"
+                title={t('layoutEditor.resetTitle')}
               >
                 <RotateCcw className="h-4 w-4" />
-                Reset
+                {t('layoutEditor.reset')}
               </Button>
             </>
           )}
@@ -149,7 +151,7 @@ const LayoutEditor = () => {
             onClick={exportLayout}
             size="sm"
             variant="outline"
-            title="Exportar configuración"
+            title={t('layoutEditor.export')}
           >
             <Download className="h-4 w-4" />
           </Button>
