@@ -440,11 +440,11 @@ const Home = () => {
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'house' ? 'opacity-50 scale-105' : ''}`}
               >
-                <div className="w-full h-full relative">
+                <div className="flex flex-col items-center justify-center w-full h-full">
                   <img
                     src={getBuildingImage('house', 1, 'A')}
                     alt="House"
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-32 h-32 md:w-40 md:h-40 object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -520,7 +520,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-32 h-32 md:w-44 md:h-44 object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -614,7 +614,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
-                    className="w-full h-full object-contain pointer-events-none"
+                    className="w-32 h-32 md:w-44 md:h-44 object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
