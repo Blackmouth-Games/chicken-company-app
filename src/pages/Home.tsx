@@ -781,8 +781,9 @@ const Home = () => {
                   className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.leftCorrals.gridColumn,
-                    gridRow: 4 + index,
+                    gridRow: layoutConfig.leftCorrals.startRow + index,
                   }}
+                  data-slot={`left-${position}`}
                 >
                   <BuildingSlot
                     position={position}
@@ -792,10 +793,10 @@ const Home = () => {
                     isLeftColumn={true}
                   />
                   
-                  {/* Individual slot edit controls */}
+                  {/* Individual slot edit controls - Always visible in edit mode */}
                   {isEditMode && (
-                    <div className="absolute -bottom-16 left-0 right-0 bg-background border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                      <div className="text-xs font-bold text-yellow-700 mb-1">Slot {position}</div>
+                    <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-yellow-700 mb-1">Slot Izq. {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
                           <span className="block text-muted-foreground">Columns:</span>
@@ -805,6 +806,18 @@ const Home = () => {
                             onChange={(e) => updateCorralColumn('left', { gridColumn: e.target.value })}
                             className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="1 / 7"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-muted-foreground">Start Row:</span>
+                          <input
+                            type="number"
+                            value={layoutConfig.leftCorrals.startRow}
+                            onChange={(e) => updateCorralColumn('left', { startRow: parseInt(e.target.value) || 4 })}
+                            className="w-full px-2 py-1 border rounded bg-background"
+                            placeholder="4"
+                            onClick={(e) => e.stopPropagation()}
                           />
                         </label>
                       </div>
@@ -825,8 +838,9 @@ const Home = () => {
                   className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.rightCorrals.gridColumn,
-                    gridRow: 4 + index,
+                    gridRow: layoutConfig.rightCorrals.startRow + index,
                   }}
+                  data-slot={`right-${position}`}
                 >
                   <BuildingSlot
                     position={position}
@@ -836,10 +850,10 @@ const Home = () => {
                     isLeftColumn={false}
                   />
                   
-                  {/* Individual slot edit controls */}
+                  {/* Individual slot edit controls - Always visible in edit mode */}
                   {isEditMode && (
-                    <div className="absolute -bottom-16 left-0 right-0 bg-background border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                      <div className="text-xs font-bold text-orange-700 mb-1">Slot {position}</div>
+                    <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-orange-700 mb-1">Slot Der. {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
                           <span className="block text-muted-foreground">Columns:</span>
@@ -849,6 +863,18 @@ const Home = () => {
                             onChange={(e) => updateCorralColumn('right', { gridColumn: e.target.value })}
                             className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="20 / 26"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-muted-foreground">Start Row:</span>
+                          <input
+                            type="number"
+                            value={layoutConfig.rightCorrals.startRow}
+                            onChange={(e) => updateCorralColumn('right', { startRow: parseInt(e.target.value) || 4 })}
+                            className="w-full px-2 py-1 border rounded bg-background"
+                            placeholder="4"
+                            onClick={(e) => e.stopPropagation()}
                           />
                         </label>
                       </div>

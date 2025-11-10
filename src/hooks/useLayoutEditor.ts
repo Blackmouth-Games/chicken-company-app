@@ -23,8 +23,8 @@ export interface LayoutConfig {
   market: { gridColumn: string; gridRow: string };
   house: { gridColumn: string; gridRow: string };
   boxes: { gridColumn: string; gridRow: string };
-  leftCorrals: { gridColumn: string; gap: string };
-  rightCorrals: { gridColumn: string; gap: string };
+  leftCorrals: { gridColumn: string; gap: string; startRow: number };
+  rightCorrals: { gridColumn: string; gap: string; startRow: number };
   belts: BeltConfig[];
   grid: { gap: string; maxWidth: string };
 }
@@ -34,8 +34,8 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   market: { gridColumn: '20 / 26', gridRow: '1 / 4' },
   house: { gridColumn: '11 / 16', gridRow: '1 / 3' },
   boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px' },
-  rightCorrals: { gridColumn: '20 / 26', gap: '20px' },
+  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4 },
+  rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4 },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
   grid: { gap: '20px', maxWidth: '1600px' },
 };
@@ -74,10 +74,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           leftCorrals: {
             gridColumn: parsed.leftCorrals?.gridColumn || DEFAULT_LAYOUT.leftCorrals.gridColumn,
             gap: parsed.leftCorrals?.gap || DEFAULT_LAYOUT.leftCorrals.gap,
+            startRow: parsed.leftCorrals?.startRow || DEFAULT_LAYOUT.leftCorrals.startRow,
           },
           rightCorrals: {
             gridColumn: parsed.rightCorrals?.gridColumn || DEFAULT_LAYOUT.rightCorrals.gridColumn,
             gap: parsed.rightCorrals?.gap || DEFAULT_LAYOUT.rightCorrals.gap,
+            startRow: parsed.rightCorrals?.startRow || DEFAULT_LAYOUT.rightCorrals.startRow,
           },
           belts: Array.isArray(parsed.belts) 
             ? parsed.belts.map((belt: any) => ({
@@ -261,7 +263,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       }
 
       if (resizing) {
-        const buildingKey = resizing.building as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
+        const buildingKey = resizing.building as keyof Pick<LayoutConfig, 'warehouse' | 'market' | 'house' | 'boxes'>;
         const currentConfig = layoutConfig[buildingKey];
         
         const colPos = parseGridNotation(currentConfig.gridColumn);
@@ -314,7 +316,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
     const handleMouseUp = () => {
       if (isDragging && draggedBuilding && tempPosition) {
-        const buildingKey = draggedBuilding as keyof Pick<LayoutConfig, 'warehouse' | 'market'>;
+        const buildingKey = draggedBuilding as keyof Pick<LayoutConfig, 'warehouse' | 'market' | 'house' | 'boxes'>;
         const currentConfig = layoutConfig[buildingKey];
         
         const colSpan = parseGridNotation(currentConfig.gridColumn);
@@ -323,7 +325,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         const width = colSpan.end - colSpan.start;
         const height = rowSpan.end - rowSpan.start;
         
-        // Try to update position
+        // Move to exact grid position (snap to grid)
         const success = updateBuildingLayout(buildingKey, {
           gridColumn: createGridNotation(tempPosition.col, tempPosition.col + width),
           gridRow: createGridNotation(tempPosition.row, tempPosition.row + height),
@@ -434,7 +436,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Update corral column layout
-  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string }>) => {
+  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string; startRow: number }>) => {
     const key = column === 'left' ? 'leftCorrals' : 'rightCorrals';
     setLayoutConfig(prev => {
       const newConfig = {
@@ -451,11 +453,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
   // Remove handleGridClick - no longer needed
 
-  // Simplified add belt at position - only horizontal, one cell
+  // Add belt at position - support all directions
   const addBeltAtPosition = (
     col: number, 
     row: number, 
-    direction: 'east' | 'west',
+    direction: 'north' | 'south' | 'east' | 'west',
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'
   ) => {
     const newBelt: BeltConfig = {

@@ -8,12 +8,13 @@ interface AddBeltDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   gridPosition: { col: number; row: number } | null;
-  onAddBelt: (direction: 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => void;
+  onAddBelt: (direction: 'north' | 'south' | 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => void;
+  showVertical?: boolean;
 }
 
-export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt }: AddBeltDialogProps) => {
+export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, showVertical = false }: AddBeltDialogProps) => {
   const { t } = useLanguage();
-  const [selectedDirection, setSelectedDirection] = useState<'east' | 'west'>('east');
+  const [selectedDirection, setSelectedDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
   const [selectedType, setSelectedType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
 
   const handleConfirm = () => {
@@ -23,10 +24,14 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt }: A
     setSelectedType('straight');
   };
 
-  const directions = [
+  const allDirections = [
+    { value: 'north' as const, icon: ArrowUp, label: t('layoutEditor.direction_north') },
+    { value: 'south' as const, icon: ArrowDown, label: t('layoutEditor.direction_south') },
     { value: 'west' as const, icon: ArrowLeft, label: t('layoutEditor.direction_west') },
     { value: 'east' as const, icon: ArrowRight, label: t('layoutEditor.direction_east') },
   ];
+
+  const directions = showVertical ? allDirections : allDirections.filter(d => d.value === 'east' || d.value === 'west');
 
   const types = [
     { value: 'straight' as const, label: t('layoutEditor.type_straight') },
