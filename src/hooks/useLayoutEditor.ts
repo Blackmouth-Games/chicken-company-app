@@ -62,6 +62,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [resizing, setResizing] = useState<{ building: string; handle: string } | null>(null);
   const [tempPosition, setTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [hasCollision, setHasCollision] = useState(false);
+  const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
+  const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
 
   // Calculate total rows based on belt configuration
   const getTotalRows = (): number => {
@@ -169,6 +171,19 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     setTempPosition(gridPos);
   };
 
+  // Handle belt drag start
+  const handleBeltMouseDown = (e: React.MouseEvent, beltId: string) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggedBelt(beltId);
+    setIsDragging(true);
+    
+    const gridPos = pixelToGrid(e.clientX, e.clientY);
+    setDragOffset({ x: e.clientX, y: e.clientY });
+    setBeltTempPosition(gridPos);
+  };
+
   // Handle resize start
   const handleResizeStart = (e: React.MouseEvent, buildingName: string, handle: string) => {
     if (!isEditMode) return;
@@ -191,6 +206,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       if (isDragging && draggedBuilding) {
         const gridPos = pixelToGrid(e.clientX, e.clientY);
         setTempPosition(gridPos);
+      }
+
+      if (isDragging && draggedBelt) {
+        const gridPos = pixelToGrid(e.clientX, e.clientY);
+        setBeltTempPosition(gridPos);
       }
 
       if (resizing) {
@@ -269,11 +289,34 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           });
         }
       }
+
+      if (isDragging && draggedBelt && beltTempPosition) {
+        const belt = layoutConfig.belts.find(b => b.id === draggedBelt);
+        if (belt) {
+          const colSpan = parseGridNotation(belt.gridColumn);
+          const rowSpan = parseGridNotation(belt.gridRow);
+          
+          const width = colSpan.end - colSpan.start;
+          const height = rowSpan.end - rowSpan.start;
+          
+          updateBelt(draggedBelt, {
+            gridColumn: createGridNotation(beltTempPosition.col, beltTempPosition.col + width),
+            gridRow: createGridNotation(beltTempPosition.row, beltTempPosition.row + height),
+          });
+
+          toast({
+            title: "Cinta movida",
+            description: `Cinta movida a columna ${beltTempPosition.col}, fila ${beltTempPosition.row}`,
+          });
+        }
+      }
       
       setIsDragging(false);
       setDraggedBuilding(null);
+      setDraggedBelt(null);
       setResizing(null);
       setTempPosition(null);
+      setBeltTempPosition(null);
     };
 
     if (isDragging || resizing) {
@@ -285,7 +328,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, draggedBuilding, resizing, tempPosition, layoutConfig]);
+  }, [isDragging, draggedBuilding, draggedBelt, resizing, tempPosition, beltTempPosition, layoutConfig]);
 
   // Belt management
   const addBelt = () => {
@@ -421,14 +464,17 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     isEditMode,
     isDragging,
     draggedBuilding,
+    draggedBelt,
     resizing,
     tempPosition,
+    beltTempPosition,
     hasCollision,
     gridRef,
     
     // Methods
     getTotalRows,
     handleBuildingMouseDown,
+    handleBeltMouseDown,
     handleResizeStart,
     updateBuildingLayout,
     updateMinHeight,

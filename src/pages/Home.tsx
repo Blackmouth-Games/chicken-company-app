@@ -45,12 +45,15 @@ const Home = () => {
     isEditMode,
     isDragging,
     draggedBuilding,
+    draggedBelt,
     resizing,
     tempPosition,
+    beltTempPosition,
     hasCollision,
     gridRef,
     getTotalRows,
     handleBuildingMouseDown,
+    handleBeltMouseDown,
     handleResizeStart,
     updateBuildingLayout,
     updateMinHeight,
@@ -298,11 +301,35 @@ const Home = () => {
           style={{ maxWidth: layoutConfig.grid.maxWidth }}
           onClick={handleGridClick}
         >
-          {/* Fine grid overlay */}
+          {/* Grid numbering overlay - Only in edit mode */}
+          {isEditMode && (
+            <>
+              {/* Column numbers */}
+              <div className="absolute -top-6 left-0 right-0 flex pointer-events-none" style={{ gap: layoutConfig.grid.gap }}>
+                {Array.from({ length: 25 }).map((_, i) => (
+                  <div key={`col-${i}`} className="flex-1 text-center text-xs font-mono text-foreground/60">
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+              {/* Row numbers */}
+              <div className="absolute -left-8 top-0 bottom-0 flex flex-col pointer-events-none" style={{ gap: layoutConfig.grid.gap }}>
+                {Array.from({ length: getTotalRows() }).map((_, i) => (
+                  <div key={`row-${i}`} className="flex-1 flex items-center justify-end text-xs font-mono text-foreground/60">
+                    {i + 1}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          
+          {/* Fine grid overlay with enhanced visibility */}
           <div 
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
+              backgroundImage: isEditMode 
+                ? 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)' 
+                : 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
               backgroundSize: '20px 20px'
             }}
           />
@@ -561,44 +588,57 @@ const Home = () => {
             </div>
 
             {/* VERTICAL CONVEYOR BELTS - Dynamic based on config */}
-            {layoutConfig.belts.map((belt, idx) => (
-              <div 
-                key={belt.id}
-                className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-pink-500' : ''}`}
-                style={{ 
-                  gridColumn: belt.gridColumn,
-                  gridRow: belt.gridRow
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden">
-                  {/* Belt pattern */}
-                  <div className="h-full w-full flex flex-col items-center justify-evenly">
-                    {Array.from({ length: 30 }).map((_, i) => (
-                      <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
-                    ))}
+            {layoutConfig.belts.map((belt, idx) => {
+              const isBeltDragging = draggedBelt === belt.id;
+              
+              return (
+                <div 
+                  key={belt.id}
+                  className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-pink-500' : ''} ${
+                    isBeltDragging ? 'ring-4 ring-pink-600 ring-offset-4 opacity-50' : ''
+                  }`}
+                  style={{ 
+                    gridColumn: belt.gridColumn,
+                    gridRow: belt.gridRow
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => isEditMode && handleBeltMouseDown(e, belt.id)}
+                >
+                  <div className={`w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden ${
+                    isEditMode ? 'cursor-move' : ''
+                  }`}>
+                    {/* Belt pattern */}
+                    <div className="h-full w-full flex flex-col items-center justify-evenly">
+                      {Array.from({ length: 30 }).map((_, i) => (
+                        <div key={i} className="w-3 h-0.5 bg-pink-700 rounded-full shadow-inner" />
+                      ))}
+                    </div>
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+                    
+                    {isEditMode && (
+                      <>
+                        <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono pointer-events-none">
+                          Belt {idx + 1}
+                        </div>
+                        {beltTempPosition && isBeltDragging && (
+                          <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none">
+                            → Col {beltTempPosition.col}, Row {beltTempPosition.row}
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeBelt(belt.id);
+                          }}
+                          className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 font-bold z-50"
+                          title="Eliminar cinta"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
                   </div>
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                  
-                  {isEditMode && (
-                    <>
-                      <div className="absolute top-2 right-2 bg-pink-600 text-white text-xs px-2 py-1 rounded font-mono">
-                        Belt {idx + 1}
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeBelt(belt.id);
-                        }}
-                        className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600 font-bold z-50"
-                        title="Eliminar cinta"
-                      >
-                        ✕
-                      </button>
-                    </>
-                  )}
-                </div>
                 
                 {/* Edit Controls */}
                 {isEditMode && (
@@ -630,7 +670,8 @@ const Home = () => {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
 
             {/* LEFT CORRALS - Columns 1-6, starting from row 4, vertical stack */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
