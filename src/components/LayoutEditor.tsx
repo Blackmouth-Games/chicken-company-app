@@ -150,6 +150,24 @@ const LayoutEditor = () => {
                 <RotateCcw className="h-4 w-4" />
                 {t('layoutEditor.reset')}
               </Button>
+              <div className="flex items-center gap-2 bg-background/50 px-2 py-1 rounded border">
+                <label className="text-xs whitespace-nowrap">Gap:</label>
+                <input
+                  type="text"
+                  defaultValue="20px"
+                  onChange={(e) => {
+                    const savedLayout = localStorage.getItem('debugLayoutConfig');
+                    if (savedLayout) {
+                      const config = JSON.parse(savedLayout);
+                      config.grid.gap = e.target.value;
+                      localStorage.setItem('debugLayoutConfig', JSON.stringify(config));
+                      window.dispatchEvent(new CustomEvent('layoutConfigUpdate', { detail: config }));
+                    }
+                  }}
+                  className="w-16 px-1 py-0.5 text-xs border rounded bg-background"
+                  placeholder="20px"
+                />
+              </div>
             </>
           )}
           <Button
