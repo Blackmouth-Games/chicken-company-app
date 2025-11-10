@@ -124,31 +124,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
+  const [cellSize, setCellSize] = useState<number>(20);
 
   const getTotalRows = (): number => {
-    let rows = beltSpanForRows; // baseline
-    try {
-      // Consider belts
-      layoutConfig.belts?.forEach((belt) => {
-        const parsed = parseGridNotation(belt.gridRow);
-        rows = Math.max(rows, parsed.end);
-      });
-      // Consider main buildings
-      const buildings = ['warehouse', 'market', 'house', 'boxes'] as const;
-      buildings.forEach((key) => {
-        // @ts-ignore
-        const row = layoutConfig[key]?.gridRow;
-        if (row) {
-          const r = parseGridNotation(row);
-          rows = Math.max(rows, r.end);
-        }
-      });
-      // Consider corrals start rows + buffer
-      if (layoutConfig.leftCorrals?.startRow) rows = Math.max(rows, layoutConfig.leftCorrals.startRow + 20);
-      if (layoutConfig.rightCorrals?.startRow) rows = Math.max(rows, layoutConfig.rightCorrals.startRow + 20);
-    } catch {}
-    // Ensure a sane minimum
-    return Math.max(rows, beltSpanForRows);
+    return layoutConfig.grid?.totalRows || beltSpanForRows;
   };
 
   // Save layout to localStorage
@@ -165,11 +144,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const relativeY = y - rect.top;
     
     const totalRows = getTotalRows();
-    const columnWidth = rect.width / TOTAL_COLUMNS;
-    const rowHeight = rect.height / totalRows;
+    const gapPx = parseInt((layoutConfig.grid.gap || '0').toString());
+    const columnWidth = (rect.width - gapPx * (TOTAL_COLUMNS - 1)) / TOTAL_COLUMNS;
+    const rowHeight = (rect.height - gapPx * (totalRows - 1)) / totalRows;
     
-    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor(relativeX / columnWidth) + 1));
-    const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / rowHeight) + 1));
+    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor((relativeX + gapPx) / (columnWidth + gapPx)) + 1));
+    const row = Math.max(1, Math.min(totalRows, Math.floor((relativeY + gapPx) / (rowHeight + gapPx)) + 1));
     
     return { col, row };
   };
@@ -192,11 +172,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         updates.gridRow || layoutConfig[building].gridRow
       );
 
-      // Allow grid to auto-grow vertically while resizing/moving
-      const dynamicMaxRows = Math.max(getTotalRows(), newArea.rowEnd);
-
-      // Check bounds with dynamic rows
-      if (!isWithinBounds(newArea, TOTAL_COLUMNS, dynamicMaxRows)) {
+      // Check bounds against fixed grid size
+      if (!isWithinBounds(newArea, TOTAL_COLUMNS, getTotalRows())) {
         toast({
           title: t('layoutEditor.outOfBounds'),
           description: t('layoutEditor.outOfBoundsDesc'),
@@ -598,6 +575,22 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       }
     }
   };
+  // Compute responsive cell size based on container width and gap
+  useEffect(() => {
+    const computeCell = () => {
+      if (!gridRef.current) return;
+      const width = gridRef.current.clientWidth;
+      const gapValue = parseInt((layoutConfig.grid.gap || '0').toString());
+      const totalGaps = gapValue * (TOTAL_COLUMNS - 1);
+      const size = Math.max(12, Math.floor((width - totalGaps) / TOTAL_COLUMNS));
+      setCellSize(size);
+    };
+    computeCell();
+    window.addEventListener('resize', computeCell);
+    return () => window.removeEventListener('resize', computeCell);
+  }, [layoutConfig.grid.gap]);
+
+  // External events (edit mode, add belt, config updates)
   useEffect(() => {
     const handleEditModeChange = (event: CustomEvent<boolean>) => {
       setIsEditMode(event.detail);
@@ -654,5 +647,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     duplicateSelected,
     rotateSelected,
     setSelectedObject,
+    cellSize,
   };
 };
