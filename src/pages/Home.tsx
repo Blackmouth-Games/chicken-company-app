@@ -105,12 +105,15 @@ const Home = () => {
 
       // Ajuste vertical en función de la altura visible y el número de filas
       const rows = Math.min(layoutConfig.grid.totalRows ?? 20, 40);
-      const margin = 40; // espacio para navegación inferior/bordes
+      const isMobile = window.innerWidth <= 768;
+      const margin = isMobile ? 16 : 40; // menos margen en móvil
       const availableHeight = Math.max(120, window.innerHeight - rect.top - margin);
       const sizeByHeight =
         rows > 0 ? (availableHeight - gapVal * (rows - 1)) / rows : sizeByWidth;
 
-      const candidate = Math.floor(Math.min(sizeByWidth, sizeByHeight));
+      // Mobile-first: prioriza ancho en pantallas estrechas
+      const preferred = isMobile ? sizeByWidth : Math.min(sizeByWidth, sizeByHeight);
+      const candidate = Math.floor(preferred);
       const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
 
       setCellSize(prev => (prev !== clamped ? clamped : prev));
@@ -515,6 +518,15 @@ const Home = () => {
                     className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-purple-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'house', 'se')}
                   />
+                  {/* Edge resize handles (vertical only) */}
+                  <div 
+                    className="resize-handle absolute top-0 left-1/2 w-4 h-4 bg-purple-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'n')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 left-1/2 w-4 h-4 bg-purple-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 's')}
+                  />
                   
                 </div>
               )}
@@ -770,6 +782,15 @@ const Home = () => {
                     className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-amber-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'boxes', 'se')}
                   />
+                  {/* Edge resize handles (vertical only) */}
+                  <div 
+                    className="resize-handle absolute top-0 left-1/2 w-4 h-4 bg-amber-600 rounded-full cursor-n-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 'n')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 left-1/2 w-4 h-4 bg-amber-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 's')}
+                  />
                 </div>
               )}
             </div>
@@ -824,7 +845,7 @@ const Home = () => {
                   
                   {/* Individual slot edit controls - Always visible in edit mode */}
                   {isEditMode && index === 0 && (
-                    <div className="absolute -bottom-28 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
+                    <div className="absolute -bottom-32 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
                       <div className="text-xs font-bold text-yellow-700 mb-1">Corrales Izquierdos</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
@@ -846,6 +867,18 @@ const Home = () => {
                             onChange={(e) => updateCorralColumn('left', { startRow: parseInt(e.target.value) || 4 })}
                             className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="4"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-muted-foreground">Row span (alto slot):</span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={layoutConfig.leftCorrals.rowSpan ?? 1}
+                            onChange={(e) => updateCorralColumn('left', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
+                            className="w-full px-2 py-1 border rounded bg-background"
+                            placeholder="1"
                             onClick={(e) => e.stopPropagation()}
                           />
                         </label>
@@ -883,7 +916,7 @@ const Home = () => {
                   
                   {/* Individual slot edit controls - Always visible in edit mode */}
                   {isEditMode && index === 0 && (
-                    <div className="absolute -bottom-28 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
+                    <div className="absolute -bottom-32 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
                       <div className="text-xs font-bold text-orange-700 mb-1">Corrales Derechos</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
@@ -905,6 +938,18 @@ const Home = () => {
                             onChange={(e) => updateCorralColumn('right', { startRow: parseInt(e.target.value) || 4 })}
                             className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="4"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </label>
+                        <label className="flex-1">
+                          <span className="block text-muted-foreground">Row span (alto slot):</span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={layoutConfig.rightCorrals.rowSpan ?? 1}
+                            onChange={(e) => updateCorralColumn('right', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
+                            className="w-full px-2 py-1 border rounded bg-background"
+                            placeholder="1"
                             onClick={(e) => e.stopPropagation()}
                           />
                         </label>

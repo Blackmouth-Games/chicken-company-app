@@ -40,10 +40,10 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   warehouse: { gridColumn: '3 / 10', gridRow: '6 / 14' },
   market: { gridColumn: '16 / 23', gridRow: '6 / 14' },
   boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
-  leftCorrals: { gridColumn: '3 / 10', gap: '16px', startRow: 14, rowSpan: 4 },
-  rightCorrals: { gridColumn: '16 / 23', gap: '16px', startRow: 14, rowSpan: 4 },
+  leftCorrals: { gridColumn: '3 / 10', gap: '12px', startRow: 14, rowSpan: 4 },
+  rightCorrals: { gridColumn: '16 / 23', gap: '12px', startRow: 14, rowSpan: 4 },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
-  grid: { gap: '16px', maxWidth: '1400px', totalRows: 40 },
+  grid: { gap: '12px', maxWidth: '100vw', totalRows: 40 },
 };
 
 const TOTAL_COLUMNS = 25;
@@ -462,7 +462,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Update corral column layout
-  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string; startRow: number }>) => {
+  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string; startRow: number; rowSpan: number }>) => {
     const key = column === 'left' ? 'leftCorrals' : 'rightCorrals';
     setLayoutConfig(prev => {
       const newConfig = {
