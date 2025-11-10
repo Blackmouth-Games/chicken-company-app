@@ -124,7 +124,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
-  const [cellSize, setCellSize] = useState<number>(20);
 
   const getTotalRows = (): number => {
     return layoutConfig.grid?.totalRows || beltSpanForRows;
@@ -145,11 +144,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     
     const totalRows = getTotalRows();
     const gapPx = parseInt((layoutConfig.grid.gap || '0').toString());
-    const columnWidth = (rect.width - gapPx * (TOTAL_COLUMNS - 1)) / TOTAL_COLUMNS;
-    const rowHeight = (rect.height - gapPx * (totalRows - 1)) / totalRows;
+    const CELL_SIZE = 20; // Fixed cell size
     
-    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor((relativeX + gapPx) / (columnWidth + gapPx)) + 1));
-    const row = Math.max(1, Math.min(totalRows, Math.floor((relativeY + gapPx) / (rowHeight + gapPx)) + 1));
+    // Calculate position based on fixed 20px cells + gaps
+    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor(relativeX / (CELL_SIZE + gapPx)) + 1));
+    const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (CELL_SIZE + gapPx)) + 1));
     
     return { col, row };
   };
@@ -575,21 +574,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       }
     }
   };
-  // Compute responsive cell size based on container width and gap
-  useEffect(() => {
-    const computeCell = () => {
-      if (!gridRef.current) return;
-      const width = gridRef.current.clientWidth;
-      const gapValue = parseInt((layoutConfig.grid.gap || '0').toString());
-      const totalGaps = gapValue * (TOTAL_COLUMNS - 1);
-      const size = Math.max(12, Math.floor((width - totalGaps) / TOTAL_COLUMNS));
-      setCellSize(size);
-    };
-    computeCell();
-    window.addEventListener('resize', computeCell);
-    return () => window.removeEventListener('resize', computeCell);
-  }, [layoutConfig.grid.gap]);
-
+  
   // External events (edit mode, add belt, config updates)
   useEffect(() => {
     const handleEditModeChange = (event: CustomEvent<boolean>) => {
@@ -647,6 +632,5 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     duplicateSelected,
     rotateSelected,
     setSelectedObject,
-    cellSize,
   };
 };

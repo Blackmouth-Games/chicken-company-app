@@ -402,14 +402,16 @@ const Home = () => {
               backgroundSize: '20px 20px'
             }}
           />
-          {/* Grid: 25 columns total - House | Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
+          {/* Grid: 25 columns total - Fixed cell size system */}
           <div 
             className="grid items-stretch relative"
             style={{
-              gridTemplateColumns: 'repeat(25, 1fr)',
+              gridTemplateColumns: 'repeat(25, 20px)',
               gridAutoRows: '20px',
               minHeight: `${getTotalRows() * 20}px`,
-              gap: layoutConfig.grid.gap
+              gap: layoutConfig.grid.gap,
+              width: 'fit-content',
+              margin: '0 auto'
             }}
           >
 
@@ -444,7 +446,7 @@ const Home = () => {
                   <img
                     src={getBuildingImage('house', 1, 'A')}
                     alt="House"
-                    className="w-32 h-32 md:w-40 md:h-40 object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -520,7 +522,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
-                    className="w-32 h-32 md:w-44 md:h-44 object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -614,7 +616,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
-                    className="w-32 h-32 md:w-44 md:h-44 object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -697,7 +699,7 @@ const Home = () => {
                 } ${isDragging && draggedBuilding === 'boxes' ? 'opacity-50 scale-105' : ''}`}
               >
                 {getBoxImage() && (
-                  <img 
+                  <img
                     src={getBoxImage()!} 
                     alt="Storage boxes" 
                     className="w-full h-full object-contain pointer-events-none"
