@@ -149,14 +149,17 @@ export const ConveyorBelt = ({
         
         {isEditMode && (
           <>
-            <div className="absolute top-2 right-2 bg-cyan-600 text-white text-xs px-2 py-1 rounded font-mono pointer-events-none z-10">
-              {belt.direction.toUpperCase()} - {belt.type}
-            </div>
             {tempPosition && isDragging && (
               <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none z-10">
                 → Col {tempPosition.col}, Row {tempPosition.row}
               </div>
             )}
+          </>
+        )}
+        
+        {/* Tooltip with actions when belt is selected */}
+        {isEditMode && isSelected && !isDragging && (
+          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex gap-2 z-50 whitespace-nowrap">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
@@ -164,12 +167,13 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant="destructive"
-              className="absolute top-2 left-2 h-7 w-7 p-0 z-10"
+              className="h-8 px-3"
               title="Eliminar cinta"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 mr-1" />
+              Eliminar
             </Button>
-            {isSelected && onRotate && (
+            {onRotate && (
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -177,14 +181,14 @@ export const ConveyorBelt = ({
                 }}
                 size="sm"
                 variant="default"
-                className="absolute bottom-2 left-1/2 -translate-x-1/2 h-7 px-2 z-10"
+                className="h-8 px-3"
                 title="Rotar cinta"
               >
                 <RotateCw className="h-4 w-4 mr-1" />
                 Rotar
               </Button>
             )}
-          </>
+          </div>
         )}
       </div>
     

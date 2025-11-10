@@ -127,6 +127,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [hasCollision, setHasCollision] = useState(false);
   const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
+  const [lastBeltGridPos, setLastBeltGridPos] = useState<{ col: number; row: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
   const getTotalRows = (): number => {
@@ -257,6 +258,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const gridPos = pixelToGrid(e.clientX, e.clientY);
     setDragOffset({ x: e.clientX, y: e.clientY });
     setBeltTempPosition(gridPos);
+    setLastBeltGridPos(gridPos);
   };
 
   // Handle resize start
@@ -285,7 +287,11 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
       if (isDragging && draggedBelt) {
         const gridPos = pixelToGrid(e.clientX, e.clientY);
-        setBeltTempPosition(gridPos);
+        // Only update if position actually changed to avoid jittery movement
+        if (!lastBeltGridPos || lastBeltGridPos.col !== gridPos.col || lastBeltGridPos.row !== gridPos.row) {
+          setBeltTempPosition(gridPos);
+          setLastBeltGridPos(gridPos);
+        }
       }
 
       if (resizing) {
@@ -399,6 +405,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       setResizing(null);
       setTempPosition(null);
       setBeltTempPosition(null);
+      setLastBeltGridPos(null);
     };
 
     if (isDragging || resizing) {
