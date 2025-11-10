@@ -18,6 +18,7 @@ import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
 import { ConveyorBelt } from "@/components/ConveyorBelt";
+import { SelectionToolbar } from "@/components/SelectionToolbar";
 import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -56,9 +57,12 @@ const Home = () => {
     beltTempPosition,
     hasCollision,
     gridRef,
+    selectedObject,
     getTotalRows,
     handleBuildingMouseDown,
+    handleBuildingClick,
     handleBeltMouseDown,
+    handleBeltClick,
     handleResizeStart,
     updateBuildingLayout,
     updateCorralColumn,
@@ -67,6 +71,10 @@ const Home = () => {
     updateBelt,
     setLayoutConfig,
     addBeltAtPosition,
+    deleteSelected,
+    duplicateSelected,
+    rotateSelected,
+    setSelectedObject,
   } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
@@ -257,7 +265,7 @@ const Home = () => {
     }
   };
 
-  const handleBuildingClick = (buildingId: string) => {
+  const handleBuildingClickAction = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
     setCorralDialogOpen(true);
   };
@@ -353,7 +361,9 @@ const Home = () => {
             <div
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'house' ? 'ring-4 ring-purple-600 ring-offset-4' : ''
-              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
+                selectedObject?.type === 'building' && selectedObject?.id === 'house' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
+              }`}
               style={{
                 gridColumn: layoutConfig.house.gridColumn,
                 gridRow: layoutConfig.house.gridRow,
@@ -364,7 +374,11 @@ const Home = () => {
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'house')}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isEditMode) setHouseOpen(true);
+                  if (isEditMode) {
+                    handleBuildingClick('house');
+                  } else {
+                    setHouseOpen(true);
+                  }
                 }}
                 className={`w-full h-full flex items-center justify-center transition-all ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
@@ -442,7 +456,9 @@ const Home = () => {
             <div 
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'warehouse' ? 'ring-4 ring-blue-600 ring-offset-4' : ''
-              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
+                selectedObject?.type === 'building' && selectedObject?.id === 'warehouse' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
+              }`}
               style={{ 
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
@@ -453,7 +469,11 @@ const Home = () => {
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'warehouse')}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isEditMode) setWarehouseOpen(true);
+                  if (isEditMode) {
+                    handleBuildingClick('warehouse');
+                  } else {
+                    setWarehouseOpen(true);
+                  }
                 }}
                 className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
@@ -555,7 +575,9 @@ const Home = () => {
             <div 
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-green-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'market' ? 'ring-4 ring-green-600 ring-offset-4' : ''
-              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''} ${
+                selectedObject?.type === 'building' && selectedObject?.id === 'market' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''
+              }`}
               style={{ 
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
@@ -566,7 +588,11 @@ const Home = () => {
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'market')}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isEditMode) setMarketOpen(true);
+                  if (isEditMode) {
+                    handleBuildingClick('market');
+                  } else {
+                    setMarketOpen(true);
+                  }
                 }}
                 className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
@@ -668,7 +694,7 @@ const Home = () => {
             <div 
               className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
-              }`}
+              } ${selectedObject?.type === 'building' && selectedObject?.id === 'boxes' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
               style={{ 
                 gridColumn: layoutConfig.boxes.gridColumn,
                 gridRow: layoutConfig.boxes.gridRow
@@ -677,6 +703,12 @@ const Home = () => {
             >
               <div
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'boxes')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isEditMode) {
+                    handleBuildingClick('boxes');
+                  }
+                }}
                 className={`w-full h-full flex items-center justify-center transition-all ${
                   isEditMode ? 'cursor-move' : ''
                 } ${isDragging && draggedBuilding === 'boxes' ? 'opacity-50 scale-105' : ''}`}
@@ -761,8 +793,10 @@ const Home = () => {
                   idx={idx}
                   isEditMode={isEditMode}
                   isDragging={isBeltDragging}
+                  isSelected={selectedObject?.type === 'belt' && selectedObject?.id === belt.id}
                   tempPosition={beltTempPosition}
                   onMouseDown={(e) => isEditMode && handleBeltMouseDown(e, belt.id)}
+                  onClick={() => isEditMode && handleBeltClick(belt.id)}
                   onRemove={() => removeBelt(belt.id)}
                   onUpdateColumn={(value) => updateBelt(belt.id, { gridColumn: value })}
                   onUpdateRow={(value) => updateBelt(belt.id, { gridRow: value })}
@@ -789,7 +823,7 @@ const Home = () => {
                     position={position}
                     building={building}
                     onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={true}
                   />
                   
@@ -846,7 +880,7 @@ const Home = () => {
                     position={position}
                     building={building}
                     onBuyClick={handleBuyClick}
-                    onBuildingClick={building ? () => handleBuildingClick(building.id) : undefined}
+                    onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={false}
                   />
                   
@@ -917,6 +951,13 @@ const Home = () => {
         buildingId={selectedBuildingId}
       />
       <LayoutEditor />
+      <SelectionToolbar
+        selectedObject={selectedObject}
+        onRotate={rotateSelected}
+        onDuplicate={duplicateSelected}
+        onDelete={deleteSelected}
+        onDeselect={() => setSelectedObject(null)}
+      />
     </div>
   );
 };

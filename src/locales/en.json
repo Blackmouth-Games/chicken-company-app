@@ -74,7 +74,15 @@
     "type_curve_ne": "Curve NE ↗",
     "type_curve_nw": "Curve NW ↖",
     "type_curve_se": "Curve SE ↘",
-    "type_curve_sw": "Curve SW ↙"
+    "type_curve_sw": "Curve SW ↙",
+    "rotate": "Rotate",
+    "duplicate": "Duplicate",
+    "rotated": "Rotated",
+    "rotatedDesc": "Object rotated successfully",
+    "duplicated": "Duplicated",
+    "duplicatedDesc": "Object duplicated successfully",
+    "cannotDelete": "Cannot delete",
+    "cannotDeleteBuilding": "Buildings cannot be deleted"
   },
   "common": {
     "close": "Close",

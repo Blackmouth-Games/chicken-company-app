@@ -16,7 +16,13 @@ interface BeltConfig {
   gridRow: string;
   direction: 'north' | 'south' | 'east' | 'west';
   type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+  rotation?: number; // 0, 90, 180, 270
 }
+
+type SelectableObject = {
+  type: 'building' | 'belt';
+  id: string; // belt id or building name (warehouse, market, house, boxes)
+};
 
 export interface LayoutConfig {
   warehouse: { gridColumn: string; gridRow: string };
@@ -114,6 +120,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [hasCollision, setHasCollision] = useState(false);
   const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
+  const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
   // Calculate total rows based on belt configuration
   const getTotalRows = (): number => {
@@ -207,11 +214,24 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     return true;
   };
 
+  // Handle building click for selection
+  const handleBuildingClick = (buildingName: string) => {
+    if (!isEditMode) return;
+    setSelectedObject({ type: 'building', id: buildingName });
+  };
+
+  // Handle belt click for selection
+  const handleBeltClick = (beltId: string) => {
+    if (!isEditMode) return;
+    setSelectedObject({ type: 'belt', id: beltId });
+  };
+
   // Handle drag start
   const handleBuildingMouseDown = (e: React.MouseEvent, buildingName: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
+    setSelectedObject({ type: 'building', id: buildingName });
     setDraggedBuilding(buildingName);
     setIsDragging(true);
     
@@ -225,6 +245,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
+    setSelectedObject({ type: 'belt', id: beltId });
     setDraggedBelt(beltId);
     setIsDragging(true);
     
@@ -486,7 +507,77 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
-  // Listen for external events
+  // Delete selected object
+  const deleteSelected = () => {
+    if (!selectedObject) return;
+    
+    if (selectedObject.type === 'belt') {
+      removeBelt(selectedObject.id);
+      setSelectedObject(null);
+    } else if (selectedObject.type === 'building') {
+      // Buildings can't be deleted, only belts
+      toast({
+        title: t('layoutEditor.cannotDelete'),
+        description: t('layoutEditor.cannotDeleteBuilding'),
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Duplicate selected object
+  const duplicateSelected = () => {
+    if (!selectedObject) return;
+    
+    if (selectedObject.type === 'belt') {
+      const belt = layoutConfig.belts.find(b => b.id === selectedObject.id);
+      if (belt) {
+        const parsed = parseGridNotation(belt.gridColumn);
+        const newBelt: BeltConfig = {
+          ...belt,
+          id: `belt-${Date.now()}`,
+          gridColumn: createGridNotation(parsed.start + 2, parsed.end + 2), // Offset by 2 columns
+        };
+        
+        setLayoutConfig(prev => {
+          const newConfig = {
+            ...prev,
+            belts: [...prev.belts, newBelt],
+          };
+          saveLayoutToStorage(newConfig);
+          setSelectedObject({ type: 'belt', id: newBelt.id });
+          toast({
+            title: t('layoutEditor.duplicated'),
+            description: t('layoutEditor.duplicatedDesc'),
+          });
+          return newConfig;
+        });
+      }
+    }
+  };
+
+  // Rotate selected object
+  const rotateSelected = () => {
+    if (!selectedObject) return;
+    
+    if (selectedObject.type === 'belt') {
+      const belt = layoutConfig.belts.find(b => b.id === selectedObject.id);
+      if (belt) {
+        // Cycle through directions: east -> south -> west -> north -> east
+        const directionCycle: Record<string, 'north' | 'south' | 'east' | 'west'> = {
+          'east': 'south',
+          'south': 'west',
+          'west': 'north',
+          'north': 'east',
+        };
+        
+        updateBelt(belt.id, { direction: directionCycle[belt.direction] });
+        toast({
+          title: t('layoutEditor.rotated'),
+          description: t('layoutEditor.rotatedDesc'),
+        });
+      }
+    }
+  };
   useEffect(() => {
     const handleEditModeChange = (event: CustomEvent<boolean>) => {
       setIsEditMode(event.detail);
@@ -523,11 +614,14 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     beltTempPosition,
     hasCollision,
     gridRef,
+    selectedObject,
     
     // Methods
     getTotalRows,
     handleBuildingMouseDown,
+    handleBuildingClick,
     handleBeltMouseDown,
+    handleBeltClick,
     handleResizeStart,
     updateBuildingLayout,
     updateCorralColumn,
@@ -536,5 +630,9 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     updateBelt,
     setLayoutConfig,
     addBeltAtPosition,
+    deleteSelected,
+    duplicateSelected,
+    rotateSelected,
+    setSelectedObject,
   };
 };

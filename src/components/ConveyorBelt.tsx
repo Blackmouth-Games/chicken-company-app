@@ -12,8 +12,10 @@ interface ConveyorBeltProps {
   idx: number;
   isEditMode: boolean;
   isDragging: boolean;
+  isSelected: boolean;
   tempPosition: { col: number; row: number } | null;
   onMouseDown: (e: React.MouseEvent) => void;
+  onClick: () => void;
   onRemove: () => void;
   onUpdateColumn: (value: string) => void;
   onUpdateRow: (value: string) => void;
@@ -24,8 +26,10 @@ export const ConveyorBelt = ({
   idx,
   isEditMode,
   isDragging,
+  isSelected,
   tempPosition,
   onMouseDown,
+  onClick,
   onRemove,
   onUpdateColumn,
   onUpdateRow,
@@ -59,12 +63,15 @@ export const ConveyorBelt = ({
     <div 
       className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
         isDragging ? 'ring-4 ring-cyan-600 ring-offset-4 opacity-50' : ''
-      }`}
+      } ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
       style={{ 
         gridColumn: belt.gridColumn,
         gridRow: belt.gridRow
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       onMouseDown={onMouseDown}
       data-belt={belt.id}
     >
