@@ -827,9 +827,9 @@ const Home = () => {
                     isLeftColumn={true}
                   />
                   
-                  {/* Individual slot edit controls - Always visible in edit mode */}
-                  {isEditMode && (
-                    <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  {/* Individual slot edit controls - Visible in edit mode */}
+                  {isEditMode && index === 0 && (
+                    <div className="absolute -bottom-24 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
                       <div className="text-xs font-bold text-yellow-700 mb-1">Slot Izq. {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
@@ -884,9 +884,9 @@ const Home = () => {
                     isLeftColumn={false}
                   />
                   
-                  {/* Individual slot edit controls - Always visible in edit mode */}
-                  {isEditMode && (
-                    <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  {/* Individual slot edit controls - Visible in edit mode */}
+                  {isEditMode && index === 0 && (
+                    <div className="absolute -bottom-24 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg z-50">
                       <div className="text-xs font-bold text-orange-700 mb-1">Slot Der. {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">

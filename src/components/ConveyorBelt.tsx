@@ -77,12 +77,21 @@ export const ConveyorBelt = ({
     >
       <div className={`w-full h-full relative overflow-hidden ${
         isEditMode ? 'cursor-move' : ''
-      }`}>
+      } ${isVertical ? 'min-w-[20px]' : 'min-h-[20px]'}`}>
         {/* Belt base with metallic look */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-600 via-slate-500 to-slate-600">
-          {/* Side borders */}
-          <div className="absolute inset-y-0 left-0 w-1 bg-slate-800"></div>
-          <div className="absolute inset-y-0 right-0 w-1 bg-slate-800"></div>
+          {/* Side borders - adjust based on direction */}
+          {isVertical ? (
+            <>
+              <div className="absolute inset-x-0 top-0 h-1 bg-slate-800"></div>
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-slate-800"></div>
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-y-0 left-0 w-1 bg-slate-800"></div>
+              <div className="absolute inset-y-0 right-0 w-1 bg-slate-800"></div>
+            </>
+          )}
           
           {isCurve ? (
             // Curved belt with SVG path
@@ -155,9 +164,18 @@ export const ConveyorBelt = ({
             </>
           )}
           
-          {/* Gears/rollers effect at edges */}
-          <div className="absolute top-0 left-0 right-0 h-2 bg-slate-700 border-b-2 border-slate-800"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-2 bg-slate-700 border-t-2 border-slate-800"></div>
+          {/* Gears/rollers effect at edges - adjust based on direction */}
+          {isVertical ? (
+            <>
+              <div className="absolute left-0 top-0 bottom-0 w-2 bg-slate-700 border-r-2 border-slate-800"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-2 bg-slate-700 border-l-2 border-slate-800"></div>
+            </>
+          ) : (
+            <>
+              <div className="absolute top-0 left-0 right-0 h-2 bg-slate-700 border-b-2 border-slate-800"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-2 bg-slate-700 border-t-2 border-slate-800"></div>
+            </>
+          )}
         </div>
         
         {isEditMode && (
