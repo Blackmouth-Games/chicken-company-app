@@ -517,6 +517,7 @@ const Home = () => {
                 </div>
               )}
             </div>
+            )}
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             {!hideBuildings && (
