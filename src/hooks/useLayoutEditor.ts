@@ -144,11 +144,15 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     
     const totalRows = getTotalRows();
     const gapPx = parseInt((layoutConfig.grid.gap || '0').toString());
-    const CELL_SIZE = 20; // Fixed cell size
     
-    // Calculate position based on fixed 20px cells + gaps
-    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor(relativeX / (CELL_SIZE + gapPx)) + 1));
-    const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (CELL_SIZE + gapPx)) + 1));
+    // Calculate cell dimensions from actual grid size
+    const totalGapWidth = gapPx * (TOTAL_COLUMNS - 1);
+    const totalGapHeight = gapPx * (totalRows - 1);
+    const cellWidth = (rect.width - totalGapWidth) / TOTAL_COLUMNS;
+    const cellHeight = (rect.height - totalGapHeight) / totalRows;
+    
+    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor(relativeX / (cellWidth + gapPx)) + 1));
+    const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (cellHeight + gapPx)) + 1));
     
     return { col, row };
   };

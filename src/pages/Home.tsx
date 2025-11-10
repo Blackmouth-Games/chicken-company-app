@@ -402,16 +402,14 @@ const Home = () => {
               backgroundSize: '20px 20px'
             }}
           />
-          {/* Grid: 25 columns total - Fixed cell size system */}
+          {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
-            className="grid items-stretch relative"
+            className="grid items-stretch relative w-full max-w-[1600px] mx-auto"
             style={{
-              gridTemplateColumns: 'repeat(25, 20px)',
-              gridAutoRows: '20px',
-              minHeight: `${getTotalRows() * 20}px`,
-              gap: layoutConfig.grid.gap,
-              width: 'fit-content',
-              margin: '0 auto'
+              gridTemplateColumns: 'repeat(25, 1fr)',
+              gridAutoRows: '1fr',
+              aspectRatio: '25 / ' + getTotalRows(),
+              gap: layoutConfig.grid.gap
             }}
           >
 
