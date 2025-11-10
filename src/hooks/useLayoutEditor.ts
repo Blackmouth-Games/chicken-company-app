@@ -19,19 +19,23 @@ interface BeltConfig {
 }
 
 export interface LayoutConfig {
-  warehouse: { gridColumn: string; gridRow: string; minHeight: string };
-  market: { gridColumn: string; gridRow: string; minHeight: string };
-  leftCorrals: { gridColumn: string; gap: string; minHeight: string };
-  rightCorrals: { gridColumn: string; gap: string; minHeight: string };
+  warehouse: { gridColumn: string; gridRow: string };
+  market: { gridColumn: string; gridRow: string };
+  house: { gridColumn: string; gridRow: string };
+  boxes: { gridColumn: string; gridRow: string };
+  leftCorrals: { gridColumn: string; gap: string };
+  rightCorrals: { gridColumn: string; gap: string };
   belts: BeltConfig[];
   grid: { gap: string; maxWidth: string };
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
-  warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4', minHeight: '120px' },
-  market: { gridColumn: '20 / 26', gridRow: '1 / 4', minHeight: '120px' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px', minHeight: '260px' },
-  rightCorrals: { gridColumn: '20 / 26', gap: '20px', minHeight: '260px' },
+  warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4' },
+  market: { gridColumn: '20 / 26', gridRow: '1 / 4' },
+  house: { gridColumn: '11 / 16', gridRow: '1 / 3' },
+  boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
+  leftCorrals: { gridColumn: '1 / 7', gap: '20px' },
+  rightCorrals: { gridColumn: '20 / 26', gap: '20px' },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20', direction: 'south', type: 'straight' }],
   grid: { gap: '20px', maxWidth: '1600px' },
 };
@@ -106,7 +110,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
   // Update building layout with collision detection
   const updateBuildingLayout = (
-    building: keyof Pick<LayoutConfig, 'warehouse' | 'market'>,
+    building: keyof Pick<LayoutConfig, 'warehouse' | 'market' | 'house' | 'boxes'>,
     updates: Partial<LayoutConfig['warehouse']>,
     skipCollisionCheck = false
   ): boolean => {
@@ -150,7 +154,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       const updated = {
         ...prev,
         [building]: {
-          minHeight: prev[building].minHeight,
           ...prev[building],
           ...updates,
         }
@@ -390,14 +393,15 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
-  // Update minHeight for buildings
-  const updateMinHeight = (building: 'warehouse' | 'market', minHeight: string) => {
+  // Update corral column layout
+  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string }>) => {
+    const key = column === 'left' ? 'leftCorrals' : 'rightCorrals';
     setLayoutConfig(prev => {
       const newConfig = {
         ...prev,
-        [building]: {
-          ...prev[building],
-          minHeight,
+        [key]: {
+          ...prev[key],
+          ...updates,
         },
       };
       saveLayoutToStorage(newConfig);
@@ -510,7 +514,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     handleBeltMouseDown,
     handleResizeStart,
     updateBuildingLayout,
-    updateMinHeight,
+    updateCorralColumn,
     addBelt,
     removeBelt,
     updateBelt,

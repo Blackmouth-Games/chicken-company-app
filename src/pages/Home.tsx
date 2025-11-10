@@ -64,7 +64,7 @@ const Home = () => {
     handleBeltMouseDown,
     handleResizeStart,
     updateBuildingLayout,
-    updateMinHeight,
+    updateCorralColumn,
     addBelt,
     removeBelt,
     updateBelt,
@@ -369,25 +369,91 @@ const Home = () => {
 
             {/* HOUSE - Top Center above everything */}
             <div
-              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''} ${
+                isDragging && draggedBuilding === 'house' ? 'ring-4 ring-purple-600 ring-offset-4' : ''
+              } ${hasCollision ? 'ring-4 ring-red-500 ring-offset-4 animate-pulse' : ''}`}
               style={{
-                gridColumn: '11 / 16',
-                gridRow: '1 / 3',
+                gridColumn: layoutConfig.house.gridColumn,
+                gridRow: layoutConfig.house.gridRow,
               }}
               data-building="house"
             >
               <button
-                onClick={() => !isEditMode && setHouseOpen(true)}
+                onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'house')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isEditMode) setHouseOpen(true);
+                }}
                 className={`w-full h-full flex items-center justify-center transition-all ${
-                  isEditMode ? 'cursor-default' : 'hover:scale-105'
-                }`}
-                style={{ minHeight: '120px' }}
+                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
+                } ${isDragging && draggedBuilding === 'house' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
                   <div className="text-4xl md:text-5xl mb-1">🏠</div>
                   <p className="text-xs font-medium">Farms house</p>
+                  {isEditMode && (
+                    <>
+                      <div className="absolute top-1 right-1 bg-purple-600 text-white text-xs px-2 py-1 rounded font-mono">
+                        {layoutConfig.house.gridColumn} / {layoutConfig.house.gridRow}
+                      </div>
+                      {tempPosition && isDragging && draggedBuilding === 'house' && (
+                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
+                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               </button>
+
+              {/* Edit Controls when in Edit Mode */}
+              {isEditMode && (
+                <div className="absolute inset-0 pointer-events-none">
+                  {/* Resize handles */}
+                  <div 
+                    className="resize-handle absolute top-0 left-0 w-4 h-4 bg-purple-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'nw')}
+                  />
+                  <div 
+                    className="resize-handle absolute top-0 right-0 w-4 h-4 bg-purple-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'ne')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 left-0 w-4 h-4 bg-purple-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'sw')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-purple-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'se')}
+                  />
+                  
+                  {/* Edit overlay */}
+                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-purple-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs">
+                      <label className="flex-1">
+                        <span className="block text-muted-foreground">Columns:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.house.gridColumn}
+                          onChange={(e) => updateBuildingLayout('house', { gridColumn: e.target.value })}
+                          className="w-full px-2 py-1 border rounded bg-background"
+                          placeholder="11 / 16"
+                        />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-muted-foreground">Rows:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.house.gridRow}
+                          onChange={(e) => updateBuildingLayout('house', { gridRow: e.target.value })}
+                          className="w-full px-2 py-1 border rounded bg-background"
+                          placeholder="1 / 3"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
@@ -410,7 +476,6 @@ const Home = () => {
                 className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
-                style={{ minHeight: layoutConfig.warehouse.minHeight }}
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-blue-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
@@ -421,14 +486,6 @@ const Home = () => {
                     alt="Warehouse" 
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
-                  {/* Boxes showing warehouse capacity */}
-                  {getBoxImage() && (
-                    <img 
-                      src={getBoxImage()!} 
-                      alt="Storage boxes" 
-                      className="absolute -bottom-2 -right-2 w-20 h-20 md:w-24 md:h-24 object-contain pointer-events-none z-20"
-                    />
-                  )}
                   {isEditMode && (
                     <>
                       <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
@@ -484,41 +541,29 @@ const Home = () => {
                   />
                   
                   {/* Edit input overlay */}
-                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs mb-1">
+                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs">
                       <label className="flex-1">
-                        <span className="block text-gray-600">Columns:</span>
+                        <span className="block text-muted-foreground">Columns:</span>
                         <input
                           type="text"
                           value={layoutConfig.warehouse.gridColumn}
                           onChange={(e) => updateBuildingLayout('warehouse', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
+                          className="w-full px-2 py-1 border rounded bg-background"
                           placeholder="1 / 7"
                         />
                       </label>
                       <label className="flex-1">
-                        <span className="block text-gray-600">Rows:</span>
+                        <span className="block text-muted-foreground">Rows:</span>
                         <input
                           type="text"
                           value={layoutConfig.warehouse.gridRow}
                           onChange={(e) => updateBuildingLayout('warehouse', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
+                          className="w-full px-2 py-1 border rounded bg-background"
                           placeholder="1 / 4"
                         />
                       </label>
                     </div>
-                    <label className="block">
-                      <span className="block text-gray-600 text-xs">Min Height (px):</span>
-                      <input
-                        type="number"
-                        value={parseInt(layoutConfig.warehouse.minHeight)}
-                        onChange={(e) => updateMinHeight('warehouse', `${e.target.value}px`)}
-                        className="w-full px-2 py-1 border rounded text-xs"
-                        placeholder="120"
-                        min="60"
-                        max="500"
-                      />
-                    </label>
                   </div>
                 </div>
               )}
@@ -544,7 +589,6 @@ const Home = () => {
                 className={`w-full h-full flex items-center justify-center transition-all relative ${
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
-                style={{ minHeight: layoutConfig.market.minHeight }}
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base font-bold shadow-md z-10">
@@ -610,41 +654,115 @@ const Home = () => {
                   />
                   
                   {/* Edit input overlay */}
-                  <div className="absolute -bottom-28 left-0 right-0 bg-white border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs mb-1">
+                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs">
                       <label className="flex-1">
-                        <span className="block text-gray-600">Columns:</span>
+                        <span className="block text-muted-foreground">Columns:</span>
                         <input
                           type="text"
                           value={layoutConfig.market.gridColumn}
                           onChange={(e) => updateBuildingLayout('market', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
+                          className="w-full px-2 py-1 border rounded bg-background"
                           placeholder="20 / 26"
                         />
                       </label>
                       <label className="flex-1">
-                        <span className="block text-gray-600">Rows:</span>
+                        <span className="block text-muted-foreground">Rows:</span>
                         <input
                           type="text"
                           value={layoutConfig.market.gridRow}
                           onChange={(e) => updateBuildingLayout('market', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded"
+                          className="w-full px-2 py-1 border rounded bg-background"
                           placeholder="1 / 4"
                         />
                       </label>
                     </div>
-                    <label className="block">
-                      <span className="block text-gray-600 text-xs">Min Height (px):</span>
-                      <input
-                        type="number"
-                        value={parseInt(layoutConfig.market.minHeight)}
-                        onChange={(e) => updateMinHeight('market', `${e.target.value}px`)}
-                        className="w-full px-2 py-1 border rounded text-xs"
-                        placeholder="120"
-                        min="60"
-                        max="500"
-                      />
-                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* BOXES - Independent from warehouse */}
+            <div 
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
+                isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
+              }`}
+              style={{ 
+                gridColumn: layoutConfig.boxes.gridColumn,
+                gridRow: layoutConfig.boxes.gridRow
+              }}
+              data-building="boxes"
+            >
+              <div
+                onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'boxes')}
+                className={`w-full h-full flex items-center justify-center transition-all ${
+                  isEditMode ? 'cursor-move' : ''
+                } ${isDragging && draggedBuilding === 'boxes' ? 'opacity-50 scale-105' : ''}`}
+              >
+                {getBoxImage() && (
+                  <img 
+                    src={getBoxImage()!} 
+                    alt="Storage boxes" 
+                    className="w-full h-full object-contain pointer-events-none"
+                  />
+                )}
+                {isEditMode && (
+                  <>
+                    <div className="absolute top-1 right-1 bg-amber-600 text-white text-xs px-2 py-1 rounded font-mono">
+                      {layoutConfig.boxes.gridColumn} / {layoutConfig.boxes.gridRow}
+                    </div>
+                    {tempPosition && isDragging && draggedBuilding === 'boxes' && (
+                      <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
+                        Mover a: Col {tempPosition.col}, Row {tempPosition.row}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Edit Controls */}
+              {isEditMode && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div 
+                    className="resize-handle absolute top-0 left-0 w-4 h-4 bg-amber-600 rounded-full cursor-nw-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 'nw')}
+                  />
+                  <div 
+                    className="resize-handle absolute top-0 right-0 w-4 h-4 bg-amber-600 rounded-full cursor-ne-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 'ne')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 left-0 w-4 h-4 bg-amber-600 rounded-full cursor-sw-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 'sw')}
+                  />
+                  <div 
+                    className="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-amber-600 rounded-full cursor-se-resize pointer-events-auto translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'boxes', 'se')}
+                  />
+                  
+                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-amber-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="flex gap-2 text-xs">
+                      <label className="flex-1">
+                        <span className="block text-muted-foreground">Columns:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.boxes.gridColumn}
+                          onChange={(e) => updateBuildingLayout('boxes', { gridColumn: e.target.value })}
+                          className="w-full px-2 py-1 border rounded bg-background"
+                          placeholder="6 / 8"
+                        />
+                      </label>
+                      <label className="flex-1">
+                        <span className="block text-muted-foreground">Rows:</span>
+                        <input
+                          type="text"
+                          value={layoutConfig.boxes.gridRow}
+                          onChange={(e) => updateBuildingLayout('boxes', { gridRow: e.target.value })}
+                          className="w-full px-2 py-1 border rounded bg-background"
+                          placeholder="3 / 5"
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
@@ -674,16 +792,14 @@ const Home = () => {
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
-              const isFirstCorral = index === 0;
               
               return (
                 <div 
                   key={`left-${position}`}
-                  className={`relative group ${isEditMode && isFirstCorral ? 'ring-2 ring-yellow-500 ring-offset-2' : ''}`}
+                  className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.leftCorrals.gridColumn,
                     gridRow: 4 + index,
-                    minHeight: layoutConfig.leftCorrals.minHeight
                   }}
                 >
                   <BuildingSlot
@@ -694,47 +810,19 @@ const Home = () => {
                     isLeftColumn={true}
                   />
                   
-                  {/* Show edit controls only on first corral */}
-                  {isEditMode && isFirstCorral && (
-                    <div className="absolute -bottom-24 left-0 right-0 bg-white border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                      <div className="text-xs font-bold text-yellow-700 mb-1">⚙️ Config Corrales Izquierdos</div>
+                  {/* Individual slot edit controls */}
+                  {isEditMode && (
+                    <div className="absolute -bottom-16 left-0 right-0 bg-background border-2 border-yellow-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-yellow-700 mb-1">Slot {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
-                          <span className="block text-gray-600">Columns:</span>
+                          <span className="block text-muted-foreground">Columns:</span>
                           <input
                             type="text"
                             value={layoutConfig.leftCorrals.gridColumn}
-                            onChange={(e) => {
-                              setLayoutConfig(prev => {
-                                const newConfig = {
-                                  ...prev,
-                                  leftCorrals: { ...prev.leftCorrals, gridColumn: e.target.value }
-                                };
-                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
-                                return newConfig;
-                              });
-                            }}
-                            className="w-full px-2 py-1 border rounded"
+                            onChange={(e) => updateCorralColumn('left', { gridColumn: e.target.value })}
+                            className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="1 / 7"
-                          />
-                        </label>
-                        <label className="flex-1">
-                          <span className="block text-gray-600">Min Height:</span>
-                          <input
-                            type="text"
-                            value={layoutConfig.leftCorrals.minHeight}
-                            onChange={(e) => {
-                              setLayoutConfig(prev => {
-                                const newConfig = {
-                                  ...prev,
-                                  leftCorrals: { ...prev.leftCorrals, minHeight: e.target.value }
-                                };
-                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
-                                return newConfig;
-                              });
-                            }}
-                            className="w-full px-2 py-1 border rounded"
-                            placeholder="260px"
                           />
                         </label>
                       </div>
@@ -748,16 +836,14 @@ const Home = () => {
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
-              const isFirstCorral = index === 0;
               
               return (
                 <div 
                   key={`right-${position}`}
-                  className={`relative group ${isEditMode && isFirstCorral ? 'ring-2 ring-orange-500 ring-offset-2' : ''}`}
+                  className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.rightCorrals.gridColumn,
                     gridRow: 4 + index,
-                    minHeight: layoutConfig.rightCorrals.minHeight
                   }}
                 >
                   <BuildingSlot
@@ -768,47 +854,19 @@ const Home = () => {
                     isLeftColumn={false}
                   />
                   
-                  {/* Show edit controls only on first corral */}
-                  {isEditMode && isFirstCorral && (
-                    <div className="absolute -bottom-24 left-0 right-0 bg-white border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                      <div className="text-xs font-bold text-orange-700 mb-1">⚙️ Config Corrales Derechos</div>
+                  {/* Individual slot edit controls */}
+                  {isEditMode && (
+                    <div className="absolute -bottom-16 left-0 right-0 bg-background border-2 border-orange-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                      <div className="text-xs font-bold text-orange-700 mb-1">Slot {position}</div>
                       <div className="flex gap-2 text-xs">
                         <label className="flex-1">
-                          <span className="block text-gray-600">Columns:</span>
+                          <span className="block text-muted-foreground">Columns:</span>
                           <input
                             type="text"
                             value={layoutConfig.rightCorrals.gridColumn}
-                            onChange={(e) => {
-                              setLayoutConfig(prev => {
-                                const newConfig = {
-                                  ...prev,
-                                  rightCorrals: { ...prev.rightCorrals, gridColumn: e.target.value }
-                                };
-                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
-                                return newConfig;
-                              });
-                            }}
-                            className="w-full px-2 py-1 border rounded"
+                            onChange={(e) => updateCorralColumn('right', { gridColumn: e.target.value })}
+                            className="w-full px-2 py-1 border rounded bg-background"
                             placeholder="20 / 26"
-                          />
-                        </label>
-                        <label className="flex-1">
-                          <span className="block text-gray-600">Min Height:</span>
-                          <input
-                            type="text"
-                            value={layoutConfig.rightCorrals.minHeight}
-                            onChange={(e) => {
-                              setLayoutConfig(prev => {
-                                const newConfig = {
-                                  ...prev,
-                                  rightCorrals: { ...prev.rightCorrals, minHeight: e.target.value }
-                                };
-                                localStorage.setItem('debugLayoutConfig', JSON.stringify(newConfig));
-                                return newConfig;
-                              });
-                            }}
-                            className="w-full px-2 py-1 border rounded"
-                            placeholder="260px"
                           />
                         </label>
                       </div>
