@@ -925,7 +925,7 @@ const Home = () => {
         userId={userId || undefined}
         buildingId={selectedBuildingId}
       />
-      <LayoutEditor />
+      
       <SelectionToolbar
         selectedObject={selectedObject}
         onRotate={rotateSelected}

@@ -21,7 +21,6 @@ import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import LayoutEditor from "./components/LayoutEditor";
 const queryClient = new QueryClient();
 const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect-manifest.json";
 
