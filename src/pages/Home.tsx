@@ -98,7 +98,8 @@ const Home = () => {
       const columns = 30;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
       const rect = el.getBoundingClientRect();
-      const width = rect.width;
+      // Usar el ancho del viewport para garantizar 30 columnas visibles
+      const width = Math.max(rect.width, window.innerWidth);
 
       // Escala 100% por ancho: 30 columnas siempre visibles y celdas 1:1
       const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
