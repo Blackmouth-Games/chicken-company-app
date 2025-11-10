@@ -21,7 +21,7 @@ import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-
+import LayoutEditor from "./components/LayoutEditor";
 const queryClient = new QueryClient();
 const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect-manifest.json";
 
@@ -50,8 +50,11 @@ const AppRoutes = () => {
   useEffect(() => {
     initTelegramWebApp();
     const telegramStatus: boolean = isTelegramWebApp();
-    console.log("[AppRoutes] init", { telegramStatus, manifestUrl });
-    setIsFromTelegram(telegramStatus);
+    const params = new URLSearchParams(window.location.search);
+    const forceWeb = params.get('debug') === '1' || params.get('forceWeb') === '1';
+    const forced = forceWeb ? true : telegramStatus;
+    console.log("[AppRoutes] init", { telegramStatus, forced, forceWeb, manifestUrl });
+    setIsFromTelegram(forced);
   }, []);
 
   // Show splash screen first
