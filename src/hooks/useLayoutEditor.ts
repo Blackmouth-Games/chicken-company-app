@@ -371,7 +371,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e?: MouseEvent) => {
       if (isDragging && draggedBuilding && tempPosition) {
         const buildingKey = draggedBuilding as keyof Pick<LayoutConfig, 'warehouse' | 'market' | 'house' | 'boxes'>;
         const currentConfig = layoutConfig[buildingKey];
@@ -400,9 +400,38 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         }
       }
 
-      if (isDragging && draggedBelt && beltTempPosition) {
+      if (isDragging && draggedBelt) {
         const belt = layoutConfig.belts.find(b => b.id === draggedBelt);
-        if (belt) {
+        if (belt && gridRef.current && e) {
+          // Calculate final position from current mouse position
+          const finalGridPos = pixelToGrid(e.clientX, e.clientY);
+          
+          const colSpan = parseGridNotation(belt.gridColumn);
+          const rowSpan = parseGridNotation(belt.gridRow);
+          
+          const width = colSpan.end - colSpan.start;
+          const height = rowSpan.end - rowSpan.start;
+          
+          const newCol = Math.max(1, Math.min(TOTAL_COLUMNS - width + 1, finalGridPos.col));
+          const newRow = Math.max(1, Math.min(getTotalRows() - height + 1, finalGridPos.row));
+          
+          // Only update if position actually changed
+          if (newCol !== colSpan.start || newRow !== rowSpan.start) {
+            updateBelt(draggedBelt, {
+              gridColumn: createGridNotation(newCol, newCol + width),
+              gridRow: createGridNotation(newRow, newRow + height),
+            });
+
+            toast({
+              title: t('layoutEditor.beltMoved'),
+              description: t('layoutEditor.beltMovedDesc', { 
+                col: newCol.toString(), 
+                row: newRow.toString() 
+              }),
+            });
+          }
+        } else if (belt && beltTempPosition) {
+          // Fallback to beltTempPosition if no event
           const colSpan = parseGridNotation(belt.gridColumn);
           const rowSpan = parseGridNotation(belt.gridRow);
           
@@ -436,11 +465,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
     if (isDragging || resizing) {
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
+      const handleMouseUpEvent = (e: MouseEvent) => handleMouseUp(e);
+      window.addEventListener('mouseup', handleMouseUpEvent);
       
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+        window.removeEventListener('mouseup', handleMouseUpEvent);
       };
     }
   }, [isDragging, draggedBuilding, draggedBelt, resizing, tempPosition, beltTempPosition, layoutConfig]);
