@@ -32,14 +32,14 @@ const LayoutEditor = () => {
 
   const resetLayout = () => {
     const defaultConfig = {
-      warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4' },
-      market: { gridColumn: '20 / 26', gridRow: '1 / 4' },
-      house: { gridColumn: '11 / 16', gridRow: '1 / 3' },
-      boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
-      leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4 },
-      rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4 },
-      belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
-      grid: { gap: '20px', maxWidth: '1600px' },
+      house: { gridColumn: '10 / 16', gridRow: '1 / 6' },
+      warehouse: { gridColumn: '3 / 10', gridRow: '6 / 14' },
+      market: { gridColumn: '16 / 23', gridRow: '6 / 14' },
+      boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
+      leftCorrals: { gridColumn: '3 / 10', gap: '16px', startRow: 14, rowSpan: 4 },
+      rightCorrals: { gridColumn: '16 / 23', gap: '16px', startRow: 14, rowSpan: 4 },
+      belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
+      grid: { gap: '16px', maxWidth: '1400px', totalRows: 40 },
     };
     
     localStorage.setItem('debugLayoutConfig', JSON.stringify(defaultConfig));
@@ -72,7 +72,7 @@ const LayoutEditor = () => {
   };
 
   // Drag handlers for button
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = (e: MouseEvent) => {
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - position.x,

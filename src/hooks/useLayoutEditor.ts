@@ -36,14 +36,14 @@ export interface LayoutConfig {
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
-  warehouse: { gridColumn: '1 / 7', gridRow: '1 / 4' },
-  market: { gridColumn: '20 / 26', gridRow: '1 / 4' },
-  house: { gridColumn: '11 / 16', gridRow: '1 / 3' },
-  boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4, rowSpan: 12 },
-  rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4, rowSpan: 12 },
-  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
-  grid: { gap: '20px', maxWidth: '1600px', totalRows: 40 },
+  house: { gridColumn: '10 / 16', gridRow: '1 / 6' },
+  warehouse: { gridColumn: '3 / 10', gridRow: '6 / 14' },
+  market: { gridColumn: '16 / 23', gridRow: '6 / 14' },
+  boxes: { gridColumn: '10 / 16', gridRow: '6 / 8' },
+  leftCorrals: { gridColumn: '3 / 10', gap: '16px', startRow: 14, rowSpan: 4 },
+  rightCorrals: { gridColumn: '16 / 23', gap: '16px', startRow: 14, rowSpan: 4 },
+  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '8 / 9', direction: 'south', type: 'straight' }],
+  grid: { gap: '16px', maxWidth: '1400px', totalRows: 40 },
 };
 
 const TOTAL_COLUMNS = 25;
@@ -62,6 +62,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         
         // Migrate old structure to new structure
         const migrated: LayoutConfig = {
+          house: {
+            gridColumn: parsed.house?.gridColumn || DEFAULT_LAYOUT.house.gridColumn,
+            gridRow: parsed.house?.gridRow || DEFAULT_LAYOUT.house.gridRow,
+          },
           warehouse: {
             gridColumn: parsed.warehouse?.gridColumn || DEFAULT_LAYOUT.warehouse.gridColumn,
             gridRow: parsed.warehouse?.gridRow || DEFAULT_LAYOUT.warehouse.gridRow,
@@ -69,10 +73,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           market: {
             gridColumn: parsed.market?.gridColumn || DEFAULT_LAYOUT.market.gridColumn,
             gridRow: parsed.market?.gridRow || DEFAULT_LAYOUT.market.gridRow,
-          },
-          house: {
-            gridColumn: parsed.house?.gridColumn || DEFAULT_LAYOUT.house.gridColumn,
-            gridRow: parsed.house?.gridRow || DEFAULT_LAYOUT.house.gridRow,
           },
           boxes: {
             gridColumn: parsed.boxes?.gridColumn || DEFAULT_LAYOUT.boxes.gridColumn,
@@ -232,7 +232,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle drag start
-  const handleBuildingMouseDown = (e: React.MouseEvent, buildingName: string) => {
+  const handleBuildingMouseDown = (e: MouseEvent, buildingName: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
@@ -246,7 +246,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle belt drag start
-  const handleBeltMouseDown = (e: React.MouseEvent, beltId: string) => {
+  const handleBeltMouseDown = (e: MouseEvent, beltId: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
@@ -260,7 +260,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle resize start
-  const handleResizeStart = (e: React.MouseEvent, buildingName: string, handle: string) => {
+  const handleResizeStart = (e: MouseEvent, buildingName: string, handle: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();

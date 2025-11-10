@@ -12,6 +12,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { TutorialDialog } from "@/components/TutorialDialog";
 import { ProfileDialog } from "@/components/ProfileDialog";
 import { BuildingSlot } from "@/components/BuildingSlot";
+import { parseGridNotation } from "@/lib/layoutCollisions";
 import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
@@ -124,44 +125,45 @@ const Home = () => {
   const generateDynamicBelts = () => {
     const dynamicBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
-    const startRow = layoutConfig.leftCorrals.startRow;
-    
-    // Central vertical belts (column 13)
-    for (let i = 0; i < slotsPerSide; i++) {
-      const row = startRow + i;
+    const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
+    const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
+    const boxesRows = parseGridNotation(layoutConfig.boxes.gridRow);
+    const centralColumn = parseGridNotation(layoutConfig.belts[0]?.gridColumn || '13 / 14');
+    const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
+    const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
+
+    const walkwayStartRow = Math.min(leftStartRow, boxesRows.end);
+    const walkwayEndRow = leftStartRow + slotsPerSide * slotRowSpan;
+
+    for (let row = walkwayStartRow; row < walkwayEndRow; row++) {
       dynamicBelts.push({
-        id: `belt-center-${i}`,
-        gridColumn: '13 / 14',
+        id: `belt-center-${row}`,
+        gridColumn: `${centralColumn.start} / ${centralColumn.end}`,
         gridRow: `${row} / ${row + 1}`,
         direction: 'south' as const,
         type: 'straight' as const,
       });
     }
     
-    // Left side horizontal belts (connecting corrals to center)
     for (let i = 0; i < slotsPerSide; i++) {
-      const row = startRow + i;
-      // Belts from column 7 to 13 (connecting left corrals to center)
-      for (let col = 7; col < 13; col++) {
+      const slotRowStart = leftStartRow + i * slotRowSpan;
+      const connectorRow = slotRowStart + Math.floor(slotRowSpan / 2);
+
+      for (let col = leftColumns.end; col < centralColumn.start; col++) {
         dynamicBelts.push({
           id: `belt-left-${i}-${col}`,
           gridColumn: `${col} / ${col + 1}`,
-          gridRow: `${row} / ${row + 1}`,
+          gridRow: `${connectorRow} / ${connectorRow + 1}`,
           direction: 'east' as const,
           type: 'straight' as const,
         });
       }
-    }
-    
-    // Right side horizontal belts (connecting corrals to center)
-    for (let i = 0; i < slotsPerSide; i++) {
-      const row = startRow + i;
-      // Belts from column 14 to 20 (connecting center to right corrals)
-      for (let col = 14; col < 20; col++) {
+
+      for (let col = centralColumn.end; col < rightColumns.start; col++) {
         dynamicBelts.push({
           id: `belt-right-${i}-${col}`,
           gridColumn: `${col} / ${col + 1}`,
-          gridRow: `${row} / ${row + 1}`,
+          gridRow: `${connectorRow} / ${connectorRow + 1}`,
           direction: 'east' as const,
           type: 'straight' as const,
         });
@@ -795,10 +797,12 @@ const Home = () => {
               );
             })}
 
-            {/* LEFT CORRALS - Columns 1-6, starting from row 4, vertical stack */}
+            {/* LEFT CORRALS */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
+              const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
+              const baseRow = (layoutConfig.leftCorrals.startRow ?? 1) + index * slotRowSpan;
               
               return (
                 <div 
@@ -806,7 +810,7 @@ const Home = () => {
                   className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.leftCorrals.gridColumn,
-                    gridRow: layoutConfig.leftCorrals.startRow + index,
+                    gridRow: `${baseRow} / ${baseRow + slotRowSpan}`,
                   }}
                   data-slot={`left-${position}`}
                 >
@@ -852,10 +856,12 @@ const Home = () => {
               );
             })}
 
-            {/* RIGHT CORRALS - Columns 20-25, starting from row 4, vertical stack */}
+            {/* RIGHT CORRALS */}
             {Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
+              const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);
+              const baseRow = (layoutConfig.rightCorrals.startRow ?? 1) + index * slotRowSpan;
               
               return (
                 <div 
@@ -863,7 +869,7 @@ const Home = () => {
                   className="relative group"
                   style={{ 
                     gridColumn: layoutConfig.rightCorrals.gridColumn,
-                    gridRow: layoutConfig.rightCorrals.startRow + index,
+                    gridRow: `${baseRow} / ${baseRow + slotRowSpan}`,
                   }}
                   data-slot={`right-${position}`}
                 >
