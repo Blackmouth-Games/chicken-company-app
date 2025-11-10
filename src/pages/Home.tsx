@@ -357,8 +357,9 @@ const Home = () => {
     const centerLineEndRow = lastSlotRow + 1; // Extend one row below the last slot
     
     // Generate continuous vertical line: one belt per row
+    // Generate regardless of getTotalRows() limit - belts can be outside visible area
     for (let beltRow = centerLineStartRow; beltRow <= centerLineEndRow; beltRow++) {
-      if (beltRow < getTotalRows() && centerCol >= 1 && centerCol <= 30) {
+      if (beltRow >= 1 && centerCol >= 1 && centerCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
           const beltRowNotation = parseGridNotation(b.gridRow);
@@ -411,12 +412,15 @@ const Home = () => {
     
     // Right corrals: belts point west (towards center)
     // Only one belt per corral, positioned 3 rows from the top of each corral
+    // Belts should be in the column just to the left of right corral start (rightColumns.start - 1)
+    // This places them one column to the left of where they currently are
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = rightStartRow + i * (slotRowSpan + 1);
       // Belt should be 3 rows from the top of the corral: row = baseRow + 3
       const beltRow = baseRow + 3;
-      // Belt column: left edge of right corral (pointing west towards center)
-      const beltCol = rightColumns.start;
+      // Belt column: one column to the left of right corral start (rightColumns.start - 1)
+      // This is the column just to the left of where they currently are
+      const beltCol = rightColumns.start - 1;
       
       // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
       if (beltRow >= 1 && beltCol >= 1 && beltCol <= 30) {
