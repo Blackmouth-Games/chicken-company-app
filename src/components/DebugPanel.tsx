@@ -23,6 +23,7 @@ const DebugPanel = () => {
   const [beltCount, setBeltCount] = useState<number>(0);
   const [gap, setGap] = useState<string>("20px");
   const [beltDebugInfo, setBeltDebugInfo] = useState<any>(null);
+  const [paintModeClickInfo, setPaintModeClickInfo] = useState<any>(null);
 
   // Listen to layout changes
   useEffect(() => {
@@ -41,13 +42,16 @@ const DebugPanel = () => {
     const onLayoutUpdate = () => refreshLayout();
     const onEditChange = (e: any) => setIsEditMode(!!e.detail);
     const onBeltDebugInfo = (e: any) => setBeltDebugInfo(e.detail);
+    const onPaintModeClick = (e: any) => setPaintModeClickInfo(e.detail);
     window.addEventListener('layoutConfigUpdate', onLayoutUpdate as any);
     window.addEventListener('layoutEditModeChange', onEditChange as any);
     window.addEventListener('beltDebugInfo', onBeltDebugInfo as any);
+    window.addEventListener('paintModeClick', onPaintModeClick as any);
     return () => {
       window.removeEventListener('layoutConfigUpdate', onLayoutUpdate as any);
       window.removeEventListener('layoutEditModeChange', onEditChange as any);
       window.removeEventListener('beltDebugInfo', onBeltDebugInfo as any);
+      window.removeEventListener('paintModeClick', onPaintModeClick as any);
     };
   }, []);
 
@@ -397,6 +401,71 @@ const DebugPanel = () => {
                       >
                         <Copy className="h-3 w-3 mr-2" />
                         Copiar info de cintas
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Paint Mode Click Debug Info */}
+              {paintModeClickInfo && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">🖱️ Debug de Click (Paint Mode)</h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <div>
+                      <p><strong>Posición del mouse:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>clientX: {paintModeClickInfo.clientX}</li>
+                        <li>clientY: {paintModeClickInfo.clientY}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Posición del rect:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>rect.left: {paintModeClickInfo.rectLeft}</li>
+                        <li>rect.top: {paintModeClickInfo.rectTop}</li>
+                        <li>rect.width: {paintModeClickInfo.rectWidth}</li>
+                        <li>rect.height: {paintModeClickInfo.rectHeight}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Posición relativa:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>relativeX: {paintModeClickInfo.relativeX.toFixed(2)}</li>
+                        <li>relativeY: {paintModeClickInfo.relativeY.toFixed(2)}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Dimensiones de celda:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>cellWidth: {paintModeClickInfo.cellWidth.toFixed(2)}</li>
+                        <li>cellHeight: {paintModeClickInfo.cellHeight.toFixed(2)}</li>
+                        <li>gapPx: {paintModeClickInfo.gapPx}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p><strong>Posición calculada:</strong></p>
+                      <ul className="text-xs mt-1 space-y-1">
+                        <li>Columna: {paintModeClickInfo.calculatedCol}</li>
+                        <li>Fila: {paintModeClickInfo.calculatedRow}</li>
+                        <li>Total filas: {paintModeClickInfo.totalRows}</li>
+                      </ul>
+                    </div>
+                    <div className="border-t pt-2">
+                      <Button
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(paintModeClickInfo, null, 2));
+                          toast({
+                            title: "Info copiada",
+                            description: "Información de click copiada al portapapeles",
+                          });
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Copy className="h-3 w-3 mr-2" />
+                        Copiar info de click
                       </Button>
                     </div>
                   </div>

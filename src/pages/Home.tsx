@@ -661,8 +661,9 @@ const Home = () => {
             onClick={(e) => {
               if (paintMode && isEditMode && !isDragging) {
                 e.stopPropagation();
-                const rect = gridRef.current?.getBoundingClientRect();
-                if (!rect) return;
+                // Get the actual grid element where the click occurred
+                const gridElement = e.currentTarget as HTMLElement;
+                const rect = gridElement.getBoundingClientRect();
                 
                 const relativeX = e.clientX - rect.left;
                 const relativeY = e.clientY - rect.top;
@@ -674,8 +675,28 @@ const Home = () => {
                 const cellWidth = (rect.width - totalGapWidth) / 30;
                 const cellHeight = (rect.height - totalGapHeight) / totalRows;
                 
+                // Calculate column and row from click position
                 const col = Math.max(1, Math.min(30, Math.floor(relativeX / (cellWidth + gapPx)) + 1));
                 const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (cellHeight + gapPx)) + 1));
+                
+                // Debug: Send click position to DebugPanel
+                const clickInfo = {
+                  clientX: e.clientX,
+                  clientY: e.clientY,
+                  rectLeft: rect.left,
+                  rectTop: rect.top,
+                  relativeX,
+                  relativeY,
+                  cellWidth,
+                  cellHeight,
+                  gapPx,
+                  calculatedCol: col,
+                  calculatedRow: row,
+                  rectWidth: rect.width,
+                  rectHeight: rect.height,
+                  totalRows,
+                };
+                window.dispatchEvent(new CustomEvent('paintModeClick', { detail: clickInfo }));
                 
                 // Check if there's already a belt at this position
                 const existingBelt = allBelts.find(belt => {
