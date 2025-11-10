@@ -405,27 +405,36 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const handleGridClick = (e: React.MouseEvent) => {
     if (!isEditMode) return;
     
+    // Check if click is on an element with specific classes (building or belt)
+    const target = e.target as HTMLElement;
+    const isBuilding = target.closest('[data-building]');
+    const isBelt = target.closest('[data-belt]');
+    
+    if (isBuilding || isBelt) {
+      return; // Don't add belt if clicking on a building or belt
+    }
+    
     const gridPos = pixelToGrid(e.clientX, e.clientY);
     
-    // Show direction picker dialog
-    const direction = window.prompt(
-      t('layoutEditor.addBeltPrompt', { col: gridPos.col.toString(), row: gridPos.row.toString() }),
-      t('layoutEditor.vertical')
-    );
-    
-    if (!direction) return;
-    
-    const isVertical = direction.toLowerCase().startsWith('v');
+    // Trigger dialog instead of prompt
+    window.dispatchEvent(new CustomEvent('openAddBeltDialog', { 
+      detail: { col: gridPos.col, row: gridPos.row } 
+    }));
+  };
+
+  // Add belt with specified direction
+  const addBeltAtPosition = (col: number, row: number, direction: 'vertical' | 'horizontal') => {
+    const isVertical = direction === 'vertical';
     const totalRows = getTotalRows();
     
     const newBelt: BeltConfig = {
       id: `belt-${Date.now()}`,
       gridColumn: isVertical 
-        ? `${gridPos.col} / ${gridPos.col + 1}` 
-        : `${gridPos.col} / span 6`,
+        ? `${col} / ${col + 1}` 
+        : `${col} / span 6`,
       gridRow: isVertical 
-        ? `${gridPos.row} / span ${totalRows - gridPos.row + 1}` 
-        : `${gridPos.row} / ${gridPos.row + 1}`,
+        ? `${row} / span ${totalRows - row + 1}` 
+        : `${row} / ${row + 1}`,
     };
     
     setLayoutConfig(prev => {
@@ -438,8 +447,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         title: t('layoutEditor.beltAdded'),
         description: t('layoutEditor.beltAddedAt', { 
           direction: isVertical ? t('layoutEditor.vertical') : t('layoutEditor.horizontal'),
-          col: gridPos.col.toString(), 
-          row: gridPos.row.toString() 
+          col: col.toString(), 
+          row: row.toString() 
         }),
       });
       return newConfig;
@@ -496,5 +505,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     updateBelt,
     setLayoutConfig,
     handleGridClick,
+    addBeltAtPosition,
   };
 };

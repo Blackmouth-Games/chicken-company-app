@@ -59,11 +59,11 @@
     "minHeight": "Min Height (px)",
     "column": "Column",
     "row": "Row",
-    "vertical": "vertical",
-    "horizontal": "horizontal",
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
     "belt": "Belt",
     "moveTo": "Mover a",
-    "addBeltPrompt": "Agregar cinta en Col {{col}}, Row {{row}}\n\nEscribe la dirección:\n- \"vertical\" o \"v\" para vertical\n- \"horizontal\" o \"h\" para horizontal"
+    "addBeltPrompt": "Agregar cinta en columna {{col}}, fila {{row}}. ¿Qué dirección?"
   },
   "common": {
     "close": "Cerrar",

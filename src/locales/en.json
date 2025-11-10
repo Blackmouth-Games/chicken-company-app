@@ -59,11 +59,11 @@
     "minHeight": "Min Height (px)",
     "column": "Column",
     "row": "Row",
-    "vertical": "vertical",
-    "horizontal": "horizontal",
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
     "belt": "Belt",
     "moveTo": "Move to",
-    "addBeltPrompt": "Add belt at Col {{col}}, Row {{row}}\n\nType the direction:\n- \"vertical\" or \"v\" for vertical\n- \"horizontal\" or \"h\" for horizontal"
+    "addBeltPrompt": "Add belt at column {{col}}, row {{row}}. Which direction?"
   },
   "common": {
     "close": "Close",

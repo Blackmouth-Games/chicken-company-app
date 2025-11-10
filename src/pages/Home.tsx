@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import bgFarm from "@/assets/bg-farm-grass.png";
 import defaultAvatar from "@/assets/default-avatar.png";
+import box1Image from "@/assets/box_1.png";
+import box2Image from "@/assets/box_2.png";
+import box3Image from "@/assets/box_3.png";
 import { getTelegramUser } from "@/lib/telegram";
 import { getBuildingImage, type BuildingType } from "@/lib/buildingImages";
 import { Button } from "@/components/ui/button";
@@ -14,6 +17,7 @@ import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
+import { AddBeltDialog } from "@/components/AddBeltDialog";
 import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,10 +38,13 @@ const Home = () => {
   const [houseOpen, setHouseOpen] = useState(false);
   const [corralDialogOpen, setCorralDialogOpen] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
+  const [addBeltDialogOpen, setAddBeltDialogOpen] = useState(false);
+  const [beltGridPosition, setBeltGridPosition] = useState<{ col: number; row: number } | null>(null);
   const { toast } = useToast();
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [warehouseCapacity, setWarehouseCapacity] = useState({ current: 0, max: 100 });
 
   // Use layout editor hook
   const {
@@ -62,6 +69,7 @@ const Home = () => {
     updateBelt,
     setLayoutConfig,
     handleGridClick,
+    addBeltAtPosition,
   } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
@@ -120,6 +128,34 @@ const Home = () => {
       });
     };
   }, [playMusic, isMuted]);
+
+  // Listen for add belt dialog event
+  useEffect(() => {
+    const handleOpenDialog = (event: CustomEvent<{ col: number; row: number }>) => {
+      setBeltGridPosition(event.detail);
+      setAddBeltDialogOpen(true);
+    };
+
+    window.addEventListener('openAddBeltDialog', handleOpenDialog as EventListener);
+    return () => {
+      window.removeEventListener('openAddBeltDialog', handleOpenDialog as EventListener);
+    };
+  }, []);
+
+  // Load warehouse capacity (simulated for now)
+  useEffect(() => {
+    // TODO: Load from database
+    setWarehouseCapacity({ current: 67, max: 100 }); // Example: 67%
+  }, []);
+
+  // Calculate which box image to show based on capacity percentage
+  const getBoxImage = () => {
+    const percentage = (warehouseCapacity.current / warehouseCapacity.max) * 100;
+    if (percentage >= 80) return box3Image;
+    if (percentage >= 45) return box2Image;
+    if (percentage >= 15) return box1Image;
+    return null; // No box if less than 15%
+  };
 
   const loadUserProfile = async () => {
     if (!telegramUser?.id) return;
@@ -281,19 +317,6 @@ const Home = () => {
       </div>
 
       <div className="relative z-10 p-4 md:p-6 pt-20 md:pt-24">
-        {/* House - Centered at top */}
-        <div className="flex justify-center mb-6 md:mb-8">
-          <button
-            onClick={() => setHouseOpen(true)}
-            className="bg-background/80 backdrop-blur-sm border-2 border-primary/30 rounded-lg p-3 md:p-4 hover:bg-background/90 transition-all hover:scale-105"
-          >
-            <div className="flex flex-col items-center">
-              <div className="text-4xl md:text-5xl mb-1">🏠</div>
-              <p className="text-xs font-medium">Farms house</p>
-            </div>
-          </button>
-        </div>
-
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
         <div 
           ref={gridRef}
@@ -333,15 +356,38 @@ const Home = () => {
               backgroundSize: '20px 20px'
             }}
           />
-          {/* Grid: 25 columns total - Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
+          {/* Grid: 25 columns total - House | Warehouse(6) | Left Corrals(6) | Belt(1) | Right Corrals(6) | Market(6) */}
           <div 
             className="grid auto-rows-fr items-stretch relative"
             style={{
               gridTemplateColumns: 'repeat(25, 1fr)',
-              minHeight: '700px',
+              minHeight: `${getTotalRows() * 20}px`,
               gap: layoutConfig.grid.gap
             }}
           >
+
+            {/* HOUSE - Top Center above everything */}
+            <div
+              className={`flex items-center justify-center relative group ${isEditMode ? 'ring-2 ring-purple-500 ring-offset-2' : ''}`}
+              style={{
+                gridColumn: '11 / 16',
+                gridRow: '1 / 3',
+              }}
+              data-building="house"
+            >
+              <button
+                onClick={() => !isEditMode && setHouseOpen(true)}
+                className={`w-full h-full flex items-center justify-center transition-all ${
+                  isEditMode ? 'cursor-default' : 'hover:scale-105'
+                }`}
+                style={{ minHeight: '120px' }}
+              >
+                <div className="flex flex-col items-center">
+                  <div className="text-4xl md:text-5xl mb-1">🏠</div>
+                  <p className="text-xs font-medium">Farms house</p>
+                </div>
+              </button>
+            </div>
             
             {/* WAREHOUSE - Top Left: Columns 1-6, Rows 1-3 */}
             <div 
@@ -352,12 +398,16 @@ const Home = () => {
                 gridColumn: layoutConfig.warehouse.gridColumn,
                 gridRow: layoutConfig.warehouse.gridRow
               }}
+              data-building="warehouse"
             >
               <button
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'warehouse')}
-                onClick={() => !isEditMode && setWarehouseOpen(true)}
-                className={`bg-gradient-to-br from-blue-100 to-blue-50 border-2 border-blue-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
-                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:from-blue-200 hover:to-blue-100 hover:scale-105'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isEditMode) setWarehouseOpen(true);
+                }}
+                className={`w-full h-full flex items-center justify-center transition-all relative ${
+                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
                 style={{ minHeight: layoutConfig.warehouse.minHeight }}
               >
@@ -370,6 +420,14 @@ const Home = () => {
                     alt="Warehouse" 
                     className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
                   />
+                  {/* Boxes showing warehouse capacity */}
+                  {getBoxImage() && (
+                    <img 
+                      src={getBoxImage()!} 
+                      alt="Storage boxes" 
+                      className="absolute -bottom-2 -right-2 w-20 h-20 md:w-24 md:h-24 object-contain pointer-events-none z-20"
+                    />
+                  )}
                   {isEditMode && (
                     <>
                       <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
@@ -474,12 +532,16 @@ const Home = () => {
                 gridColumn: layoutConfig.market.gridColumn,
                 gridRow: layoutConfig.market.gridRow
               }}
+              data-building="market"
             >
               <button
                 onMouseDown={(e) => isEditMode && handleBuildingMouseDown(e, 'market')}
-                onClick={() => !isEditMode && setMarketOpen(true)}
-                className={`bg-gradient-to-br from-green-100 to-green-50 border-2 border-green-400 rounded-lg p-4 md:p-6 transition-all relative shadow-lg w-full h-full flex items-center justify-center ${
-                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:from-green-200 hover:to-green-100 hover:scale-105'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isEditMode) setMarketOpen(true);
+                }}
+                className={`w-full h-full flex items-center justify-center transition-all relative ${
+                  isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
                 style={{ minHeight: layoutConfig.market.minHeight }}
               >
@@ -603,6 +665,7 @@ const Home = () => {
                   }}
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => isEditMode && handleBeltMouseDown(e, belt.id)}
+                  data-belt={belt.id}
                 >
                   <div className={`w-full h-full bg-gradient-to-r from-pink-400 via-pink-500 to-pink-400 shadow-lg border-x-2 border-pink-600 relative overflow-hidden ${
                     isEditMode ? 'cursor-move' : ''
@@ -854,6 +917,16 @@ const Home = () => {
         buildingId={selectedBuildingId}
       />
       <LayoutEditor />
+      <AddBeltDialog 
+        open={addBeltDialogOpen} 
+        onOpenChange={setAddBeltDialogOpen}
+        gridPosition={beltGridPosition}
+        onAddBelt={(direction) => {
+          if (beltGridPosition) {
+            addBeltAtPosition(beltGridPosition.col, beltGridPosition.row, direction);
+          }
+        }}
+      />
     </div>
   );
 };
