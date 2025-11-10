@@ -82,7 +82,11 @@
     "duplicated": "Duplicado",
     "duplicatedDesc": "Objeto duplicado correctamente",
     "cannotDelete": "No se puede eliminar",
-    "cannotDeleteBuilding": "Los edificios no se pueden eliminar"
+    "cannotDeleteBuilding": "Los edificios no se pueden eliminar",
+    "copy": "Copiar",
+    "layoutCopied": "Configuración copiada",
+    "layoutCopiedDesc": "La configuración se ha copiado al portapapeles",
+    "copyError": "Error al copiar al portapapeles"
   },
   "common": {
     "close": "Cerrar",

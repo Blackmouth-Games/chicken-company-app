@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Download, Plus, RotateCcw } from "lucide-react";
+import { Layout, Copy, Plus, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -52,17 +52,20 @@ const LayoutEditor = () => {
   const exportLayout = () => {
     const savedLayout = localStorage.getItem('debugLayoutConfig');
     if (savedLayout) {
-      const blob = new Blob([savedLayout], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'layout-config.json';
-      a.click();
-      URL.revokeObjectURL(url);
-      toast({
-        title: t('layoutEditor.layoutExported'),
-        description: t('layoutEditor.layoutExportedDesc'),
-      });
+      navigator.clipboard.writeText(savedLayout)
+        .then(() => {
+          toast({
+            title: t('layoutEditor.layoutCopied'),
+            description: t('layoutEditor.layoutCopiedDesc'),
+          });
+        })
+        .catch(() => {
+          toast({
+            title: t('common.error'),
+            description: t('layoutEditor.copyError'),
+            variant: 'destructive',
+          });
+        });
     }
   };
 
@@ -151,9 +154,11 @@ const LayoutEditor = () => {
             onClick={exportLayout}
             size="sm"
             variant="outline"
-            title={t('layoutEditor.export')}
+            className="gap-2"
+            title={t('layoutEditor.copy')}
           >
-            <Download className="h-4 w-4" />
+            <Copy className="h-4 w-4" />
+            {t('layoutEditor.copy')}
           </Button>
         </div>
       </div>

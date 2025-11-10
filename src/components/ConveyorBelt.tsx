@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
+import beltImage from "@/assets/belt_A.png";
 
 interface ConveyorBeltProps {
   belt: {
@@ -78,105 +79,15 @@ export const ConveyorBelt = ({
       <div className={`w-full h-full relative overflow-hidden ${
         isEditMode ? 'cursor-move' : ''
       } ${isVertical ? 'min-w-[20px]' : 'min-h-[20px]'}`}>
-        {/* Belt base with metallic look */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-600 via-slate-500 to-slate-600">
-          {/* Side borders - adjust based on direction */}
-          {isVertical ? (
-            <>
-              <div className="absolute inset-x-0 top-0 h-1 bg-slate-800"></div>
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-slate-800"></div>
-            </>
-          ) : (
-            <>
-              <div className="absolute inset-y-0 left-0 w-1 bg-slate-800"></div>
-              <div className="absolute inset-y-0 right-0 w-1 bg-slate-800"></div>
-            </>
-          )}
-          
-          {isCurve ? (
-            // Curved belt with SVG path
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id={`gradient-${belt.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.8" />
-                  <stop offset="50%" stopColor="#38bdf8" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.8" />
-                </linearGradient>
-              </defs>
-              <path 
-                d={getCurvePath()} 
-                stroke={`url(#gradient-${belt.id})`}
-                strokeWidth="20" 
-                fill="none"
-                className="animate-pulse"
-              />
-              {/* Animated dots along curve */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <circle
-                  key={i}
-                  r="3"
-                  fill="#38bdf8"
-                  className="animate-[move_2s_linear_infinite]"
-                  style={{
-                    animationDelay: `${i * 0.4}s`,
-                    offsetPath: `path('${getCurvePath()}')`,
-                    offsetDistance: '0%',
-                  }}
-                >
-                  <animateMotion
-                    dur="2s"
-                    repeatCount="indefinite"
-                    begin={`${i * 0.4}s`}
-                  >
-                    <mpath href={`#curve-${belt.id}`} />
-                  </animateMotion>
-                </circle>
-              ))}
-            </svg>
-          ) : (
-            // Straight belt with arrows
-            <>
-              {/* Moving belt surface with chevrons */}
-              <div className="absolute inset-0 flex flex-col items-center justify-evenly overflow-hidden">
-                {Array.from({ length: isVertical ? 30 : 15 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="relative"
-                    style={{
-                      transform: getArrowTransform(),
-                      animation: 'beltMove 2s linear infinite',
-                      animationDelay: `${i * 0.066}s`,
-                    }}
-                  >
-                    <svg width="24" height="12" viewBox="0 0 24 12" className="opacity-80">
-                      <path 
-                        d="M 12 0 L 24 6 L 12 12 L 0 6 Z" 
-                        fill="#38bdf8"
-                        className="drop-shadow-lg"
-                      />
-                    </svg>
-                  </div>
-                ))}
-              </div>
-              
-              {/* Shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent pointer-events-none" />
-            </>
-          )}
-          
-          {/* Gears/rollers effect at edges - adjust based on direction */}
-          {isVertical ? (
-            <>
-              <div className="absolute left-0 top-0 bottom-0 w-2 bg-slate-700 border-r-2 border-slate-800"></div>
-              <div className="absolute right-0 top-0 bottom-0 w-2 bg-slate-700 border-l-2 border-slate-800"></div>
-            </>
-          ) : (
-            <>
-              <div className="absolute top-0 left-0 right-0 h-2 bg-slate-700 border-b-2 border-slate-800"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-2 bg-slate-700 border-t-2 border-slate-800"></div>
-            </>
-          )}
-        </div>
+        {/* Belt image */}
+        <img 
+          src={beltImage} 
+          alt="Conveyor belt" 
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{
+            transform: getArrowTransform(),
+          }}
+        />
         
         {isEditMode && (
           <>

@@ -82,7 +82,11 @@
     "duplicated": "Duplicated",
     "duplicatedDesc": "Object duplicated successfully",
     "cannotDelete": "Cannot delete",
-    "cannotDeleteBuilding": "Buildings cannot be deleted"
+    "cannotDeleteBuilding": "Buildings cannot be deleted",
+    "copy": "Copy",
+    "layoutCopied": "Configuration copied",
+    "layoutCopiedDesc": "Configuration has been copied to clipboard",
+    "copyError": "Error copying to clipboard"
   },
   "common": {
     "close": "Close",

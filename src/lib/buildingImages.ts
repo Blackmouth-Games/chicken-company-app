@@ -4,15 +4,16 @@ import warehouse1B from "@/assets/buildings/warehouse_1B.png";
 import market1A from "@/assets/buildings/market_1A.png";
 import market1B from "@/assets/buildings/market_1B.png";
 import house1A from "@/assets/buildings/house_1A.png";
+import coop1A from "@/assets/buildings/coop_1A.png";
 
 // Building images by type, level, and skin
 export const BUILDING_IMAGES = {
   corral: {
-    1: { A: house1A, B: house1A },
-    2: { A: house1A, B: house1A },
-    3: { A: house1A, B: house1A },
-    4: { A: house1A, B: house1A },
-    5: { A: house1A, B: house1A },
+    1: { A: coop1A, B: coop1A },
+    2: { A: coop1A, B: coop1A },
+    3: { A: coop1A, B: coop1A },
+    4: { A: coop1A, B: coop1A },
+    5: { A: coop1A, B: coop1A },
   },
   warehouse: {
     1: { A: warehouse1A, B: warehouse1B },
