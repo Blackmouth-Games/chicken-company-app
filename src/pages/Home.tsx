@@ -56,6 +56,8 @@ const Home = () => {
     resizing,
     tempPosition,
     beltTempPosition,
+    beltDragOffset,
+    dragOffset,
     hasCollision,
     gridRef,
     selectedObject,
@@ -1095,6 +1097,8 @@ const Home = () => {
                   isDragging={isBeltDragging}
                   isSelected={selectedObject?.type === 'belt' && selectedObject?.id === belt.id}
                   tempPosition={beltTempPosition}
+                  dragOffset={isBeltDragging ? dragOffset : null}
+                  beltDragOffset={isBeltDragging ? beltDragOffset : null}
                   onMouseDown={(e) => isEditMode && isManualBelt && handleBeltMouseDown(e, belt.id)}
                   onClick={() => isEditMode && isManualBelt && handleBeltClick(belt.id)}
                   onRemove={() => isManualBelt && removeBelt(belt.id)}

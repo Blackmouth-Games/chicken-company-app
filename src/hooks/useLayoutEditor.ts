@@ -128,6 +128,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [draggedBelt, setDraggedBelt] = useState<string | null>(null);
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [lastBeltGridPos, setLastBeltGridPos] = useState<{ col: number; row: number } | null>(null);
+  const [beltDragOffset, setBeltDragOffset] = useState<{ x: number; y: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
   const getTotalRows = (): number => {
@@ -255,8 +256,29 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     setDraggedBelt(beltId);
     setIsDragging(true);
     
-    const gridPos = pixelToGrid(e.clientX, e.clientY);
+    const belt = layoutConfig.belts.find(b => b.id === beltId);
+    if (!belt || !gridRef.current) return;
+    
+    const gridRect = gridRef.current.getBoundingClientRect();
+    const beltCol = parseGridNotation(belt.gridColumn);
+    const beltRow = parseGridNotation(belt.gridRow);
+    
+    // Calculate the center position of the belt in pixels
+    const cellWidth = (gridRect.width - (parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0) * (TOTAL_COLUMNS - 1)) / TOTAL_COLUMNS;
+    const cellHeight = (gridRect.height - (parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0) * (getTotalRows() - 1)) / getTotalRows();
+    const gapPx = parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0;
+    
+    const beltCenterX = gridRect.left + (beltCol.start - 1) * (cellWidth + gapPx) + cellWidth / 2;
+    const beltCenterY = gridRect.top + (beltRow.start - 1) * (cellHeight + gapPx) + cellHeight / 2;
+    
+    // Calculate offset from mouse to belt center
+    const offsetX = e.clientX - beltCenterX;
+    const offsetY = e.clientY - beltCenterY;
+    
+    setBeltDragOffset({ x: offsetX, y: offsetY });
     setDragOffset({ x: e.clientX, y: e.clientY });
+    
+    const gridPos = pixelToGrid(e.clientX, e.clientY);
     setBeltTempPosition(gridPos);
     setLastBeltGridPos(gridPos);
   };
@@ -285,9 +307,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         setTempPosition(gridPos);
       }
 
-      if (isDragging && draggedBelt) {
+      if (isDragging && draggedBelt && beltDragOffset) {
+        // Always update drag offset to follow mouse smoothly
+        setDragOffset({ x: e.clientX, y: e.clientY });
+        
+        // Update grid position only when it changes
         const gridPos = pixelToGrid(e.clientX, e.clientY);
-        // Only update if position actually changed to avoid jittery movement
         if (!lastBeltGridPos || lastBeltGridPos.col !== gridPos.col || lastBeltGridPos.row !== gridPos.row) {
           setBeltTempPosition(gridPos);
           setLastBeltGridPos(gridPos);
@@ -406,6 +431,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       setTempPosition(null);
       setBeltTempPosition(null);
       setLastBeltGridPos(null);
+      setBeltDragOffset(null);
     };
 
     if (isDragging || resizing) {
@@ -626,6 +652,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     resizing,
     tempPosition,
     beltTempPosition,
+    beltDragOffset,
+    dragOffset,
     hasCollision,
     gridRef,
     selectedObject,

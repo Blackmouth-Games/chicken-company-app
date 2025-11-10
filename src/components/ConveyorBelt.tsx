@@ -15,6 +15,8 @@ interface ConveyorBeltProps {
   isDragging: boolean;
   isSelected: boolean;
   tempPosition: { col: number; row: number } | null;
+  dragOffset: { x: number; y: number } | null;
+  beltDragOffset: { x: number; y: number } | null;
   onMouseDown: (e: React.MouseEvent) => void;
   onClick: () => void;
   onRemove: () => void;
@@ -30,6 +32,8 @@ export const ConveyorBelt = ({
   isDragging,
   isSelected,
   tempPosition,
+  dragOffset,
+  beltDragOffset,
   onMouseDown,
   onClick,
   onRemove,
@@ -92,14 +96,37 @@ export const ConveyorBelt = ({
     }
   };
 
+  // Calculate position for smooth mouse following during drag
+  const getDragStyle = () => {
+    if (isDragging && dragOffset && beltDragOffset) {
+      // Calculate absolute position based on mouse position minus the offset
+      const left = dragOffset.x - beltDragOffset.x;
+      const top = dragOffset.y - beltDragOffset.y;
+      return {
+        position: 'fixed' as const,
+        left: `${left}px`,
+        top: `${top}px`,
+        width: 'var(--cell-size, 40px)',
+        height: 'var(--cell-size, 40px)',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none' as const,
+        zIndex: 1000,
+      };
+    }
+    return {};
+  };
+
   return (
     <div 
       className={`flex justify-center relative w-full h-full group z-20 ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
         isDragging ? 'ring-4 ring-cyan-600 ring-offset-4 opacity-50' : ''
       } ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
       style={{ 
-        gridColumn: belt.gridColumn,
-        gridRow: belt.gridRow
+        ...(isDragging ? {} : {
+          gridColumn: belt.gridColumn,
+          gridRow: belt.gridRow,
+        }),
+        ...getDragStyle(),
       }}
       onClick={(e) => {
         e.stopPropagation();
