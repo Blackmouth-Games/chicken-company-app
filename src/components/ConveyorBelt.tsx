@@ -38,10 +38,10 @@ export const ConveyorBelt = ({
   // Get arrow direction based on belt direction
   const getArrowTransform = () => {
     switch (belt.direction) {
-      case 'north': return 'rotate(180deg)';
-      case 'south': return 'rotate(0deg)';
-      case 'east': return 'rotate(-90deg)';
-      case 'west': return 'rotate(90deg)';
+      case 'north': return 'rotate(270deg)';
+      case 'south': return 'rotate(90deg)';
+      case 'east': return 'rotate(0deg)';
+      case 'west': return 'rotate(180deg)';
       default: return 'rotate(0deg)';
     }
   };
@@ -62,7 +62,7 @@ export const ConveyorBelt = ({
 
   return (
     <div 
-      className={`flex justify-center relative group ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
+      className={`flex justify-center relative w-full h-full group ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
         isDragging ? 'ring-4 ring-cyan-600 ring-offset-4 opacity-50' : ''
       } ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
       style={{ 
@@ -115,35 +115,6 @@ export const ConveyorBelt = ({
         )}
       </div>
     
-      {/* Edit Controls */}
-      {isEditMode && (
-        <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-cyan-500 rounded-lg p-2 space-y-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 min-w-[200px]">
-          <div className="flex gap-2 text-xs">
-            <label className="flex-1">
-              <span className="block text-muted-foreground">Column:</span>
-              <input
-                type="text"
-                value={belt.gridColumn}
-                onChange={(e) => onUpdateColumn(e.target.value)}
-                className="w-full px-2 py-1 border rounded bg-background"
-                placeholder="13 / 14"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </label>
-            <label className="flex-1">
-              <span className="block text-muted-foreground">Row:</span>
-              <input
-                type="text"
-                value={belt.gridRow}
-                onChange={(e) => onUpdateRow(e.target.value)}
-                className="w-full px-2 py-1 border rounded bg-background"
-                placeholder="1 / span 3"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </label>
-          </div>
-        </div>
-      )}
       
       <style>{`
         @keyframes beltMove {

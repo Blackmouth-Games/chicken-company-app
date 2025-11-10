@@ -439,9 +439,12 @@ const Home = () => {
                   isEditMode ? 'cursor-move hover:shadow-2xl' : 'hover:scale-105'
                 } ${isDragging && draggedBuilding === 'house' ? 'opacity-50 scale-105' : ''}`}
               >
-                <div className="flex flex-col items-center">
-                  <div className="text-4xl md:text-5xl mb-1">🏠</div>
-                  <p className="text-xs font-medium">Farms house</p>
+                <div className="w-full h-full relative">
+                  <img
+                    src={getBuildingImage('house', 1, 'A')}
+                    alt="House"
+                    className="w-full h-full object-contain pointer-events-none"
+                  />
                   {isEditMode && (
                     <>
                       <div className="absolute top-1 right-1 bg-purple-600 text-white text-xs px-2 py-1 rounded font-mono">
@@ -478,31 +481,6 @@ const Home = () => {
                     onMouseDown={(e) => handleResizeStart(e, 'house', 'se')}
                   />
                   
-                  {/* Edit overlay */}
-                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-purple-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs">
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Columns:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.house.gridColumn}
-                          onChange={(e) => updateBuildingLayout('house', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="11 / 16"
-                        />
-                      </label>
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Rows:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.house.gridRow}
-                          onChange={(e) => updateBuildingLayout('house', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="1 / 3"
-                        />
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -541,7 +519,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
                     alt="Warehouse" 
-                    className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -597,31 +575,6 @@ const Home = () => {
                     onMouseDown={(e) => handleResizeStart(e, 'warehouse', 'e')}
                   />
                   
-                  {/* Edit input overlay */}
-                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-blue-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs">
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Columns:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.warehouse.gridColumn}
-                          onChange={(e) => updateBuildingLayout('warehouse', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="1 / 7"
-                        />
-                      </label>
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Rows:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.warehouse.gridRow}
-                          onChange={(e) => updateBuildingLayout('warehouse', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="1 / 4"
-                        />
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -660,7 +613,7 @@ const Home = () => {
                   <img 
                     src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
                     alt="Market" 
-                    className="w-40 h-40 md:w-52 md:h-52 object-contain pointer-events-none"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
                   {isEditMode && (
                     <>
@@ -716,19 +669,6 @@ const Home = () => {
                     onMouseDown={(e) => handleResizeStart(e, 'market', 'e')}
                   />
                   
-                  {/* Edit input overlay */}
-                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-green-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs">
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Columns:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.market.gridColumn}
-                          onChange={(e) => updateBuildingLayout('market', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="20 / 26"
-                        />
-                      </label>
                       <label className="flex-1">
                         <span className="block text-muted-foreground">Rows:</span>
                         <input
@@ -809,26 +749,6 @@ const Home = () => {
                     onMouseDown={(e) => handleResizeStart(e, 'boxes', 'se')}
                   />
                   
-                  <div className="absolute -bottom-20 left-0 right-0 bg-background border-2 border-amber-500 rounded-lg p-2 space-y-1 pointer-events-auto shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                    <div className="flex gap-2 text-xs">
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Columns:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.boxes.gridColumn}
-                          onChange={(e) => updateBuildingLayout('boxes', { gridColumn: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="6 / 8"
-                        />
-                      </label>
-                      <label className="flex-1">
-                        <span className="block text-muted-foreground">Rows:</span>
-                        <input
-                          type="text"
-                          value={layoutConfig.boxes.gridRow}
-                          onChange={(e) => updateBuildingLayout('boxes', { gridRow: e.target.value })}
-                          className="w-full px-2 py-1 border rounded bg-background"
-                          placeholder="3 / 5"
                         />
                       </label>
                     </div>
