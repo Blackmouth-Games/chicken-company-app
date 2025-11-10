@@ -106,9 +106,29 @@ const LayoutEditor = () => {
     }
   }, [isDragging, dragOffset]);
 
+  // Keep menu visible: clamp saved position on mount and window resize
+  useEffect(() => {
+    const clampPosition = () => {
+      setPosition((prev) => {
+        const maxX = Math.max(8, window.innerWidth - 200);
+        const maxY = Math.max(8, window.innerHeight - 56);
+        const x = Math.min(Math.max(prev.x, 8), maxX);
+        const y = Math.min(Math.max(prev.y, 8), maxY);
+        if (x !== prev.x || y !== prev.y) {
+          localStorage.setItem('layoutEditorPosition', JSON.stringify({ x, y }));
+        }
+        return { x, y };
+      });
+    };
+
+    clampPosition();
+    window.addEventListener('resize', clampPosition);
+    return () => window.removeEventListener('resize', clampPosition);
+  }, []);
+
   return (
     <div
-      className="fixed z-40 flex gap-2"
+      className="fixed z-50 flex gap-2"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
