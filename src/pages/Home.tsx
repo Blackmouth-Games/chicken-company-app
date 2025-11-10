@@ -17,7 +17,6 @@ import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
-import { AddBeltDialog } from "@/components/AddBeltDialog";
 import { ConveyorBelt } from "@/components/ConveyorBelt";
 import LayoutEditor from "@/components/LayoutEditor";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,8 +38,6 @@ const Home = () => {
   const [houseOpen, setHouseOpen] = useState(false);
   const [corralDialogOpen, setCorralDialogOpen] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
-  const [addBeltDialogOpen, setAddBeltDialogOpen] = useState(false);
-  const [beltGridPosition, setBeltGridPosition] = useState<{ col: number; row: number } | null>(null);
   const { toast } = useToast();
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
@@ -69,7 +66,6 @@ const Home = () => {
     removeBelt,
     updateBelt,
     setLayoutConfig,
-    handleGridClick,
     addBeltAtPosition,
   } = useLayoutEditor(20);
 
@@ -129,19 +125,6 @@ const Home = () => {
       });
     };
   }, [playMusic, isMuted]);
-
-  // Listen for add belt dialog event
-  useEffect(() => {
-    const handleOpenDialog = (event: CustomEvent<{ col: number; row: number }>) => {
-      setBeltGridPosition(event.detail);
-      setAddBeltDialogOpen(true);
-    };
-
-    window.addEventListener('openAddBeltDialog', handleOpenDialog as EventListener);
-    return () => {
-      window.removeEventListener('openAddBeltDialog', handleOpenDialog as EventListener);
-    };
-  }, []);
 
   // Load warehouse capacity (simulated for now)
   useEffect(() => {
@@ -323,7 +306,6 @@ const Home = () => {
           ref={gridRef}
           className="max-w-7xl mx-auto relative" 
           style={{ maxWidth: layoutConfig.grid.maxWidth }}
-          onClick={handleGridClick}
         >
           {/* Grid numbering overlay - Only in edit mode */}
           {isEditMode && (
@@ -909,16 +891,6 @@ const Home = () => {
         buildingId={selectedBuildingId}
       />
       <LayoutEditor />
-      <AddBeltDialog 
-        open={addBeltDialogOpen} 
-        onOpenChange={setAddBeltDialogOpen}
-        gridPosition={beltGridPosition}
-        onAddBelt={(direction, type) => {
-          if (beltGridPosition) {
-            addBeltAtPosition(beltGridPosition.col, beltGridPosition.row, direction, type);
-          }
-        }}
-      />
     </div>
   );
 };

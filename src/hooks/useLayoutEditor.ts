@@ -36,7 +36,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   boxes: { gridColumn: '6 / 8', gridRow: '3 / 5' },
   leftCorrals: { gridColumn: '1 / 7', gap: '20px' },
   rightCorrals: { gridColumn: '20 / 26', gap: '20px' },
-  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '1 / span 20', direction: 'south', type: 'straight' }],
+  belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
   grid: { gap: '20px', maxWidth: '1600px' },
 };
 
@@ -384,14 +384,14 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     }
   }, [isDragging, draggedBuilding, draggedBelt, resizing, tempPosition, beltTempPosition, layoutConfig]);
 
-  // Belt management
+  // Belt management - Add belt with default position
   const addBelt = () => {
     setLayoutConfig(prev => {
       const newBelt: BeltConfig = {
         id: `belt-${Date.now()}`,
         gridColumn: '13 / 14',
-        gridRow: '1 / span 20',
-        direction: 'south',
+        gridRow: '10 / 11',
+        direction: 'east',
         type: 'straight',
       };
       const newConfig = {
@@ -449,45 +449,19 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
-  // Handle grid cell click to add belt
-  const handleGridClick = (e: React.MouseEvent) => {
-    if (!isEditMode) return;
-    
-    // Check if click is on an element with specific classes (building or belt)
-    const target = e.target as HTMLElement;
-    const isBuilding = target.closest('[data-building]');
-    const isBelt = target.closest('[data-belt]');
-    
-    if (isBuilding || isBelt) {
-      return; // Don't add belt if clicking on a building or belt
-    }
-    
-    const gridPos = pixelToGrid(e.clientX, e.clientY);
-    
-    // Trigger dialog instead of prompt
-    window.dispatchEvent(new CustomEvent('openAddBeltDialog', { 
-      detail: { col: gridPos.col, row: gridPos.row } 
-    }));
-  };
+  // Remove handleGridClick - no longer needed
 
-  // Add belt with specified direction and type
+  // Simplified add belt at position - only horizontal, one cell
   const addBeltAtPosition = (
     col: number, 
     row: number, 
-    direction: 'north' | 'south' | 'east' | 'west',
+    direction: 'east' | 'west',
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'
   ) => {
-    const totalRows = getTotalRows();
-    const isVertical = direction === 'north' || direction === 'south';
-    
     const newBelt: BeltConfig = {
       id: `belt-${Date.now()}`,
-      gridColumn: isVertical 
-        ? `${col} / ${col + 1}` 
-        : `${col} / span 3`,
-      gridRow: isVertical 
-        ? `${row} / span 3` 
-        : `${row} / ${row + 1}`,
+      gridColumn: `${col} / ${col + 1}`,
+      gridRow: `${row} / ${row + 1}`,
       direction,
       type,
     };
@@ -559,7 +533,6 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     removeBelt,
     updateBelt,
     setLayoutConfig,
-    handleGridClick,
     addBeltAtPosition,
   };
 };
