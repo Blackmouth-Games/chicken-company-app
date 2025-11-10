@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout, Copy, Plus, RotateCcw, Eye, EyeOff } from "lucide-react";
+import { Layout, Copy, Plus, RotateCcw, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,6 +8,10 @@ const LayoutEditor = () => {
   const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [hideBuildings, setHideBuildings] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => {
+    const saved = localStorage.getItem('layoutEditorVisible');
+    return saved ? JSON.parse(saved) : true;
+  });
   const [position, setPosition] = useState(() => {
     const savedPosition = localStorage.getItem('layoutEditorPosition');
     return savedPosition ? JSON.parse(savedPosition) : { x: 16, y: 200 };
@@ -35,6 +39,12 @@ const LayoutEditor = () => {
     const newState = !hideBuildings;
     setHideBuildings(newState);
     window.dispatchEvent(new CustomEvent('hideBuildingsChange', { detail: newState }));
+  };
+
+  const toggleVisibility = () => {
+    const newState = !isVisible;
+    setIsVisible(newState);
+    localStorage.setItem('layoutEditorVisible', JSON.stringify(newState));
   };
 
   const resetLayout = () => {
@@ -133,6 +143,29 @@ const LayoutEditor = () => {
     return () => window.removeEventListener('resize', clampPosition);
   }, []);
 
+  if (!isVisible) {
+    return (
+      <div
+        className="fixed z-50"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+      >
+        <Button
+          onClick={toggleVisibility}
+          size="sm"
+          variant="outline"
+          className="gap-2"
+          title="Mostrar editor de layout"
+        >
+          <ChevronUp className="h-4 w-4" />
+          Layout
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div
       className="fixed z-50 flex gap-2"
@@ -146,6 +179,15 @@ const LayoutEditor = () => {
         onMouseDown={handleMouseDown}
       >
         <div className="flex gap-2">
+          <Button
+            onClick={toggleVisibility}
+            size="sm"
+            variant="ghost"
+            className="gap-2 -ml-1 -mr-1"
+            title="Ocultar editor de layout"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
           <Button
             onClick={toggleEditMode}
             size="sm"

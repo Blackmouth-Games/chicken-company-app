@@ -68,25 +68,6 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
           </div>
         </div>
-
-        {/* Horizontal conveyor belt connecting to central belt */}
-        <div 
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-4 md:h-5 bg-gradient-to-b from-pink-400 via-pink-500 to-pink-400 z-30 shadow-lg border-y-2 border-pink-600 overflow-hidden",
-            isLeftColumn 
-              ? "-right-6 md:-right-8 w-8 md:w-10" 
-              : "-left-6 md:-left-8 w-8 md:w-10"
-          )}
-        >
-          {/* Belt pattern */}
-          <div className="h-full w-full flex items-center justify-evenly">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="w-0.5 h-2 md:h-3 bg-pink-700 rounded-full shadow-inner" />
-            ))}
-          </div>
-          {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        </div>
       </div>
     );
   }
