@@ -43,10 +43,11 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 4, rowSpan: 12 },
   rightCorrals: { gridColumn: '20 / 26', gap: '20px', startRow: 4, rowSpan: 12 },
   belts: [{ id: 'belt-1', gridColumn: '13 / 14', gridRow: '10 / 11', direction: 'east', type: 'straight' }],
-  grid: { gap: '20px', maxWidth: '1600px', totalRows: 60 },
+  grid: { gap: '20px', maxWidth: '1600px', totalRows: 40 },
 };
 
 const TOTAL_COLUMNS = 25;
+const MAX_TOTAL_ROWS = 40;
 
 export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const { toast } = useToast();
@@ -101,7 +102,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           grid: {
             gap: parsed.grid?.gap || DEFAULT_LAYOUT.grid.gap,
             maxWidth: parsed.grid?.maxWidth || DEFAULT_LAYOUT.grid.maxWidth,
-            totalRows: parsed.grid?.totalRows || DEFAULT_LAYOUT.grid.totalRows,
+            totalRows: Math.min(
+              MAX_TOTAL_ROWS,
+              parsed.grid?.totalRows ?? DEFAULT_LAYOUT.grid.totalRows ?? MAX_TOTAL_ROWS
+            ),
           },
         };
         
@@ -126,7 +130,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
   const getTotalRows = (): number => {
-    return layoutConfig.grid?.totalRows || beltSpanForRows;
+    const rows = layoutConfig.grid?.totalRows || beltSpanForRows;
+    return Math.min(rows, MAX_TOTAL_ROWS);
   };
 
   // Save layout to localStorage

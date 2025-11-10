@@ -93,16 +93,32 @@ const Home = () => {
     const compute = () => {
       const el = gridRef.current as HTMLDivElement | null;
       if (!el) return;
+
       const columns = 25;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
-      const width = el.clientWidth;
-      const size = Math.max(8, Math.floor((width - gapVal * (columns - 1)) / columns));
-      if (size !== cellSize) setCellSize(size);
+      const rect = el.getBoundingClientRect();
+      const width = rect.width;
+
+      // Ajuste horizontal basado en el ancho disponible
+      const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
+
+      // Ajuste vertical en función de la altura visible y el número de filas
+      const rows = Math.min(layoutConfig.grid.totalRows ?? 20, 40);
+      const margin = 40; // espacio para navegación inferior/bordes
+      const availableHeight = Math.max(120, window.innerHeight - rect.top - margin);
+      const sizeByHeight =
+        rows > 0 ? (availableHeight - gapVal * (rows - 1)) / rows : sizeByWidth;
+
+      const candidate = Math.floor(Math.min(sizeByWidth, sizeByHeight));
+      const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
+
+      setCellSize(prev => (prev !== clamped ? clamped : prev));
     };
+
     compute();
     window.addEventListener('resize', compute);
     return () => window.removeEventListener('resize', compute);
-  }, [gridRef, layoutConfig.grid.gap, cellSize]);
+  }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
 
   // Generate dynamic belts based on number of slots
   const generateDynamicBelts = () => {
