@@ -52,11 +52,51 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (!parsed.belts) {
-          parsed.belts = DEFAULT_LAYOUT.belts;
-        }
-        return parsed;
-      } catch {
+        
+        // Migrate old structure to new structure
+        const migrated: LayoutConfig = {
+          warehouse: {
+            gridColumn: parsed.warehouse?.gridColumn || DEFAULT_LAYOUT.warehouse.gridColumn,
+            gridRow: parsed.warehouse?.gridRow || DEFAULT_LAYOUT.warehouse.gridRow,
+          },
+          market: {
+            gridColumn: parsed.market?.gridColumn || DEFAULT_LAYOUT.market.gridColumn,
+            gridRow: parsed.market?.gridRow || DEFAULT_LAYOUT.market.gridRow,
+          },
+          house: {
+            gridColumn: parsed.house?.gridColumn || DEFAULT_LAYOUT.house.gridColumn,
+            gridRow: parsed.house?.gridRow || DEFAULT_LAYOUT.house.gridRow,
+          },
+          boxes: {
+            gridColumn: parsed.boxes?.gridColumn || DEFAULT_LAYOUT.boxes.gridColumn,
+            gridRow: parsed.boxes?.gridRow || DEFAULT_LAYOUT.boxes.gridRow,
+          },
+          leftCorrals: {
+            gridColumn: parsed.leftCorrals?.gridColumn || DEFAULT_LAYOUT.leftCorrals.gridColumn,
+            gap: parsed.leftCorrals?.gap || DEFAULT_LAYOUT.leftCorrals.gap,
+          },
+          rightCorrals: {
+            gridColumn: parsed.rightCorrals?.gridColumn || DEFAULT_LAYOUT.rightCorrals.gridColumn,
+            gap: parsed.rightCorrals?.gap || DEFAULT_LAYOUT.rightCorrals.gap,
+          },
+          belts: Array.isArray(parsed.belts) 
+            ? parsed.belts.map((belt: any) => ({
+                id: belt.id,
+                gridColumn: belt.gridColumn,
+                gridRow: belt.gridRow,
+                direction: belt.direction || 'south',
+                type: belt.type || 'straight',
+              }))
+            : DEFAULT_LAYOUT.belts,
+          grid: {
+            gap: parsed.grid?.gap || DEFAULT_LAYOUT.grid.gap,
+            maxWidth: parsed.grid?.maxWidth || DEFAULT_LAYOUT.grid.maxWidth,
+          },
+        };
+        
+        return migrated;
+      } catch (error) {
+        console.error('Error parsing layout config, using default:', error);
         return DEFAULT_LAYOUT;
       }
     }
