@@ -100,20 +100,9 @@ const Home = () => {
       const rect = el.getBoundingClientRect();
       const width = rect.width;
 
-      // Ajuste horizontal basado en el ancho disponible
+      // Escala 100% por ancho: 30 columnas siempre visibles y celdas 1:1
       const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
-
-      // Ajuste vertical en función de la altura visible y el número de filas
-      const rows = Math.min(layoutConfig.grid.totalRows ?? 20, 40);
-      const isMobile = window.innerWidth <= 768;
-      const margin = isMobile ? 16 : 40; // menos margen en móvil
-      const availableHeight = Math.max(120, window.innerHeight - rect.top - margin);
-      const sizeByHeight =
-        rows > 0 ? (availableHeight - gapVal * (rows - 1)) / rows : sizeByWidth;
-
-      // Mobile-first: prioriza ancho en pantallas estrechas
-      const preferred = isMobile ? sizeByWidth : Math.min(sizeByWidth, sizeByHeight);
-      const candidate = Math.floor(preferred);
+      const candidate = Math.floor(sizeByWidth);
       const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
 
       setCellSize(prev => (prev !== clamped ? clamped : prev));
@@ -121,14 +110,12 @@ const Home = () => {
 
     compute();
     window.addEventListener('resize', compute);
-    window.addEventListener('orientationchange', compute);
     // Reaccionar a cambios del contenedor (p. ej., barras/side-panels)
     const el = gridRef.current as HTMLDivElement | null;
     const ro = el ? new ResizeObserver(() => compute()) : null;
     if (el && ro) ro.observe(el);
     return () => {
       window.removeEventListener('resize', compute);
-      window.removeEventListener('orientationchange', compute);
       if (el && ro) ro.disconnect();
     };
   }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
@@ -414,7 +401,7 @@ const Home = () => {
         {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
         <div 
           ref={gridRef}
-          className="max-w-7xl mx-auto relative" 
+          className="w-full mx-auto relative" 
           style={{ maxWidth: layoutConfig.grid.maxWidth }}
         >
           {/* Grid numbering overlay - Only in edit mode */}
@@ -455,7 +442,7 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
-            className="grid items-stretch relative w-full max-w-[1600px] mx-auto"
+            className="grid items-stretch relative w-full mx-auto"
             style={{
               gridTemplateColumns: `repeat(30, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
