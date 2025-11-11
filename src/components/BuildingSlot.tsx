@@ -1,7 +1,9 @@
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { getBuildingImage, type BuildingType } from "@/lib/buildingImages";
+import { getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
+import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { useMemo } from "react";
 
 interface BuildingSlotProps {
   position: number;
@@ -11,6 +13,7 @@ interface BuildingSlotProps {
     level: number;
     capacity: number;
     current_chickens: number;
+    selected_skin?: string | null;
   };
   onBuyClick: (position: number) => void;
   onBuildingClick?: () => void;
@@ -20,6 +23,25 @@ interface BuildingSlotProps {
 }
 
 export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, isLeftColumn = true, isEditMode = false, editControls }: BuildingSlotProps) => {
+  const { getSkinByKey } = useBuildingSkins(building?.building_type);
+  
+  // Get skin info from database if selected_skin is set
+  const skinInfo = useMemo(() => {
+    if (!building?.selected_skin) return null;
+    return getSkinByKey(building.selected_skin);
+  }, [building?.selected_skin, getSkinByKey]);
+
+  // Get building display (image or emoji)
+  const buildingDisplay = useMemo(() => {
+    if (!building) return null;
+    return getBuildingDisplay(
+      building.building_type as BuildingType,
+      building.level,
+      building.selected_skin,
+      skinInfo || undefined
+    );
+  }, [building, skinInfo]);
+
   if (building) {
     // Calculate visible chickens: floor(current_chickens / 10)
     const visibleChickens = Math.floor(building.current_chickens / 10);
@@ -37,13 +59,19 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
 
           <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4">
-            {/* Building image - top right */}
+            {/* Building image or emoji - top right */}
             <div className="flex justify-end mb-2">
-              <img 
-                src={getBuildingImage(building.building_type as BuildingType, building.level, 'A')} 
-                alt={`${building.building_type} nivel ${building.level}`}
-                className="h-24 w-auto md:h-28 max-w-full object-contain"
-              />
+              {buildingDisplay?.type === 'image' ? (
+                <img 
+                  src={buildingDisplay.src} 
+                  alt={`${building.building_type} nivel ${building.level}`}
+                  className="h-24 w-auto md:h-28 max-w-full object-contain"
+                />
+              ) : (
+                <div className="text-7xl md:text-8xl leading-none">
+                  {buildingDisplay?.emoji || '🏚️'}
+                </div>
+              )}
             </div>
             
             {/* Chickens area - show chickens walking around */}

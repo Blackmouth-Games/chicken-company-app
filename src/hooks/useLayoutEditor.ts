@@ -19,6 +19,7 @@ interface BeltConfig {
   rotation?: number; // 0, 90, 180, 270
   isOutput?: boolean; // Marks this belt as output for a corral
   isDestiny?: boolean; // Marks this belt as final destination where eggs are removed
+  isTransport?: boolean; // Marks this belt as transport belt
   corralId?: string; // ID of the corral this output belt belongs to
 }
 
@@ -531,11 +532,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         ...prev,
         belts: prev.belts.map(b => {
           if (b.id === beltId) {
-            // Toggle output, clear destiny if setting output
+            // Toggle output, clear destiny and transport if setting output
             return {
               ...b,
               isOutput: !b.isOutput,
               isDestiny: b.isOutput ? b.isDestiny : false, // Clear destiny if setting output
+              isTransport: b.isOutput ? b.isTransport : false, // Clear transport if setting output
               corralId: !b.isOutput ? corralId : undefined,
             };
           }
@@ -560,12 +562,39 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         ...prev,
         belts: prev.belts.map(b => {
           if (b.id === beltId) {
-            // Toggle destiny, clear output if setting destiny
+            // Toggle destiny, clear output and transport if setting destiny
             return {
               ...b,
               isDestiny: !b.isDestiny,
               isOutput: b.isDestiny ? b.isOutput : false, // Clear output if setting destiny
+              isTransport: b.isDestiny ? b.isTransport : false, // Clear transport if setting destiny
               corralId: b.isDestiny ? b.corralId : undefined,
+            };
+          }
+          return b;
+        }),
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  const toggleBeltTransport = (beltId: string) => {
+    setLayoutConfig(prev => {
+      const belt = prev.belts.find(b => b.id === beltId);
+      if (!belt) return prev;
+      
+      const newConfig = {
+        ...prev,
+        belts: prev.belts.map(b => {
+          if (b.id === beltId) {
+            // Toggle transport, clear output and destiny if setting transport
+            return {
+              ...b,
+              isTransport: !b.isTransport,
+              isOutput: b.isTransport ? b.isOutput : false, // Clear output if setting transport
+              isDestiny: b.isTransport ? b.isDestiny : false, // Clear destiny if setting transport
+              corralId: b.isTransport ? b.corralId : undefined,
             };
           }
           return b;
@@ -754,6 +783,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     updateBelt,
     toggleBeltOutput,
     toggleBeltDestiny,
+    toggleBeltTransport,
     setLayoutConfig,
     addBeltAtPosition,
     deleteSelected,

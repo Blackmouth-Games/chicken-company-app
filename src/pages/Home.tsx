@@ -82,6 +82,7 @@ const Home = () => {
     setSelectedObject,
     toggleBeltOutput,
     toggleBeltDestiny,
+    toggleBeltTransport,
   } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
@@ -1195,6 +1196,7 @@ const Home = () => {
                   onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
                   onToggleOutput={() => toggleBeltOutput(belt.id, undefined)}
                   onToggleDestiny={() => toggleBeltDestiny(belt.id)}
+                  onToggleTransport={() => toggleBeltTransport(belt.id)}
                 />
               );
             })}
@@ -1235,7 +1237,10 @@ const Home = () => {
                 >
                   <BuildingSlot
                     position={position}
-                    building={building}
+                    building={building ? {
+                      ...building,
+                      selected_skin: building.selected_skin || null
+                    } : undefined}
                     onBuyClick={handleBuyClick}
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={true}
@@ -1306,7 +1311,10 @@ const Home = () => {
                 >
                   <BuildingSlot
                     position={position}
-                    building={building}
+                    building={building ? {
+                      ...building,
+                      selected_skin: building.selected_skin || null
+                    } : undefined}
                     onBuyClick={handleBuyClick}
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={false}

@@ -45,9 +45,16 @@ export const useBuildingSkins = (buildingType?: string) => {
     fetchSkins();
   }, [buildingType]);
 
+  // Get skin by key
+  const getSkinByKey = (skinKey: string | null | undefined): BuildingSkin | null => {
+    if (!skinKey) return null;
+    return skins.find(s => s.skin_key === skinKey) || null;
+  };
+
   return {
     skins,
     loading,
     refetch: fetchSkins,
+    getSkinByKey,
   };
 };

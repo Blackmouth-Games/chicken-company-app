@@ -42,15 +42,86 @@ export const BUILDING_IMAGES = {
 export type BuildingType = keyof typeof BUILDING_IMAGES;
 export type BuildingSkin = 'A' | 'B';
 
+// Mapping from database skin_key to local image skin (A/B)
+// If a skin_key is not in this map, it will use the emoji from the database
+const SKIN_KEY_TO_LOCAL_MAP: Record<string, BuildingSkin> = {
+  // Corral skins
+  'corral_default': 'A',
+  'corral_premium': 'B',
+  'corral_luxury': 'B',
+  // Warehouse skins
+  'warehouse_default': 'A',
+  'warehouse_modern': 'B',
+  // Market skins
+  'market_default': 'A',
+  'market_premium': 'B',
+};
+
+/**
+ * Maps a database skin_key to a local image skin (A/B)
+ * Returns null if the skin_key should use an emoji instead
+ */
+export const mapSkinKeyToLocal = (skinKey: string | null | undefined): BuildingSkin | null => {
+  if (!skinKey) return null;
+  return SKIN_KEY_TO_LOCAL_MAP[skinKey] || null;
+};
+
+/**
+ * Gets building image from local assets or returns null if should use emoji
+ * @param type Building type
+ * @param level Building level
+ * @param skinKey Database skin_key (e.g., 'corral_default') or local skin ('A'/'B')
+ * @param skinInfo Optional skin info from database with image_url (emoji)
+ * @returns Image URL string or null if should use emoji
+ */
 export const getBuildingImage = (
   type: BuildingType, 
   level: number, 
-  skin: BuildingSkin = 'A'
-): string => {
-  const images = BUILDING_IMAGES[type];
-  if (!images) return warehouse1A;
+  skinKey?: string | null,
+  skinInfo?: { image_url: string } | null
+): string | null => {
+  // If skinKey is 'A' or 'B', use it directly
+  if (skinKey === 'A' || skinKey === 'B') {
+    const images = BUILDING_IMAGES[type];
+    if (!images) return warehouse1A;
+    const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
+    return images[validLevel]?.[skinKey] || images[1]?.A || warehouse1A;
+  }
   
-  // Ensure level is within bounds
-  const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
-  return images[validLevel]?.[skin] || images[1]?.A || warehouse1A;
+  // Try to map skin_key to local image
+  const localSkin = mapSkinKeyToLocal(skinKey);
+  if (localSkin) {
+    const images = BUILDING_IMAGES[type];
+    if (!images) return warehouse1A;
+    const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
+    return images[validLevel]?.[localSkin] || images[1]?.A || warehouse1A;
+  }
+  
+  // If no local image mapping, return null to indicate should use emoji
+  return null;
+};
+
+/**
+ * Gets building display (image or emoji) based on skin
+ * @param type Building type
+ * @param level Building level
+ * @param skinKey Database skin_key
+ * @param skinInfo Optional skin info from database with image_url (emoji)
+ * @returns Object with either image (string) or emoji (string)
+ */
+export const getBuildingDisplay = (
+  type: BuildingType,
+  level: number,
+  skinKey?: string | null,
+  skinInfo?: { image_url: string } | null
+): { type: 'image'; src: string } | { type: 'emoji'; emoji: string } => {
+  const image = getBuildingImage(type, level, skinKey, skinInfo);
+  
+  if (image) {
+    return { type: 'image', src: image };
+  }
+  
+  // Fallback to emoji from skinInfo or default
+  const emoji = skinInfo?.image_url || '🏚️';
+  return { type: 'emoji', emoji };
 };

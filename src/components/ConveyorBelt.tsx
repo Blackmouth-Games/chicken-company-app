@@ -9,9 +9,10 @@ interface ConveyorBeltProps {
     gridRow: string;
     direction: 'north' | 'south' | 'east' | 'west';
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
-    isOutput?: boolean;
-    isDestiny?: boolean;
-    corralId?: string;
+  isOutput?: boolean;
+  isDestiny?: boolean;
+  isTransport?: boolean;
+  corralId?: string;
   };
   idx: number;
   isEditMode: boolean;
@@ -28,6 +29,7 @@ interface ConveyorBeltProps {
   onUpdateRow: (value: string) => void;
   onToggleOutput?: () => void;
   onToggleDestiny?: () => void;
+  onToggleTransport?: () => void;
 }
 
 export const ConveyorBelt = ({
@@ -47,6 +49,7 @@ export const ConveyorBelt = ({
   onUpdateRow,
   onToggleOutput,
   onToggleDestiny,
+  onToggleTransport,
 }: ConveyorBeltProps) => {
   // Get arrow direction based on belt direction
   const getArrowTransform = () => {
@@ -274,15 +277,39 @@ export const ConveyorBelt = ({
               🎯 Destiny
             </Button>
           )}
+          {onToggleTransport && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onToggleTransport();
+              }}
+              size="sm"
+              variant={belt.isTransport ? "default" : "outline"}
+              className="h-8 px-3"
+              title="Marcar como cinta de transporte"
+            >
+              🚚 Transporte
+            </Button>
+          )}
         </div>
       )}
       
-      {/* Visual indicators for output and destiny */}
+      {/* Visual indicators for output, destiny and transport */}
       {belt.isOutput && (
-        <div className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-40" title="Salida de corral" />
+        <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🥚 Salida de corral">
+          <span className="text-xs">🥚</span>
+        </div>
       )}
       {belt.isDestiny && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white z-40" title="Destino final" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🎯 Destino final">
+          <span className="text-xs">🎯</span>
+        </div>
+      )}
+      {belt.isTransport && (
+        <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🚚 Cinta de transporte">
+          <span className="text-xs">🚚</span>
+        </div>
       )}
       
       <style>{`
