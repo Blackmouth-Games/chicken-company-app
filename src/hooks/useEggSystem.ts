@@ -30,8 +30,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const animationFrameRef = useRef<number>();
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
 
-  // Get corrals from buildings
-  const corrals = buildings.filter(b => b.building_type === 'corral');
+  // Get corrals from buildings - handle undefined/null
+  const corrals = (buildings || []).filter(b => b && b.building_type === 'corral');
 
   // Find output belt for a corral
   const findOutputBelt = useCallback((corralId: string): Belt | null => {

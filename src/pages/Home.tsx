@@ -84,9 +84,6 @@ const Home = () => {
     toggleBeltDestiny,
   } = useLayoutEditor(20);
 
-  // Egg system
-  const { eggs } = useEggSystem(allBelts, buildings);
-
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
   const MIN_EMPTY_SLOTS = 4;
@@ -542,6 +539,9 @@ const Home = () => {
   const autoCorralBelts = generateCorralBelts();
   const manualBelts = layoutConfig.belts || [];
   const allBelts = [...autoCorralBelts, ...manualBelts];
+
+  // Egg system - must be after allBelts is defined
+  const { eggs } = useEggSystem(allBelts, buildings);
   
   // Debug: Send belt information to DebugPanel
   useEffect(() => {
