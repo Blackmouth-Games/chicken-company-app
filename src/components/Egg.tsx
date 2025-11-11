@@ -64,7 +64,7 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, onReachDesti
         ...getPosition(),
       }}
     >
-      <div className="w-4 h-4 bg-yellow-400 rounded-full border-2 border-yellow-600 shadow-md animate-pulse" />
+      <div className="text-2xl drop-shadow-lg animate-pulse">🥚</div>
     </div>
   ) : null;
 };

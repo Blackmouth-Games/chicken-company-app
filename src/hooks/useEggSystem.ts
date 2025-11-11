@@ -24,7 +24,7 @@ interface Belt {
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
-const EGG_SPAWN_INTERVAL = 3000; // Spawn egg every 3 seconds per corral
+const EGG_SPAWN_INTERVAL = 1000; // Spawn egg every 1 second per corral (more frequent)
 
 export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const [eggs, setEggs] = useState<Egg[]>([]);
