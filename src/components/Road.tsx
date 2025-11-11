@@ -9,6 +9,9 @@ interface RoadProps {
     gridRow: string;
     direction: 'north' | 'south' | 'east' | 'west';
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+    isPointA?: boolean;
+    isTransport?: boolean;
+    isPointB?: boolean;
   };
   idx: number;
   isEditMode: boolean;
@@ -23,6 +26,9 @@ interface RoadProps {
   onRotate?: () => void;
   onUpdateColumn: (value: string) => void;
   onUpdateRow: (value: string) => void;
+  onTogglePointA?: () => void;
+  onToggleTransport?: () => void;
+  onTogglePointB?: () => void;
 }
 
 export const Road = ({
@@ -40,6 +46,9 @@ export const Road = ({
   onRotate,
   onUpdateColumn,
   onUpdateRow,
+  onTogglePointA,
+  onToggleTransport,
+  onTogglePointB,
 }: RoadProps) => {
   // Get arrow direction based on road direction
   const getArrowTransform = () => {
@@ -68,16 +77,22 @@ export const Road = ({
     return {};
   };
 
-  // Get border color for edit mode
+  // Get border color for edit mode based on road type
   const getEditModeBorderColor = () => {
-    if (!isEditMode || !isSelected) return 'transparent';
-    return 'border-gray-400';
+    if (!isEditMode || !isSelected) return '';
+    if (road.isPointA) return 'ring-2 ring-green-500';
+    if (road.isPointB) return 'ring-2 ring-red-500';
+    if (road.isTransport) return 'ring-2 ring-blue-500';
+    return 'ring-2 ring-gray-400';
   };
 
-  // Get dragging border color
+  // Get dragging border color based on road type
   const getDraggingBorderColor = () => {
-    if (!isDragging) return 'transparent';
-    return 'border-blue-400';
+    if (!isDragging) return '';
+    if (road.isPointA) return 'ring-2 ring-green-400';
+    if (road.isPointB) return 'ring-2 ring-red-400';
+    if (road.isTransport) return 'ring-2 ring-blue-400';
+    return 'ring-2 ring-blue-400';
   };
 
   const position = getPosition();
@@ -86,7 +101,7 @@ export const Road = ({
   return (
     <div
       data-road={road.id}
-      className={`absolute ${isDragging ? 'z-30' : 'z-5'} ${isEditMode && isSelected ? 'outline outline-2 outline-offset-2 outline-blue-500' : ''}`}
+      className={`absolute ${isDragging ? 'z-30' : 'z-0'} ${isEditMode && isSelected ? 'outline outline-2 outline-offset-2 outline-blue-500' : ''}`}
       style={{
         gridColumn: tempPosition ? `${tempPosition.col} / ${tempPosition.col + 2}` : road.gridColumn,
         gridRow: tempPosition ? `${tempPosition.row} / ${tempPosition.row + 2}` : road.gridRow,
@@ -102,20 +117,23 @@ export const Road = ({
       {/* Main road div - 2x2 cells */}
       <div
         className={`
-          relative w-full h-full
-          ${getEditModeBorderColor() ? `border-2 ${getEditModeBorderColor()}` : ''}
-          ${getDraggingBorderColor() ? `border-2 ${getDraggingBorderColor()}` : ''}
-          ${isEditMode && isSelected ? 'ring-2 ring-blue-500' : ''}
+          relative w-full h-full overflow-hidden
+          ${getEditModeBorderColor()}
+          ${getDraggingBorderColor()}
         `}
-        style={{
-          backgroundColor: '#8B7355', // Road color (brown/gray) - fallback
-          backgroundImage: `url(${roadImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          transform: getArrowTransform(),
-        }}
       >
+        {/* Road image */}
+        <img 
+          src={roadImage} 
+          alt="Road" 
+          className="w-full h-full object-cover"
+          style={{
+            transform: getArrowTransform(),
+            width: '100%',
+            height: '100%',
+          }}
+        />
+        
         {/* Direction indicator arrow */}
         {isEditMode && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -168,6 +186,48 @@ export const Road = ({
               className="h-8 w-8 p-0"
             >
               <RotateCw className="h-4 w-4" />
+            </Button>
+          )}
+          {isManualRoad && onTogglePointA && (
+            <Button
+              size="sm"
+              variant={road.isPointA ? "default" : "outline"}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onTogglePointA();
+              }}
+              className="h-8 px-2 text-xs"
+            >
+              🟢 A
+            </Button>
+          )}
+          {isManualRoad && onToggleTransport && (
+            <Button
+              size="sm"
+              variant={road.isTransport ? "default" : "outline"}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleTransport();
+              }}
+              className="h-8 px-2 text-xs"
+            >
+              🚚 T
+            </Button>
+          )}
+          {isManualRoad && onTogglePointB && (
+            <Button
+              size="sm"
+              variant={road.isPointB ? "default" : "outline"}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onTogglePointB();
+              }}
+              className="h-8 px-2 text-xs"
+            >
+              🔴 B
             </Button>
           )}
         </div>

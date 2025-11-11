@@ -31,6 +31,9 @@ interface RoadConfig {
   direction: 'north' | 'south' | 'east' | 'west';
   type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
   rotation?: number; // 0, 90, 180, 270
+  isPointA?: boolean; // Marks this road as point A (start point)
+  isTransport?: boolean; // Marks this road as transport (middle section)
+  isPointB?: boolean; // Marks this road as point B (destination point)
 }
 
 type SelectableObject = {
@@ -705,6 +708,84 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
+  const toggleRoadPointA = (roadId: string) => {
+    setLayoutConfig(prev => {
+      const road = prev.roads.find(r => r.id === roadId);
+      if (!road) return prev;
+      
+      const newConfig = {
+        ...prev,
+        roads: prev.roads.map(r => {
+          if (r.id === roadId) {
+            // Toggle point A, clear point B and transport if setting point A
+            const isSettingPointA = !r.isPointA;
+            return {
+              ...r,
+              isPointA: isSettingPointA,
+              isPointB: isSettingPointA ? false : r.isPointB,
+              isTransport: isSettingPointA ? false : r.isTransport,
+            };
+          }
+          return r;
+        }),
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  const toggleRoadPointB = (roadId: string) => {
+    setLayoutConfig(prev => {
+      const road = prev.roads.find(r => r.id === roadId);
+      if (!road) return prev;
+      
+      const newConfig = {
+        ...prev,
+        roads: prev.roads.map(r => {
+          if (r.id === roadId) {
+            // Toggle point B, clear point A and transport if setting point B
+            const isSettingPointB = !r.isPointB;
+            return {
+              ...r,
+              isPointB: isSettingPointB,
+              isPointA: isSettingPointB ? false : r.isPointA,
+              isTransport: isSettingPointB ? false : r.isTransport,
+            };
+          }
+          return r;
+        }),
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  const toggleRoadTransport = (roadId: string) => {
+    setLayoutConfig(prev => {
+      const road = prev.roads.find(r => r.id === roadId);
+      if (!road) return prev;
+      
+      const newConfig = {
+        ...prev,
+        roads: prev.roads.map(r => {
+          if (r.id === roadId) {
+            // Toggle transport, clear point A and point B if setting transport
+            const isSettingTransport = !r.isTransport;
+            return {
+              ...r,
+              isTransport: isSettingTransport,
+              isPointA: isSettingTransport ? false : r.isPointA,
+              isPointB: isSettingTransport ? false : r.isPointB,
+            };
+          }
+          return r;
+        }),
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
   const toggleBeltOutput = (beltId: string, slotPosition?: number) => {
     setLayoutConfig(prev => {
       const belt = prev.belts.find(b => b.id === beltId);
@@ -1046,6 +1127,9 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     addRoad,
     removeRoad,
     updateRoad,
+    toggleRoadPointA,
+    toggleRoadPointB,
+    toggleRoadTransport,
     addRoadAtPosition,
     deleteSelected,
     duplicateSelected,

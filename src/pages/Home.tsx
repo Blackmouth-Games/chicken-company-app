@@ -23,11 +23,13 @@ import { Road } from "@/components/Road";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
 import LayoutEditor from "@/components/LayoutEditor";
 import { Egg } from "@/components/Egg";
+import { Vehicle } from "@/components/Vehicle";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
 import { useLayoutEditor } from "@/hooks/useLayoutEditor";
 import { useEggSystem } from "@/hooks/useEggSystem";
+import { useVehicleSystem } from "@/hooks/useVehicleSystem";
 
 const Home = () => {
   const telegramUser = getTelegramUser();
@@ -82,6 +84,9 @@ const Home = () => {
     updateBelt,
     removeRoad,
     updateRoad,
+    toggleRoadPointA,
+    toggleRoadPointB,
+    toggleRoadTransport,
     setLayoutConfig,
     addBeltAtPosition,
     deleteSelected,
@@ -557,9 +562,13 @@ const Home = () => {
   const autoCorralBelts = generateCorralBelts();
   const manualBelts = layoutConfig.belts || [];
   const allBelts = [...autoCorralBelts, ...manualBelts];
+  const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
   const { eggs } = useEggSystem(allBelts, buildings);
+  
+  // Vehicle system - must be after roads are defined
+  const { vehicles } = useVehicleSystem(allRoads);
   
   // Debug: Send belt information to DebugPanel
   useEffect(() => {
@@ -1211,7 +1220,7 @@ const Home = () => {
             </div>
             )}
 
-            {/* ROADS - Render before belts so they appear behind */}
+            {/* ROADS - Render first so they appear behind buildings and belts (z-0) */}
             {layoutConfig.roads?.map((road, idx) => {
               const isRoadDragging = draggedRoad === road.id;
               
@@ -1232,6 +1241,9 @@ const Home = () => {
                   onRotate={isEditMode ? () => rotateSelected() : undefined}
                   onUpdateColumn={(value) => updateRoad(road.id, { gridColumn: value })}
                   onUpdateRow={(value) => updateRoad(road.id, { gridRow: value })}
+                  onTogglePointA={isEditMode ? () => toggleRoadPointA(road.id) : undefined}
+                  onToggleTransport={isEditMode ? () => toggleRoadTransport(road.id) : undefined}
+                  onTogglePointB={isEditMode ? () => toggleRoadPointB(road.id) : undefined}
                 />
               );
             })}
@@ -1285,6 +1297,24 @@ const Home = () => {
                   gridRow={currentBelt.gridRow}
                   progress={egg.progress}
                   direction={currentBelt.direction}
+                />
+              );
+            })}
+
+            {/* VEHICLES */}
+            {vehicles.map(vehicle => {
+              const currentRoad = allRoads.find(r => r.id === vehicle.currentRoadId);
+              if (!currentRoad) return null;
+              
+              return (
+                <Vehicle
+                  key={vehicle.id}
+                  id={vehicle.id}
+                  gridColumn={currentRoad.gridColumn}
+                  gridRow={currentRoad.gridRow}
+                  progress={vehicle.progress}
+                  direction={currentRoad.direction}
+                  isLoaded={vehicle.isLoaded}
                 />
               );
             })}
