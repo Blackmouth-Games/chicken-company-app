@@ -176,8 +176,9 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const cellWidth = (rect.width - totalGapWidth) / TOTAL_COLUMNS;
     const cellHeight = (rect.height - totalGapHeight) / totalRows;
     
-    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor(relativeX / (cellWidth + gapPx)) + 1));
-    const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (cellHeight + gapPx)) + 1));
+    // Add gapPx / 2 to account for rounding and ensure we get the correct cell
+    const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor((relativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+    const row = Math.max(1, Math.min(totalRows, Math.floor((relativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
     
     return { col, row };
   };
@@ -406,16 +407,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           gridRow: createGridNotation(tempPosition.row, tempPosition.row + height),
         });
 
-        if (success) {
-          toast({
-            title: t('layoutEditor.buildingMoved'),
-            description: t('layoutEditor.buildingMovedDesc', { 
-              building: draggedBuilding, 
-              col: tempPosition.col.toString(), 
-              row: tempPosition.row.toString() 
-            }),
-          });
-        }
+        // Removed toast notification for building movement
       }
 
       if (isDragging && draggedBelt) {
@@ -440,13 +432,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
               gridRow: createGridNotation(newRow, newRow + height),
             });
 
-            toast({
-              title: t('layoutEditor.beltMoved'),
-              description: t('layoutEditor.beltMovedDesc', { 
-                col: newCol.toString(), 
-                row: newRow.toString() 
-              }),
-            });
+            // Removed toast notification for belt movement
           }
         } else if (belt && beltTempPosition) {
           // Fallback to beltTempPosition if no event
@@ -461,13 +447,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
             gridRow: createGridNotation(beltTempPosition.row, beltTempPosition.row + height),
           });
 
-          toast({
-            title: t('layoutEditor.beltMoved'),
-            description: t('layoutEditor.beltMovedDesc', { 
-              col: beltTempPosition.col.toString(), 
-              row: beltTempPosition.row.toString() 
-            }),
-          });
+          // Removed toast notification for belt movement
         }
       }
       

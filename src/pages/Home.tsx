@@ -875,11 +875,6 @@ const Home = () => {
                       <div className="absolute top-1 right-1 bg-purple-600 text-white text-xs px-2 py-1 rounded font-mono">
                         {layoutConfig.house.gridColumn} / {layoutConfig.house.gridRow}
                       </div>
-                      {tempPosition && isDragging && draggedBuilding === 'house' && (
-                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
-                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
@@ -962,11 +957,6 @@ const Home = () => {
                       <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
                         {layoutConfig.warehouse.gridColumn} / {layoutConfig.warehouse.gridRow}
                       </div>
-                      {tempPosition && isDragging && draggedBuilding === 'warehouse' && (
-                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
-                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
@@ -1058,11 +1048,6 @@ const Home = () => {
                       <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded font-mono">
                         {layoutConfig.market.gridColumn} / {layoutConfig.market.gridRow}
                       </div>
-                      {tempPosition && isDragging && draggedBuilding === 'market' && (
-                        <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
-                          Mover a: Col {tempPosition.col}, Row {tempPosition.row}
-                        </div>
-                      )}
                     </>
                   )}
                 </div>
@@ -1147,11 +1132,6 @@ const Home = () => {
                     <div className="absolute top-1 right-1 bg-amber-600 text-white text-xs px-2 py-1 rounded font-mono">
                       {layoutConfig.boxes.gridColumn} / {layoutConfig.boxes.gridRow}
                     </div>
-                    {tempPosition && isDragging && draggedBuilding === 'boxes' && (
-                      <div className="absolute top-1 left-1 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">
-                        Mover a: Col {tempPosition.col}, Row {tempPosition.row}
-                      </div>
-                    )}
                   </>
                 )}
               </div>
@@ -1209,8 +1189,8 @@ const Home = () => {
                   beltDragOffset={isBeltDragging ? beltDragOffset : null}
                   onMouseDown={(e) => isEditMode && isManualBelt && handleBeltMouseDown(e, belt.id)}
                   onClick={() => isEditMode && handleBeltClick(belt.id)}
-                  onRemove={() => isManualBelt && removeBelt(belt.id)}
-                  onRotate={() => isManualBelt && rotateSelected()}
+                  onRemove={isManualBelt ? () => removeBelt(belt.id) : undefined}
+                  onRotate={isManualBelt ? () => rotateSelected() : undefined}
                   onUpdateColumn={(value) => isManualBelt && updateBelt(belt.id, { gridColumn: value })}
                   onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
                   onToggleOutput={() => toggleBeltOutput(belt.id, undefined)}

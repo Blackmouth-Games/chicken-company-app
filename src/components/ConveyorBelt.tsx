@@ -22,7 +22,7 @@ interface ConveyorBeltProps {
   beltDragOffset: { x: number; y: number } | null;
   onMouseDown: (e: React.MouseEvent) => void;
   onClick: () => void;
-  onRemove: () => void;
+  onRemove?: () => void;
   onRotate?: () => void;
   onUpdateColumn: (value: string) => void;
   onUpdateRow: (value: string) => void;
@@ -136,6 +136,11 @@ export const ConveyorBelt = ({
         ...getDragStyle(),
       }}
       onClick={(e) => {
+        // Don't trigger click if clicking on action buttons
+        const target = e.target as HTMLElement;
+        if (target.closest('.absolute.left-full')) {
+          return;
+        }
         e.stopPropagation();
         onClick();
       }}
@@ -196,7 +201,17 @@ export const ConveyorBelt = ({
       
       {/* Action buttons outside the belt - positioned to the right */}
       {isEditMode && isSelected && !isDragging && (
-        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap">
+        <div 
+          className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
           {onRemove && (
             <Button
               onClick={(e) => {

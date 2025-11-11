@@ -19,7 +19,8 @@ export const SelectionToolbar = ({
 }: SelectionToolbarProps) => {
   const { t } = useLanguage();
   
-  if (!selectedObject) return null;
+  // Don't show toolbar for belts (they have their own action buttons)
+  if (!selectedObject || selectedObject.type === 'belt') return null;
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-background/95 backdrop-blur-sm border-2 border-primary rounded-lg shadow-2xl p-3 flex gap-2 animate-in slide-in-from-bottom-4">
