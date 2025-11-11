@@ -295,23 +295,6 @@ export const ConveyorBelt = ({
         </div>
       )}
       
-      {/* Visual indicators for output, destiny and transport */}
-      {belt.isOutput && (
-        <div className="absolute -top-1 -left-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🥚 Salida de corral">
-          <span className="text-xs">🥚</span>
-        </div>
-      )}
-      {belt.isDestiny && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🎯 Destino final">
-          <span className="text-xs">🎯</span>
-        </div>
-      )}
-      {belt.isTransport && (
-        <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white z-40 flex items-center justify-center" title="🚚 Cinta de transporte">
-          <span className="text-xs">🚚</span>
-        </div>
-      )}
-      
       <style>{`
         @keyframes beltMoveeast {
           0% {
