@@ -132,6 +132,7 @@ const Home = () => {
     direction: 'north' | 'south' | 'east' | 'west';
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
   }>({ direction: 'east', type: 'straight' });
+  const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
   
   useEffect(() => {
     const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
@@ -667,11 +668,44 @@ const Home = () => {
           />
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
+            data-grid-container
             className={`grid items-stretch relative w-full mx-auto ${paintMode && isEditMode ? 'cursor-crosshair' : ''}`}
             style={{
               gridTemplateColumns: `repeat(30, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
+            }}
+            onMouseMove={(e) => {
+              if (paintMode && isEditMode && !isDragging) {
+                // Don't process if mouse is on a belt or building
+                const target = e.target as HTMLElement;
+                if (target.closest('[data-belt]') || target.closest('[data-building]')) {
+                  setHoveredCell(null);
+                  return;
+                }
+                
+                // Calculate which cell is being hovered
+                const gridElement = e.currentTarget as HTMLElement;
+                const gridRect = gridElement.getBoundingClientRect();
+                const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
+                const totalRows = getTotalRows();
+                
+                const totalGapWidth = gapPx * (30 - 1);
+                const totalGapHeight = gapPx * (totalRows - 1);
+                const cellWidth = (gridRect.width - totalGapWidth) / 30;
+                const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
+                
+                const gridRelativeX = e.clientX - gridRect.left;
+                const gridRelativeY = e.clientY - gridRect.top;
+                
+                const col = Math.max(1, Math.min(30, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
+                const row = Math.max(1, Math.min(totalRows, Math.floor(gridRelativeY / (cellHeight + gapPx)) + 1));
+                
+                setHoveredCell({ col, row });
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredCell(null);
             }}
             onClick={(e) => {
               if (paintMode && isEditMode && !isDragging) {
@@ -762,6 +796,17 @@ const Home = () => {
               }
             }}
           >
+            {/* Hover cell highlight */}
+            {hoveredCell && paintMode && isEditMode && (
+              <div
+                className="absolute pointer-events-none z-10 border-2 border-red-500 bg-red-500/20"
+                style={{
+                  gridColumn: `${hoveredCell.col} / ${hoveredCell.col + 1}`,
+                  gridRow: `${hoveredCell.row} / ${hoveredCell.row + 1}`,
+                }}
+              />
+            )}
+            
             {/* Building placement preview */}
             {isEditMode && isDragging && draggedBuilding && tempPosition && (
               (() => {
