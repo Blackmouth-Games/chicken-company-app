@@ -9,6 +9,8 @@ const LayoutEditor = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [hideBuildings, setHideBuildings] = useState(false);
   const [paintMode, setPaintMode] = useState(false);
+  const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
+  const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
   const [isVisible, setIsVisible] = useState(() => {
     const saved = localStorage.getItem('layoutEditorVisible');
     return saved ? JSON.parse(saved) : true;
@@ -56,6 +58,20 @@ const LayoutEditor = () => {
         ? 'Haz clic en las celdas vacías para colocar cintas'
         : 'Modo pintado desactivado',
     });
+  };
+
+  const handlePaintDirectionChange = (direction: 'north' | 'south' | 'east' | 'west') => {
+    setPaintDirection(direction);
+    window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
+      detail: { direction, type: paintType } 
+    }));
+  };
+
+  const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => {
+    setPaintType(type);
+    window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
+      detail: { direction: paintDirection, type } 
+    }));
   };
 
   const toggleVisibility = () => {
@@ -267,6 +283,106 @@ const LayoutEditor = () => {
             <Paintbrush className="h-4 w-4" />
             {paintMode ? "Pintar ON" : "Modo Pintar"}
           </Button>
+
+          {/* Paint Mode Options - Only show when paint mode is active */}
+          {paintMode && (
+            <>
+              {/* Direction Selector */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Dirección:</label>
+                <div className="grid grid-cols-2 gap-1">
+                  <Button
+                    onClick={() => handlePaintDirectionChange('north')}
+                    size="sm"
+                    variant={paintDirection === 'north' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Norte (↑)"
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintDirectionChange('south')}
+                    size="sm"
+                    variant={paintDirection === 'south' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Sur (↓)"
+                  >
+                    ↓
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintDirectionChange('east')}
+                    size="sm"
+                    variant={paintDirection === 'east' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Este (→)"
+                  >
+                    →
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintDirectionChange('west')}
+                    size="sm"
+                    variant={paintDirection === 'west' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Oeste (←)"
+                  >
+                    ←
+                  </Button>
+                </div>
+              </div>
+
+              {/* Type Selector */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Tipo:</label>
+                <div className="flex gap-1">
+                  <Button
+                    onClick={() => handlePaintTypeChange('straight')}
+                    size="sm"
+                    variant={paintType === 'straight' ? "default" : "outline"}
+                    className="h-7 flex-1 text-xs"
+                    title="Recta"
+                  >
+                    ─
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-ne')}
+                    size="sm"
+                    variant={paintType === 'curve-ne' ? "default" : "outline"}
+                    className="h-7 flex-1 text-xs"
+                    title="Curva NE"
+                  >
+                    └
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-nw')}
+                    size="sm"
+                    variant={paintType === 'curve-nw' ? "default" : "outline"}
+                    className="h-7 flex-1 text-xs"
+                    title="Curva NW"
+                  >
+                    ┘
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-se')}
+                    size="sm"
+                    variant={paintType === 'curve-se' ? "default" : "outline"}
+                    className="h-7 flex-1 text-xs"
+                    title="Curva SE"
+                  >
+                    ┌
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-sw')}
+                    size="sm"
+                    variant={paintType === 'curve-sw' ? "default" : "outline"}
+                    className="h-7 flex-1 text-xs"
+                    title="Curva SW"
+                  >
+                    ┐
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="h-px bg-border my-1" />

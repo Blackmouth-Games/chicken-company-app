@@ -128,6 +128,10 @@ const Home = () => {
   
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
+  const [paintOptions, setPaintOptions] = useState<{
+    direction: 'north' | 'south' | 'east' | 'west';
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+  }>({ direction: 'east', type: 'straight' });
   
   useEffect(() => {
     const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
@@ -148,6 +152,17 @@ const Home = () => {
     window.addEventListener('paintModeChange', handlePaintModeChange as EventListener);
     return () => {
       window.removeEventListener('paintModeChange', handlePaintModeChange as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' }>) => {
+      setPaintOptions(event.detail);
+    };
+
+    window.addEventListener('paintOptionsChange', handlePaintOptionsChange as EventListener);
+    return () => {
+      window.removeEventListener('paintOptionsChange', handlePaintOptionsChange as EventListener);
     };
   }, []);
 
@@ -660,24 +675,39 @@ const Home = () => {
             }}
             onClick={(e) => {
               if (paintMode && isEditMode && !isDragging) {
+                // Don't process if click is on a belt or building
+                const target = e.target as HTMLElement;
+                if (target.closest('[data-belt]') || target.closest('[data-building]')) {
+                  return;
+                }
+                
                 e.stopPropagation();
-                // Get the actual grid element where the click occurred
-                const gridElement = e.currentTarget as HTMLElement;
-                const rect = gridElement.getBoundingClientRect();
+                // Use gridRef to get the correct container position
+                const gridContainer = gridRef.current;
+                if (!gridContainer) return;
+                
+                const rect = gridContainer.getBoundingClientRect();
                 
                 const relativeX = e.clientX - rect.left;
                 const relativeY = e.clientY - rect.top;
                 const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
                 const totalRows = getTotalRows();
                 
+                // Get the actual grid element to calculate cell size
+                const gridElement = e.currentTarget as HTMLElement;
+                const gridRect = gridElement.getBoundingClientRect();
+                
                 const totalGapWidth = gapPx * (30 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (rect.width - totalGapWidth) / 30;
-                const cellHeight = (rect.height - totalGapHeight) / totalRows;
+                const cellWidth = (gridRect.width - totalGapWidth) / 30;
+                const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
-                // Calculate column and row from click position
-                const col = Math.max(1, Math.min(30, Math.floor(relativeX / (cellWidth + gapPx)) + 1));
-                const row = Math.max(1, Math.min(totalRows, Math.floor(relativeY / (cellHeight + gapPx)) + 1));
+                // Calculate column and row from click position relative to grid element
+                const gridRelativeX = e.clientX - gridRect.left;
+                const gridRelativeY = e.clientY - gridRect.top;
+                
+                const col = Math.max(1, Math.min(30, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
+                const row = Math.max(1, Math.min(totalRows, Math.floor(gridRelativeY / (cellHeight + gapPx)) + 1));
                 
                 // Debug: Send click position to DebugPanel
                 const clickInfo = {
@@ -685,8 +715,12 @@ const Home = () => {
                   clientY: e.clientY,
                   rectLeft: rect.left,
                   rectTop: rect.top,
+                  gridRectLeft: gridRect.left,
+                  gridRectTop: gridRect.top,
                   relativeX,
                   relativeY,
+                  gridRelativeX,
+                  gridRelativeY,
                   cellWidth,
                   cellHeight,
                   gapPx,
@@ -694,6 +728,8 @@ const Home = () => {
                   calculatedRow: row,
                   rectWidth: rect.width,
                   rectHeight: rect.height,
+                  gridRectWidth: gridRect.width,
+                  gridRectHeight: gridRect.height,
                   totalRows,
                 };
                 window.dispatchEvent(new CustomEvent('paintModeClick', { detail: clickInfo }));
@@ -717,7 +753,8 @@ const Home = () => {
                    parseGridNotation(layoutConfig.boxes.gridRow).start <= row && parseGridNotation(layoutConfig.boxes.gridRow).end > row);
                 
                 if (!existingBelt && !hasBuilding) {
-                  addBeltAtPosition(col, row, 'east', 'straight');
+                  // Use paint options for direction and type
+                  addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type);
                 } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
                   // Remove belt if clicking on an existing manual belt
                   removeBelt(existingBelt.id);
