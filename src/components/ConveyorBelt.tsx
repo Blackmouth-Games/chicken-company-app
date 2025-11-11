@@ -76,19 +76,23 @@ export const ConveyorBelt = ({
   const isCurve = belt.type.startsWith('curve-');
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
 
-  // Get gradient for belt animation based on direction
+  // Get gradient for belt animation based on direction - designed for seamless loop
   const getBeltAnimationGradient = () => {
     switch (belt.direction) {
       case 'east':
-        return 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+        // Gradient that repeats seamlessly - bright spot moves from left to right
+        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
       case 'west':
-        return 'linear-gradient(270deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+        // Gradient that repeats seamlessly - bright spot moves from right to left
+        return 'repeating-linear-gradient(270deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
       case 'south':
-        return 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+        // Gradient that repeats seamlessly - bright spot moves from top to bottom
+        return 'repeating-linear-gradient(180deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
       case 'north':
-        return 'linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+        // Gradient that repeats seamlessly - bright spot moves from bottom to top
+        return 'repeating-linear-gradient(0deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
       default:
-        return 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.5) 30%, rgba(255,255,255,0.5) 70%, transparent 100%)';
+        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
     }
   };
 
@@ -127,10 +131,40 @@ export const ConveyorBelt = ({
     return {};
   };
 
+  // Get border color based on belt type when in edit mode
+  const getEditModeBorderColor = () => {
+    if (!isEditMode) return '';
+    
+    if (belt.isOutput) {
+      return 'ring-2 ring-green-500';
+    } else if (belt.isDestiny) {
+      return 'ring-2 ring-red-500';
+    } else if (belt.isTransport) {
+      return 'ring-2 ring-blue-500';
+    } else {
+      return 'ring-2 ring-cyan-500'; // Default color
+    }
+  };
+
+  // Get dragging border color based on belt type
+  const getDraggingBorderColor = () => {
+    if (!isDragging) return '';
+    
+    if (belt.isOutput) {
+      return 'ring-4 ring-green-600 ring-offset-4 opacity-50';
+    } else if (belt.isDestiny) {
+      return 'ring-4 ring-red-600 ring-offset-4 opacity-50';
+    } else if (belt.isTransport) {
+      return 'ring-4 ring-blue-600 ring-offset-4 opacity-50';
+    } else {
+      return 'ring-4 ring-cyan-600 ring-offset-4 opacity-50'; // Default color
+    }
+  };
+
   return (
     <div 
-      className={`flex justify-center relative w-full h-full group z-5 ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
-        isDragging ? 'ring-4 ring-cyan-600 ring-offset-4 opacity-50' : ''
+      className={`flex justify-center relative w-full h-full group z-5 ${getEditModeBorderColor()} ${
+        getDraggingBorderColor()
       } ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
       style={{ 
         ...(isDragging ? {} : {
@@ -171,7 +205,7 @@ export const ConveyorBelt = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             background: getBeltAnimationGradient(),
-            backgroundSize: '200% 200%',
+            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '50px 100%' : '100% 50px',
             animation: `beltMove${belt.direction} 1.5s linear infinite`,
             opacity: 0.4,
             mixBlendMode: 'screen',
@@ -183,7 +217,7 @@ export const ConveyorBelt = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             background: getBeltPatternGradient(),
-            backgroundSize: '100% 20px',
+            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '20px 100%' : '100% 20px',
             animation: `beltMove${belt.direction} 1.5s linear infinite`,
             opacity: 0.2,
             mixBlendMode: 'multiply',
@@ -299,37 +333,37 @@ export const ConveyorBelt = ({
       <style>{`
         @keyframes beltMoveeast {
           0% {
-            transform: translateX(-100%);
+            backgroundPosition: 0% 0%;
           }
           100% {
-            transform: translateX(100%);
+            backgroundPosition: 50px 0%;
           }
         }
         
         @keyframes beltMovewest {
           0% {
-            transform: translateX(100%);
+            backgroundPosition: 0% 0%;
           }
           100% {
-            transform: translateX(-100%);
+            backgroundPosition: -50px 0%;
           }
         }
         
         @keyframes beltMovesouth {
           0% {
-            transform: translateY(-100%);
+            backgroundPosition: 0% 0%;
           }
           100% {
-            transform: translateY(100%);
+            backgroundPosition: 0% 50px;
           }
         }
         
         @keyframes beltMovenorth {
           0% {
-            transform: translateY(100%);
+            backgroundPosition: 0% 0%;
           }
           100% {
-            transform: translateY(-100%);
+            backgroundPosition: 0% -50px;
           }
         }
       `}</style>

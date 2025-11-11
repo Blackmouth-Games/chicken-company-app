@@ -4,9 +4,7 @@ import { useState, useMemo } from "react";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
-import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Edit, ExternalLink } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 
@@ -20,10 +18,8 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
   const { getBuildingByType, refetch } = useUserBuildings(userId);
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState<{ type: 'warehouse' | 'market'; open: boolean }>({ type: 'warehouse', open: false });
-  const [showSkinSelector, setShowSkinSelector] = useState<{ type: 'house' | 'warehouse' | 'market'; open: boolean }>({ type: 'house', open: false });
   
   // House skins (assuming house uses 'house' as building type, or we can use a default)
-  const { getSkinByKey: getHouseSkinByKey } = useBuildingSkins('house');
   const { getSkinByKey: getWarehouseSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
   const { getSkinByKey: getMarketSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
 
@@ -99,15 +95,6 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
               <div className="max-w-3xl mx-auto p-6 space-y-6">
                 {/* House Section */}
                 <div className="relative border-2 border-amber-300 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 p-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSkinSelector({ type: 'house', open: true })}
-                    className="absolute top-2 right-2 h-8 w-8 hover:bg-amber-200"
-                  >
-                    <Edit className="h-4 w-4 text-amber-700" />
-                  </Button>
-                  
                   <div className="flex flex-col items-center gap-3">
                     {houseDisplay?.type === 'image' ? (
                       <img 
@@ -127,14 +114,6 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
 
                 {/* Warehouse Section */}
                 <div className="relative border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSkinSelector({ type: 'warehouse', open: true })}
-                    className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-200"
-                  >
-                    <Edit className="h-4 w-4 text-blue-700" />
-                  </Button>
                   
                   <div className="flex flex-col items-center gap-3">
                     {warehouseDisplay?.type === 'image' ? (
@@ -181,14 +160,6 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
 
                 {/* Market Section */}
                 <div className="relative border-2 border-green-300 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSkinSelector({ type: 'market', open: true })}
-                    className="absolute top-2 right-2 h-8 w-8 hover:bg-green-200"
-                  >
-                    <Edit className="h-4 w-4 text-green-700" />
-                  </Button>
                   
                   <div className="flex flex-col items-center gap-3">
                     {marketDisplay?.type === 'image' ? (
@@ -276,37 +247,6 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
           upgradePrice={marketNextPrice.price_ton}
           newCapacity={marketNextPrice.capacity}
           onUpgradeComplete={handleUpgradeComplete}
-        />
-      )}
-
-      {/* Skin Selector Dialogs */}
-      {warehouse && showSkinSelector.type === 'warehouse' && (
-        <SkinSelectorDialog
-          open={showSkinSelector.open}
-          onOpenChange={(open) => setShowSkinSelector({ type: 'warehouse', open })}
-          buildingId={warehouse.id}
-          buildingType={BUILDING_TYPES.WAREHOUSE}
-          userId={userId}
-          currentSkin={warehouse.selected_skin || null}
-          onSkinSelected={() => {
-            refetch();
-            setShowSkinSelector({ type: 'warehouse', open: false });
-          }}
-        />
-      )}
-
-      {market && showSkinSelector.type === 'market' && (
-        <SkinSelectorDialog
-          open={showSkinSelector.open}
-          onOpenChange={(open) => setShowSkinSelector({ type: 'market', open })}
-          buildingId={market.id}
-          buildingType={BUILDING_TYPES.MARKET}
-          userId={userId}
-          currentSkin={market.selected_skin || null}
-          onSkinSelected={() => {
-            refetch();
-            setShowSkinSelector({ type: 'market', open: false });
-          }}
         />
       )}
     </>

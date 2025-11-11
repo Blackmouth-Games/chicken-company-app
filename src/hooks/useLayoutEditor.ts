@@ -337,8 +337,13 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         // Always update drag offset to follow mouse smoothly
         setDragOffset({ x: e.clientX, y: e.clientY });
         
-        // Update grid position only when it changes
-        const gridPos = pixelToGrid(e.clientX, e.clientY);
+        // Calculate the visual center position of the belt (where it appears on screen)
+        // This is the mouse position minus the offset, which gives us the center of the belt
+        const beltCenterX = e.clientX - beltDragOffset.x;
+        const beltCenterY = e.clientY - beltDragOffset.y;
+        
+        // Update grid position based on the visual center of the belt, not the mouse position
+        const gridPos = pixelToGrid(beltCenterX, beltCenterY);
         if (!lastBeltGridPos || lastBeltGridPos.col !== gridPos.col || lastBeltGridPos.row !== gridPos.row) {
           setBeltTempPosition(gridPos);
           setLastBeltGridPos(gridPos);
@@ -419,9 +424,14 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
 
       if (isDragging && draggedBelt) {
         const belt = layoutConfig.belts.find(b => b.id === draggedBelt);
-        if (belt && gridRef.current && e) {
-          // Calculate final position from current mouse position
-          const finalGridPos = pixelToGrid(e.clientX, e.clientY);
+        if (belt && gridRef.current && e && beltDragOffset && dragOffset) {
+          // Calculate the visual center position of the belt (where it appears on screen)
+          // This is the mouse position minus the offset, which gives us the center of the belt
+          const beltCenterX = dragOffset.x - beltDragOffset.x;
+          const beltCenterY = dragOffset.y - beltDragOffset.y;
+          
+          // Calculate final position from the visual center of the belt, not the mouse position
+          const finalGridPos = pixelToGrid(beltCenterX, beltCenterY);
           
           const colSpan = parseGridNotation(belt.gridColumn);
           const rowSpan = parseGridNotation(belt.gridRow);
