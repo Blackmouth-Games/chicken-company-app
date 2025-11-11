@@ -75,7 +75,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
     { id: 'belt-1762856923052', gridColumn: '4 / 5', gridRow: '17 / 18', direction: 'north', type: 'curve-se' },
     { id: 'belt-1762856940335', gridColumn: '15 / 16', gridRow: '18 / 19', direction: 'west', type: 'curve-se' },
     { id: 'belt-1762856948463', gridColumn: '4 / 5', gridRow: '18 / 19', direction: 'north', type: 'curve-se' },
-    { id: 'belt-1762876749609', gridColumn: '4 / 5', gridRow: '16 / 17', direction: 'north', type: 'straight', isTransport: false, isOutput: true, isDestiny: false },
+    { id: 'belt-1762876749609', gridColumn: '4 / 5', gridRow: '16 / 17', direction: 'north', type: 'straight', isOutput: true, isDestiny: false, isTransport: false },
   ],
   roads: [],
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
@@ -126,13 +126,22 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
             rowSpan: parsed.rightCorrals?.rowSpan || DEFAULT_LAYOUT.rightCorrals.rowSpan,
           },
           belts: Array.isArray(parsed.belts) 
-            ? parsed.belts.map((belt: any) => ({
-                id: belt.id,
-                gridColumn: belt.gridColumn,
-                gridRow: belt.gridRow,
-                direction: belt.direction || 'south',
-                type: belt.type || 'straight',
-              }))
+            ? parsed.belts.map((belt: any) => {
+                // Preserve all belt properties, including isOutput, isDestiny, isTransport, slotPosition
+                const defaultBelt = DEFAULT_LAYOUT.belts.find((b: any) => b.id === belt.id);
+                return {
+                  id: belt.id,
+                  gridColumn: belt.gridColumn,
+                  gridRow: belt.gridRow,
+                  direction: belt.direction || defaultBelt?.direction || 'south',
+                  type: belt.type || defaultBelt?.type || 'straight',
+                  isOutput: belt.isOutput ?? defaultBelt?.isOutput ?? false,
+                  isDestiny: belt.isDestiny ?? defaultBelt?.isDestiny ?? false,
+                  isTransport: belt.isTransport ?? defaultBelt?.isTransport ?? false,
+                  slotPosition: belt.slotPosition ?? defaultBelt?.slotPosition,
+                  corralId: belt.corralId ?? defaultBelt?.corralId,
+                };
+              })
             : DEFAULT_LAYOUT.belts,
           roads: Array.isArray(parsed.roads) 
             ? parsed.roads.map((road: any) => ({
@@ -344,7 +353,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle road drag start
-  const handleRoadMouseDown = (e: MouseEvent, roadId: string) => {
+  const handleRoadMouseDown = (e: React.MouseEvent | MouseEvent, roadId: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();

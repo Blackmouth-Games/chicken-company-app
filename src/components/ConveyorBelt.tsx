@@ -173,6 +173,14 @@ export const ConveyorBelt = ({
         }),
         ...getDragStyle(),
       }}
+      onAuxClick={(e) => {
+        // Middle mouse button click (button 1) - open edit modal
+        if (e.button === 1 && isEditMode) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
       onClick={(e) => {
         // Don't trigger click if clicking on action buttons
         const target = e.target as HTMLElement;

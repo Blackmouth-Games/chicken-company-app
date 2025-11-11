@@ -20,7 +20,7 @@ interface RoadProps {
   tempPosition: { col: number; row: number } | null;
   dragOffset: { x: number; y: number } | null;
   roadDragOffset: { x: number; y: number } | null;
-  onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onMouseDown: (e: React.MouseEvent) => void;
   onClick: () => void;
   onRemove?: () => void;
   onRotate?: () => void;
@@ -108,7 +108,14 @@ export const Road = ({
         ...position,
         cursor: isEditMode ? 'move' : 'default',
       }}
-      onMouseDown={onMouseDown}
+      onAuxClick={(e) => {
+        // Middle mouse button click (button 1) - open edit modal
+        if (e.button === 1 && isEditMode) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -121,6 +128,7 @@ export const Road = ({
           ${getEditModeBorderColor()}
           ${getDraggingBorderColor()}
         `}
+        onMouseDown={onMouseDown}
       >
         {/* Road image */}
         <img 
