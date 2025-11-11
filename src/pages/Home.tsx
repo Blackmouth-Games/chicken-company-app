@@ -1041,7 +1041,7 @@ const Home = () => {
                   if (isEditMode) {
                     handleBuildingClick('market');
                   } else {
-                    setMarketOpen(true);
+                    setHouseOpen(true);
                   }
                 }}
                 className={`w-full h-full flex items-center justify-center transition-all relative ${
@@ -1406,9 +1406,7 @@ const Home = () => {
         onPurchaseComplete={handlePurchaseComplete}
       />
 
-      <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} userId={userId || undefined} />
-      <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} userId={userId || undefined} />
-      <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} />
+      <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} userId={userId || undefined} />
       <CorralDialog 
         open={corralDialogOpen} 
         onOpenChange={setCorralDialogOpen} 
