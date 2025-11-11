@@ -32,8 +32,6 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const upgradePrice = nextLevelPrice?.price_ton || 0;
   const nextLevelCapacity = nextLevelPrice?.capacity || 0;
 
-  if (!corral) return null;
-
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
     if (!corral?.selected_skin) return null;
@@ -42,13 +40,16 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
 
   // Get building display (image or emoji)
   const buildingDisplay = useMemo(() => {
+    if (!corral) return null;
     return getBuildingDisplay(
       'corral',
       corral.level,
       corral.selected_skin || null,
       skinInfo || undefined
     );
-  }, [corral.level, corral.selected_skin, skinInfo]);
+  }, [corral, skinInfo]);
+
+  if (!corral) return null;
 
   const efficiency = corral.current_chickens > 0 
     ? Math.min(100, Math.round((corral.current_chickens / corral.capacity) * 100))
@@ -95,7 +96,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="w-16 h-16 object-contain"
                 />
               ) : (
-                <div className="text-6xl">{buildingDisplay?.emoji || '🏚️'}</div>
+                <div className="text-6xl">{buildingDisplay?.emoji || '🏠'}</div>
               )}
               <div className="flex-1">
                 <h3 className="font-bold text-lg">Corral</h3>
