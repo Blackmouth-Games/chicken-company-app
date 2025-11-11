@@ -1201,20 +1201,20 @@ const Home = () => {
                   key={belt.id}
                   belt={belt}
                   idx={idx}
-                  isEditMode={isEditMode && isManualBelt}
+                  isEditMode={isEditMode}
                   isDragging={isBeltDragging}
                   isSelected={selectedObject?.type === 'belt' && selectedObject?.id === belt.id}
                   tempPosition={beltTempPosition}
                   dragOffset={isBeltDragging ? dragOffset : null}
                   beltDragOffset={isBeltDragging ? beltDragOffset : null}
                   onMouseDown={(e) => isEditMode && isManualBelt && handleBeltMouseDown(e, belt.id)}
-                  onClick={() => isEditMode && isManualBelt && handleBeltClick(belt.id)}
+                  onClick={() => isEditMode && handleBeltClick(belt.id)}
                   onRemove={() => isManualBelt && removeBelt(belt.id)}
                   onRotate={() => isManualBelt && rotateSelected()}
                   onUpdateColumn={(value) => isManualBelt && updateBelt(belt.id, { gridColumn: value })}
                   onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
-                  onToggleOutput={() => isManualBelt && toggleBeltOutput(belt.id, undefined)}
-                  onToggleDestiny={() => isManualBelt && toggleBeltDestiny(belt.id)}
+                  onToggleOutput={() => toggleBeltOutput(belt.id, undefined)}
+                  onToggleDestiny={() => toggleBeltDestiny(belt.id)}
                 />
               );
             })}

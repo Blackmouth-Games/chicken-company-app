@@ -197,23 +197,27 @@ export const ConveyorBelt = ({
       {/* Action buttons outside the belt - positioned to the right */}
       {isEditMode && isSelected && !isDragging && (
         <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            size="sm"
-            variant="destructive"
-            className="h-8 px-3"
-            title="Eliminar cinta"
-          >
-            <X className="h-4 w-4 mr-1" />
-            Eliminar
-          </Button>
+          {onRemove && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onRemove();
+              }}
+              size="sm"
+              variant="destructive"
+              className="h-8 px-3"
+              title="Eliminar cinta"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Eliminar
+            </Button>
+          )}
           {onRotate && (
             <Button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onRotate();
               }}
               size="sm"
@@ -229,6 +233,7 @@ export const ConveyorBelt = ({
             <Button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onToggleOutput();
               }}
               size="sm"
@@ -243,6 +248,7 @@ export const ConveyorBelt = ({
             <Button
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onToggleDestiny();
               }}
               size="sm"
