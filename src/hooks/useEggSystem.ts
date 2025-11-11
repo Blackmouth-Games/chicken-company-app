@@ -185,8 +185,15 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     });
   }, [belts]);
 
-  // Spawn eggs from corrals periodically
+  // Spawn eggs from corrals periodically with async delays
   useEffect(() => {
+    // Initialize random initial delays for each corral to stagger spawns
+    const corralInitialDelays = new Map<string, number>();
+    corrals.forEach((corral, index) => {
+      // Each corral gets a random initial delay to make spawning async
+      corralInitialDelays.set(corral.id, index * 150 + Math.random() * 400);
+    });
+
     const interval = setInterval(() => {
       const now = Date.now();
       corrals.forEach(corral => {
@@ -194,13 +201,26 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         const slotPosition = corral.position_index;
         if (slotPosition === undefined || slotPosition === null) return;
         
-        const lastSpawn = lastSpawnTimeRef.current.get(corral.id) || 0;
-        if (now - lastSpawn >= EGG_SPAWN_INTERVAL) {
-          spawnEgg(corral.id, slotPosition);
+        const lastSpawn = lastSpawnTimeRef.current.get(corral.id) || -Infinity;
+        const initialDelay = corralInitialDelays.get(corral.id) || 0;
+        
+        // For first spawn, wait for initial delay. For subsequent spawns, use normal interval
+        const timeSinceLastSpawn = now - lastSpawn;
+        const shouldSpawn = lastSpawn === -Infinity 
+          ? now >= initialDelay 
+          : timeSinceLastSpawn >= EGG_SPAWN_INTERVAL;
+        
+        if (shouldSpawn) {
+          // Add a small random delay (0-200ms) for each individual spawn to make it more async
+          const randomDelay = Math.random() * 200;
+          setTimeout(() => {
+            spawnEgg(corral.id, slotPosition);
+          }, randomDelay);
+          
           lastSpawnTimeRef.current.set(corral.id, now);
         }
       });
-    }, 1000); // Check every second
+    }, 100); // Check more frequently for smoother async spawning
     
     return () => clearInterval(interval);
   }, [corrals, spawnEgg]);

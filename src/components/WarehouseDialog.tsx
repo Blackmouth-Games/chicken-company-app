@@ -6,7 +6,7 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Palette, ExternalLink } from "lucide-react";
+import { Palette, Edit } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 import { useMemo } from "react";
@@ -69,14 +69,12 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Warehouse Card with Edit Button */}
                 <div className="relative border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <button
                     onClick={() => setShowSkinSelector(true)}
-                    className="absolute top-2 right-2 h-8 w-8 hover:bg-blue-200"
+                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors"
                   >
-                    <ExternalLink className="h-4 w-4 text-blue-700" />
-                  </Button>
+                    <Edit className="h-4 w-4" />
+                  </button>
                   
                   <div className="flex flex-col items-center gap-3">
                     {buildingDisplay?.type === 'image' ? (

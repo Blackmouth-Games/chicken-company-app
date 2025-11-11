@@ -6,7 +6,7 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Palette, ExternalLink } from "lucide-react";
+import { Palette, Edit } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 import { useMemo } from "react";
@@ -69,14 +69,12 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Market Card with Edit Button */}
                 <div className="relative border-2 border-green-300 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-6">
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <button
                     onClick={() => setShowSkinSelector(true)}
-                    className="absolute top-2 right-2 h-8 w-8 hover:bg-green-200"
+                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors"
                   >
-                    <ExternalLink className="h-4 w-4 text-green-700" />
-                  </Button>
+                    <Edit className="h-4 w-4" />
+                  </button>
                   
                   <div className="flex flex-col items-center gap-3">
                     {buildingDisplay?.type === 'image' ? (

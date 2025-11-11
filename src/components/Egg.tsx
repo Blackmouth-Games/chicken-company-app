@@ -64,7 +64,7 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, onReachDesti
         ...getPosition(),
       }}
     >
-      <div className="text-2xl drop-shadow-lg animate-pulse">🥚</div>
+      <div className="text-lg animate-pulse">🥚</div>
     </div>
   ) : null;
 };
