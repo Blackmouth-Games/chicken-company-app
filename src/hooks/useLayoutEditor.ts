@@ -44,7 +44,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   house: { gridColumn: '9 / 22', gridRow: '1 / 9' },
   warehouse: { gridColumn: '1 / 10', gridRow: '9 / 17' },
   market: { gridColumn: '22 / 31', gridRow: '9 / 17' },
-  boxes: { gridColumn: '10 / 13', gridRow: '12 / 17' },
+  boxes: { gridColumn: '10 / 14', gridRow: '12 / 17' },
   leftCorrals: { gridColumn: '1 / 14', gap: '20px', startRow: 20, rowSpan: 10 },
   rightCorrals: { gridColumn: '17 / 30', gap: '20px', startRow: 20, rowSpan: 10 },
   belts: [
@@ -62,6 +62,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
     { id: 'belt-1762856923052', gridColumn: '4 / 5', gridRow: '17 / 18', direction: 'north', type: 'curve-se' },
     { id: 'belt-1762856940335', gridColumn: '15 / 16', gridRow: '18 / 19', direction: 'west', type: 'curve-se' },
     { id: 'belt-1762856948463', gridColumn: '4 / 5', gridRow: '18 / 19', direction: 'north', type: 'curve-se' },
+    { id: 'belt-1762876749609', gridColumn: '4 / 5', gridRow: '16 / 17', direction: 'north', type: 'straight', isTransport: false, isOutput: true, isDestiny: false },
   ],
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
 };
