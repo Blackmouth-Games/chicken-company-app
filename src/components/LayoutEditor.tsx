@@ -42,6 +42,10 @@ const LayoutEditor = () => {
     window.dispatchEvent(new CustomEvent('addBelt'));
   };
 
+  const addRoad = () => {
+    window.dispatchEvent(new CustomEvent('addRoad'));
+  };
+
   const toggleHideBuildings = () => {
     const newState = !hideBuildings;
     setHideBuildings(newState);
@@ -285,6 +289,17 @@ const LayoutEditor = () => {
           >
             <Plus className="h-4 w-4" />
             {t('layoutEditor.addBelt')}
+          </Button>
+
+          <Button
+            onClick={addRoad}
+            size="sm"
+            variant="outline"
+            className="gap-2 w-full justify-start"
+            title="Agregar carretera"
+          >
+            <Plus className="h-4 w-4" />
+            Agregar carretera
           </Button>
 
           {/* Paint Mode */}

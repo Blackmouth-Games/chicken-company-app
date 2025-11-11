@@ -24,9 +24,18 @@ interface BeltConfig {
   corralId?: string; // Deprecated: use slotPosition instead. Kept for backwards compatibility
 }
 
+interface RoadConfig {
+  id: string;
+  gridColumn: string;
+  gridRow: string;
+  direction: 'north' | 'south' | 'east' | 'west';
+  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+  rotation?: number; // 0, 90, 180, 270
+}
+
 type SelectableObject = {
-  type: 'building' | 'belt';
-  id: string; // belt id or building name (warehouse, market, house, boxes)
+  type: 'building' | 'belt' | 'road';
+  id: string; // belt id, road id, or building name (warehouse, market, house, boxes)
 };
 
 export interface LayoutConfig {
@@ -37,6 +46,7 @@ export interface LayoutConfig {
   leftCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
   rightCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
   belts: BeltConfig[];
+  roads: RoadConfig[];
   grid: { gap: string; maxWidth: string; totalRows?: number };
 }
 
@@ -64,6 +74,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
     { id: 'belt-1762856948463', gridColumn: '4 / 5', gridRow: '18 / 19', direction: 'north', type: 'curve-se' },
     { id: 'belt-1762876749609', gridColumn: '4 / 5', gridRow: '16 / 17', direction: 'north', type: 'straight', isTransport: false, isOutput: true, isDestiny: false },
   ],
+  roads: [],
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
 };
 
@@ -120,6 +131,15 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
                 type: belt.type || 'straight',
               }))
             : DEFAULT_LAYOUT.belts,
+          roads: Array.isArray(parsed.roads) 
+            ? parsed.roads.map((road: any) => ({
+                id: road.id,
+                gridColumn: road.gridColumn,
+                gridRow: road.gridRow,
+                direction: road.direction || 'east',
+                type: road.type || 'straight',
+              }))
+            : (parsed.roads || DEFAULT_LAYOUT.roads),
           grid: {
             gap: parsed.grid?.gap || DEFAULT_LAYOUT.grid.gap,
             maxWidth: parsed.grid?.maxWidth || DEFAULT_LAYOUT.grid.maxWidth,
@@ -150,6 +170,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   const [beltTempPosition, setBeltTempPosition] = useState<{ col: number; row: number } | null>(null);
   const [lastBeltGridPos, setLastBeltGridPos] = useState<{ col: number; row: number } | null>(null);
   const [beltDragOffset, setBeltDragOffset] = useState<{ x: number; y: number } | null>(null);
+  const [draggedRoad, setDraggedRoad] = useState<string | null>(null);
+  const [roadTempPosition, setRoadTempPosition] = useState<{ col: number; row: number } | null>(null);
+  const [lastRoadGridPos, setLastRoadGridPos] = useState<{ col: number; row: number } | null>(null);
+  const [roadDragOffset, setRoadDragOffset] = useState<{ x: number; y: number } | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectableObject | null>(null);
 
   const getTotalRows = (): number => {
@@ -255,6 +279,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     setSelectedObject({ type: 'belt', id: beltId });
   };
 
+  // Handle road click for selection
+  const handleRoadClick = (roadId: string) => {
+    if (!isEditMode) return;
+    setSelectedObject({ type: 'road', id: roadId });
+  };
+
   // Handle drag start
   const handleBuildingMouseDown = (e: MouseEvent, buildingName: string) => {
     if (!isEditMode) return;
@@ -308,6 +338,46 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const gridPos = pixelToGrid(e.clientX, e.clientY);
     setBeltTempPosition(gridPos);
     setLastBeltGridPos(gridPos);
+  };
+
+  // Handle road drag start
+  const handleRoadMouseDown = (e: MouseEvent, roadId: string) => {
+    if (!isEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedObject({ type: 'road', id: roadId });
+    setDraggedRoad(roadId);
+    setIsDragging(true);
+    
+    const road = layoutConfig.roads.find(r => r.id === roadId);
+    if (!road || !gridRef.current) return;
+    
+    const gridRect = gridRef.current.getBoundingClientRect();
+    const roadCol = parseGridNotation(road.gridColumn);
+    const roadRow = parseGridNotation(road.gridRow);
+    
+    // Calculate cell dimensions using the same logic as pixelToGrid for consistency
+    const totalRows = getTotalRows();
+    const gapPx = parseInt((layoutConfig.grid.gap || '0').toString());
+    const totalGapWidth = gapPx * (TOTAL_COLUMNS - 1);
+    const totalGapHeight = gapPx * (totalRows - 1);
+    const cellWidth = (gridRect.width - totalGapWidth) / TOTAL_COLUMNS;
+    const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
+    
+    // Roads are 2x2, so calculate center from the first cell
+    const roadCenterX = gridRect.left + (roadCol.start - 1) * (cellWidth + gapPx) + cellWidth;
+    const roadCenterY = gridRect.top + (roadRow.start - 1) * (cellHeight + gapPx) + cellHeight;
+    
+    // Calculate offset from mouse click position to road center
+    const offsetX = e.clientX - roadCenterX;
+    const offsetY = e.clientY - roadCenterY;
+    
+    setRoadDragOffset({ x: offsetX, y: offsetY });
+    setDragOffset({ x: e.clientX, y: e.clientY });
+    
+    const gridPos = pixelToGrid(e.clientX, e.clientY);
+    setRoadTempPosition(gridPos);
+    setLastRoadGridPos(gridPos);
   };
 
   // Handle resize start
@@ -469,14 +539,59 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         }
       }
       
+      if (isDragging && draggedRoad) {
+        const road = layoutConfig.roads.find(r => r.id === draggedRoad);
+        if (road && gridRef.current && e && roadDragOffset && dragOffset) {
+          // Calculate the visual center position of the road (where it appears on screen)
+          const roadCenterX = dragOffset.x - roadDragOffset.x;
+          const roadCenterY = dragOffset.y - roadDragOffset.y;
+          
+          // Calculate final position from the visual center of the road, not the mouse position
+          const finalGridPos = pixelToGrid(roadCenterX, roadCenterY);
+          
+          const colSpan = parseGridNotation(road.gridColumn);
+          const rowSpan = parseGridNotation(road.gridRow);
+          
+          const width = colSpan.end - colSpan.start; // Should be 2 for roads
+          const height = rowSpan.end - rowSpan.start; // Should be 2 for roads
+          
+          const newCol = Math.max(1, Math.min(TOTAL_COLUMNS - width + 1, finalGridPos.col));
+          const newRow = Math.max(1, Math.min(getTotalRows() - height + 1, finalGridPos.row));
+          
+          // Only update if position actually changed
+          if (newCol !== colSpan.start || newRow !== rowSpan.start) {
+            updateRoad(draggedRoad, {
+              gridColumn: createGridNotation(newCol, newCol + width),
+              gridRow: createGridNotation(newRow, newRow + height),
+            });
+          }
+        } else if (road && roadTempPosition) {
+          // Fallback to roadTempPosition if no event
+          const colSpan = parseGridNotation(road.gridColumn);
+          const rowSpan = parseGridNotation(road.gridRow);
+          
+          const width = colSpan.end - colSpan.start;
+          const height = rowSpan.end - rowSpan.start;
+          
+          updateRoad(draggedRoad, {
+            gridColumn: createGridNotation(roadTempPosition.col, roadTempPosition.col + width),
+            gridRow: createGridNotation(roadTempPosition.row, roadTempPosition.row + height),
+          });
+        }
+      }
+
       setIsDragging(false);
       setDraggedBuilding(null);
       setDraggedBelt(null);
+      setDraggedRoad(null);
       setResizing(null);
       setTempPosition(null);
       setBeltTempPosition(null);
+      setRoadTempPosition(null);
       setLastBeltGridPos(null);
+      setLastRoadGridPos(null);
       setBeltDragOffset(null);
+      setRoadDragOffset(null);
     };
 
     if (isDragging || resizing) {
@@ -489,7 +604,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         window.removeEventListener('mouseup', handleMouseUpEvent);
       };
     }
-  }, [isDragging, draggedBuilding, draggedBelt, resizing, tempPosition, beltTempPosition, layoutConfig]);
+  }, [isDragging, draggedBuilding, draggedBelt, draggedRoad, resizing, tempPosition, beltTempPosition, roadTempPosition, layoutConfig]);
 
   // Belt management - Add belt with default position
   const addBelt = () => {
@@ -535,6 +650,55 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       const newConfig = {
         ...prev,
         belts: prev.belts.map(b => b.id === beltId ? { ...b, ...updates } : b),
+      };
+      saveLayoutToStorage(newConfig);
+      return newConfig;
+    });
+  };
+
+  // Road management - Add road with default position (2x2)
+  const addRoad = () => {
+    setLayoutConfig(prev => {
+      const newRoad: RoadConfig = {
+        id: `road-${Date.now()}`,
+        gridColumn: '13 / 15',
+        gridRow: '10 / 12',
+        direction: 'east',
+        type: 'straight',
+      };
+      const newConfig = {
+        ...prev,
+        roads: [...prev.roads, newRoad],
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: t('layoutEditor.roadAdded'),
+        description: t('layoutEditor.roadAddedDesc'),
+      });
+      return newConfig;
+    });
+  };
+
+  const removeRoad = (roadId: string) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        roads: prev.roads.filter(r => r.id !== roadId),
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: t('layoutEditor.roadRemoved'),
+        description: t('layoutEditor.roadRemovedDesc'),
+      });
+      return newConfig;
+    });
+  };
+
+  const updateRoad = (roadId: string, updates: Partial<RoadConfig>) => {
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        roads: prev.roads.map(r => r.id === roadId ? { ...r, ...updates } : r),
       };
       saveLayoutToStorage(newConfig);
       return newConfig;
@@ -681,6 +845,39 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
+  // Add road at position - support all directions (2x2)
+  const addRoadAtPosition = (
+    col: number, 
+    row: number, 
+    direction: 'north' | 'south' | 'east' | 'west',
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'
+  ) => {
+    const newRoad: RoadConfig = {
+      id: `road-${Date.now()}`,
+      gridColumn: `${col} / ${col + 2}`, // Roads are 2x2
+      gridRow: `${row} / ${row + 2}`,
+      direction,
+      type,
+    };
+    
+    setLayoutConfig(prev => {
+      const newConfig = {
+        ...prev,
+        roads: [...prev.roads, newRoad],
+      };
+      saveLayoutToStorage(newConfig);
+      toast({
+        title: t('layoutEditor.roadAdded'),
+        description: t('layoutEditor.roadAddedAt', { 
+          direction: t(`layoutEditor.direction_${direction}`),
+          col: col.toString(), 
+          row: row.toString() 
+        }),
+      });
+      return newConfig;
+    });
+  };
+
   // Delete selected object
   const deleteSelected = () => {
     if (!selectedObject) return;
@@ -726,6 +923,30 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           return newConfig;
         });
       }
+    } else if (selectedObject.type === 'road') {
+      const road = layoutConfig.roads.find(r => r.id === selectedObject.id);
+      if (road) {
+        const parsed = parseGridNotation(road.gridColumn);
+        const newRoad: RoadConfig = {
+          ...road,
+          id: `road-${Date.now()}`,
+          gridColumn: createGridNotation(parsed.start + 3, parsed.end + 3), // Offset by 3 columns for 2x2 road
+        };
+        
+        setLayoutConfig(prev => {
+          const newConfig = {
+            ...prev,
+            roads: [...prev.roads, newRoad],
+          };
+          saveLayoutToStorage(newConfig);
+          setSelectedObject({ type: 'road', id: newRoad.id });
+          toast({
+            title: t('layoutEditor.duplicated'),
+            description: t('layoutEditor.duplicatedDesc'),
+          });
+          return newConfig;
+        });
+      }
     }
   };
 
@@ -763,20 +984,26 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       addBelt();
     };
 
+    const handleAddRoad = () => {
+      addRoad();
+    };
+
     const handleLayoutUpdate = (event: CustomEvent<LayoutConfig>) => {
       setLayoutConfig(event.detail);
     };
 
     window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
     window.addEventListener('addBelt', handleAddBelt as EventListener);
+    window.addEventListener('addRoad', handleAddRoad as EventListener);
     window.addEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
 
     return () => {
       window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
       window.removeEventListener('addBelt', handleAddBelt as EventListener);
+      window.removeEventListener('addRoad', handleAddRoad as EventListener);
       window.removeEventListener('layoutConfigUpdate', handleLayoutUpdate as EventListener);
     };
-  }, []);
+  }, [addBelt, addRoad]);
 
   return {
     // State
@@ -785,10 +1012,13 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     isDragging,
     draggedBuilding,
     draggedBelt,
+    draggedRoad,
     resizing,
     tempPosition,
     beltTempPosition,
+    roadTempPosition,
     beltDragOffset,
+    roadDragOffset,
     dragOffset,
     hasCollision,
     gridRef,
@@ -800,6 +1030,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     handleBuildingClick,
     handleBeltMouseDown,
     handleBeltClick,
+    handleRoadMouseDown,
+    handleRoadClick,
     handleResizeStart,
     updateBuildingLayout,
     updateCorralColumn,
@@ -811,6 +1043,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     toggleBeltTransport,
     setLayoutConfig,
     addBeltAtPosition,
+    addRoad,
+    removeRoad,
+    updateRoad,
+    addRoadAtPosition,
     deleteSelected,
     duplicateSelected,
     rotateSelected,

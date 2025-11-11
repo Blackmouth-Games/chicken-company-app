@@ -1,6 +1,6 @@
 import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
-import beltImage from "@/assets/belt_A.png";
+import beltImage from "@/assets/Belt_A.jpg";
 
 interface ConveyorBeltProps {
   belt: {

@@ -19,6 +19,7 @@ import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
 import { CorralDialog } from "@/components/CorralDialog";
 import { ConveyorBelt } from "@/components/ConveyorBelt";
+import { Road } from "@/components/Road";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
 import LayoutEditor from "@/components/LayoutEditor";
 import { Egg } from "@/components/Egg";
@@ -55,10 +56,13 @@ const Home = () => {
     isDragging,
     draggedBuilding,
     draggedBelt,
+    draggedRoad,
     resizing,
     tempPosition,
     beltTempPosition,
+    roadTempPosition,
     beltDragOffset,
+    roadDragOffset,
     dragOffset,
     hasCollision,
     gridRef,
@@ -68,12 +72,16 @@ const Home = () => {
     handleBuildingClick,
     handleBeltMouseDown,
     handleBeltClick,
+    handleRoadMouseDown,
+    handleRoadClick,
     handleResizeStart,
     updateBuildingLayout,
     updateCorralColumn,
     addBelt,
     removeBelt,
     updateBelt,
+    removeRoad,
+    updateRoad,
     setLayoutConfig,
     addBeltAtPosition,
     deleteSelected,
@@ -790,6 +798,13 @@ const Home = () => {
                   return beltCol.start === col && beltRow.start === row;
                 });
                 
+                // Check if there's a road at this position (roads are 2x2)
+                const existingRoad = layoutConfig.roads?.find(road => {
+                  const roadCol = parseGridNotation(road.gridColumn);
+                  const roadRow = parseGridNotation(road.gridRow);
+                  return roadCol.start <= col && roadCol.end > col && roadRow.start <= row && roadRow.end > row;
+                });
+                
                 // Check if there's a building at this position
                 const hasBuilding = 
                   (parseGridNotation(layoutConfig.house.gridColumn).start <= col && parseGridNotation(layoutConfig.house.gridColumn).end > col &&
@@ -801,7 +816,8 @@ const Home = () => {
                   (parseGridNotation(layoutConfig.boxes.gridColumn).start <= col && parseGridNotation(layoutConfig.boxes.gridColumn).end > col &&
                    parseGridNotation(layoutConfig.boxes.gridRow).start <= row && parseGridNotation(layoutConfig.boxes.gridRow).end > row);
                 
-                if (!existingBelt && !hasBuilding) {
+                // Don't add belt if there's already a road or belt here
+                if (!existingRoad && !existingBelt && !hasBuilding) {
                   // Use paint options for direction and type
                   addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type);
                 } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
@@ -1194,6 +1210,31 @@ const Home = () => {
               )}
             </div>
             )}
+
+            {/* ROADS - Render before belts so they appear behind */}
+            {layoutConfig.roads?.map((road, idx) => {
+              const isRoadDragging = draggedRoad === road.id;
+              
+              return (
+                <Road
+                  key={road.id}
+                  road={road}
+                  idx={idx}
+                  isEditMode={isEditMode}
+                  isDragging={isRoadDragging}
+                  isSelected={selectedObject?.type === 'road' && selectedObject?.id === road.id}
+                  tempPosition={roadTempPosition}
+                  dragOffset={isRoadDragging ? dragOffset : null}
+                  roadDragOffset={isRoadDragging ? roadDragOffset : null}
+                  onMouseDown={(e) => isEditMode && handleRoadMouseDown(e, road.id)}
+                  onClick={() => handleRoadClick(road.id)}
+                  onRemove={isEditMode ? () => removeRoad(road.id) : undefined}
+                  onRotate={isEditMode ? () => rotateSelected() : undefined}
+                  onUpdateColumn={(value) => updateRoad(road.id, { gridColumn: value })}
+                  onUpdateRow={(value) => updateRoad(road.id, { gridRow: value })}
+                />
+              );
+            })}
 
             {/* CONVEYOR BELTS - Auto-generated corral belts + manual belts - Render first so they appear behind buildings */}
             {allBelts.map((belt, idx) => {
