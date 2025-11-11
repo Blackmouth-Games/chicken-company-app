@@ -397,6 +397,7 @@ const Home = () => {
             gridRow: createGridNotation(beltRow, beltRow + 1),
             direction: 'north' as const,
             type: 'straight' as const,
+            isTransport: true, // Center line belts are transport
           });
         }
       }
@@ -422,12 +423,15 @@ const Home = () => {
         });
         
         if (!existingBelt) {
+          const slotPosition = i * 2; // Left slots: 0, 2, 4, 6, ...
           autoBelts.push({
             id: `belt-auto-left-${i}`,
             gridColumn: createGridNotation(beltCol, beltCol + 1),
             gridRow: createGridNotation(beltRow, beltRow + 1),
             direction: 'east' as const,
             type: 'straight' as const,
+            isOutput: true, // Auto-generated belts from slots are output
+            slotPosition: slotPosition, // Associate with slot position
           });
         }
       }
@@ -455,12 +459,15 @@ const Home = () => {
         });
         
         if (!existingBelt) {
+          const slotPosition = i * 2 + 1; // Right slots: 1, 3, 5, 7, ...
           autoBelts.push({
             id: `belt-auto-right-${i}`,
             gridColumn: createGridNotation(beltCol, beltCol + 1),
             gridRow: createGridNotation(beltRow, beltRow + 1),
             direction: 'west' as const,
             type: 'straight' as const,
+            isOutput: true, // Auto-generated belts from slots are output
+            slotPosition: slotPosition, // Associate with slot position
           });
         }
       }
@@ -499,6 +506,7 @@ const Home = () => {
             gridRow: createGridNotation(warehouseCenterRow, warehouseCenterRow + 1),
             direction: 'west' as const, // Points towards warehouse (left)
             type: 'straight' as const,
+            isTransport: true, // Connection belts are transport
           });
         }
       }
@@ -528,6 +536,7 @@ const Home = () => {
             gridRow: createGridNotation(marketCenterRow, marketCenterRow + 1),
             direction: 'east' as const, // Points towards market (right)
             type: 'straight' as const,
+            isTransport: true, // Connection belts are transport
           });
         }
       }
@@ -714,13 +723,13 @@ const Home = () => {
               setHoveredCell(null);
             }}
             onClick={(e) => {
+              // Don't process if click is on action buttons modal or other UI elements
+              const target = e.target as HTMLElement;
+              if (target.closest('.absolute.left-full') || target.closest('[data-belt]') || target.closest('[data-building]')) {
+                return;
+              }
+              
               if (paintMode && isEditMode && !isDragging) {
-                // Don't process if click is on a belt or building
-                const target = e.target as HTMLElement;
-                if (target.closest('[data-belt]') || target.closest('[data-building]')) {
-                  return;
-                }
-                
                 e.stopPropagation();
                 // Use gridRef to get the correct container position
                 const gridContainer = gridRef.current;
@@ -799,6 +808,10 @@ const Home = () => {
                   // Remove belt if clicking on an existing manual belt
                   removeBelt(existingBelt.id);
                 }
+              } else if (isEditMode && !isDragging && selectedObject) {
+                // Deselect when clicking on empty cell (not in paint mode)
+                e.stopPropagation();
+                setSelectedObject(null);
               }
             }}
           >
@@ -1194,7 +1207,12 @@ const Home = () => {
                   onRotate={isManualBelt ? () => rotateSelected() : undefined}
                   onUpdateColumn={(value) => isManualBelt && updateBelt(belt.id, { gridColumn: value })}
                   onUpdateRow={(value) => isManualBelt && updateBelt(belt.id, { gridRow: value })}
-                  onToggleOutput={() => toggleBeltOutput(belt.id, undefined)}
+                  onToggleOutput={() => {
+                    // When toggling output manually, we need to find the slot position
+                    // For now, we'll let the user specify it, but for auto-generated belts it's already set
+                    // Manual belts won't have a slotPosition unless explicitly set
+                    toggleBeltOutput(belt.id, belt.slotPosition);
+                  }}
                   onToggleDestiny={() => toggleBeltDestiny(belt.id)}
                   onToggleTransport={() => toggleBeltTransport(belt.id)}
                 />

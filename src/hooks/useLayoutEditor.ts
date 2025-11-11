@@ -20,7 +20,8 @@ interface BeltConfig {
   isOutput?: boolean; // Marks this belt as output for a corral
   isDestiny?: boolean; // Marks this belt as final destination where eggs are removed
   isTransport?: boolean; // Marks this belt as transport belt
-  corralId?: string; // ID of the corral this output belt belongs to
+  slotPosition?: number; // Position index of the slot this output belt belongs to (0, 1, 2, ...)
+  corralId?: string; // Deprecated: use slotPosition instead. Kept for backwards compatibility
 }
 
 type SelectableObject = {
@@ -483,6 +484,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         gridRow: '10 / 11',
         direction: 'east',
         type: 'straight',
+        isTransport: true, // Default: all manual belts are transport
       };
       const newConfig = {
         ...prev,
@@ -523,7 +525,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
-  const toggleBeltOutput = (beltId: string, corralId?: string) => {
+  const toggleBeltOutput = (beltId: string, slotPosition?: number) => {
     setLayoutConfig(prev => {
       const belt = prev.belts.find(b => b.id === beltId);
       if (!belt) return prev;
@@ -533,17 +535,19 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         belts: prev.belts.map(b => {
           if (b.id === beltId) {
             // Toggle output, clear destiny and transport if setting output
+            const isSettingOutput = !b.isOutput;
             return {
               ...b,
-              isOutput: !b.isOutput,
-              isDestiny: b.isOutput ? b.isDestiny : false, // Clear destiny if setting output
-              isTransport: b.isOutput ? b.isTransport : false, // Clear transport if setting output
-              corralId: !b.isOutput ? corralId : undefined,
+              isOutput: isSettingOutput,
+              isDestiny: isSettingOutput ? false : b.isDestiny, // Clear destiny if setting output
+              isTransport: isSettingOutput ? false : b.isTransport, // Clear transport if setting output
+              slotPosition: isSettingOutput ? slotPosition : undefined,
+              corralId: isSettingOutput ? undefined : b.corralId, // Clear old corralId when setting
             };
           }
-          // If this belt was output for the same corral, clear it
-          if (b.corralId === corralId && b.id !== beltId) {
-            return { ...b, isOutput: false, corralId: undefined };
+          // If this belt was output for the same slot, clear it (only one output per slot)
+          if (b.slotPosition === slotPosition && b.id !== beltId && slotPosition !== undefined) {
+            return { ...b, isOutput: false, slotPosition: undefined, corralId: undefined };
           }
           return b;
         }),
@@ -563,12 +567,14 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         belts: prev.belts.map(b => {
           if (b.id === beltId) {
             // Toggle destiny, clear output and transport if setting destiny
+            const isSettingDestiny = !b.isDestiny;
             return {
               ...b,
-              isDestiny: !b.isDestiny,
-              isOutput: b.isDestiny ? b.isOutput : false, // Clear output if setting destiny
-              isTransport: b.isDestiny ? b.isTransport : false, // Clear transport if setting destiny
-              corralId: b.isDestiny ? b.corralId : undefined,
+              isDestiny: isSettingDestiny,
+              isOutput: isSettingDestiny ? false : b.isOutput, // Clear output if setting destiny
+              isTransport: isSettingDestiny ? false : b.isTransport, // Clear transport if setting destiny
+              slotPosition: isSettingDestiny ? undefined : b.slotPosition, // Clear slotPosition if setting destiny
+              corralId: isSettingDestiny ? undefined : b.corralId,
             };
           }
           return b;
@@ -589,12 +595,14 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         belts: prev.belts.map(b => {
           if (b.id === beltId) {
             // Toggle transport, clear output and destiny if setting transport
+            const isSettingTransport = !b.isTransport;
             return {
               ...b,
-              isTransport: !b.isTransport,
-              isOutput: b.isTransport ? b.isOutput : false, // Clear output if setting transport
-              isDestiny: b.isTransport ? b.isDestiny : false, // Clear destiny if setting transport
-              corralId: b.isTransport ? b.corralId : undefined,
+              isTransport: isSettingTransport,
+              isOutput: isSettingTransport ? false : b.isOutput, // Clear output if setting transport
+              isDestiny: isSettingTransport ? false : b.isDestiny, // Clear destiny if setting transport
+              slotPosition: isSettingTransport ? undefined : b.slotPosition, // Clear slotPosition if setting transport
+              corralId: isSettingTransport ? undefined : b.corralId,
             };
           }
           return b;
@@ -636,6 +644,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       gridRow: `${row} / ${row + 1}`,
       direction,
       type,
+      isTransport: true, // Default: all manual belts are transport
     };
     
     setLayoutConfig(prev => {

@@ -19,7 +19,8 @@ interface Belt {
   direction: 'north' | 'south' | 'east' | 'west';
   isOutput?: boolean;
   isDestiny?: boolean;
-  corralId?: string;
+  slotPosition?: number; // Position index of the slot this output belongs to
+  corralId?: string; // Deprecated: use slotPosition instead
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
@@ -33,9 +34,9 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   // Get corrals from buildings - handle undefined/null
   const corrals = (buildings || []).filter(b => b && b.building_type === 'corral');
 
-  // Find output belt for a corral
-  const findOutputBelt = useCallback((corralId: string): Belt | null => {
-    return belts.find(b => b.isOutput && b.corralId === corralId) || null;
+  // Find output belt for a corral by slot position
+  const findOutputBelt = useCallback((slotPosition: number): Belt | null => {
+    return belts.find(b => b.isOutput && b.slotPosition === slotPosition) || null;
   }, [belts]);
 
   // Find next belt in the path based on direction
@@ -104,8 +105,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   }, [findNextBelt]);
 
   // Spawn egg from a corral
-  const spawnEgg = useCallback((corralId: string) => {
-    const outputBelt = findOutputBelt(corralId);
+  const spawnEgg = useCallback((corralId: string, slotPosition: number) => {
+    const outputBelt = findOutputBelt(slotPosition);
     if (!outputBelt) return;
     
     const path = calculatePath(outputBelt, belts);
@@ -189,9 +190,13 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const interval = setInterval(() => {
       const now = Date.now();
       corrals.forEach(corral => {
+        // Use position_index as slotPosition
+        const slotPosition = corral.position_index;
+        if (slotPosition === undefined || slotPosition === null) return;
+        
         const lastSpawn = lastSpawnTimeRef.current.get(corral.id) || 0;
         if (now - lastSpawn >= EGG_SPAWN_INTERVAL) {
-          spawnEgg(corral.id);
+          spawnEgg(corral.id, slotPosition);
           lastSpawnTimeRef.current.set(corral.id, now);
         }
       });
