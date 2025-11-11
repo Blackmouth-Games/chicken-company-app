@@ -110,6 +110,7 @@ export const ConveyorBelt = ({
   const getDragStyle = () => {
     if (isDragging && dragOffset && beltDragOffset) {
       // Calculate absolute position based on mouse position minus the offset
+      // This ensures the belt follows the mouse smoothly while maintaining the offset
       const left = dragOffset.x - beltDragOffset.x;
       const top = dragOffset.y - beltDragOffset.y;
       return {

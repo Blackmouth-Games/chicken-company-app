@@ -850,6 +850,18 @@ const Home = () => {
               })()
             )}
 
+            {/* Belt placement preview */}
+            {isEditMode && isDragging && draggedBelt && beltTempPosition && (
+              <div
+                key="preview-belt"
+                style={{
+                  gridColumn: `${beltTempPosition.col} / ${beltTempPosition.col + 1}`,
+                  gridRow: `${beltTempPosition.row} / ${beltTempPosition.row + 1}`,
+                }}
+                className="pointer-events-none border-2 border-dashed border-cyan-400/80 bg-cyan-200/20 rounded-md z-30"
+              />
+            )}
+
             {/* HOUSE - Top Center above everything */}
             {!hideBuildings && (
             <div

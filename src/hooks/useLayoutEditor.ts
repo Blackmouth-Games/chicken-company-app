@@ -284,15 +284,20 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const beltCol = parseGridNotation(belt.gridColumn);
     const beltRow = parseGridNotation(belt.gridRow);
     
-    // Calculate the center position of the belt in pixels
-    const cellWidth = (gridRect.width - (parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0) * (TOTAL_COLUMNS - 1)) / TOTAL_COLUMNS;
-    const cellHeight = (gridRect.height - (parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0) * (getTotalRows() - 1)) / getTotalRows();
-    const gapPx = parseFloat(layoutConfig.grid.gap.replace('px', '')) || 0;
+    // Calculate cell dimensions using the same logic as pixelToGrid for consistency
+    const totalRows = getTotalRows();
+    const gapPx = parseInt((layoutConfig.grid.gap || '0').toString());
+    const totalGapWidth = gapPx * (TOTAL_COLUMNS - 1);
+    const totalGapHeight = gapPx * (totalRows - 1);
+    const cellWidth = (gridRect.width - totalGapWidth) / TOTAL_COLUMNS;
+    const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
     
+    // Calculate the center position of the belt in pixels (using same calculation as grid)
     const beltCenterX = gridRect.left + (beltCol.start - 1) * (cellWidth + gapPx) + cellWidth / 2;
     const beltCenterY = gridRect.top + (beltRow.start - 1) * (cellHeight + gapPx) + cellHeight / 2;
     
-    // Calculate offset from mouse to belt center
+    // Calculate offset from mouse click position to belt center
+    // This ensures the belt follows the mouse correctly without desviation
     const offsetX = e.clientX - beltCenterX;
     const offsetY = e.clientY - beltCenterY;
     
