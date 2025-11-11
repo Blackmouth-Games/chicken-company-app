@@ -31,9 +31,7 @@ export const ConveyorBelt = ({
   isEditMode,
   isDragging,
   isSelected,
-  tempPosition,
-  dragOffset,
-  beltDragOffset,
+  tempPosition 
   onMouseDown,
   onClick,
   onRemove,

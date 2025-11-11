@@ -677,29 +677,27 @@ const Home = () => {
             }}
             onMouseMove={(e) => {
               if (paintMode && isEditMode && !isDragging) {
-                // Don't process if mouse is on a belt or building
-                const target = e.target as HTMLElement;
-                if (target.closest('[data-belt]') || target.closest('[data-building]')) {
-                  setHoveredCell(null);
-                  return;
-                }
-                
-                // Calculate which cell is being hovered
+                // Always calculate based on grid position, even if mouse is over a belt or building
+                // This ensures the hover shows the correct cell where the belt/building is located
                 const gridElement = e.currentTarget as HTMLElement;
                 const gridRect = gridElement.getBoundingClientRect();
                 const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
                 const totalRows = getTotalRows();
                 
+                // Calculate cell dimensions - account for gaps
                 const totalGapWidth = gapPx * (30 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
                 const cellWidth = (gridRect.width - totalGapWidth) / 30;
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
+                // Calculate position relative to grid (accounting for scroll if any)
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
-                const col = Math.max(1, Math.min(30, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
-                const row = Math.max(1, Math.min(totalRows, Math.floor(gridRelativeY / (cellHeight + gapPx)) + 1));
+                // Calculate which cell the mouse is over
+                // Add 0.5 to account for rounding and ensure we get the correct cell
+                const col = Math.max(1, Math.min(30, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+                const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
                 
                 setHoveredCell({ col, row });
               }
