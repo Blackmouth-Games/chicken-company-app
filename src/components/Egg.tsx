@@ -23,7 +23,7 @@ export const Egg = ({ id, gridColumn, gridRow, progress, onReachDestiny }: EggPr
 
   return isVisible ? (
     <div
-      className="absolute z-30 pointer-events-none"
+      className="absolute z-15 pointer-events-none"
       style={{
         gridColumn,
         gridRow,

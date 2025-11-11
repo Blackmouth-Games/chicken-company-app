@@ -125,7 +125,7 @@ export const ConveyorBelt = ({
 
   return (
     <div 
-      className={`flex justify-center relative w-full h-full group z-20 ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
+      className={`flex justify-center relative w-full h-full group z-5 ${isEditMode ? 'ring-2 ring-cyan-500' : ''} ${
         isDragging ? 'ring-4 ring-cyan-600 ring-offset-4 opacity-50' : ''
       } ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
       style={{ 
