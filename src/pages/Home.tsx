@@ -1243,6 +1243,7 @@ const Home = () => {
                   gridColumn={currentBelt.gridColumn}
                   gridRow={currentBelt.gridRow}
                   progress={egg.progress}
+                  direction={currentBelt.direction}
                 />
               );
             })}
