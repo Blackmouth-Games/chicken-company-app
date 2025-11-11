@@ -9,6 +9,9 @@ interface ConveyorBeltProps {
     gridRow: string;
     direction: 'north' | 'south' | 'east' | 'west';
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+    isOutput?: boolean;
+    isDestiny?: boolean;
+    corralId?: string;
   };
   idx: number;
   isEditMode: boolean;
@@ -23,6 +26,8 @@ interface ConveyorBeltProps {
   onRotate?: () => void;
   onUpdateColumn: (value: string) => void;
   onUpdateRow: (value: string) => void;
+  onToggleOutput?: () => void;
+  onToggleDestiny?: () => void;
 }
 
 export const ConveyorBelt = ({
@@ -31,13 +36,17 @@ export const ConveyorBelt = ({
   isEditMode,
   isDragging,
   isSelected,
-  tempPosition 
+  tempPosition,
+  dragOffset,
+  beltDragOffset,
   onMouseDown,
   onClick,
   onRemove,
   onRotate,
   onUpdateColumn,
   onUpdateRow,
+  onToggleOutput,
+  onToggleDestiny,
 }: ConveyorBeltProps) => {
   // Get arrow direction based on belt direction
   const getArrowTransform = () => {
@@ -182,41 +191,78 @@ export const ConveyorBelt = ({
           </>
         )}
         
-        {/* Tooltip with actions when belt is selected */}
-        {isEditMode && isSelected && !isDragging && (
-          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex gap-2 z-50 whitespace-nowrap">
+        {/* No tooltip inside the belt */}
+      </div>
+      
+      {/* Action buttons outside the belt - positioned to the right */}
+      {isEditMode && isSelected && !isDragging && (
+        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap">
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            size="sm"
+            variant="destructive"
+            className="h-8 px-3"
+            title="Eliminar cinta"
+          >
+            <X className="h-4 w-4 mr-1" />
+            Eliminar
+          </Button>
+          {onRotate && (
             <Button
               onClick={(e) => {
                 e.stopPropagation();
-                onRemove();
+                onRotate();
               }}
               size="sm"
-              variant="destructive"
+              variant="default"
               className="h-8 px-3"
-              title="Eliminar cinta"
+              title="Rotar cinta"
             >
-              <X className="h-4 w-4 mr-1" />
-              Eliminar
+              <RotateCw className="h-4 w-4 mr-1" />
+              Rotar
             </Button>
-            {onRotate && (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRotate();
-                }}
-                size="sm"
-                variant="default"
-                className="h-8 px-3"
-                title="Rotar cinta"
-              >
-                <RotateCw className="h-4 w-4 mr-1" />
-                Rotar
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-    
+          )}
+          {onToggleOutput && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleOutput();
+              }}
+              size="sm"
+              variant={belt.isOutput ? "default" : "outline"}
+              className="h-8 px-3"
+              title="Marcar como salida de corral"
+            >
+              🥚 Output
+            </Button>
+          )}
+          {onToggleDestiny && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleDestiny();
+              }}
+              size="sm"
+              variant={belt.isDestiny ? "default" : "outline"}
+              className="h-8 px-3"
+              title="Marcar como destino final"
+            >
+              🎯 Destiny
+            </Button>
+          )}
+        </div>
+      )}
+      
+      {/* Visual indicators for output and destiny */}
+      {belt.isOutput && (
+        <div className="absolute -top-1 -left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white z-40" title="Salida de corral" />
+      )}
+      {belt.isDestiny && (
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white z-40" title="Destino final" />
+      )}
       
       <style>{`
         @keyframes beltMoveeast {

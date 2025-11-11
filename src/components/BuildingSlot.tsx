@@ -15,9 +15,11 @@ interface BuildingSlotProps {
   onBuyClick: (position: number) => void;
   onBuildingClick?: () => void;
   isLeftColumn?: boolean; // Para saber de qué lado poner la mini cinta
+  isEditMode?: boolean;
+  editControls?: React.ReactNode;
 }
 
-export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, isLeftColumn = true }: BuildingSlotProps) => {
+export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, isLeftColumn = true, isEditMode = false, editControls }: BuildingSlotProps) => {
   if (building) {
     // Calculate visible chickens: floor(current_chickens / 10)
     const visibleChickens = Math.floor(building.current_chickens / 10);
@@ -66,6 +68,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                 />
               </div>
             </div>
+            
+            {/* Edit controls inside the corral */}
+            {isEditMode && editControls && (
+              <div className="mt-2 pt-2 border-t border-green-300">
+                {editControls}
+              </div>
+            )}
           </div>
         </div>
       </div>
