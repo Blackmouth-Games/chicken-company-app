@@ -7,7 +7,9 @@ import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette, ExternalLink } from "lucide-react";
-import { getBuildingImage } from "@/lib/buildingImages";
+import { getBuildingDisplay } from "@/lib/buildingImages";
+import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { useMemo } from "react";
 
 interface MarketDialogProps {
   open: boolean;
@@ -20,11 +22,29 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
+  const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
 
   const market = getBuildingByType(BUILDING_TYPES.MARKET);
   const currentLevel = market?.level || 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.MARKET, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+
+  // Get skin info from database if selected_skin is set
+  const skinInfo = useMemo(() => {
+    if (!market?.selected_skin) return null;
+    return getSkinByKey(market.selected_skin);
+  }, [market?.selected_skin, getSkinByKey]);
+
+  // Get building display (image or emoji)
+  const buildingDisplay = useMemo(() => {
+    if (!market) return null;
+    return getBuildingDisplay(
+      'market',
+      currentLevel,
+      market.selected_skin || null,
+      skinInfo || undefined
+    );
+  }, [market, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -59,14 +79,14 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </Button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {market?.selected_skin ? (
-                      <div className="text-9xl">{market.selected_skin}</div>
-                    ) : (
+                    {buildingDisplay?.type === 'image' ? (
                       <img 
-                        src={getBuildingImage('market', currentLevel, 'A')} 
+                        src={buildingDisplay.src} 
                         alt="Market" 
                         className="w-52 h-52 object-contain"
                       />
+                    ) : (
+                      <div className="text-9xl">{buildingDisplay?.emoji || '🏪'}</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-green-900 text-lg">Market</h3>
@@ -155,8 +175,11 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
           buildingId={market.id}
           buildingType={BUILDING_TYPES.MARKET}
           userId={userId}
-          currentSkin={market.selected_skin}
-          onSkinSelected={refetch}
+          currentSkin={market.selected_skin || null}
+          onSkinSelected={() => {
+            refetch();
+            setShowSkinSelector(false);
+          }}
         />
       )}
     </>

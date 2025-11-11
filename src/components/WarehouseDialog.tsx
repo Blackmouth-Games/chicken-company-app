@@ -7,7 +7,9 @@ import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette, ExternalLink } from "lucide-react";
-import { getBuildingImage } from "@/lib/buildingImages";
+import { getBuildingDisplay } from "@/lib/buildingImages";
+import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { useMemo } from "react";
 
 interface WarehouseDialogProps {
   open: boolean;
@@ -20,11 +22,29 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
+  const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
 
   const warehouse = getBuildingByType(BUILDING_TYPES.WAREHOUSE);
   const currentLevel = warehouse?.level || 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.WAREHOUSE, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+
+  // Get skin info from database if selected_skin is set
+  const skinInfo = useMemo(() => {
+    if (!warehouse?.selected_skin) return null;
+    return getSkinByKey(warehouse.selected_skin);
+  }, [warehouse?.selected_skin, getSkinByKey]);
+
+  // Get building display (image or emoji)
+  const buildingDisplay = useMemo(() => {
+    if (!warehouse) return null;
+    return getBuildingDisplay(
+      'warehouse',
+      currentLevel,
+      warehouse.selected_skin || null,
+      skinInfo || undefined
+    );
+  }, [warehouse, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -59,7 +79,15 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   </Button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    <div className="text-9xl">{warehouse?.selected_skin || getBuildingImage('warehouse', currentLevel)}</div>
+                    {buildingDisplay?.type === 'image' ? (
+                      <img 
+                        src={buildingDisplay.src} 
+                        alt="Warehouse" 
+                        className="w-52 h-52 object-contain"
+                      />
+                    ) : (
+                      <div className="text-9xl">{buildingDisplay?.emoji || '🏭'}</div>
+                    )}
                     <div className="text-center">
                       <h3 className="font-bold text-blue-900 text-lg">Almacén</h3>
                       <p className="text-sm text-blue-700">Lvl {currentLevel}</p>
@@ -147,8 +175,11 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           buildingId={warehouse.id}
           buildingType={BUILDING_TYPES.WAREHOUSE}
           userId={userId}
-          currentSkin={warehouse.selected_skin}
-          onSkinSelected={refetch}
+          currentSkin={warehouse.selected_skin || null}
+          onSkinSelected={() => {
+            refetch();
+            setShowSkinSelector(false);
+          }}
         />
       )}
     </>

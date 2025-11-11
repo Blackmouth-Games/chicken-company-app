@@ -2,11 +2,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Info, Edit } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
+import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { getBuildingDisplay } from "@/lib/buildingImages";
 import { cn } from "@/lib/utils";
 
 interface CorralDialogProps {
@@ -22,6 +24,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const [selectedMultiplier, setSelectedMultiplier] = useState<1 | 5 | 10>(1);
   const { buildings, refetch } = useUserBuildings(userId);
   const { prices } = useBuildingPrices();
+  const { getSkinByKey } = useBuildingSkins('corral');
 
   const corral = buildings.find(b => b.id === buildingId);
   const nextLevel = corral ? corral.level + 1 : 2;
@@ -30,6 +33,22 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const nextLevelCapacity = nextLevelPrice?.capacity || 0;
 
   if (!corral) return null;
+
+  // Get skin info from database if selected_skin is set
+  const skinInfo = useMemo(() => {
+    if (!corral?.selected_skin) return null;
+    return getSkinByKey(corral.selected_skin);
+  }, [corral?.selected_skin, getSkinByKey]);
+
+  // Get building display (image or emoji)
+  const buildingDisplay = useMemo(() => {
+    return getBuildingDisplay(
+      'corral',
+      corral.level,
+      corral.selected_skin || null,
+      skinInfo || undefined
+    );
+  }, [corral.level, corral.selected_skin, skinInfo]);
 
   const efficiency = corral.current_chickens > 0 
     ? Math.min(100, Math.round((corral.current_chickens / corral.capacity) * 100))
@@ -69,7 +88,15 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
               <Edit className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="text-6xl">🏠</div>
+              {buildingDisplay?.type === 'image' ? (
+                <img 
+                  src={buildingDisplay.src} 
+                  alt="Corral" 
+                  className="w-16 h-16 object-contain"
+                />
+              ) : (
+                <div className="text-6xl">{buildingDisplay?.emoji || '🏚️'}</div>
+              )}
               <div className="flex-1">
                 <h3 className="font-bold text-lg">Corral</h3>
                 <p className="text-sm text-muted-foreground">Lvl {corral.level}</p>
