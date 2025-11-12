@@ -121,7 +121,7 @@ export const SkinSelectorDialog = ({
   // Create inventory slots organized by level and variant
   // Structure is now determined dynamically from available skins in database
   const inventorySlots = useMemo(() => {
-    const slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null }> = [];
+    let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null }> = [];
     
     // Extract all unique levels and variants from skins in database
     const levelSet = new Set<number>();
@@ -166,7 +166,7 @@ export const SkinSelectorDialog = ({
       const levels = Array.from(levelSet).sort((a, b) => a - b);
       const maxLevel = Math.max(...levels);
       
-      // Create slots for all levels up to maxLevel
+      // First, add all slots that have skins (owned or default)
       for (let level = 1; level <= maxLevel; level++) {
         // Get variants for this level, or use default variants
         const levelVariants = variantMap.get(level);
@@ -187,6 +187,22 @@ export const SkinSelectorDialog = ({
             slots.push({ level, variant, skin });
           }
         }
+      }
+      
+      // Count empty slots
+      const emptySlots = slots.filter(slot => !slot.skin);
+      
+      // If there are more than 2 empty slots, remove the excess
+      if (emptySlots.length > 2) {
+        // Keep only the first 1-2 empty slots
+        let emptyCount = 0;
+        slots = slots.filter(slot => {
+          if (!slot.skin) {
+            emptyCount++;
+            return emptyCount <= 2; // Keep only first 2 empty slots
+          }
+          return true; // Keep all slots with skins
+        });
       }
     }
 

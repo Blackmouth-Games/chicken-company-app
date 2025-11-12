@@ -736,20 +736,20 @@ const Home = () => {
             </>
           )}
           
-          {/* Fine grid overlay with enhanced visibility */}
-          <div 
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: isEditMode 
-                ? 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)' 
-                : 'linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)',
-              backgroundSize: `${
-                cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
-              }px ${
-                cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
-              }px`
-            }}
-          />
+          {/* Fine grid overlay - Only visible in edit mode */}
+          {isEditMode && (
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)',
+                backgroundSize: `${
+                  cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
+                }px ${
+                  cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
+                }px`
+              }}
+            />
+          )}
           {/* Grid: 25 columns total - Responsive cells that scale with screen */}
           <div 
             data-grid-container

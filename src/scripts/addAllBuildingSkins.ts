@@ -49,12 +49,8 @@ function detectSkinsFromImages(): SkinData[] {
   const skins: SkinData[] = [];
   const buildingTypes = getAvailableBuildingTypes();
   
-  // Track which building type has the first skin (for is_default)
-  const firstSkinByType = new Map<string, boolean>();
-  
   for (const buildingType of buildingTypes) {
     const images = getParsedImagesForType(buildingType);
-    firstSkinByType.set(buildingType, true);
     
     for (const image of images) {
       const { level, variant, fileName } = image;
@@ -64,10 +60,8 @@ function detectSkinsFromImages(): SkinData[] {
         ? `coop_${level}${variant}`
         : `${buildingType}_${level}${variant}`;
       
-      const isFirst = firstSkinByType.get(buildingType) || false;
-      if (isFirst) {
-        firstSkinByType.set(buildingType, false);
-      }
+      // Every level's variant "A" should be the default skin for that level
+      const isDefault = variant === 'A';
       
       // Get file extension from original path
       const fileExtension = image.fileName.match(/\.(png|jpg|jpeg|webp|svg)$/i)?.[0] || '.png';
@@ -77,7 +71,7 @@ function detectSkinsFromImages(): SkinData[] {
         skin_key: skinKey,
         name: generateSkinName(buildingType, level, variant),
         image_url: `/src/assets/buildings/${fileName}${fileExtension}`, // Will be replaced by emoji in DB
-        is_default: isFirst && level === 1 && variant === 'A',
+        is_default: isDefault,
         rarity: getRarityForLevel(level),
       });
     }
