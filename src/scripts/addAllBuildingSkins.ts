@@ -1,9 +1,11 @@
 /**
- * Script to add all building skins to the database
- * Run this script to populate the building_skins table with all available skins
+ * Script to automatically detect and add building skins to the database
+ * Scans assets/buildings/ folder and creates skin entries automatically
+ * Just add new image files following the pattern: {type}_{level}{variant}.png
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { getParsedImagesForType, getAvailableBuildingTypes } from "@/lib/buildingImagesDynamic";
 
 interface SkinData {
   building_type: string;
@@ -14,80 +16,153 @@ interface SkinData {
   rarity: string;
 }
 
-const allSkins: SkinData[] = [
-  // Corral skins (coop) - Levels 1-5, Variants A and B
-  { building_type: 'corral', skin_key: 'coop_1A', name: 'Corral Nivel 1A', image_url: '/src/assets/buildings/coop_1A.png', is_default: true, rarity: 'common' },
-  { building_type: 'corral', skin_key: 'coop_1B', name: 'Corral Nivel 1B (Invierno)', image_url: '/src/assets/buildings/coop_1B.png', is_default: false, rarity: 'common' },
-  { building_type: 'corral', skin_key: 'coop_2A', name: 'Corral Nivel 2A', image_url: '/src/assets/buildings/coop_2A.png', is_default: false, rarity: 'uncommon' },
-  { building_type: 'corral', skin_key: 'coop_2B', name: 'Corral Nivel 2B', image_url: '/src/assets/buildings/coop_2B.png', is_default: false, rarity: 'uncommon' },
-  { building_type: 'corral', skin_key: 'coop_3A', name: 'Corral Nivel 3A', image_url: '/src/assets/buildings/coop_3A.png', is_default: false, rarity: 'rare' },
-  { building_type: 'corral', skin_key: 'coop_3B', name: 'Corral Nivel 3B', image_url: '/src/assets/buildings/coop_3B.png', is_default: false, rarity: 'rare' },
-  { building_type: 'corral', skin_key: 'coop_4A', name: 'Corral Nivel 4A', image_url: '/src/assets/buildings/coop_4A.png', is_default: false, rarity: 'epic' },
-  { building_type: 'corral', skin_key: 'coop_4B', name: 'Corral Nivel 4B', image_url: '/src/assets/buildings/coop_4B.png', is_default: false, rarity: 'epic' },
-  { building_type: 'corral', skin_key: 'coop_5A', name: 'Corral Nivel 5A', image_url: '/src/assets/buildings/coop_5A.png', is_default: false, rarity: 'legendary' },
-  { building_type: 'corral', skin_key: 'coop_5B', name: 'Corral Nivel 5B', image_url: '/src/assets/buildings/coop_5B.png', is_default: false, rarity: 'legendary' },
-  
-  // Warehouse skins - Levels 1-5
-  { building_type: 'warehouse', skin_key: 'warehouse_1A', name: 'Almacén Nivel 1A', image_url: '/src/assets/buildings/warehouse_1A.png', is_default: true, rarity: 'common' },
-  { building_type: 'warehouse', skin_key: 'warehouse_1B', name: 'Almacén Nivel 1B', image_url: '/src/assets/buildings/warehouse_1B.png', is_default: false, rarity: 'common' },
-  { building_type: 'warehouse', skin_key: 'warehouse_2A', name: 'Almacén Nivel 2A', image_url: '/src/assets/buildings/warehouse_2A.png', is_default: false, rarity: 'uncommon' },
-  { building_type: 'warehouse', skin_key: 'warehouse_3A', name: 'Almacén Nivel 3A', image_url: '/src/assets/buildings/warehouse_3A.png', is_default: false, rarity: 'rare' },
-  { building_type: 'warehouse', skin_key: 'warehouse_4A', name: 'Almacén Nivel 4A', image_url: '/src/assets/buildings/warehouse_4A.png', is_default: false, rarity: 'epic' },
-  { building_type: 'warehouse', skin_key: 'warehouse_5A', name: 'Almacén Nivel 5A', image_url: '/src/assets/buildings/warehouse_5A.png', is_default: false, rarity: 'legendary' },
-  
-  // Market skins - Levels 1-5, Variants A and B
-  { building_type: 'market', skin_key: 'market_1A', name: 'Mercado Nivel 1A', image_url: '/src/assets/buildings/market_1A.png', is_default: true, rarity: 'common' },
-  { building_type: 'market', skin_key: 'market_1B', name: 'Mercado Nivel 1B', image_url: '/src/assets/buildings/market_1B.png', is_default: false, rarity: 'common' },
-  { building_type: 'market', skin_key: 'market_2A', name: 'Mercado Nivel 2A', image_url: '/src/assets/buildings/market_2A.png', is_default: false, rarity: 'uncommon' },
-  { building_type: 'market', skin_key: 'market_2B', name: 'Mercado Nivel 2B', image_url: '/src/assets/buildings/market_2B.png', is_default: false, rarity: 'uncommon' },
-  { building_type: 'market', skin_key: 'market_3A', name: 'Mercado Nivel 3A', image_url: '/src/assets/buildings/market_3A.png', is_default: false, rarity: 'rare' },
-  { building_type: 'market', skin_key: 'market_3B', name: 'Mercado Nivel 3B', image_url: '/src/assets/buildings/market_3B.png', is_default: false, rarity: 'rare' },
-  { building_type: 'market', skin_key: 'market_4A', name: 'Mercado Nivel 4A', image_url: '/src/assets/buildings/market_4A.png', is_default: false, rarity: 'epic' },
-  { building_type: 'market', skin_key: 'market_4B', name: 'Mercado Nivel 4B', image_url: '/src/assets/buildings/market_4B.png', is_default: false, rarity: 'epic' },
-  { building_type: 'market', skin_key: 'market_5A', name: 'Mercado Nivel 5A', image_url: '/src/assets/buildings/market_5A .png', is_default: false, rarity: 'legendary' },
-  { building_type: 'market', skin_key: 'market_5B', name: 'Mercado Nivel 5B', image_url: '/src/assets/buildings/market_5B.png', is_default: false, rarity: 'legendary' },
-  
-  // House skins - Level 1, Variants A, B, and C
-  { building_type: 'house', skin_key: 'house_1A', name: 'Casa Nivel 1A', image_url: '/src/assets/buildings/house_1A.png', is_default: true, rarity: 'common' },
-  { building_type: 'house', skin_key: 'house_1B', name: 'Casa Nivel 1B', image_url: '/src/assets/buildings/house_1B.png', is_default: false, rarity: 'common' },
-  { building_type: 'house', skin_key: 'house_1C', name: 'Casa Nivel 1C', image_url: '/src/assets/buildings/house_1C.png', is_default: false, rarity: 'common' },
-];
+/**
+ * Determine rarity based on level
+ */
+function getRarityForLevel(level: number): string {
+  if (level === 1) return 'common';
+  if (level === 2) return 'uncommon';
+  if (level === 3) return 'rare';
+  if (level === 4) return 'epic';
+  return 'legendary';
+}
 
+/**
+ * Generate skin name from building type, level, and variant
+ */
+function generateSkinName(buildingType: string, level: number, variant: string): string {
+  const buildingNames: Record<string, string> = {
+    corral: 'Corral',
+    warehouse: 'Almacén',
+    market: 'Mercado',
+    house: 'Casa',
+  };
+  
+  const buildingName = buildingNames[buildingType] || buildingType;
+  return `${buildingName} Nivel ${level}${variant}`;
+}
+
+/**
+ * Automatically detect all building images and generate skin data
+ */
+function detectSkinsFromImages(): SkinData[] {
+  const skins: SkinData[] = [];
+  const buildingTypes = getAvailableBuildingTypes();
+  
+  // Track which building type has the first skin (for is_default)
+  const firstSkinByType = new Map<string, boolean>();
+  
+  for (const buildingType of buildingTypes) {
+    const images = getParsedImagesForType(buildingType);
+    firstSkinByType.set(buildingType, true);
+    
+    for (const image of images) {
+      const { level, variant, fileName } = image;
+      
+      // Generate skin_key: normalize coop -> corral
+      const skinKey = buildingType === 'corral' && fileName.startsWith('coop_')
+        ? `coop_${level}${variant}`
+        : `${buildingType}_${level}${variant}`;
+      
+      const isFirst = firstSkinByType.get(buildingType) || false;
+      if (isFirst) {
+        firstSkinByType.set(buildingType, false);
+      }
+      
+      // Get file extension from original path
+      const fileExtension = image.fileName.match(/\.(png|jpg|jpeg|webp|svg)$/i)?.[0] || '.png';
+      
+      skins.push({
+        building_type: buildingType,
+        skin_key: skinKey,
+        name: generateSkinName(buildingType, level, variant),
+        image_url: `/src/assets/buildings/${fileName}${fileExtension}`, // Will be replaced by emoji in DB
+        is_default: isFirst && level === 1 && variant === 'A',
+        rarity: getRarityForLevel(level),
+      });
+    }
+  }
+  
+  return skins;
+}
+
+/**
+ * Get emoji for building type (for image_url fallback)
+ */
+function getEmojiForBuildingType(buildingType: string): string {
+  const emojis: Record<string, string> = {
+    corral: '🏚️',
+    warehouse: '🏭',
+    market: '🏪',
+    house: '🏠',
+  };
+  return emojis[buildingType] || '🏚️';
+}
+
+/**
+ * Add all building skins to database (auto-detected from images)
+ */
 export const addAllBuildingSkins = async () => {
-  console.log('Iniciando inserción de skins...');
+  console.log('🔍 Escaneando imágenes en assets/buildings/...');
+  
+  // Auto-detect skins from images
+  const detectedSkins = detectSkinsFromImages();
+  console.log(`📦 Encontradas ${detectedSkins.length} skins en imágenes`);
+  
+  // Get existing skins from database
+  const { data: existingSkins } = await supabase
+    .from('building_skins')
+    .select('skin_key');
+  
+  const existingKeys = new Set(existingSkins?.map(s => s.skin_key) || []);
+  
+  // Filter out skins that already exist
+  const newSkins = detectedSkins.filter(skin => !existingKeys.has(skin.skin_key));
+  const updateSkins = detectedSkins.filter(skin => existingKeys.has(skin.skin_key));
+  
+  console.log(`✨ ${newSkins.length} skins nuevas detectadas`);
+  console.log(`🔄 ${updateSkins.length} skins existentes (se actualizarán)`);
   
   let successCount = 0;
   let errorCount = 0;
   const errors: string[] = [];
 
-  for (const skin of allSkins) {
+  // Process all skins (new and existing)
+  for (const skin of detectedSkins) {
     try {
+      // Use emoji as image_url (images are loaded from local assets)
+      const skinWithEmoji = {
+        ...skin,
+        image_url: getEmojiForBuildingType(skin.building_type),
+      };
+      
       // Use upsert to avoid conflicts if skin already exists
       const { error } = await supabase
         .from('building_skins')
-        .upsert(skin, { onConflict: 'skin_key' });
+        .upsert(skinWithEmoji, { onConflict: 'skin_key' });
 
       if (error) {
-        console.error(`Error insertando ${skin.skin_key}:`, error.message);
+        console.error(`❌ Error insertando ${skin.skin_key}:`, error.message);
         errorCount++;
         errors.push(`${skin.skin_key}: ${error.message}`);
       } else {
-        console.log(`✓ ${skin.skin_key} insertado correctamente`);
+        const isNew = newSkins.includes(skin);
+        console.log(`${isNew ? '✨' : '🔄'} ${skin.skin_key} ${isNew ? 'insertado' : 'actualizado'} correctamente`);
         successCount++;
       }
     } catch (error: any) {
-      console.error(`Error inesperado con ${skin.skin_key}:`, error);
+      console.error(`❌ Error inesperado con ${skin.skin_key}:`, error);
       errorCount++;
       errors.push(`${skin.skin_key}: ${error.message || 'Error desconocido'}`);
     }
   }
 
-  console.log('\n=== Resumen ===');
-  console.log(`✓ Exitosas: ${successCount}`);
-  console.log(`✗ Errores: ${errorCount}`);
+  console.log('\n=== 📊 Resumen ===');
+  console.log(`✅ Exitosas: ${successCount}`);
+  console.log(`❌ Errores: ${errorCount}`);
   
   if (errors.length > 0) {
-    console.log('\nErrores detallados:');
+    console.log('\n❌ Errores detallados:');
     errors.forEach(err => console.log(`  - ${err}`));
   }
 
@@ -96,6 +171,8 @@ export const addAllBuildingSkins = async () => {
     successCount,
     errorCount,
     errors,
+    newSkins: newSkins.length,
+    updatedSkins: updateSkins.length,
   };
 };
 

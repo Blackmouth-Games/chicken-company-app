@@ -9,6 +9,7 @@ import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 import { getBuildingDisplay } from "@/lib/buildingImages";
+import { BUILDING_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface CorralDialogProps {
@@ -47,7 +48,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
       corral.selected_skin || null,
       skinInfo || undefined
     );
-  }, [corral, skinInfo]);
+  }, [corral?.selected_skin, corral?.level, skinInfo]);
 
   if (!corral) return null;
 
@@ -238,7 +239,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
         open={showSkinSelector}
         onOpenChange={setShowSkinSelector}
         buildingId={buildingId}
-        buildingType="corral"
+        buildingType={BUILDING_TYPES.CORRAL}
         userId={userId}
         currentSkin={corral?.selected_skin || null}
         onSkinSelected={() => {

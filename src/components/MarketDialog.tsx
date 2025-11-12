@@ -36,6 +36,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   }, [market?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
+  // Depend on market?.selected_skin and market?.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!market) return null;
     return getBuildingDisplay(
@@ -44,7 +45,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       market.selected_skin || null,
       skinInfo || undefined
     );
-  }, [market?.selected_skin, currentLevel, skinInfo]);
+  }, [market?.selected_skin, market?.level, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();

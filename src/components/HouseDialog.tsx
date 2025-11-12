@@ -5,6 +5,7 @@ import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { BUILDING_TYPES } from "@/lib/constants";
 import { Edit } from "lucide-react";
 
 interface HouseDialogProps {
@@ -17,8 +18,8 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
   const { refetch } = useUserBuildings(userId);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
   
-  // House skins - using 'house' as building type
-  const { getSkinByKey } = useBuildingSkins('house' as any);
+  // House skins
+  const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.HOUSE);
 
   // House display
   const houseDisplay = useMemo(() => {
@@ -81,7 +82,7 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
         open={showSkinSelector}
         onOpenChange={setShowSkinSelector}
         buildingId={undefined} // House doesn't have a building ID in database
-        buildingType={'house' as any}
+        buildingType={BUILDING_TYPES.HOUSE}
         userId={userId}
         currentSkin={null}
         onSkinSelected={() => {

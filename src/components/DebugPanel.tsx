@@ -68,7 +68,8 @@ const DebugPanel = () => {
   // Listen for skin selector errors
   useEffect(() => {
     const handleError = (e: any) => {
-      addSkinLog('error', e.detail?.message || 'Unknown error', e.detail?.error);
+      const level = e.detail?.level || 'error';
+      addSkinLog(level, e.detail?.message || 'Unknown error', e.detail?.error);
     };
     window.addEventListener('skinSelectorError', handleError as any);
     return () => {

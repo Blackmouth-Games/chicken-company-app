@@ -36,6 +36,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   }, [warehouse?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
+  // Depend on warehouse?.selected_skin and warehouse?.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!warehouse) return null;
     return getBuildingDisplay(
@@ -44,7 +45,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       warehouse.selected_skin || null,
       skinInfo || undefined
     );
-  }, [warehouse?.selected_skin, currentLevel, skinInfo]);
+  }, [warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -70,8 +71,14 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                 {/* Warehouse Card with Edit Button */}
                 <div className="relative border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-6">
                   <button
-                    onClick={() => setShowSkinSelector(true)}
-                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      console.log("Edit button clicked, opening skin selector", { warehouse: warehouse?.id, userId });
+                      setShowSkinSelector(true);
+                    }}
+                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors z-10"
+                    type="button"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
@@ -166,20 +173,18 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         />
       )}
 
-      {warehouse && (
-        <SkinSelectorDialog
-          open={showSkinSelector}
-          onOpenChange={setShowSkinSelector}
-          buildingId={warehouse.id}
-          buildingType={BUILDING_TYPES.WAREHOUSE}
-          userId={userId}
-          currentSkin={warehouse.selected_skin || null}
-          onSkinSelected={() => {
-            refetch();
-            setShowSkinSelector(false);
-          }}
-        />
-      )}
+      <SkinSelectorDialog
+        open={showSkinSelector}
+        onOpenChange={setShowSkinSelector}
+        buildingId={warehouse?.id}
+        buildingType={BUILDING_TYPES.WAREHOUSE}
+        userId={userId}
+        currentSkin={warehouse?.selected_skin || null}
+        onSkinSelected={() => {
+          refetch();
+          setShowSkinSelector(false);
+        }}
+      />
     </>
   );
 };

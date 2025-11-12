@@ -1,121 +1,87 @@
-// Import building images - House
-import house1A from "@/assets/buildings/house_1A.png";
-import house1B from "@/assets/buildings/house_1B.png";
-import house1C from "@/assets/buildings/house_1C.png";
+/**
+ * Building images system - now uses dynamic scanning
+ * Images are automatically detected from assets/buildings/
+ * Just add new image files following the pattern: {type}_{level}{variant}.png
+ */
 
-// Import building images - Coop (Corral)
-import coop1A from "@/assets/buildings/coop_1A.png";
-import coop1B from "@/assets/buildings/coop_1B.png";
-import coop2A from "@/assets/buildings/coop_2A.png";
-import coop2B from "@/assets/buildings/coop_2B.png";
-import coop3A from "@/assets/buildings/coop_3A.png";
-import coop3B from "@/assets/buildings/coop_3B.png";
-import coop4A from "@/assets/buildings/coop_4A.png";
-import coop4B from "@/assets/buildings/coop_4B.png";
-import coop5A from "@/assets/buildings/coop_5A.png";
-import coop5B from "@/assets/buildings/coop_5B.png";
+import { 
+  BUILDING_IMAGES_DYNAMIC, 
+  SKIN_KEY_TO_LOCAL_MAP_DYNAMIC,
+  getBuildingStructure 
+} from "./buildingImagesDynamic";
 
-// Import building images - Warehouse
-import warehouse1A from "@/assets/buildings/warehouse_1A.png";
-import warehouse1B from "@/assets/buildings/warehouse_1B.png";
-import warehouse2A from "@/assets/buildings/warehouse_2A.png";
-import warehouse3A from "@/assets/buildings/warehouse_3A.png";
-import warehouse4A from "@/assets/buildings/warehouse_4A.png";
-import warehouse5A from "@/assets/buildings/warehouse_5A.png";
+// Use dynamic images as primary source
+// Fallback structure for buildings without images (maintains compatibility)
+const FALLBACK_IMAGES: Record<string, Record<number, Record<string, string>>> = {};
 
-// Import building images - Market
-import market1A from "@/assets/buildings/market_1A.png";
-import market1B from "@/assets/buildings/market_1B.png";
-import market2A from "@/assets/buildings/market_2A.png";
-import market2B from "@/assets/buildings/market_2B.png";
-import market3A from "@/assets/buildings/market_3A.png";
-import market3B from "@/assets/buildings/market_3B.png";
-import market4A from "@/assets/buildings/market_4A.png";
-import market4B from "@/assets/buildings/market_4B.png";
-import market5A from "@/assets/buildings/market_5A .png"; // Note: file has space in name
-import market5B from "@/assets/buildings/market_5B.png";
+// Merge dynamic images with fallback logic
+function mergeImages(): Record<string, Record<number, Record<string, string>>> {
+  const merged = { ...BUILDING_IMAGES_DYNAMIC };
+  
+  // For each building type, ensure we have fallbacks for missing levels
+  for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
+    const structure = getBuildingStructure(buildingType);
+    const maxLevel = structure.maxLevel;
+    
+    // Ensure all levels up to maxLevel exist
+    for (let level = 1; level <= maxLevel; level++) {
+      if (!merged[buildingType][level]) {
+        merged[buildingType][level] = {};
+      }
+      
+      // For warehouse, levels 2+ fallback to level 1B if no B variant
+      if (buildingType === 'warehouse' && level > 1) {
+        if (!merged[buildingType][level]['B'] && merged[buildingType][1]?.['B']) {
+          merged[buildingType][level]['B'] = merged[buildingType][1]['B'];
+        }
+      }
+      
+      // For house, levels 2+ fallback to level 1 images
+      if (buildingType === 'house' && level > 1) {
+        if (!merged[buildingType][level]['A'] && merged[buildingType][1]?.['A']) {
+          merged[buildingType][level]['A'] = merged[buildingType][1]['A'];
+        }
+        if (!merged[buildingType][level]['B'] && merged[buildingType][1]?.['B']) {
+          merged[buildingType][level]['B'] = merged[buildingType][1]['B'];
+        }
+      }
+    }
+  }
+  
+  return merged;
+}
 
-// Building images by type, level, and skin
-export const BUILDING_IMAGES = {
-  corral: {
-    1: { A: coop1A, B: coop1B },
-    2: { A: coop2A, B: coop2B },
-    3: { A: coop3A, B: coop3B },
-    4: { A: coop4A, B: coop4B },
-    5: { A: coop5A, B: coop5B },
-  },
-  warehouse: {
-    1: { A: warehouse1A, B: warehouse1B },
-    2: { A: warehouse2A, B: warehouse1B }, // Level 2+ only has A variant, fallback to 1B
-    3: { A: warehouse3A, B: warehouse1B },
-    4: { A: warehouse4A, B: warehouse1B },
-    5: { A: warehouse5A, B: warehouse1B },
-  },
-  market: {
-    1: { A: market1A, B: market1B },
-    2: { A: market2A, B: market2B },
-    3: { A: market3A, B: market3B },
-    4: { A: market4A, B: market4B },
-    5: { A: market5A, B: market5B },
-  },
-  house: {
-    1: { A: house1A, B: house1B, C: house1C }, // House has C variant for level 1
-    2: { A: house1A, B: house1B }, // Levels 2-5 use level 1 images
-    3: { A: house1A, B: house1B },
-    4: { A: house1A, B: house1B },
-    5: { A: house1A, B: house1B },
-  },
-} as const;
+export const BUILDING_IMAGES = mergeImages();
 
 export type BuildingType = keyof typeof BUILDING_IMAGES;
 export type BuildingSkin = 'A' | 'B' | 'C';
 
-// Mapping from database skin_key to local image skin (A/B/C)
-// Format: {building_type}_{level}{variant} -> variant
-// If a skin_key is not in this map, it will use the emoji from the database
-const SKIN_KEY_TO_LOCAL_MAP: Record<string, BuildingSkin> = {
-  // Corral skins - Levels 1-5, Variants A and B
-  'corral_1A': 'A', 'corral_1B': 'B',
-  'corral_2A': 'A', 'corral_2B': 'B',
-  'corral_3A': 'A', 'corral_3B': 'B',
-  'corral_4A': 'A', 'corral_4B': 'B',
-  'corral_5A': 'A', 'corral_5B': 'B',
-  // Legacy corral skins (for backwards compatibility)
+// Legacy skin keys for backwards compatibility
+const LEGACY_SKIN_MAP: Record<string, BuildingSkin> = {
   'corral_default': 'A',
   'corral_premium': 'B',
   'corral_luxury': 'B',
-  
-  // Warehouse skins - Levels 1-5
-  'warehouse_1A': 'A', 'warehouse_1B': 'B',
-  'warehouse_2A': 'A',
-  'warehouse_3A': 'A',
-  'warehouse_4A': 'A',
-  'warehouse_5A': 'A',
-  // Legacy warehouse skins
   'warehouse_default': 'A',
   'warehouse_modern': 'B',
-  
-  // Market skins - Levels 1-5, Variants A and B
-  'market_1A': 'A', 'market_1B': 'B',
-  'market_2A': 'A', 'market_2B': 'B',
-  'market_3A': 'A', 'market_3B': 'B',
-  'market_4A': 'A', 'market_4B': 'B',
-  'market_5A': 'A', 'market_5B': 'B',
-  // Legacy market skins
   'market_default': 'A',
   'market_premium': 'B',
-  
-  // House skins - Level 1, Variants A, B, and C
-  'house_1A': 'A', 'house_1B': 'B', 'house_1C': 'C',
 };
 
 /**
- * Maps a database skin_key to a local image skin (A/B)
+ * Maps a database skin_key to a local image skin (A/B/C)
  * Returns null if the skin_key should use an emoji instead
+ * Now uses dynamic mapping from scanned images
  */
 export const mapSkinKeyToLocal = (skinKey: string | null | undefined): BuildingSkin | null => {
   if (!skinKey) return null;
-  return SKIN_KEY_TO_LOCAL_MAP[skinKey] || null;
+  
+  // Check legacy mappings first
+  if (LEGACY_SKIN_MAP[skinKey]) {
+    return LEGACY_SKIN_MAP[skinKey];
+  }
+  
+  // Use dynamic mapping from scanned images
+  return SKIN_KEY_TO_LOCAL_MAP_DYNAMIC[skinKey] || null;
 };
 
 /**
@@ -135,32 +101,38 @@ export const getBuildingImage = (
   // If skinKey is 'A', 'B', or 'C', use it directly
   if (skinKey === 'A' || skinKey === 'B' || skinKey === 'C') {
     const images = BUILDING_IMAGES[type];
-    if (!images) return warehouse1A;
-    const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
+    if (!images) return null;
+    
+    // Get structure to know max level
+    const structure = getBuildingStructure(type);
+    const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
     const levelImages = images[validLevel];
+    
+    if (!levelImages) return null;
     
     // For C variant, fallback to B if not available, then to A
     if (skinKey === 'C') {
-      const cImage = levelImages && 'C' in levelImages ? levelImages.C : null;
+      const cImage = levelImages['C'];
       if (cImage) return cImage;
-      return levelImages?.B || levelImages?.A || images[1]?.A || warehouse1A;
+      return levelImages['B'] || levelImages['A'] || images[1]?.A || null;
     }
-    return levelImages?.[skinKey] || images[1]?.A || warehouse1A;
+    return levelImages[skinKey] || images[1]?.A || null;
   }
   
   // If no skinKey is provided, use default 'A' variant for the level
   if (!skinKey) {
     const images = BUILDING_IMAGES[type];
-    if (!images) return warehouse1A;
-    const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
-    return images[validLevel]?.A || images[1]?.A || warehouse1A;
+    if (!images) return null;
+    const structure = getBuildingStructure(type);
+    const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+    return images[validLevel]?.A || images[1]?.A || null;
   }
   
   // Try to map skin_key to local image
   const localSkin = mapSkinKeyToLocal(skinKey);
   if (localSkin) {
     const images = BUILDING_IMAGES[type];
-    if (!images) return warehouse1A;
+    if (!images) return null;
     
     // Extract level from skin_key if format is {type}_{level}{variant}
     // e.g., 'corral_2A' -> level 2, 'warehouse_5A' -> level 5
@@ -169,14 +141,16 @@ export const getBuildingImage = (
       const levelMatch = skinKey.match(/_(\d+)[ABC]/);
       if (levelMatch) {
         const extractedLevel = parseInt(levelMatch[1], 10);
-        if (extractedLevel >= 1 && extractedLevel <= 5) {
+        const structure = getBuildingStructure(type);
+        if (extractedLevel >= 1 && extractedLevel <= structure.maxLevel) {
           imageLevel = extractedLevel;
         }
       }
     }
     
-    const validLevel = Math.max(1, Math.min(5, imageLevel)) as 1 | 2 | 3 | 4 | 5;
-    return images[validLevel]?.[localSkin] || images[1]?.A || warehouse1A;
+    const structure = getBuildingStructure(type);
+    const validLevel = Math.max(1, Math.min(structure.maxLevel, imageLevel));
+    return images[validLevel]?.[localSkin] || images[1]?.A || null;
   }
   
   // If no local image mapping, return null to indicate should use emoji
@@ -203,7 +177,41 @@ export const getBuildingDisplay = (
     return { type: 'image', src: image };
   }
   
-  // Fallback to emoji from skinInfo or default
-  const emoji = skinInfo?.image_url || '🏚️';
-  return { type: 'emoji', emoji };
+  // If skinInfo has an image_url, check if it's a valid URL or emoji
+  if (skinInfo?.image_url) {
+    // Ignore paths that start with /src/ as they don't work in the browser
+    // These are development paths that should be handled by getBuildingImage
+    if (skinInfo.image_url.startsWith('/src/')) {
+      // Fallback to default emoji since the path won't work
+      return { type: 'emoji', emoji: '🏚️' };
+    }
+    
+    // Check if it looks like a valid URL (http/https) or absolute path
+    const isUrl = skinInfo.image_url.startsWith('http://') || 
+                  skinInfo.image_url.startsWith('https://') ||
+                  skinInfo.image_url.startsWith('/');
+    
+    // Check if it ends with image extensions
+    const isImageFile = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(skinInfo.image_url);
+    
+    if (isUrl && isImageFile && !skinInfo.image_url.startsWith('/src/')) {
+      // Try to use it as an image URL
+      return { type: 'image', src: skinInfo.image_url };
+    }
+    
+    // Otherwise treat it as an emoji (single character or emoji)
+    // Emojis are typically 1-2 characters or contain emoji unicode ranges
+    const isEmoji = skinInfo.image_url.length <= 2 || 
+                    /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(skinInfo.image_url);
+    
+    if (isEmoji) {
+      return { type: 'emoji', emoji: skinInfo.image_url };
+    }
+    
+    // If it doesn't look like an emoji or valid URL, use default
+    return { type: 'emoji', emoji: '🏚️' };
+  }
+  
+  // Fallback to default emoji
+  return { type: 'emoji', emoji: '🏚️' };
 };

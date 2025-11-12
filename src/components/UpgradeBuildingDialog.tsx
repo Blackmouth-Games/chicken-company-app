@@ -45,20 +45,26 @@ export const UpgradeBuildingDialog = ({
   const { playSound } = useAudio();
   const { getSkinByKey } = useBuildingSkins(buildingType);
 
-  // Fetch building to get selected_skin
+  // Fetch building to get selected_skin - refetch every time modal opens
   useEffect(() => {
     if (open && buildingId && userId) {
-      supabase
-        .from("user_buildings")
-        .select("*")
-        .eq("id", buildingId)
-        .eq("user_id", userId)
-        .single()
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setBuilding(data);
-          }
-        });
+      const fetchBuilding = async () => {
+        const { data, error } = await supabase
+          .from("user_buildings")
+          .select("*")
+          .eq("id", buildingId)
+          .eq("user_id", userId)
+          .single();
+        
+        if (!error && data) {
+          setBuilding(data);
+        }
+      };
+      
+      fetchBuilding();
+    } else if (!open) {
+      // Reset building when dialog closes to force refresh on next open
+      setBuilding(null);
     }
   }, [open, buildingId, userId]);
 

@@ -125,7 +125,7 @@ const Home = () => {
       marketBuilding?.selected_skin || null,
       marketSkinInfo || undefined
     );
-  }, [marketBuilding?.selected_skin, marketLevel, marketSkinInfo]);
+  }, [marketBuilding?.selected_skin, marketBuilding?.level, marketLevel, marketSkinInfo]);
 
   // Get warehouse building
   const warehouseBuilding = buildings.find(b => b.building_type === 'warehouse');
@@ -145,7 +145,7 @@ const Home = () => {
       warehouseBuilding?.selected_skin || null,
       warehouseSkinInfo || undefined
     );
-  }, [warehouseBuilding?.selected_skin, warehouseLevel, warehouseSkinInfo]);
+  }, [warehouseBuilding?.selected_skin, warehouseBuilding?.level, warehouseLevel, warehouseSkinInfo]);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;

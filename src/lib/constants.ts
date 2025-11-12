@@ -10,6 +10,7 @@ export const BUILDING_TYPES = {
   CORRAL: "corral",
   MARKET: "market",
   WAREHOUSE: "warehouse",
+  HOUSE: "house",
 } as const;
 
 export type BuildingType = typeof BUILDING_TYPES[keyof typeof BUILDING_TYPES];
