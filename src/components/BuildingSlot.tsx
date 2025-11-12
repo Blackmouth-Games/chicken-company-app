@@ -32,15 +32,16 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   }, [building?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
+  // Depend on building.selected_skin and building.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!building) return null;
     return getBuildingDisplay(
       building.building_type as BuildingType,
       building.level,
-      building.selected_skin,
+      building.selected_skin || null, // Explicitly pass null if undefined
       skinInfo || undefined
     );
-  }, [building, skinInfo]);
+  }, [building?.selected_skin, building?.level, building?.building_type, skinInfo]);
 
   if (building) {
     // Calculate visible chickens: floor(current_chickens / 10)

@@ -39,12 +39,21 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   // Depend on warehouse?.selected_skin and warehouse?.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!warehouse) return null;
-    return getBuildingDisplay(
+    const display = getBuildingDisplay(
       'warehouse',
       currentLevel,
       warehouse.selected_skin || null,
       skinInfo || undefined
     );
+    // Debug log to see what's being returned
+    console.log('[WarehouseDialog] buildingDisplay:', {
+      selected_skin: warehouse.selected_skin,
+      currentLevel,
+      displayType: display?.type,
+      hasImage: display?.type === 'image',
+      hasEmoji: display?.type === 'emoji',
+    });
+    return display;
   }, [warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {

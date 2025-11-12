@@ -71,8 +71,18 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                 {/* Market Card with Edit Button */}
                 <div className="relative border-2 border-green-300 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-6">
                   <button
-                    onClick={() => setShowSkinSelector(true)}
-                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      console.log('[MarketDialog] Edit button clicked, opening skin selector', { 
+                        market: market?.id, 
+                        userId,
+                        showSkinSelector: false 
+                      });
+                      setShowSkinSelector(true);
+                    }}
+                    className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md hover:bg-white transition-colors z-10"
+                    type="button"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
@@ -167,20 +177,18 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         />
       )}
 
-      {market && (
-        <SkinSelectorDialog
-          open={showSkinSelector}
-          onOpenChange={setShowSkinSelector}
-          buildingId={market.id}
-          buildingType={BUILDING_TYPES.MARKET}
-          userId={userId}
-          currentSkin={market.selected_skin || null}
-          onSkinSelected={() => {
-            refetch();
-            setShowSkinSelector(false);
-          }}
-        />
-      )}
+      <SkinSelectorDialog
+        open={showSkinSelector}
+        onOpenChange={setShowSkinSelector}
+        buildingId={market?.id}
+        buildingType={BUILDING_TYPES.MARKET}
+        userId={userId}
+        currentSkin={market?.selected_skin || null}
+        onSkinSelected={() => {
+          refetch();
+          setShowSkinSelector(false);
+        }}
+      />
     </>
   );
 };

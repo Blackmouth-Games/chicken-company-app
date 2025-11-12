@@ -62,11 +62,34 @@ function parseImageFileName(fileName: string): ParsedImage | null {
   const level = parseInt(levelStr, 10);
   if (isNaN(level) || level < 1 || level > 99) return null;
   
+  // Find the correct URL from buildingImageModules
+  // The key in buildingImageModules is the full file path like '/src/assets/buildings/warehouse_1A.png'
+  let imageUrl: string | undefined;
+  
+  // Try exact match first
+  const exactKey = `/src/assets/buildings/${baseName}`;
+  if (buildingImageModules[exactKey]) {
+    imageUrl = buildingImageModules[exactKey];
+  } else {
+    // Fallback: search by filename
+    for (const [key, url] of Object.entries(buildingImageModules)) {
+      // Match by filename (with or without path)
+      if (key.includes(baseName) || key.endsWith(`/${baseName}`) || key.endsWith(`\\${baseName}`)) {
+        imageUrl = url;
+        break;
+      }
+    }
+  }
+  
+  if (!imageUrl) {
+    console.warn(`[parseImageFileName] Could not find image URL for: ${baseName}, available keys:`, Object.keys(buildingImageModules).slice(0, 5));
+  }
+  
   return {
     buildingType,
     level,
     variant: variant.toUpperCase(),
-    url: buildingImageModules[fileName],
+    url: imageUrl || '',
     fileName: nameWithoutExt, // Return without extension
   };
 }
@@ -79,9 +102,17 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
   
   for (const [filePath, url] of Object.entries(buildingImageModules)) {
     const parsed = parseImageFileName(filePath);
-    if (!parsed) continue;
+    if (!parsed) {
+      console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
+      continue;
+    }
     
     const { buildingType, level, variant, url: imageUrl } = parsed;
+    
+    if (!imageUrl) {
+      console.warn(`[buildDynamicImages] No URL found for ${buildingType} level ${level} variant ${variant} (file: ${filePath})`);
+      continue;
+    }
     
     if (!images[buildingType]) {
       images[buildingType] = {};
@@ -92,6 +123,13 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
     
     images[buildingType][level][variant] = imageUrl;
   }
+  
+  // Debug: log what was built
+  console.log('[buildDynamicImages] Built images structure:', {
+    types: Object.keys(images),
+    warehouse: images['warehouse'] ? Object.keys(images['warehouse']) : 'not found',
+    corral: images['corral'] ? Object.keys(images['corral']) : 'not found',
+  });
   
   return images;
 }

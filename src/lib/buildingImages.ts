@@ -122,10 +122,17 @@ export const getBuildingImage = (
   // If no skinKey is provided, use default 'A' variant for the level
   if (!skinKey) {
     const images = BUILDING_IMAGES[type];
-    if (!images) return null;
+    if (!images) {
+      console.warn(`[getBuildingImage] No images found for building type: ${type}`);
+      return null;
+    }
     const structure = getBuildingStructure(type);
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
-    return images[validLevel]?.A || images[1]?.A || null;
+    const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+    if (!defaultImage) {
+      console.warn(`[getBuildingImage] No default image found for ${type} level ${validLevel}, available levels:`, Object.keys(images));
+    }
+    return defaultImage;
   }
   
   // Try to map skin_key to local image
