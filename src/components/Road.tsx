@@ -142,6 +142,12 @@ export const Road = ({
           ${getDraggingBorderColor()}
         `}
         onMouseDown={onMouseDown}
+        style={{
+          // Extend slightly beyond boundaries to cover gaps
+          margin: '-0.5px',
+          width: 'calc(100% + 1px)',
+          height: 'calc(100% + 1px)',
+        }}
       >
         {/* Road image */}
         <img 

@@ -119,95 +119,83 @@ export const SkinSelectorDialog = ({
   const loading = skinsLoading || itemsLoading;
 
   // Create inventory slots organized by level and variant
-  // Structure is now determined dynamically from available skins in database
+  // Now supports 10 skins per level (A-J or 1-10)
+  // Only shows: owned skins, default skins, and empty slots for default skins not owned
   const inventorySlots = useMemo(() => {
     let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null }> = [];
     
-    // Extract all unique levels and variants from skins in database
+    // Extract all unique levels from skins in database
     const levelSet = new Set<number>();
-    const variantMap = new Map<number, Set<string>>();
     
-    // Scan all skins to find available levels and variants
+    // Scan all skins to find available levels
     for (const skin of skins) {
-      const levelMatch = skin.skin_key.match(/_(\d+)([ABC])/);
+      // Support both old format (A, B, C) and new format (1-10 or A-J)
+      const levelMatch = skin.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
       if (levelMatch) {
         const level = parseInt(levelMatch[1], 10);
-        const variant = levelMatch[2];
         levelSet.add(level);
-        if (!variantMap.has(level)) {
-          variantMap.set(level, new Set());
-        }
-        variantMap.get(level)!.add(variant);
       }
     }
     
-    // If no skins found, use default structure
-    if (levelSet.size === 0) {
-      const defaultStructure: Record<string, { maxLevel: number; variants: string[] }> = {
-        corral: { maxLevel: 5, variants: ['A', 'B'] },
-        warehouse: { maxLevel: 5, variants: ['A', 'B'] },
-        market: { maxLevel: 5, variants: ['A', 'B'] },
-        house: { maxLevel: 1, variants: ['A', 'B', 'C'] },
-      };
-      const config = defaultStructure[buildingType] || { maxLevel: 5, variants: ['A', 'B'] };
-      
-      for (let level = 1; level <= config.maxLevel; level++) {
-        for (const variant of config.variants) {
-          if (buildingType === 'warehouse' && level > 1 && variant === 'B') {
-            continue;
-          }
-          const skinKey = `${buildingType}_${level}${variant}`;
-          const skin = skins.find(s => s.skin_key === skinKey) || null;
-          slots.push({ level, variant, skin });
-        }
-      }
-    } else {
-      // Use dynamic structure from database
-      const levels = Array.from(levelSet).sort((a, b) => a - b);
-      const maxLevel = Math.max(...levels);
-      
-      // First, add all slots that have skins (owned or default)
-      for (let level = 1; level <= maxLevel; level++) {
-        // Get variants for this level, or use default variants
-        const levelVariants = variantMap.get(level);
-        const variants = levelVariants ? Array.from(levelVariants).sort() : ['A', 'B'];
+    // Get max level from database or use default
+    const levels = levelSet.size > 0 ? Array.from(levelSet).sort((a, b) => a - b) : [1, 2, 3, 4, 5];
+    const maxLevel = levels.length > 0 ? Math.max(...levels) : 5;
+    
+    // Generate 10 variants per level (A-J)
+    const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    
+    // For each level, create slots for all 10 variants
+    for (let level = 1; level <= maxLevel; level++) {
+      for (const variant of variants) {
+        const skinKey = `${buildingType}_${level}${variant}`;
+        const skin = skins.find(s => s.skin_key === skinKey) || null;
         
-        // For warehouse, only level 1 has variant B
-        if (buildingType === 'warehouse' && level > 1) {
-          const filteredVariants = variants.filter(v => v !== 'B');
-          for (const variant of filteredVariants.length > 0 ? filteredVariants : ['A']) {
-            const skinKey = `${buildingType}_${level}${variant}`;
-            const skin = skins.find(s => s.skin_key === skinKey) || null;
+        // Only include slot if:
+        // 1. Skin exists and is owned by user
+        // 2. Skin exists and is default (is_default = true)
+        // 3. Skin doesn't exist but we want to show empty slots for defaults
+        if (skin) {
+          const isOwned = skin.is_default || hasItem("skin", skin.skin_key);
+          const isDefault = skin.is_default;
+          
+          // Only add if owned or default
+          if (isOwned || isDefault) {
             slots.push({ level, variant, skin });
           }
         } else {
-          for (const variant of variants) {
-            const skinKey = `${buildingType}_${level}${variant}`;
-            const skin = skins.find(s => s.skin_key === skinKey) || null;
-            slots.push({ level, variant, skin });
+          // For empty slots, we'll add them later only for default positions
+          // We'll check if there's a default skin for this level that should be shown
+          // For now, skip empty slots that don't correspond to defaults
+        }
+      }
+    }
+    
+    // Now add empty slots for default skins that user doesn't own
+    // Find all default skins and add empty slots for those the user doesn't have
+    for (let level = 1; level <= maxLevel; level++) {
+      for (const variant of variants) {
+        const skinKey = `${buildingType}_${level}${variant}`;
+        const skin = skins.find(s => s.skin_key === skinKey);
+        
+        // If it's a default skin but user doesn't own it, add empty slot
+        if (skin && skin.is_default && !hasItem("skin", skin.skin_key)) {
+          // Check if we already added this slot
+          const alreadyAdded = slots.some(s => s.level === level && s.variant === variant);
+          if (!alreadyAdded) {
+            slots.push({ level, variant, skin: null }); // Empty slot for default skin not owned
           }
         }
       }
-      
-      // Count empty slots
-      const emptySlots = slots.filter(slot => !slot.skin);
-      
-      // If there are more than 2 empty slots, remove the excess
-      if (emptySlots.length > 2) {
-        // Keep only the first 1-2 empty slots
-        let emptyCount = 0;
-        slots = slots.filter(slot => {
-          if (!slot.skin) {
-            emptyCount++;
-            return emptyCount <= 2; // Keep only first 2 empty slots
-          }
-          return true; // Keep all slots with skins
-        });
-      }
     }
+    
+    // Sort slots by level, then by variant
+    slots.sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level;
+      return a.variant.localeCompare(b.variant);
+    });
 
     return slots;
-  }, [skins, buildingType]);
+  }, [skins, buildingType, hasItem]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -247,12 +235,25 @@ export const SkinSelectorDialog = ({
                       <h3 className="text-lg font-semibold text-muted-foreground">
                         Nivel {level}
                       </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {levelSlots.map((slot, index) => {
                           const skin = slot.skin;
                           const isOwned = skin ? (skin.is_default || hasItem("skin", skin.skin_key)) : false;
                           const isSelected = skin ? (currentSkin === skin.skin_key || (!currentSkin && skin.is_default)) : false;
                           const isEmpty = !skin;
+                          
+                          // For empty slots, only show if they represent a default skin the user doesn't own
+                          if (isEmpty) {
+                            // Check if this empty slot corresponds to a default skin
+                            const defaultSkin = skins.find(s => 
+                              s.skin_key === `${buildingType}_${slot.level}${slot.variant}` && 
+                              s.is_default
+                            );
+                            // Only show empty slot if it's for a default skin
+                            if (!defaultSkin) {
+                              return null; // Don't render non-default empty slots
+                            }
+                          }
 
                           // Get building display for owned skins
                           const skinDisplay = skin ? getBuildingDisplay(

@@ -618,7 +618,7 @@ const Home = () => {
   const { eggs } = useEggSystem(allBelts, buildings);
   
   // Vehicle system - must be after roads are defined
-  const { vehicles } = useVehicleSystem(allRoads);
+  const { vehicles } = useVehicleSystem(allRoads, marketLevel);
   
   // Debug: Send belt information to DebugPanel
   useEffect(() => {

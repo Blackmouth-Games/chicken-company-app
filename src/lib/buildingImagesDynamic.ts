@@ -40,8 +40,9 @@ function parseImageFileName(fileName: string): ParsedImage | null {
   const nameWithoutExt = baseName.replace(/\.[^.]+$/, '');
   
   // Match pattern: {type}_{level}{variant}
-  // Examples: coop_1A, warehouse_5A, house_1C
-  const match = nameWithoutExt.match(/^([a-z]+)_(\d+)([A-Z])$/i);
+  // Examples: coop_1A, warehouse_5A, house_1C, corral_2J (supports A-J for 10 variants)
+  // Also supports numeric variants: corral_21, warehouse_35 (for variants 1-10)
+  const match = nameWithoutExt.match(/^([a-z]+)_(\d+)([A-J]|\d{1,2})$/i);
   
   if (!match) return null;
   
@@ -62,6 +63,14 @@ function parseImageFileName(fileName: string): ParsedImage | null {
   const level = parseInt(levelStr, 10);
   if (isNaN(level) || level < 1 || level > 99) return null;
   
+  // Normalize variant: if it's a number (1-10), convert to letter (A-J)
+  let normalizedVariant = variant.toUpperCase();
+  const variantNum = parseInt(variant, 10);
+  if (!isNaN(variantNum) && variantNum >= 1 && variantNum <= 10) {
+    // Convert 1-10 to A-J
+    normalizedVariant = String.fromCharCode(64 + variantNum); // 1->A, 2->B, ..., 10->J
+  }
+
   // Find the correct URL from buildingImageModules
   // The key in buildingImageModules is the full file path like '/src/assets/buildings/warehouse_1A.png'
   let imageUrl: string | undefined;
@@ -88,7 +97,7 @@ function parseImageFileName(fileName: string): ParsedImage | null {
   return {
     buildingType,
     level,
-    variant: variant.toUpperCase(),
+    variant: normalizedVariant,
     url: imageUrl || '',
     fileName: nameWithoutExt, // Return without extension
   };
@@ -137,8 +146,8 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
 /**
  * Build dynamic SKIN_KEY_TO_LOCAL_MAP from scanned images
  */
-function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C'> {
-  const map: Record<string, 'A' | 'B' | 'C'> = {};
+function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J'> {
+  const map: Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J'> = {};
   
   for (const filePath of Object.keys(buildingImageModules)) {
     const parsed = parseImageFileName(filePath);
@@ -147,9 +156,9 @@ function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C'> {
     const { buildingType, level, variant } = parsed;
     const skinKey = `${buildingType}_${level}${variant}`;
     
-    // Only map valid variants
-    if (variant === 'A' || variant === 'B' || variant === 'C') {
-      map[skinKey] = variant as 'A' | 'B' | 'C';
+    // Map all valid variants (A-J for 10 skins per level)
+    if (['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'].includes(variant)) {
+      map[skinKey] = variant as 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J';
     }
   }
   

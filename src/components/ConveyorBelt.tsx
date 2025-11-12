@@ -197,6 +197,12 @@ export const ConveyorBelt = ({
           isEditMode ? 'cursor-move' : ''
         }`}
         onMouseDown={onMouseDown}
+        style={{
+          // Extend slightly beyond boundaries to cover gaps
+          margin: '-0.5px',
+          width: 'calc(100% + 1px)',
+          height: 'calc(100% + 1px)',
+        }}
       >
         {/* Belt image */}
         <img 

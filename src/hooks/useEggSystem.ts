@@ -25,11 +25,15 @@ interface Belt {
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
 const EGG_SPAWN_INTERVAL = 3000; // Spawn egg every 3 seconds per corral
+const MAX_EGGS = 50; // Maximum number of eggs in the system
+const EGG_MAX_AGE = 60000; // Maximum age for an egg (60 seconds) before removal
 
 export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const [eggs, setEggs] = useState<Egg[]>([]);
   const animationFrameRef = useRef<number>();
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
+  const eggCreationTimeRef = useRef<Map<string, number>>(new Map());
+  const isPageVisibleRef = useRef(true);
 
   // Get corrals from buildings - handle undefined/null
   const corrals = (buildings || []).filter(b => b && b.building_type === 'corral');
@@ -115,28 +119,48 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const beltPos = parseGridNotation(outputBelt.gridColumn);
     const beltRow = parseGridNotation(outputBelt.gridRow);
     
-    const newEgg: Egg = {
-      id: `egg-${Date.now()}-${Math.random()}`,
-      currentBeltId: outputBelt.id,
-      currentCol: beltPos.start,
-      currentRow: beltRow.start,
-      progress: 0,
-      path,
-      pathIndex: 0,
-      corralId,
-    };
-    
-    setEggs(prev => [...prev, newEgg]);
+    // Check if we've reached max eggs limit
+    setEggs(prev => {
+      if (prev.length >= MAX_EGGS) {
+        // Don't spawn if we're at max capacity
+        return prev;
+      }
+      
+      const newEgg: Egg = {
+        id: `egg-${Date.now()}-${Math.random()}`,
+        currentBeltId: outputBelt.id,
+        currentCol: beltPos.start,
+        currentRow: beltRow.start,
+        progress: 0,
+        path,
+        pathIndex: 0,
+        corralId,
+      };
+      
+      // Track creation time for age-based removal
+      eggCreationTimeRef.current.set(newEgg.id, Date.now());
+      
+      return [...prev, newEgg];
+    });
   }, [belts, findOutputBelt, calculatePath]);
 
   // Update egg positions
   const updateEggs = useCallback(() => {
+    const now = Date.now();
     setEggs(prevEggs => {
       return prevEggs.map(egg => {
+        // Check if egg is too old (stuck or lost)
+        const creationTime = eggCreationTimeRef.current.get(egg.id);
+        if (creationTime && (now - creationTime) > EGG_MAX_AGE) {
+          eggCreationTimeRef.current.delete(egg.id);
+          return null; // Remove old eggs
+        }
+        
         // Find current belt
         const currentBelt = belts.find(b => b.id === egg.currentBeltId);
         if (!currentBelt) {
           // Belt no longer exists, remove egg
+          eggCreationTimeRef.current.delete(egg.id);
           return null;
         }
         
@@ -147,19 +171,22 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         if (newProgress >= 1) {
           const nextPathIndex = egg.pathIndex + 1;
           if (nextPathIndex >= egg.path.length) {
-            // Reached end of path - check if we're at destiny belt
-            if (currentBelt.isDestiny) {
-              // Remove egg when it reaches destiny
-              return null;
-            }
-            // No more path and not at destiny, remove egg to prevent accumulation
+          // Reached end of path - check if we're at destiny belt
+          if (currentBelt.isDestiny) {
+            // Remove egg when it reaches destiny
+            eggCreationTimeRef.current.delete(egg.id);
             return null;
+          }
+          // No more path and not at destiny, remove egg to prevent accumulation
+          eggCreationTimeRef.current.delete(egg.id);
+          return null;
           }
           
           const nextBeltId = egg.path[nextPathIndex];
           const nextBelt = belts.find(b => b.id === nextBeltId);
           if (!nextBelt) {
             // Next belt doesn't exist, remove egg
+            eggCreationTimeRef.current.delete(egg.id);
             return null;
           }
           
@@ -195,13 +222,33 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         // Check if egg reached destiny (after progress update)
         if (currentBelt.isDestiny && newProgress >= 1) {
           // Remove egg when it reaches destiny
+          eggCreationTimeRef.current.delete(egg.id);
           return null;
         }
         
         return { ...egg, progress: newProgress };
-      }).filter((egg): egg is Egg => egg !== null);
+      }).filter((egg): egg is Egg => {
+        if (egg === null) return false;
+        // Also remove eggs that are no longer tracked (shouldn't happen, but safety check)
+        if (!eggCreationTimeRef.current.has(egg.id)) {
+          return false;
+        }
+        return true;
+      });
     });
   }, [belts]);
+
+  // Monitor page visibility to pause spawning when tab is hidden
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isPageVisibleRef.current = !document.hidden;
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // Spawn eggs from corrals periodically with async delays
   useEffect(() => {
@@ -224,6 +271,9 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     });
 
     const interval = setInterval(() => {
+      // Don't spawn eggs if page is not visible
+      if (!isPageVisibleRef.current) return;
+      
       const now = Date.now();
       corrals.forEach(corral => {
         // Use position_index as slotPosition

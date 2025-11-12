@@ -25,11 +25,31 @@ interface Road {
   isTransport?: boolean;
 }
 
-const VEHICLE_SPEED = 0.015; // Progress increment per frame (slower than eggs)
-const VEHICLE_SPAWN_INTERVAL = 5000; // Spawn vehicle every 5 seconds per route
+const BASE_VEHICLE_SPEED = 0.015; // Base progress increment per frame (slower than eggs)
+const BASE_VEHICLE_SPAWN_INTERVAL = 30000; // Base spawn interval: 30 seconds per route (much higher)
 const VEHICLE_WAIT_TIME = 2000; // Wait 2 seconds at destination before returning
+const MAX_VEHICLES = 1; // Only one vehicle at a time
 
-export const useVehicleSystem = (roads: Road[]) => {
+// Calculate vehicle speed based on market level
+// Higher level = faster speed
+const getVehicleSpeed = (marketLevel: number): number => {
+  // Level 1 = base speed, level 5 = 2x speed
+  const speedMultiplier = 1 + (marketLevel - 1) * 0.25; // 1.0, 1.25, 1.5, 1.75, 2.0
+  return BASE_VEHICLE_SPEED * speedMultiplier;
+};
+
+// Calculate spawn interval based on market level
+// Higher level = shorter interval (more frequent spawns), but still much higher than before
+const getVehicleSpawnInterval = (marketLevel: number): number => {
+  // Level 1 = 30000ms (30s), level 2 = 25000ms (25s), level 3 = 20000ms (20s), level 4 = 15000ms (15s), level 5 = 10000ms (10s)
+  const interval = BASE_VEHICLE_SPAWN_INTERVAL - (marketLevel - 1) * 5000;
+  return Math.max(10000, interval); // Minimum 10 seconds
+};
+
+export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
+  // Calculate dynamic values based on market level
+  const vehicleSpeed = getVehicleSpeed(marketLevel);
+  const vehicleSpawnInterval = getVehicleSpawnInterval(marketLevel);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const animationFrameRef = useRef<number>();
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
@@ -205,8 +225,8 @@ export const useVehicleSystem = (roads: Road[]) => {
           return null;
         }
         
-        // Update progress
-        let newProgress = vehicle.progress + VEHICLE_SPEED;
+        // Update progress (speed varies by market level)
+        let newProgress = vehicle.progress + vehicleSpeed;
         
         // If progress >= 1, move to next road in path
         if (newProgress >= 1) {
@@ -248,9 +268,10 @@ export const useVehicleSystem = (roads: Road[]) => {
         return { ...vehicle, progress: newProgress };
       }).filter((vehicle): vehicle is Vehicle => vehicle !== null);
     });
-  }, [roads, calculatePath]);
+  }, [roads, calculatePath, vehicleSpeed]);
 
   // Spawn vehicles from point A to point B periodically
+  // Only spawn if there are no vehicles currently in the system
   useEffect(() => {
     const pointA = findPointA();
     const pointB = findPointB();
@@ -260,22 +281,48 @@ export const useVehicleSystem = (roads: Road[]) => {
     const routeKey = `${pointA.id}-${pointB.id}`;
     
     const interval = setInterval(() => {
-      const now = Date.now();
-      const lastSpawn = lastSpawnTimeRef.current.get(routeKey) || 0;
-      
-      if (now - lastSpawn >= VEHICLE_SPAWN_INTERVAL) {
-        // Add random delay for async spawning
-        const randomDelay = Math.random() * 1000;
-        setTimeout(() => {
-          spawnVehicle(pointA, pointB);
-        }, randomDelay);
+      // Only spawn if we have less than MAX_VEHICLES
+      setVehicles(currentVehicles => {
+        if (currentVehicles.length >= MAX_VEHICLES) {
+          // Already at max vehicles, don't spawn
+          return currentVehicles;
+        }
         
-        lastSpawnTimeRef.current.set(routeKey, now);
-      }
+        const now = Date.now();
+        const lastSpawn = lastSpawnTimeRef.current.get(routeKey) || 0;
+        
+        if (now - lastSpawn >= vehicleSpawnInterval) {
+          // Spawn new vehicle
+          const path = calculatePath(pointA, pointB, roads, true);
+          if (path.length > 0 && path[path.length - 1] === pointB.id) {
+            const roadPos = parseGridNotation(pointA.gridColumn);
+            const roadRow = parseGridNotation(pointA.gridRow);
+            
+            const newVehicle: Vehicle = {
+              id: `vehicle-${Date.now()}-${Math.random()}`,
+              currentRoadId: pointA.id,
+              currentCol: roadPos.start,
+              currentRow: roadRow.start,
+              progress: 0,
+              path,
+              pathIndex: 0,
+              isLoaded: false, // Starting empty (vacío)
+              goingToB: true, // Going from A to B
+              pointAId: pointA.id,
+              pointBId: pointB.id,
+            };
+            
+            lastSpawnTimeRef.current.set(routeKey, now);
+            return [...currentVehicles, newVehicle];
+          }
+        }
+        
+        return currentVehicles;
+      });
     }, 1000); // Check every second
     
     return () => clearInterval(interval);
-  }, [findPointA, findPointB, spawnVehicle]);
+  }, [findPointA, findPointB, roads, calculatePath, vehicleSpawnInterval]);
 
   // Animation loop
   useEffect(() => {
