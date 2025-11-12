@@ -136,7 +136,11 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
   // Debug: log what was built
   console.log('[buildDynamicImages] Built images structure:', {
     types: Object.keys(images),
-    warehouse: images['warehouse'] ? Object.keys(images['warehouse']) : 'not found',
+    warehouse: images['warehouse'] ? {
+      levels: Object.keys(images['warehouse']),
+      level1: images['warehouse'][1] ? Object.keys(images['warehouse'][1]) : 'no level 1',
+      level1A: images['warehouse'][1]?.['A'] || 'no 1A',
+    } : 'not found',
     corral: images['corral'] ? Object.keys(images['corral']) : 'not found',
   });
   

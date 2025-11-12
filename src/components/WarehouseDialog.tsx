@@ -65,16 +65,9 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       currentLevel,
       displayType: display?.type,
       hasImage: display?.type === 'image',
-      hasEmoji: display?.type === 'emoji',
       imageSrc: display?.type === 'image' ? display.src : null,
-      emoji: display?.type === 'emoji' ? display.emoji : null,
       skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
     });
-    
-    // If we got an emoji but we should have an image, log a warning
-    if (display?.type === 'emoji') {
-      console.warn('[WarehouseDialog] Got emoji instead of image. This might indicate missing warehouse images.');
-    }
     
     return display;
   }, [warehouse, warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
@@ -116,27 +109,18 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay ? (
-                      buildingDisplay.type === 'image' ? (
-                        <img 
-                          src={buildingDisplay.src} 
-                          alt="Warehouse" 
-                          className="w-52 h-52 object-contain"
-                          onError={(e) => {
-                            console.error('[WarehouseDialog] Image failed to load:', buildingDisplay.src);
-                            // Fallback to emoji if image fails to load
-                            e.currentTarget.style.display = 'none';
-                            const emojiDiv = e.currentTarget.nextElementSibling as HTMLElement;
-                            if (emojiDiv) {
-                              emojiDiv.style.display = 'block';
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="text-9xl">{buildingDisplay.emoji || '🏭'}</div>
-                      )
+                    {buildingDisplay && buildingDisplay.type === 'image' ? (
+                      <img 
+                        src={buildingDisplay.src} 
+                        alt="Warehouse" 
+                        className="w-52 h-52 object-contain"
+                        onError={(e) => {
+                          console.error('[WarehouseDialog] Image failed to load:', buildingDisplay.src);
+                          console.error('[WarehouseDialog] This should not happen - image should always be available');
+                        }}
+                      />
                     ) : (
-                      <div className="text-9xl">🏭</div>
+                      <div className="text-9xl">🏚️</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-blue-900 text-lg">Almacén</h3>

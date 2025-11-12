@@ -1092,14 +1092,14 @@ const Home = () => {
                   <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
                     {warehouseLevel}
                   </div>
-                  {warehouseDisplay?.type === 'image' ? (
+                  {warehouseDisplay && warehouseDisplay.type === 'image' ? (
                     <img 
                       src={warehouseDisplay.src} 
                       alt="Warehouse" 
                       className="w-full h-full object-contain pointer-events-none"
                     />
                   ) : (
-                    <div className="text-4xl md:text-5xl pointer-events-none">{warehouseDisplay?.emoji || '🏚️'}</div>
+                    <div className="text-4xl md:text-5xl pointer-events-none">🏚️</div>
                   )}
                   {isEditMode && (
                     <>
@@ -1187,14 +1187,14 @@ const Home = () => {
                   <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
                     {marketLevel}
                   </div>
-                  {marketDisplay?.type === 'image' ? (
+                  {marketDisplay && marketDisplay.type === 'image' ? (
                     <img 
                       src={marketDisplay.src} 
                       alt="Market" 
                       className="w-full h-full object-contain pointer-events-none"
                     />
                   ) : (
-                    <div className="text-4xl md:text-5xl pointer-events-none">{marketDisplay?.emoji || '🏪'}</div>
+                    <div className="text-4xl md:text-5xl pointer-events-none">🏪</div>
                   )}
                   {isEditMode && (
                     <>

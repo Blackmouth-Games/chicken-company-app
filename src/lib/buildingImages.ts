@@ -124,13 +124,18 @@ export const getBuildingImage = (
     const images = BUILDING_IMAGES[type];
     if (!images) {
       console.warn(`[getBuildingImage] No images found for building type: ${type}`);
+      console.warn(`[getBuildingImage] Available types in BUILDING_IMAGES:`, Object.keys(BUILDING_IMAGES));
       return null;
     }
     const structure = getBuildingStructure(type);
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
     const defaultImage = images[validLevel]?.A || images[1]?.A || null;
     if (!defaultImage) {
-      console.warn(`[getBuildingImage] No default image found for ${type} level ${validLevel}, available levels:`, Object.keys(images), `available variants for level ${validLevel}:`, images[validLevel] ? Object.keys(images[validLevel]) : 'none');
+      console.warn(`[getBuildingImage] No default image found for ${type} level ${validLevel}`);
+      console.warn(`[getBuildingImage] Available levels:`, Object.keys(images));
+      console.warn(`[getBuildingImage] Level ${validLevel} variants:`, images[validLevel] ? Object.keys(images[validLevel]) : 'none');
+      console.warn(`[getBuildingImage] Level 1 variants:`, images[1] ? Object.keys(images[1]) : 'none');
+      console.warn(`[getBuildingImage] Level 1 A image:`, images[1]?.['A'] || 'not found');
     } else {
       console.log(`[getBuildingImage] Using default 'A' variant for ${type} level ${validLevel}:`, defaultImage);
     }
@@ -167,109 +172,73 @@ export const getBuildingImage = (
 };
 
 /**
- * Gets building display (image or emoji) based on skin
+ * Gets building display (ALWAYS returns an image, never an emoji)
+ * If no skin is selected, uses the default _1A image for the level
  * @param type Building type
  * @param level Building level
  * @param skinKey Database skin_key
- * @param skinInfo Optional skin info from database with image_url (emoji)
- * @returns Object with either image (string) or emoji (string)
+ * @param skinInfo Optional skin info from database with image_url
+ * @returns Object with image (string) - NEVER returns emoji
  */
 export const getBuildingDisplay = (
   type: BuildingType,
   level: number,
   skinKey?: string | null,
   skinInfo?: { image_url: string } | null
-): { type: 'image'; src: string } | { type: 'emoji'; emoji: string } => {
-  const image = getBuildingImage(type, level, skinKey, skinInfo);
+): { type: 'image'; src: string } => {
+  // First, try to get the image using getBuildingImage
+  let image = getBuildingImage(type, level, skinKey, skinInfo);
   
+  // If we got an image, return it
   if (image) {
     return { type: 'image', src: image };
   }
   
-  // If we didn't get an image, try to get the default 'A' variant one more time
-  // This ensures we always try to show an image before falling back to emoji
-  if (!image) {
-    const images = BUILDING_IMAGES[type];
-    if (images) {
-      const structure = getBuildingStructure(type);
-      const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
-      const defaultImage = images[validLevel]?.A || images[1]?.A || null;
-      if (defaultImage) {
-        console.log(`[getBuildingDisplay] Using fallback default image for ${type} level ${validLevel}:`, defaultImage);
-        return { type: 'image', src: defaultImage };
-      }
-    }
-  }
-  
-  // If skinInfo has an image_url, check if it's a valid URL or emoji
-  if (skinInfo?.image_url) {
-    // Ignore paths that start with /src/ as they don't work in the browser
-    // These are development paths that should be handled by getBuildingImage
-    if (skinInfo.image_url.startsWith('/src/')) {
-      // Try one more time to get default image before falling back to emoji
-      const images = BUILDING_IMAGES[type];
-      if (images) {
-        const structure = getBuildingStructure(type);
-        const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
-        const defaultImage = images[validLevel]?.A || images[1]?.A || null;
-        if (defaultImage) {
-          return { type: 'image', src: defaultImage };
-        }
-      }
-      // Fallback to default emoji since the path won't work
-      return { type: 'emoji', emoji: '🏚️' };
-    }
-    
-    // Check if it looks like a valid URL (http/https) or absolute path
-    const isUrl = skinInfo.image_url.startsWith('http://') || 
-                  skinInfo.image_url.startsWith('https://') ||
-                  skinInfo.image_url.startsWith('/');
-    
-    // Check if it ends with image extensions
-    const isImageFile = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(skinInfo.image_url);
-    
-    if (isUrl && isImageFile && !skinInfo.image_url.startsWith('/src/')) {
-      // Try to use it as an image URL
-      return { type: 'image', src: skinInfo.image_url };
-    }
-    
-    // Otherwise treat it as an emoji (single character or emoji)
-    // Emojis are typically 1-2 characters or contain emoji unicode ranges
-    const isEmoji = skinInfo.image_url.length <= 2 || 
-                    /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(skinInfo.image_url);
-    
-    if (isEmoji) {
-      return { type: 'emoji', emoji: skinInfo.image_url };
-    }
-    
-    // If it doesn't look like an emoji or valid URL, try default image one more time
-    const images = BUILDING_IMAGES[type];
-    if (images) {
-      const structure = getBuildingStructure(type);
-      const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
-      const defaultImage = images[validLevel]?.A || images[1]?.A || null;
-      if (defaultImage) {
-        return { type: 'image', src: defaultImage };
-      }
-    }
-    
-    // If it doesn't look like an emoji or valid URL, use default
-    return { type: 'emoji', emoji: '🏚️' };
-  }
-  
-  // Final fallback: try to get default image one more time
+  // If no image was found, ALWAYS use the default _1A image for the level
+  // This ensures we NEVER show an emoji
   const images = BUILDING_IMAGES[type];
   if (images) {
     const structure = getBuildingStructure(type);
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+    
+    // Try to get the _1A image for the current level
     const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+    
     if (defaultImage) {
-      console.log(`[getBuildingDisplay] Final fallback: using default image for ${type} level ${validLevel}:`, defaultImage);
+      console.log(`[getBuildingDisplay] Using default _1A image for ${type} level ${validLevel}:`, defaultImage);
       return { type: 'image', src: defaultImage };
     }
   }
   
-  // Last resort: fallback to default emoji
-  console.warn(`[getBuildingDisplay] No image found for ${type} level ${level}, falling back to emoji`);
-  return { type: 'emoji', emoji: '🏚️' };
+  // If skinInfo has an image_url that looks like a valid URL, try to use it
+  if (skinInfo?.image_url) {
+    // Check if it's a valid URL (http/https) or absolute path (but not /src/)
+    const isUrl = (skinInfo.image_url.startsWith('http://') || 
+                   skinInfo.image_url.startsWith('https://') ||
+                   (skinInfo.image_url.startsWith('/') && !skinInfo.image_url.startsWith('/src/')));
+    
+    // Check if it ends with image extensions
+    const isImageFile = /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(skinInfo.image_url);
+    
+    if (isUrl && isImageFile) {
+      return { type: 'image', src: skinInfo.image_url };
+    }
+  }
+  
+  // Final fallback: try to get ANY image from level 1
+  if (images && images[1]) {
+    // Try A, then B, then C, then any other variant
+    const fallbackImage = images[1]['A'] || images[1]['B'] || images[1]['C'] || 
+                          Object.values(images[1])[0] || null;
+    
+    if (fallbackImage) {
+      console.warn(`[getBuildingDisplay] Using emergency fallback image for ${type}:`, fallbackImage);
+      return { type: 'image', src: fallbackImage };
+    }
+  }
+  
+  // This should NEVER happen if images are properly set up
+  // But if it does, we'll throw an error instead of showing an emoji
+  console.error(`[getBuildingDisplay] CRITICAL: No image found for ${type} level ${level}. This should not happen!`);
+  throw new Error(`No image available for building type: ${type}, level: ${level}. Please ensure ${type}_1A.png exists in assets/buildings/`);
 };

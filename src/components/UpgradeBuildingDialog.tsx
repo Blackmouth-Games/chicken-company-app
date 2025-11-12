@@ -94,10 +94,10 @@ export const UpgradeBuildingDialog = ({
     );
   }, [buildingType, nextLevel, building?.selected_skin, skinInfo]);
 
-  // Building emojis and labels
+  // Building emojis and labels (only used as fallback if images fail to load)
   const buildingInfo: Record<string, { emoji: string; label: string; capacityLabel: string }> = {
     corral: { emoji: "🏠", label: "Corral", capacityLabel: "Max. Capacity:" },
-    warehouse: { emoji: "🏭", label: "Almacén", capacityLabel: "Max. Capacity:" },
+    warehouse: { emoji: "🏚️", label: "Almacén", capacityLabel: "Max. Capacity:" },
     market: { emoji: "🏪", label: "Market", capacityLabel: "Velocidad in" },
   };
 
@@ -217,7 +217,7 @@ export const UpgradeBuildingDialog = ({
             <div className="relative flex items-center justify-center gap-4 p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl">
               {/* Current Level */}
               <div className="flex flex-col items-center animate-in fade-in slide-in-from-left-5 duration-500">
-                {currentDisplay?.type === 'image' ? (
+                {currentDisplay && currentDisplay.type === 'image' ? (
                   <img 
                     src={currentDisplay.src} 
                     alt={`${info.label} Nivel ${currentLevel}`}
@@ -225,7 +225,7 @@ export const UpgradeBuildingDialog = ({
                   />
                 ) : (
                   <div className="text-5xl mb-2 transform transition-transform duration-300 hover:scale-110">
-                    {currentDisplay?.emoji || info.emoji}
+                    {info.emoji}
                   </div>
                 )}
                 <div className="px-2.5 py-1 bg-muted rounded-full">
@@ -240,7 +240,7 @@ export const UpgradeBuildingDialog = ({
               
               {/* Next Level */}
               <div className="flex flex-col items-center animate-in fade-in slide-in-from-right-5 duration-500 delay-150">
-                {nextDisplay?.type === 'image' ? (
+                {nextDisplay && nextDisplay.type === 'image' ? (
                   <img 
                     src={nextDisplay.src} 
                     alt={`${info.label} Nivel ${nextLevel}`}
@@ -248,7 +248,7 @@ export const UpgradeBuildingDialog = ({
                   />
                 ) : (
                   <div className="text-5xl mb-2 transform transition-transform duration-300 hover:scale-110 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
-                    {nextDisplay?.emoji || info.emoji}
+                    {info.emoji}
                   </div>
                 )}
                 <div className="px-2.5 py-1 bg-primary/20 rounded-full border-2 border-primary/50">
