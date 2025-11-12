@@ -136,13 +136,24 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
               })
             : DEFAULT_LAYOUT.belts,
           roads: Array.isArray(parsed.roads) 
-            ? parsed.roads.map((road: any) => ({
-                id: road.id,
-                gridColumn: road.gridColumn,
-                gridRow: road.gridRow,
-                direction: road.direction || 'east',
-                type: road.type || 'straight',
-              }))
+            ? parsed.roads.map((road: any) => {
+                // Ensure roads always have 2x2 span
+                const colSpan = parseGridNotation(road.gridColumn);
+                const rowSpan = parseGridNotation(road.gridRow);
+                const colStart = colSpan.start;
+                const rowStart = rowSpan.start;
+                
+                return {
+                  id: road.id,
+                  gridColumn: createGridNotation(colStart, colStart + 2),
+                  gridRow: createGridNotation(rowStart, rowStart + 2),
+                  direction: road.direction || 'east',
+                  type: road.type || 'straight',
+                  isPointA: road.isPointA || false,
+                  isPointB: road.isPointB || false,
+                  isTransport: road.isTransport || false,
+                };
+              })
             : (parsed.roads || DEFAULT_LAYOUT.roads),
           grid: {
             gap: parsed.grid?.gap || DEFAULT_LAYOUT.grid.gap,
@@ -559,14 +570,15 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           // Calculate final position from the visual center of the road, not the mouse position
           const finalGridPos = pixelToGrid(roadCenterX, roadCenterY);
           
-          const colSpan = parseGridNotation(road.gridColumn);
-          const rowSpan = parseGridNotation(road.gridRow);
-          
-          const width = colSpan.end - colSpan.start; // Should be 2 for roads
-          const height = rowSpan.end - rowSpan.start; // Should be 2 for roads
+          // Roads always occupy 2x2 cells
+          const width = 2;
+          const height = 2;
           
           const newCol = Math.max(1, Math.min(TOTAL_COLUMNS - width + 1, finalGridPos.col));
           const newRow = Math.max(1, Math.min(getTotalRows() - height + 1, finalGridPos.row));
+          
+          const colSpan = parseGridNotation(road.gridColumn);
+          const rowSpan = parseGridNotation(road.gridRow);
           
           // Only update if position actually changed
           if (newCol !== colSpan.start || newRow !== rowSpan.start) {
@@ -577,15 +589,10 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
           }
         } else if (road && roadTempPosition) {
           // Fallback to roadTempPosition if no event
-          const colSpan = parseGridNotation(road.gridColumn);
-          const rowSpan = parseGridNotation(road.gridRow);
-          
-          const width = colSpan.end - colSpan.start;
-          const height = rowSpan.end - rowSpan.start;
-          
+          // Roads always occupy 2x2 cells
           updateRoad(draggedRoad, {
-            gridColumn: createGridNotation(roadTempPosition.col, roadTempPosition.col + width),
-            gridRow: createGridNotation(roadTempPosition.row, roadTempPosition.row + height),
+            gridColumn: createGridNotation(roadTempPosition.col, roadTempPosition.col + 2),
+            gridRow: createGridNotation(roadTempPosition.row, roadTempPosition.row + 2),
           });
         }
       }
