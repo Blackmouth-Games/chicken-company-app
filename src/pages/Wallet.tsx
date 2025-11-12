@@ -5,16 +5,112 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { normalizeTonAddress } from "@/lib/ton";
+import { useToast } from "@/hooks/use-toast";
 
 const Wallet = () => {
   const wallet = useTonWallet();
   const telegramUser = getTelegramUser();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Create or link auth.users when wallet connects
+  useEffect(() => {
+    if (wallet && telegramUser?.id) {
+      handleWalletConnection();
+    }
+  }, [wallet, telegramUser]);
 
   useEffect(() => {
     loadTransactions();
   }, [telegramUser]);
+
+  const handleWalletConnection = async () => {
+    if (!wallet || !telegramUser?.id) return;
+
+    try {
+      const walletAddress = normalizeTonAddress(wallet.account.address);
+      
+      // Get user profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("telegram_id", telegramUser.id)
+        .single();
+
+      if (profileError || !profile) {
+        console.error("Error getting profile:", profileError);
+        return;
+      }
+
+      // Create unique email from wallet address
+      const walletEmail = `${walletAddress.toLowerCase()}@ton.wallet`;
+
+      // Check if auth user already exists for this profile
+      const { data: existingAuthUser } = await supabase
+        .from("user_wallets")
+        .select("wallet_address")
+        .eq("user_id", profile.id)
+        .eq("wallet_address", walletAddress)
+        .maybeSingle();
+
+      if (existingAuthUser) {
+        console.log("Wallet already linked to auth user");
+        return;
+      }
+
+      // Create auth user with wallet as email
+      // Use a deterministic password based on wallet address (user won't use this to login)
+      const deterministicPassword = `ton_${walletAddress}_${Date.now()}`;
+      
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: walletEmail,
+        password: deterministicPassword,
+        options: {
+          data: {
+            wallet_address: walletAddress,
+            telegram_id: telegramUser.id,
+            profile_id: profile.id,
+          },
+        },
+      });
+
+      if (signUpError) {
+        // If user already exists, try to sign in
+        if (signUpError.message.includes("already registered")) {
+          console.log("Auth user already exists for this wallet");
+        } else {
+          console.error("Error creating auth user:", signUpError);
+        }
+        return;
+      }
+
+      if (authData.user) {
+        console.log("Auth user created successfully:", authData.user.id);
+        
+        toast({
+          title: "¡Wallet conectada!",
+          description: "Tu wallet TON ha sido vinculada correctamente",
+        });
+
+        // Store wallet info
+        const { error: walletError } = await supabase
+          .from("user_wallets")
+          .insert({
+            user_id: profile.id,
+            wallet_address: walletAddress,
+            blockchain: "TON",
+            is_primary: true,
+          });
+
+        if (walletError && !walletError.message.includes("duplicate key")) {
+          console.error("Error storing wallet:", walletError);
+        }
+      }
+    } catch (error) {
+      console.error("Error handling wallet connection:", error);
+    }
+  };
 
   const loadTransactions = async () => {
     if (!telegramUser?.id) return;
