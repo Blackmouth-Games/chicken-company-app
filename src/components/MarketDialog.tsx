@@ -42,35 +42,16 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   }, [market?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
-  // Depend on market?.selected_skin and market?.level explicitly to ensure updates
+  // Use the same pattern as CorralDialog for consistency
   const buildingDisplay = useMemo(() => {
     if (!market) return null;
-    
-    // If selected_skin is null/undefined, use null to trigger default 'A' variant
-    // If selected_skin exists, use it (it will be mapped to local variant via mapSkinKeyToLocal)
-    const skinKeyToUse = market.selected_skin || null;
-    
-    const display = getBuildingDisplay(
+    return getBuildingDisplay(
       'market',
-      currentLevel,
-      skinKeyToUse,
+      market.level,
+      market.selected_skin || null,
       skinInfo || undefined
     );
-    
-    // Debug log to see what's being returned
-    console.log('[MarketDialog] buildingDisplay:', {
-      market: market?.id,
-      selected_skin: market.selected_skin,
-      skinKeyToUse,
-      currentLevel,
-      displayType: display?.type,
-      hasImage: display?.type === 'image',
-      imageSrc: display?.type === 'image' ? display.src : null,
-      skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
-    });
-    
-    return display;
-  }, [market, market?.selected_skin, market?.level, currentLevel, skinInfo]);
+  }, [market?.selected_skin, market?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
