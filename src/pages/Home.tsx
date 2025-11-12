@@ -910,17 +910,6 @@ const Home = () => {
                     );
                   });
                   
-                  // Check if there's a building in the 2x2 area
-                  const hasBuildingInArea = 
-                    (parseGridNotation(layoutConfig.house.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.house.gridColumn).end > roadAreaCol.start &&
-                     parseGridNotation(layoutConfig.house.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.house.gridRow).end > roadAreaRow.start) ||
-                    (parseGridNotation(layoutConfig.warehouse.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.warehouse.gridColumn).end > roadAreaCol.start &&
-                     parseGridNotation(layoutConfig.warehouse.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.warehouse.gridRow).end > roadAreaRow.start) ||
-                    (parseGridNotation(layoutConfig.market.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.market.gridColumn).end > roadAreaCol.start &&
-                     parseGridNotation(layoutConfig.market.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.market.gridRow).end > roadAreaRow.start) ||
-                    (parseGridNotation(layoutConfig.boxes.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.boxes.gridColumn).end > roadAreaCol.start &&
-                     parseGridNotation(layoutConfig.boxes.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.boxes.gridRow).end > roadAreaRow.start);
-                  
                   // Check if there's a belt in the 2x2 area
                   const hasBeltInArea = allBelts.some(belt => {
                     const beltCol = parseGridNotation(belt.gridColumn);
@@ -929,7 +918,8 @@ const Home = () => {
                            beltRow.start >= roadAreaRow.start && beltRow.end <= roadAreaRow.end;
                   });
                   
-                  if (!overlappingRoad && !hasBuildingInArea && !hasBeltInArea) {
+                  // Roads can be placed behind buildings, so we don't check for building collisions
+                  if (!overlappingRoad && !hasBeltInArea) {
                     // Use paint options for direction and type
                     addRoadAtPosition(col, row, paintOptions.direction, paintOptions.type);
                   } else if (overlappingRoad) {

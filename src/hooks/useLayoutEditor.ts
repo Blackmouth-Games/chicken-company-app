@@ -694,20 +694,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
             );
           });
           
-          // Check for collisions with buildings
-          const testArea: GridArea = {
-            colStart: areaCol.start,
-            colEnd: areaCol.end,
-            rowStart: areaRow.start,
-            rowEnd: areaRow.end,
-          };
-          const hasBuildingCollision = wouldCollide(
-            testArea,
-            prev,
-            'house' // Just check, doesn't matter which building type
-          );
-          
-          if (!hasRoadCollision && !hasBuildingCollision.collides) {
+          // Roads can be placed behind buildings, so we don't check for building collisions
+          if (!hasRoadCollision) {
             newCol = col;
             newRow = row;
             foundPosition = true;

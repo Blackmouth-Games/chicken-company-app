@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
@@ -9,7 +10,7 @@ import { Loader2, Lock, Check } from "lucide-react";
 interface SkinSelectorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  buildingId: string;
+  buildingId: string | undefined;
   buildingType: string;
   userId: string | undefined;
   currentSkin: string | null;
@@ -29,8 +30,55 @@ export const SkinSelectorDialog = ({
   const { hasItem, loading: itemsLoading } = useUserItems(userId);
   const { toast } = useToast();
 
+  // Log when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      console.log("SkinSelectorDialog opened", { buildingId, buildingType, userId, currentSkin });
+      if (!buildingId) {
+        const errorMsg = `SkinSelectorDialog opened without buildingId for ${buildingType}`;
+        console.warn(errorMsg);
+        window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+          detail: { message: errorMsg, error: new Error(errorMsg) } 
+        }));
+      }
+      if (!userId) {
+        const errorMsg = `SkinSelectorDialog opened without userId for ${buildingType}`;
+        console.warn(errorMsg);
+        window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+          detail: { message: errorMsg, error: new Error(errorMsg) } 
+        }));
+      }
+    }
+  }, [open, buildingId, buildingType, userId, currentSkin]);
+
   const handleSelectSkin = async (skinKey: string) => {
-    if (!userId) return;
+    if (!userId) {
+      const errorMsg = "No user ID provided";
+      console.error("Error selecting skin:", errorMsg);
+      window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+        detail: { message: errorMsg, error: new Error(errorMsg) } 
+      }));
+      toast({
+        title: "Error",
+        description: "No se pudo identificar al usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!buildingId) {
+      const errorMsg = "No building ID provided";
+      console.error("Error selecting skin:", errorMsg);
+      window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+        detail: { message: errorMsg, error: new Error(errorMsg) } 
+      }));
+      toast({
+        title: "Error",
+        description: "Este edificio no tiene ID en la base de datos",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -50,6 +98,9 @@ export const SkinSelectorDialog = ({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error selecting skin:", error);
+      window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+        detail: { message: error.message || "No se pudo aplicar la skin", error } 
+      }));
       toast({
         title: "Error",
         description: error.message || "No se pudo aplicar la skin",
@@ -110,14 +161,20 @@ export const SkinSelectorDialog = ({
                         {/* Action Button */}
                         <Button
                           onClick={() => handleSelectSkin(skin.skin_key)}
-                          disabled={isSelected}
+                          disabled={isSelected || !buildingId}
                           className="w-full"
                           size="sm"
+                          title={!buildingId ? "Este edificio no tiene ID en la base de datos" : undefined}
                         >
                           {isSelected ? (
                             <>
                               <Check className="w-4 h-4 mr-1" />
                               Seleccionada
+                            </>
+                          ) : !buildingId ? (
+                            <>
+                              <Lock className="w-4 h-4 mr-1" />
+                              No disponible
                             </>
                           ) : (
                             "Seleccionar"

@@ -148,6 +148,14 @@ export const getBuildingImage = (
     return levelImages?.[skinKey] || images[1]?.A || warehouse1A;
   }
   
+  // If no skinKey is provided, use default 'A' variant for the level
+  if (!skinKey) {
+    const images = BUILDING_IMAGES[type];
+    if (!images) return warehouse1A;
+    const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
+    return images[validLevel]?.A || images[1]?.A || warehouse1A;
+  }
+  
   // Try to map skin_key to local image
   const localSkin = mapSkinKeyToLocal(skinKey);
   if (localSkin) {

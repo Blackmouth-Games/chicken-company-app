@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bug, X, Copy, Check, Layout, Plus, RotateCcw } from "lucide-react";
+import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -7,6 +7,9 @@ import { getTelegramUser, isTelegramWebApp } from "@/lib/telegram";
 import { useTonWallet, useTonAddress } from "@tonconnect/ui-react";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserBuildings } from "@/hooks/useUserBuildings";
+import { useUserItems } from "@/hooks/useUserItems";
 
 const DebugPanel = () => {
   const { t } = useLanguage();
@@ -24,6 +27,54 @@ const DebugPanel = () => {
   const [gap, setGap] = useState<string>("20px");
   const [beltDebugInfo, setBeltDebugInfo] = useState<any>(null);
   const [paintModeClickInfo, setPaintModeClickInfo] = useState<any>(null);
+  
+  // Skins tab state
+  const [userId, setUserId] = useState<string | null>(null);
+  const [skinsLogs, setSkinsLogs] = useState<Array<{ timestamp: string; level: string; message: string; error?: any }>>([]);
+  
+  // Function to add logs (defined before use)
+  const addSkinLog = (level: string, message: string, error?: any) => {
+    setSkinsLogs(prev => [...prev.slice(-49), {
+      timestamp: new Date().toLocaleTimeString(),
+      level,
+      message,
+      error: error ? (error.message || JSON.stringify(error)) : undefined
+    }]);
+  };
+  
+  // Get user profile ID
+  useEffect(() => {
+    const loadUserId = async () => {
+      if (!telegramUser?.id) return;
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("telegram_id", telegramUser.id)
+          .maybeSingle();
+        if (profile) {
+          setUserId(profile.id);
+        }
+      } catch (error) {
+        addSkinLog('error', 'Error loading user ID', error);
+      }
+    };
+    loadUserId();
+  }, [telegramUser?.id]);
+  
+  const { buildings } = useUserBuildings(userId || undefined);
+  const { items: userItems } = useUserItems(userId || undefined);
+  
+  // Listen for skin selector errors
+  useEffect(() => {
+    const handleError = (e: any) => {
+      addSkinLog('error', e.detail?.message || 'Unknown error', e.detail?.error);
+    };
+    window.addEventListener('skinSelectorError', handleError as any);
+    return () => {
+      window.removeEventListener('skinSelectorError', handleError as any);
+    };
+  }, []);
 
   // Listen to layout changes
   useEffect(() => {
@@ -199,11 +250,15 @@ const DebugPanel = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs defaultValue="general" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="layout">
                 <Layout className="h-4 w-4 mr-2" />
                 Layout
+              </TabsTrigger>
+              <TabsTrigger value="skins">
+                <Palette className="h-4 w-4 mr-2" />
+                Skins
               </TabsTrigger>
             </TabsList>
 
@@ -471,6 +526,107 @@ const DebugPanel = () => {
                   </div>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="skins" className="space-y-4">
+              {/* User ID Status */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">👤 User Status</h3>
+                <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
+                  <p><strong>User ID:</strong> {userId || 'Not loaded'}</p>
+                  <p><strong>Telegram ID:</strong> {telegramUser?.id || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Selected Skins */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">🎨 Selected Skins</h3>
+                <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                  {buildings && buildings.length > 0 ? (
+                    <div className="space-y-2">
+                      {buildings.map((building: any) => (
+                        <div key={building.id} className="border-b pb-2 last:border-0">
+                          <p><strong>{building.building_type}</strong> (Lvl {building.level})</p>
+                          <p className="text-xs text-muted-foreground">
+                            Skin: {building.selected_skin || 'None (default)'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {building.id}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No buildings found</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Owned Skins */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">💎 Owned Skins</h3>
+                <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                  {userItems && userItems.length > 0 ? (
+                    <div className="space-y-1">
+                      {userItems
+                        .filter((item: any) => item.item_type === 'skin')
+                        .map((item: any) => (
+                          <div key={item.id} className="border-b pb-1 last:border-0">
+                            <p><strong>{item.item_key}</strong> (x{item.quantity})</p>
+                            <p className="text-xs text-muted-foreground">
+                              Acquired: {new Date(item.acquired_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        ))}
+                      {userItems.filter((item: any) => item.item_type === 'skin').length === 0 && (
+                        <p className="text-muted-foreground">No owned skins</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No items found</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Error Logs */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Error Logs
+                  </h3>
+                  <Button
+                    onClick={() => setSkinsLogs([])}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <div className="bg-muted p-3 rounded-md space-y-2 text-sm max-h-60 overflow-y-auto">
+                  {skinsLogs.length > 0 ? (
+                    <div className="space-y-2">
+                      {skinsLogs.map((log, idx) => (
+                        <div key={idx} className={`border-l-2 pl-2 ${
+                          log.level === 'error' ? 'border-red-500' : 
+                          log.level === 'warning' ? 'border-yellow-500' : 
+                          'border-blue-500'
+                        }`}>
+                          <p className="text-xs text-muted-foreground">{log.timestamp}</p>
+                          <p className={log.level === 'error' ? 'text-red-600' : ''}>
+                            [{log.level.toUpperCase()}] {log.message}
+                          </p>
+                          {log.error && (
+                            <p className="text-xs text-muted-foreground mt-1">{log.error}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No errors logged</p>
+                  )}
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
