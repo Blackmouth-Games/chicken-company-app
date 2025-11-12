@@ -24,9 +24,15 @@ interface Belt {
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
-const EGG_SPAWN_INTERVAL = 3000; // Spawn egg every 3 seconds per corral
+const BASE_EGG_SPAWN_INTERVAL = 5000; // Base spawn interval (5 seconds) for level 1
 const MAX_EGGS = 50; // Maximum number of eggs in the system
 const EGG_MAX_AGE = 60000; // Maximum age for an egg (60 seconds) before removal
+
+// Calculate spawn interval based on corral level (higher level = faster spawn)
+const getEggSpawnInterval = (level: number): number => {
+  // Level 1: 5s, Level 2: 4s, Level 3: 3s, Level 4: 2s, Level 5: 1.5s
+  return Math.max(1500, BASE_EGG_SPAWN_INTERVAL - (level - 1) * 1000);
+};
 
 export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const [eggs, setEggs] = useState<Egg[]>([]);
@@ -173,11 +179,12 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           if (nextPathIndex >= egg.path.length) {
           // Reached end of path - check if we're at destiny belt
           if (currentBelt.isDestiny) {
-            // Remove egg when it reaches destiny
+            // Egg has completed its journey on the destiny belt, remove it
             eggCreationTimeRef.current.delete(egg.id);
             return null;
           }
-          // No more path and not at destiny, remove egg to prevent accumulation
+          // No more path and not at destiny - this shouldn't happen, but remove to prevent accumulation
+          console.warn(`[useEggSystem] Egg ${egg.id} reached end of path but not at destiny belt`);
           eggCreationTimeRef.current.delete(egg.id);
           return null;
           }
@@ -190,9 +197,9 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             return null;
           }
           
-          // Check if next belt is destiny - if so, we'll remove it when progress reaches 1
+          // Check if next belt is destiny - allow egg to enter and complete journey
           if (nextBelt.isDestiny) {
-            // Move to destiny belt
+            // Move to destiny belt, let it complete the journey
             const nextPos = parseGridNotation(nextBelt.gridColumn);
             const nextRow = parseGridNotation(nextBelt.gridRow);
             
@@ -219,9 +226,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           };
         }
         
-        // Check if egg reached destiny (after progress update)
-        if (currentBelt.isDestiny && newProgress >= 1) {
-          // Remove egg when it reaches destiny
+        // Check if egg reached destiny (only remove when progress is exactly 1 or more)
+        // Don't remove immediately when entering destiny belt, let it complete the journey
+        if (currentBelt.isDestiny && newProgress >= 0.99) {
+          // Remove egg when it reaches the end of destiny belt
           eggCreationTimeRef.current.delete(egg.id);
           return null;
         }
@@ -298,15 +306,17 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         }
         
         const now = Date.now();
+        // Get spawn interval based on corral level
+        const spawnInterval = getEggSpawnInterval(corral.level || 1);
         let delay: number;
         
         if (lastSpawn === undefined) {
           // First spawn - use initial delay
           delay = Math.max(0, initialDelay);
         } else {
-          // Subsequent spawns - calculate time until next spawn
+          // Subsequent spawns - calculate time until next spawn based on corral level
           const timeSinceLastSpawn = now - lastSpawn;
-          delay = Math.max(0, EGG_SPAWN_INTERVAL - timeSinceLastSpawn);
+          delay = Math.max(0, spawnInterval - timeSinceLastSpawn);
         }
         
         // Add a small random delay (0-500ms) for each individual spawn to make it more async
@@ -363,25 +373,30 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const debugInfo: any = {
       totalEggs: eggs.length,
       maxEggs: MAX_EGGS,
-      spawnInterval: EGG_SPAWN_INTERVAL,
-      nextSpawns: [] as Array<{ corralId: string; timeUntilSpawn: number; lastSpawn?: number }>,
+      baseSpawnInterval: BASE_EGG_SPAWN_INTERVAL,
+      nextSpawns: [] as Array<{ corralId: string; level: number; spawnInterval: number; timeUntilSpawn: number; lastSpawn?: number }>,
       corrals: corrals.length,
       pageVisible: isPageVisibleRef.current,
     };
 
     corrals.forEach(corral => {
       const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
+      const spawnInterval = getEggSpawnInterval(corral.level || 1);
       if (lastSpawn === undefined) {
         debugInfo.nextSpawns.push({
           corralId: corral.id,
+          level: corral.level || 1,
+          spawnInterval,
           timeUntilSpawn: 0, // Will spawn soon
           lastSpawn: undefined,
         });
       } else {
         const timeSinceLastSpawn = now - lastSpawn;
-        const timeUntilSpawn = Math.max(0, EGG_SPAWN_INTERVAL - timeSinceLastSpawn);
+        const timeUntilSpawn = Math.max(0, spawnInterval - timeSinceLastSpawn);
         debugInfo.nextSpawns.push({
           corralId: corral.id,
+          level: corral.level || 1,
+          spawnInterval,
           timeUntilSpawn,
           lastSpawn,
         });
