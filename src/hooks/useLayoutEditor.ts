@@ -54,34 +54,34 @@ export interface LayoutConfig {
 }
 
 const DEFAULT_LAYOUT: LayoutConfig = {
-  house: { gridColumn: '9 / 22', gridRow: '1 / 9' },
-  warehouse: { gridColumn: '1 / 10', gridRow: '9 / 17' },
-  market: { gridColumn: '22 / 31', gridRow: '9 / 17' },
-  boxes: { gridColumn: '10 / 14', gridRow: '12 / 17' },
-  leftCorrals: { gridColumn: '1 / 14', gap: '20px', startRow: 20, rowSpan: 10 },
-  rightCorrals: { gridColumn: '17 / 30', gap: '20px', startRow: 20, rowSpan: 10 },
+  house: { gridColumn: '5 / 11', gridRow: '1 / 9' },
+  warehouse: { gridColumn: '1 / 5', gridRow: '9 / 17' },
+  market: { gridColumn: '11 / 15', gridRow: '9 / 17' },
+  boxes: { gridColumn: '5 / 7', gridRow: '12 / 17' },
+  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 20, rowSpan: 10 },
+  rightCorrals: { gridColumn: '9 / 15', gap: '20px', startRow: 20, rowSpan: 10 },
   belts: [
-    { id: 'belt-1762856882265', gridColumn: '14 / 15', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856882801', gridColumn: '12 / 13', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856883705', gridColumn: '13 / 14', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856884083', gridColumn: '10 / 11', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856884637', gridColumn: '11 / 12', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856885181', gridColumn: '8 / 9', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856885543', gridColumn: '9 / 10', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856886318', gridColumn: '7 / 8', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856895756', gridColumn: '5 / 6', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856896248', gridColumn: '6 / 7', gridRow: '18 / 19', direction: 'west', type: 'straight' },
-    { id: 'belt-1762856921081', gridColumn: '15 / 16', gridRow: '19 / 20', direction: 'north', type: 'curve-se' },
-    { id: 'belt-1762856923052', gridColumn: '4 / 5', gridRow: '17 / 18', direction: 'north', type: 'curve-se' },
-    { id: 'belt-1762856940335', gridColumn: '15 / 16', gridRow: '18 / 19', direction: 'west', type: 'curve-se' },
-    { id: 'belt-1762856948463', gridColumn: '4 / 5', gridRow: '18 / 19', direction: 'north', type: 'curve-se' },
+    { id: 'belt-1762856882265', gridColumn: '7 / 8', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856882801', gridColumn: '6 / 7', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856883705', gridColumn: '5 / 6', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856884083', gridColumn: '4 / 5', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856884637', gridColumn: '3 / 4', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856885181', gridColumn: '2 / 3', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856885543', gridColumn: '1 / 2', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856886318', gridColumn: '8 / 9', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856895756', gridColumn: '9 / 10', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856896248', gridColumn: '10 / 11', gridRow: '18 / 19', direction: 'west', type: 'straight' },
+    { id: 'belt-1762856921081', gridColumn: '11 / 12', gridRow: '19 / 20', direction: 'north', type: 'curve-se' },
+    { id: 'belt-1762856923052', gridColumn: '2 / 3', gridRow: '17 / 18', direction: 'north', type: 'curve-se' },
+    { id: 'belt-1762856940335', gridColumn: '11 / 12', gridRow: '18 / 19', direction: 'west', type: 'curve-se' },
+    { id: 'belt-1762856948463', gridColumn: '2 / 3', gridRow: '18 / 19', direction: 'north', type: 'curve-se' },
     { id: 'belt-1762876749609', gridColumn: '4 / 5', gridRow: '16 / 17', direction: 'north', type: 'straight', isOutput: true, isDestiny: false, isTransport: false },
   ],
   roads: [],
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
 };
 
-const TOTAL_COLUMNS = 30;
+const TOTAL_COLUMNS = 15;
 const MAX_TOTAL_ROWS = 40;
 
 export const useLayoutEditor = (beltSpanForRows: number = 20) => {

@@ -190,12 +190,14 @@ export const ConveyorBelt = ({
         e.stopPropagation();
         onClick();
       }}
-      onMouseDown={onMouseDown}
       data-belt={belt.id}
     >
-      <div className={`w-full h-full relative overflow-hidden ${
-        isEditMode ? 'cursor-move' : ''
-      }`}>
+      <div 
+        className={`w-full h-full relative overflow-hidden ${
+          isEditMode ? 'cursor-move' : ''
+        }`}
+        onMouseDown={onMouseDown}
+      >
         {/* Belt image */}
         <img 
           src={beltImage} 

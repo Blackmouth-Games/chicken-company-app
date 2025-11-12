@@ -116,13 +116,13 @@ const Home = () => {
       const el = gridRef.current as HTMLDivElement | null;
       if (!el) return;
 
-      const columns = 30;
+      const columns = 15;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
       const rect = el.getBoundingClientRect();
-      // Usar el ancho del viewport para garantizar 30 columnas visibles
+      // Usar el ancho del viewport para garantizar 15 columnas visibles
       const width = Math.max(rect.width, window.innerWidth);
 
-      // Escala 100% por ancho: 30 columnas siempre visibles y celdas 1:1
+      // Escala 100% por ancho: 15 columnas siempre visibles y celdas 1:1
       const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
       const candidate = Math.floor(sizeByWidth);
       const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
@@ -707,7 +707,7 @@ const Home = () => {
             data-grid-container
             className={`grid items-stretch relative w-full mx-auto ${paintMode && isEditMode ? 'cursor-crosshair' : ''}`}
             style={{
-              gridTemplateColumns: `repeat(30, ${cellSize}px)`,
+              gridTemplateColumns: `repeat(15, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
             }}
@@ -744,8 +744,16 @@ const Home = () => {
             onClick={(e) => {
               // Don't process if click is on action buttons modal or other UI elements
               const target = e.target as HTMLElement;
-              if (target.closest('.absolute.left-full') || target.closest('[data-belt]') || target.closest('[data-building]')) {
+              if (target.closest('.absolute.left-full')) {
                 return;
+              }
+              
+              // Only block clicks on belts/buildings when in paint mode
+              if (paintMode && isEditMode && !isDragging) {
+                // In paint mode, block clicks on belts/buildings to allow painting
+                if (target.closest('[data-belt]') || target.closest('[data-building]') || target.closest('[data-road]')) {
+                  return;
+                }
               }
               
               if (paintMode && isEditMode && !isDragging) {
@@ -765,16 +773,16 @@ const Home = () => {
                 const gridElement = e.currentTarget as HTMLElement;
                 const gridRect = gridElement.getBoundingClientRect();
                 
-                const totalGapWidth = gapPx * (30 - 1);
+                const totalGapWidth = gapPx * (15 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (gridRect.width - totalGapWidth) / 30;
+                const cellWidth = (gridRect.width - totalGapWidth) / 15;
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
                 // Calculate column and row from click position relative to grid element
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
-                const col = Math.max(1, Math.min(30, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
+                const col = Math.max(1, Math.min(15, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
                 const row = Math.max(1, Math.min(totalRows, Math.floor(gridRelativeY / (cellHeight + gapPx)) + 1));
                 
                 // Debug: Send click position to DebugPanel
