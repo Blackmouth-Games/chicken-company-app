@@ -270,48 +270,75 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       }
     });
 
-    const interval = setInterval(() => {
-      // Don't spawn eggs if page is not visible
-      if (!isPageVisibleRef.current) return;
-      
-      const now = Date.now();
-      corrals.forEach(corral => {
-        // Use position_index as slotPosition
-        const slotPosition = corral.position_index;
-        if (slotPosition === undefined || slotPosition === null) return;
-        
-        const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
-        const initialDelay = corralInitialDelays.get(corral.id) || 0;
-        
-        // For first spawn, wait for initial delay. For subsequent spawns, use normal interval
-        if (lastSpawn === undefined) {
-          // First spawn - wait for initial delay
-          if (now >= initialDelay) {
-            // Add a small random delay (0-200ms) for each individual spawn to make it more async
-            const randomDelay = Math.random() * 200;
-            setTimeout(() => {
-              spawnEgg(corral.id, slotPosition);
-            }, randomDelay);
-            
-            lastSpawnTimeRef.current.set(corral.id, now);
-          }
-        } else {
-          // Subsequent spawns - use normal interval
-          const timeSinceLastSpawn = now - lastSpawn;
-          if (timeSinceLastSpawn >= EGG_SPAWN_INTERVAL) {
-            // Add a small random delay (0-200ms) for each individual spawn to make it more async
-            const randomDelay = Math.random() * 200;
-            setTimeout(() => {
-              spawnEgg(corral.id, slotPosition);
-            }, randomDelay);
-            
-            lastSpawnTimeRef.current.set(corral.id, now);
-          }
-        }
-      });
-    }, 500); // Check every 500ms (less frequent to reduce overhead)
+    // Set up individual timers for each corral to make spawning truly async
+    const timers: Map<string, NodeJS.Timeout> = new Map();
     
-    return () => clearInterval(interval);
+    corrals.forEach(corral => {
+      const slotPosition = corral.position_index;
+      if (slotPosition === undefined || slotPosition === null) return;
+      
+      const initialDelay = corralInitialDelays.get(corral.id) || 0;
+      
+      const scheduleNextSpawn = () => {
+        const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
+        // Clear any existing timer for this corral
+        const existingTimer = timers.get(corral.id);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+        
+        // Don't spawn if page is not visible
+        if (!isPageVisibleRef.current) {
+          // Reschedule check when page becomes visible
+          const checkTimer = setTimeout(() => {
+            scheduleNextSpawn();
+          }, 1000);
+          timers.set(corral.id, checkTimer);
+          return;
+        }
+        
+        const now = Date.now();
+        let delay: number;
+        
+        if (lastSpawn === undefined) {
+          // First spawn - use initial delay
+          delay = Math.max(0, initialDelay);
+        } else {
+          // Subsequent spawns - calculate time until next spawn
+          const timeSinceLastSpawn = now - lastSpawn;
+          delay = Math.max(0, EGG_SPAWN_INTERVAL - timeSinceLastSpawn);
+        }
+        
+        // Add a small random delay (0-500ms) for each individual spawn to make it more async
+        const randomDelay = Math.random() * 500;
+        const totalDelay = delay + randomDelay;
+        
+        const timer = setTimeout(() => {
+          // Don't spawn if page is not visible
+          if (!isPageVisibleRef.current) {
+            scheduleNextSpawn();
+            return;
+          }
+          
+          spawnEgg(corral.id, slotPosition);
+          lastSpawnTimeRef.current.set(corral.id, Date.now());
+          
+          // Schedule next spawn
+          scheduleNextSpawn();
+        }, totalDelay);
+        
+        timers.set(corral.id, timer);
+      };
+      
+      // Start scheduling for this corral
+      scheduleNextSpawn();
+    });
+    
+    // Cleanup function
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+      timers.clear();
+    };
   }, [corrals, spawnEgg]);
 
   // Animation loop
@@ -330,6 +357,40 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     };
   }, [updateEggs]);
 
-  return { eggs };
+  // Expose debug information
+  const getDebugInfo = useCallback(() => {
+    const now = Date.now();
+    const debugInfo: any = {
+      totalEggs: eggs.length,
+      maxEggs: MAX_EGGS,
+      spawnInterval: EGG_SPAWN_INTERVAL,
+      nextSpawns: [] as Array<{ corralId: string; timeUntilSpawn: number; lastSpawn?: number }>,
+      corrals: corrals.length,
+      pageVisible: isPageVisibleRef.current,
+    };
+
+    corrals.forEach(corral => {
+      const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
+      if (lastSpawn === undefined) {
+        debugInfo.nextSpawns.push({
+          corralId: corral.id,
+          timeUntilSpawn: 0, // Will spawn soon
+          lastSpawn: undefined,
+        });
+      } else {
+        const timeSinceLastSpawn = now - lastSpawn;
+        const timeUntilSpawn = Math.max(0, EGG_SPAWN_INTERVAL - timeSinceLastSpawn);
+        debugInfo.nextSpawns.push({
+          corralId: corral.id,
+          timeUntilSpawn,
+          lastSpawn,
+        });
+      }
+    });
+
+    return debugInfo;
+  }, [eggs, corrals]);
+
+  return { eggs, getDebugInfo };
 };
 

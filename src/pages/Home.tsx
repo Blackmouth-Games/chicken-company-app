@@ -615,11 +615,25 @@ const Home = () => {
   const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
-  const { eggs } = useEggSystem(allBelts, buildings);
+  const { eggs, getEggDebugInfo } = useEggSystem(allBelts, buildings);
   
   // Vehicle system - must be after roads are defined
-  const { vehicles } = useVehicleSystem(allRoads, marketLevel);
+  const { vehicles, getVehicleDebugInfo } = useVehicleSystem(allRoads, marketLevel);
   
+  // Debug: Send egg and vehicle information to DebugPanel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (getEggDebugInfo) {
+        window.dispatchEvent(new CustomEvent('eggDebugInfo', { detail: getEggDebugInfo() }));
+      }
+      if (getVehicleDebugInfo) {
+        window.dispatchEvent(new CustomEvent('vehicleDebugInfo', { detail: getVehicleDebugInfo() }));
+      }
+    }, 1000); // Update every second
+    
+    return () => clearInterval(interval);
+  }, [getEggDebugInfo, getVehicleDebugInfo]);
+
   // Debug: Send belt information to DebugPanel
   useEffect(() => {
     const leftBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-left-'));

@@ -25,7 +25,7 @@ interface Road {
   isTransport?: boolean;
 }
 
-const BASE_VEHICLE_SPEED = 0.015; // Base progress increment per frame (slower than eggs)
+const BASE_VEHICLE_SPEED = 0.05; // Base progress increment per frame (increased for visibility)
 const BASE_VEHICLE_SPAWN_INTERVAL = 30000; // Base spawn interval: 30 seconds per route (much higher)
 const VEHICLE_WAIT_TIME = 2000; // Wait 2 seconds at destination before returning
 const MAX_VEHICLES = 1; // Only one vehicle at a time
@@ -340,6 +340,29 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     };
   }, [updateVehicles]);
 
-  return { vehicles };
+  // Expose debug information
+  const getDebugInfo = useCallback(() => {
+    const now = Date.now();
+    const pointA = findPointA();
+    const pointB = findPointB();
+    const routeKey = pointA && pointB ? `${pointA.id}-${pointB.id}` : null;
+    const lastSpawn = routeKey ? lastSpawnTimeRef.current.get(routeKey) || 0 : 0;
+    const timeSinceLastSpawn = now - lastSpawn;
+    const timeUntilSpawn = Math.max(0, vehicleSpawnInterval - timeSinceLastSpawn);
+
+    return {
+      currentVehicles: vehicles.length,
+      maxVehicles: MAX_VEHICLES,
+      spawnInterval: vehicleSpawnInterval,
+      timeUntilSpawn,
+      lastSpawn: lastSpawn || null,
+      hasPointA: !!pointA,
+      hasPointB: !!pointB,
+      canSpawn: vehicles.length < MAX_VEHICLES && !!pointA && !!pointB,
+      vehicleSpeed,
+    };
+  }, [vehicles, vehicleSpawnInterval, vehicleSpeed, findPointA, findPointB]);
+
+  return { vehicles, getDebugInfo };
 };
 

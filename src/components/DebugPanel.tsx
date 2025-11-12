@@ -27,6 +27,8 @@ const DebugPanel = () => {
   const [gap, setGap] = useState<string>("20px");
   const [beltDebugInfo, setBeltDebugInfo] = useState<any>(null);
   const [paintModeClickInfo, setPaintModeClickInfo] = useState<any>(null);
+  const [eggDebugInfo, setEggDebugInfo] = useState<any>(null);
+  const [vehicleDebugInfo, setVehicleDebugInfo] = useState<any>(null);
   
   // Skins tab state
   const [userId, setUserId] = useState<string | null>(null);
@@ -95,15 +97,21 @@ const DebugPanel = () => {
     const onEditChange = (e: any) => setIsEditMode(!!e.detail);
     const onBeltDebugInfo = (e: any) => setBeltDebugInfo(e.detail);
     const onPaintModeClick = (e: any) => setPaintModeClickInfo(e.detail);
+    const onEggDebugInfo = (e: any) => setEggDebugInfo(e.detail);
+    const onVehicleDebugInfo = (e: any) => setVehicleDebugInfo(e.detail);
     window.addEventListener('layoutConfigUpdate', onLayoutUpdate as any);
     window.addEventListener('layoutEditModeChange', onEditChange as any);
     window.addEventListener('beltDebugInfo', onBeltDebugInfo as any);
     window.addEventListener('paintModeClick', onPaintModeClick as any);
+    window.addEventListener('eggDebugInfo', onEggDebugInfo as any);
+    window.addEventListener('vehicleDebugInfo', onVehicleDebugInfo as any);
     return () => {
       window.removeEventListener('layoutConfigUpdate', onLayoutUpdate as any);
       window.removeEventListener('layoutEditModeChange', onEditChange as any);
       window.removeEventListener('beltDebugInfo', onBeltDebugInfo as any);
       window.removeEventListener('paintModeClick', onPaintModeClick as any);
+      window.removeEventListener('eggDebugInfo', onEggDebugInfo as any);
+      window.removeEventListener('vehicleDebugInfo', onVehicleDebugInfo as any);
     };
   }, []);
 
@@ -247,7 +255,7 @@ const DebugPanel = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs defaultValue="general" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="layout">
                 <Layout className="h-4 w-4 mr-2" />
@@ -256,6 +264,9 @@ const DebugPanel = () => {
               <TabsTrigger value="skins">
                 <Palette className="h-4 w-4 mr-2" />
                 Skins
+              </TabsTrigger>
+              <TabsTrigger value="systems">
+                ⚙️ Systems
               </TabsTrigger>
             </TabsList>
 
@@ -624,6 +635,71 @@ const DebugPanel = () => {
                   )}
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="systems" className="space-y-4">
+              {/* Egg System Debug */}
+              {eggDebugInfo && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">🥚 Egg System</h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <div>
+                      <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs} / {eggDebugInfo.maxEggs}</p>
+                      <p><strong>Spawn Interval:</strong> {eggDebugInfo.spawnInterval}ms ({eggDebugInfo.spawnInterval / 1000}s)</p>
+                      <p><strong>Corrals:</strong> {eggDebugInfo.corrals}</p>
+                      <p><strong>Page Visible:</strong> {eggDebugInfo.pageVisible ? '✅ Yes' : '❌ No'}</p>
+                    </div>
+                    {eggDebugInfo.nextSpawns && eggDebugInfo.nextSpawns.length > 0 && (
+                      <div className="border-t pt-2">
+                        <p><strong>Next Spawns:</strong></p>
+                        <ul className="text-xs mt-1 space-y-1">
+                          {eggDebugInfo.nextSpawns.map((spawn: any, idx: number) => (
+                            <li key={idx}>
+                              Corral {spawn.corralId.slice(0, 8)}...: {spawn.timeUntilSpawn > 0 
+                                ? `${(spawn.timeUntilSpawn / 1000).toFixed(1)}s` 
+                                : 'Ready to spawn'}
+                              {spawn.lastSpawn && (
+                                <span className="text-muted-foreground ml-2">
+                                  (Last: {new Date(spawn.lastSpawn).toLocaleTimeString()})
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Vehicle System Debug */}
+              {vehicleDebugInfo && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <div>
+                      <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles} / {vehicleDebugInfo.maxVehicles}</p>
+                      <p><strong>Spawn Interval:</strong> {vehicleDebugInfo.spawnInterval}ms ({vehicleDebugInfo.spawnInterval / 1000}s)</p>
+                      <p><strong>Time Until Next Spawn:</strong> {vehicleDebugInfo.timeUntilSpawn > 0 
+                        ? `${(vehicleDebugInfo.timeUntilSpawn / 1000).toFixed(1)}s` 
+                        : 'Ready to spawn'}</p>
+                      <p><strong>Vehicle Speed:</strong> {vehicleDebugInfo.vehicleSpeed.toFixed(4)}</p>
+                      <p><strong>Has Point A:</strong> {vehicleDebugInfo.hasPointA ? '✅ Yes' : '❌ No'}</p>
+                      <p><strong>Has Point B:</strong> {vehicleDebugInfo.hasPointB ? '✅ Yes' : '❌ No'}</p>
+                      <p><strong>Can Spawn:</strong> {vehicleDebugInfo.canSpawn ? '✅ Yes' : '❌ No'}</p>
+                      {vehicleDebugInfo.lastSpawn && (
+                        <p><strong>Last Spawn:</strong> {new Date(vehicleDebugInfo.lastSpawn).toLocaleTimeString()}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(!eggDebugInfo && !vehicleDebugInfo) && (
+                <div className="text-center text-muted-foreground py-8">
+                  No system debug information available yet
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

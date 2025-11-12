@@ -63,7 +63,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
 
   return isVisible ? (
     <div
-      className="absolute z-8 pointer-events-none"
+      className="absolute z-5 pointer-events-none"
       style={{
         gridColumn,
         gridRow,
