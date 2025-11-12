@@ -97,6 +97,7 @@ const Home = () => {
     toggleBeltOutput,
     toggleBeltDestiny,
     toggleBeltTransport,
+    pixelToGrid,
   } = useLayoutEditor(20);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
@@ -116,13 +117,13 @@ const Home = () => {
       const el = gridRef.current as HTMLDivElement | null;
       if (!el) return;
 
-      const columns = 15;
+      const columns = 17;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
       const rect = el.getBoundingClientRect();
-      // Usar el ancho del viewport para garantizar 15 columnas visibles
+      // Usar el ancho del viewport para garantizar 17 columnas visibles
       const width = Math.max(rect.width, window.innerWidth);
 
-      // Escala 100% por ancho: 15 columnas siempre visibles y celdas 1:1
+      // Escala 100% por ancho: 17 columnas siempre visibles y celdas 1:1
       const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
       const candidate = Math.floor(sizeByWidth);
       const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
@@ -707,37 +708,47 @@ const Home = () => {
             data-grid-container
             className={`grid items-stretch relative w-full mx-auto ${paintMode && isEditMode ? 'cursor-crosshair' : ''}`}
             style={{
-              gridTemplateColumns: `repeat(15, ${cellSize}px)`,
+              gridTemplateColumns: `repeat(17, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
             }}
             onMouseMove={(e) => {
               if (paintMode && isEditMode && !isDragging) {
-                // Always calculate based on grid position, even if mouse is over a belt or building
-                // This ensures the hover shows the correct cell where the belt/building is located
-                const gridElement = e.currentTarget as HTMLElement;
-                const gridRect = gridElement.getBoundingClientRect();
-                const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
-                const totalRows = getTotalRows();
+                // Don't calculate if mouse is over UI elements (buttons, modals, etc.)
+                const target = e.target as HTMLElement;
+                if (target.closest('button') || 
+                    target.closest('.absolute.left-full') || 
+                    target.closest('[data-belt]') || 
+                    target.closest('[data-building]') || 
+                    target.closest('[data-road]') ||
+                    target.closest('[role="dialog"]') ||
+                    target.closest('.fixed') ||
+                    target.closest('.absolute.z-50')) {
+                  setHoveredCell(null);
+                  return;
+                }
                 
-                // Calculate cell dimensions - account for gaps
-                const totalGapWidth = gapPx * (15 - 1);
-                const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (gridRect.width - totalGapWidth) / 15;
-                const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
+                // Use the same pixelToGrid function for consistency
+                // This ensures the hover position matches exactly with click positions
+                if (!gridRef.current) {
+                  setHoveredCell(null);
+                  return;
+                }
                 
-                // Calculate position relative to grid element
-                // getBoundingClientRect() already accounts for scroll automatically
-                // Both clientX/clientY and getBoundingClientRect are relative to viewport
-                const gridRelativeX = e.clientX - gridRect.left;
-                const gridRelativeY = e.clientY - gridRect.top;
+                const gridRect = gridRef.current.getBoundingClientRect();
                 
-                // Calculate which cell the mouse is over
-                // Add gapPx/2 to account for rounding and ensure we get the correct cell
-                const col = Math.max(1, Math.min(15, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
-                const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
+                // Verify mouse is actually within grid bounds
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                if (mouseX < gridRect.left || mouseX > gridRect.right ||
+                    mouseY < gridRect.top || mouseY > gridRect.bottom) {
+                  setHoveredCell(null);
+                  return;
+                }
                 
-                setHoveredCell({ col, row });
+                // Use pixelToGrid for accurate calculation (same as click handler)
+                const gridPos = pixelToGrid(mouseX, mouseY);
+                setHoveredCell(gridPos);
               }
             }}
             onMouseLeave={() => {
@@ -767,9 +778,9 @@ const Home = () => {
                 const gridElement = e.currentTarget as HTMLElement;
                 const gridRect = gridElement.getBoundingClientRect();
                 
-                const totalGapWidth = gapPx * (15 - 1);
+                const totalGapWidth = gapPx * (17 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (gridRect.width - totalGapWidth) / 15;
+                const cellWidth = (gridRect.width - totalGapWidth) / 17;
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
                 // Calculate column and row from click position relative to grid element
@@ -778,7 +789,7 @@ const Home = () => {
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
-                const col = Math.max(1, Math.min(15, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+                const col = Math.max(1, Math.min(17, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
                 const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
                 
                 // Debug: Send click position to DebugPanel
