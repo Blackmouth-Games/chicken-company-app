@@ -68,10 +68,21 @@ export const Road = ({
   const getPosition = () => {
     if (isDragging && dragOffset && roadDragOffset) {
       // Follow mouse directly during drag
+      // Roads are 2x2 cells, so we need to calculate the size accordingly
+      // We'll use a fixed size that approximates 2 cells (will be adjusted by CSS)
+      const cellSize = 40; // Approximate cell size
+      const gap = 1; // Approximate gap
+      const roadSize = (cellSize * 2) + gap; // 2 cells + 1 gap
+      
       return {
+        position: 'fixed' as const,
         left: `${dragOffset.x - roadDragOffset.x}px`,
         top: `${dragOffset.y - roadDragOffset.y}px`,
         transform: 'translate(-50%, -50%)',
+        width: `${roadSize}px`,
+        height: `${roadSize}px`,
+        pointerEvents: 'none' as const,
+        zIndex: 1000,
       };
     }
     return {};
@@ -101,10 +112,12 @@ export const Road = ({
   return (
     <div
       data-road={road.id}
-      className={`absolute ${isDragging ? 'z-30' : 'z-0'} ${isEditMode && isSelected ? 'outline outline-2 outline-offset-2 outline-blue-500' : ''}`}
+      className={`flex justify-center items-center relative w-full h-full ${isDragging ? 'z-30' : 'z-0'} ${isEditMode && isSelected ? 'outline outline-2 outline-offset-2 outline-blue-500' : ''}`}
       style={{
-        gridColumn: tempPosition ? `${tempPosition.col} / ${tempPosition.col + 2}` : road.gridColumn,
-        gridRow: tempPosition ? `${tempPosition.row} / ${tempPosition.row + 2}` : road.gridRow,
+        ...(isDragging ? {} : {
+          gridColumn: tempPosition ? `${tempPosition.col} / ${tempPosition.col + 2}` : road.gridColumn,
+          gridRow: tempPosition ? `${tempPosition.row} / ${tempPosition.row + 2}` : road.gridRow,
+        }),
         ...position,
         cursor: isEditMode ? 'move' : 'default',
       }}
@@ -137,8 +150,6 @@ export const Road = ({
           className="w-full h-full object-cover"
           style={{
             transform: getArrowTransform(),
-            width: '100%',
-            height: '100%',
           }}
         />
         

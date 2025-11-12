@@ -442,6 +442,23 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
         }
       }
 
+      if (isDragging && draggedRoad && roadDragOffset) {
+        // Always update drag offset to follow mouse smoothly
+        setDragOffset({ x: e.clientX, y: e.clientY });
+        
+        // Calculate the visual center position of the road (where it appears on screen)
+        // This is the mouse position minus the offset, which gives us the center of the road
+        const roadCenterX = e.clientX - roadDragOffset.x;
+        const roadCenterY = e.clientY - roadDragOffset.y;
+        
+        // Update grid position based on the visual center of the road, not the mouse position
+        const gridPos = pixelToGrid(roadCenterX, roadCenterY);
+        if (!lastRoadGridPos || lastRoadGridPos.col !== gridPos.col || lastRoadGridPos.row !== gridPos.row) {
+          setRoadTempPosition(gridPos);
+          setLastRoadGridPos(gridPos);
+        }
+      }
+
       if (resizing) {
         const buildingKey = resizing.building as keyof Pick<LayoutConfig, 'warehouse' | 'market' | 'house' | 'boxes'>;
         const currentConfig = layoutConfig[buildingKey];
@@ -562,33 +579,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       
       if (isDragging && draggedRoad) {
         const road = layoutConfig.roads.find(r => r.id === draggedRoad);
-        if (road && gridRef.current && e && roadDragOffset && dragOffset) {
-          // Calculate the visual center position of the road (where it appears on screen)
-          const roadCenterX = dragOffset.x - roadDragOffset.x;
-          const roadCenterY = dragOffset.y - roadDragOffset.y;
-          
-          // Calculate final position from the visual center of the road, not the mouse position
-          const finalGridPos = pixelToGrid(roadCenterX, roadCenterY);
-          
-          // Roads always occupy 2x2 cells
-          const width = 2;
-          const height = 2;
-          
-          const newCol = Math.max(1, Math.min(TOTAL_COLUMNS - width + 1, finalGridPos.col));
-          const newRow = Math.max(1, Math.min(getTotalRows() - height + 1, finalGridPos.row));
-          
-          const colSpan = parseGridNotation(road.gridColumn);
-          const rowSpan = parseGridNotation(road.gridRow);
-          
-          // Only update if position actually changed
-          if (newCol !== colSpan.start || newRow !== rowSpan.start) {
-            updateRoad(draggedRoad, {
-              gridColumn: createGridNotation(newCol, newCol + width),
-              gridRow: createGridNotation(newRow, newRow + height),
-            });
-          }
-        } else if (road && roadTempPosition) {
-          // Fallback to roadTempPosition if no event
+        if (road && roadTempPosition) {
+          // Use roadTempPosition that was updated during mouse move
           // Roads always occupy 2x2 cells
           updateRoad(draggedRoad, {
             gridColumn: createGridNotation(roadTempPosition.col, roadTempPosition.col + 2),

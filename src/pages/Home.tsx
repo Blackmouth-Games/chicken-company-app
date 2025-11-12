@@ -1334,7 +1334,7 @@ const Home = () => {
                   isEditMode={isEditMode}
                   isDragging={isRoadDragging}
                   isSelected={selectedObject?.type === 'road' && selectedObject?.id === road.id}
-                  tempPosition={roadTempPosition}
+                  tempPosition={isRoadDragging ? roadTempPosition : null}
                   dragOffset={isRoadDragging ? dragOffset : null}
                   roadDragOffset={isRoadDragging ? roadDragOffset : null}
                   onMouseDown={(e) => isEditMode && handleRoadMouseDown(e, road.id)}
