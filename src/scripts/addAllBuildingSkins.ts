@@ -15,42 +15,42 @@ interface SkinData {
 }
 
 const allSkins: SkinData[] = [
-  // Corral skins - Levels 1-5, Variants A and B
-  { building_type: 'corral', skin_key: 'corral_1A', name: 'Corral Nivel 1 - Variante A', image_url: '🏚️', is_default: false, rarity: 'common' },
-  { building_type: 'corral', skin_key: 'corral_1B', name: 'Corral Nivel 1 - Variante B', image_url: '🏚️', is_default: false, rarity: 'common' },
-  { building_type: 'corral', skin_key: 'corral_2A', name: 'Corral Nivel 2 - Variante A', image_url: '🏚️', is_default: false, rarity: 'uncommon' },
-  { building_type: 'corral', skin_key: 'corral_2B', name: 'Corral Nivel 2 - Variante B', image_url: '🏚️', is_default: false, rarity: 'uncommon' },
-  { building_type: 'corral', skin_key: 'corral_3A', name: 'Corral Nivel 3 - Variante A', image_url: '🏚️', is_default: false, rarity: 'rare' },
-  { building_type: 'corral', skin_key: 'corral_3B', name: 'Corral Nivel 3 - Variante B', image_url: '🏚️', is_default: false, rarity: 'rare' },
-  { building_type: 'corral', skin_key: 'corral_4A', name: 'Corral Nivel 4 - Variante A', image_url: '🏚️', is_default: false, rarity: 'epic' },
-  { building_type: 'corral', skin_key: 'corral_4B', name: 'Corral Nivel 4 - Variante B', image_url: '🏚️', is_default: false, rarity: 'epic' },
-  { building_type: 'corral', skin_key: 'corral_5A', name: 'Corral Nivel 5 - Variante A', image_url: '🏚️', is_default: false, rarity: 'legendary' },
-  { building_type: 'corral', skin_key: 'corral_5B', name: 'Corral Nivel 5 - Variante B', image_url: '🏚️', is_default: false, rarity: 'legendary' },
+  // Corral skins (coop) - Levels 1-5, Variants A and B
+  { building_type: 'corral', skin_key: 'coop_1A', name: 'Corral Nivel 1A', image_url: '/src/assets/buildings/coop_1A.png', is_default: true, rarity: 'common' },
+  { building_type: 'corral', skin_key: 'coop_1B', name: 'Corral Nivel 1B (Invierno)', image_url: '/src/assets/buildings/coop_1B.png', is_default: false, rarity: 'common' },
+  { building_type: 'corral', skin_key: 'coop_2A', name: 'Corral Nivel 2A', image_url: '/src/assets/buildings/coop_2A.png', is_default: false, rarity: 'uncommon' },
+  { building_type: 'corral', skin_key: 'coop_2B', name: 'Corral Nivel 2B', image_url: '/src/assets/buildings/coop_2B.png', is_default: false, rarity: 'uncommon' },
+  { building_type: 'corral', skin_key: 'coop_3A', name: 'Corral Nivel 3A', image_url: '/src/assets/buildings/coop_3A.png', is_default: false, rarity: 'rare' },
+  { building_type: 'corral', skin_key: 'coop_3B', name: 'Corral Nivel 3B', image_url: '/src/assets/buildings/coop_3B.png', is_default: false, rarity: 'rare' },
+  { building_type: 'corral', skin_key: 'coop_4A', name: 'Corral Nivel 4A', image_url: '/src/assets/buildings/coop_4A.png', is_default: false, rarity: 'epic' },
+  { building_type: 'corral', skin_key: 'coop_4B', name: 'Corral Nivel 4B', image_url: '/src/assets/buildings/coop_4B.png', is_default: false, rarity: 'epic' },
+  { building_type: 'corral', skin_key: 'coop_5A', name: 'Corral Nivel 5A', image_url: '/src/assets/buildings/coop_5A.png', is_default: false, rarity: 'legendary' },
+  { building_type: 'corral', skin_key: 'coop_5B', name: 'Corral Nivel 5B', image_url: '/src/assets/buildings/coop_5B.png', is_default: false, rarity: 'legendary' },
   
   // Warehouse skins - Levels 1-5
-  { building_type: 'warehouse', skin_key: 'warehouse_1A', name: 'Almacén Nivel 1 - Variante A', image_url: '🏭', is_default: true, rarity: 'common' },
-  { building_type: 'warehouse', skin_key: 'warehouse_1B', name: 'Almacén Nivel 1 - Variante B', image_url: '🏭', is_default: false, rarity: 'common' },
-  { building_type: 'warehouse', skin_key: 'warehouse_2A', name: 'Almacén Nivel 2 - Variante A', image_url: '🏭', is_default: false, rarity: 'uncommon' },
-  { building_type: 'warehouse', skin_key: 'warehouse_3A', name: 'Almacén Nivel 3 - Variante A', image_url: '🏭', is_default: false, rarity: 'rare' },
-  { building_type: 'warehouse', skin_key: 'warehouse_4A', name: 'Almacén Nivel 4 - Variante A', image_url: '🏭', is_default: false, rarity: 'epic' },
-  { building_type: 'warehouse', skin_key: 'warehouse_5A', name: 'Almacén Nivel 5 - Variante A', image_url: '🏭', is_default: false, rarity: 'legendary' },
+  { building_type: 'warehouse', skin_key: 'warehouse_1A', name: 'Almacén Nivel 1A', image_url: '/src/assets/buildings/warehouse_1A.png', is_default: true, rarity: 'common' },
+  { building_type: 'warehouse', skin_key: 'warehouse_1B', name: 'Almacén Nivel 1B', image_url: '/src/assets/buildings/warehouse_1B.png', is_default: false, rarity: 'common' },
+  { building_type: 'warehouse', skin_key: 'warehouse_2A', name: 'Almacén Nivel 2A', image_url: '/src/assets/buildings/warehouse_2A.png', is_default: false, rarity: 'uncommon' },
+  { building_type: 'warehouse', skin_key: 'warehouse_3A', name: 'Almacén Nivel 3A', image_url: '/src/assets/buildings/warehouse_3A.png', is_default: false, rarity: 'rare' },
+  { building_type: 'warehouse', skin_key: 'warehouse_4A', name: 'Almacén Nivel 4A', image_url: '/src/assets/buildings/warehouse_4A.png', is_default: false, rarity: 'epic' },
+  { building_type: 'warehouse', skin_key: 'warehouse_5A', name: 'Almacén Nivel 5A', image_url: '/src/assets/buildings/warehouse_5A.png', is_default: false, rarity: 'legendary' },
   
   // Market skins - Levels 1-5, Variants A and B
-  { building_type: 'market', skin_key: 'market_1A', name: 'Mercado Nivel 1 - Variante A', image_url: '🏪', is_default: true, rarity: 'common' },
-  { building_type: 'market', skin_key: 'market_1B', name: 'Mercado Nivel 1 - Variante B', image_url: '🏪', is_default: false, rarity: 'common' },
-  { building_type: 'market', skin_key: 'market_2A', name: 'Mercado Nivel 2 - Variante A', image_url: '🏪', is_default: false, rarity: 'uncommon' },
-  { building_type: 'market', skin_key: 'market_2B', name: 'Mercado Nivel 2 - Variante B', image_url: '🏪', is_default: false, rarity: 'uncommon' },
-  { building_type: 'market', skin_key: 'market_3A', name: 'Mercado Nivel 3 - Variante A', image_url: '🏪', is_default: false, rarity: 'rare' },
-  { building_type: 'market', skin_key: 'market_3B', name: 'Mercado Nivel 3 - Variante B', image_url: '🏪', is_default: false, rarity: 'rare' },
-  { building_type: 'market', skin_key: 'market_4A', name: 'Mercado Nivel 4 - Variante A', image_url: '🏪', is_default: false, rarity: 'epic' },
-  { building_type: 'market', skin_key: 'market_4B', name: 'Mercado Nivel 4 - Variante B', image_url: '🏪', is_default: false, rarity: 'epic' },
-  { building_type: 'market', skin_key: 'market_5A', name: 'Mercado Nivel 5 - Variante A', image_url: '🏪', is_default: false, rarity: 'legendary' },
-  { building_type: 'market', skin_key: 'market_5B', name: 'Mercado Nivel 5 - Variante B', image_url: '🏪', is_default: false, rarity: 'legendary' },
+  { building_type: 'market', skin_key: 'market_1A', name: 'Mercado Nivel 1A', image_url: '/src/assets/buildings/market_1A.png', is_default: true, rarity: 'common' },
+  { building_type: 'market', skin_key: 'market_1B', name: 'Mercado Nivel 1B', image_url: '/src/assets/buildings/market_1B.png', is_default: false, rarity: 'common' },
+  { building_type: 'market', skin_key: 'market_2A', name: 'Mercado Nivel 2A', image_url: '/src/assets/buildings/market_2A.png', is_default: false, rarity: 'uncommon' },
+  { building_type: 'market', skin_key: 'market_2B', name: 'Mercado Nivel 2B', image_url: '/src/assets/buildings/market_2B.png', is_default: false, rarity: 'uncommon' },
+  { building_type: 'market', skin_key: 'market_3A', name: 'Mercado Nivel 3A', image_url: '/src/assets/buildings/market_3A.png', is_default: false, rarity: 'rare' },
+  { building_type: 'market', skin_key: 'market_3B', name: 'Mercado Nivel 3B', image_url: '/src/assets/buildings/market_3B.png', is_default: false, rarity: 'rare' },
+  { building_type: 'market', skin_key: 'market_4A', name: 'Mercado Nivel 4A', image_url: '/src/assets/buildings/market_4A.png', is_default: false, rarity: 'epic' },
+  { building_type: 'market', skin_key: 'market_4B', name: 'Mercado Nivel 4B', image_url: '/src/assets/buildings/market_4B.png', is_default: false, rarity: 'epic' },
+  { building_type: 'market', skin_key: 'market_5A', name: 'Mercado Nivel 5A', image_url: '/src/assets/buildings/market_5A .png', is_default: false, rarity: 'legendary' },
+  { building_type: 'market', skin_key: 'market_5B', name: 'Mercado Nivel 5B', image_url: '/src/assets/buildings/market_5B.png', is_default: false, rarity: 'legendary' },
   
   // House skins - Level 1, Variants A, B, and C
-  { building_type: 'house', skin_key: 'house_1A', name: 'Casa Nivel 1 - Variante A', image_url: '🏠', is_default: true, rarity: 'common' },
-  { building_type: 'house', skin_key: 'house_1B', name: 'Casa Nivel 1 - Variante B', image_url: '🏠', is_default: false, rarity: 'common' },
-  { building_type: 'house', skin_key: 'house_1C', name: 'Casa Nivel 1 - Variante C', image_url: '🏠', is_default: false, rarity: 'common' },
+  { building_type: 'house', skin_key: 'house_1A', name: 'Casa Nivel 1A', image_url: '/src/assets/buildings/house_1A.png', is_default: true, rarity: 'common' },
+  { building_type: 'house', skin_key: 'house_1B', name: 'Casa Nivel 1B', image_url: '/src/assets/buildings/house_1B.png', is_default: false, rarity: 'common' },
+  { building_type: 'house', skin_key: 'house_1C', name: 'Casa Nivel 1C', image_url: '/src/assets/buildings/house_1C.png', is_default: false, rarity: 'common' },
 ];
 
 export const addAllBuildingSkins = async () => {
@@ -103,7 +103,7 @@ export const addAllBuildingSkins = async () => {
 export const checkExistingSkins = async () => {
   const { data, error } = await supabase
     .from('building_skins')
-    .select('skin_key, building_type, name')
+    .select('skin_key, building_type, name, image_url, rarity, is_default')
     .order('building_type')
     .order('skin_key');
 
