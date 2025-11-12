@@ -151,14 +151,29 @@ const Home = () => {
     );
   }, [warehouseBuilding?.selected_skin, warehouseBuilding?.level, warehouseLevel, warehouseSkinInfo]);
 
-  // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
+  // Dynamic slots: always even number, min based on buildings + 1-2 empty slots
   const occupiedSlots = buildings.length;
-  const MIN_EMPTY_SLOTS = 4;
-  const MAX_EMPTY_SLOTS = 6;
-  // Calculate total to always be even
-  let totalSlots = occupiedSlots + MIN_EMPTY_SLOTS;
-  if (totalSlots % 2 !== 0) totalSlots++; // Make it even
-  if (totalSlots < 6) totalSlots = 6; // Minimum 6 slots
+  const MIN_EMPTY_SLOTS = 1;
+  const MAX_EMPTY_SLOTS = 2;
+  // Calculate total: occupied slots + 1-2 empty slots (prefer 2 if even, 1 if odd)
+  // Always ensure total is even
+  let emptySlots = MIN_EMPTY_SLOTS;
+  let totalSlots = occupiedSlots + emptySlots;
+  
+  // If total is odd, try to add one more empty slot (up to MAX_EMPTY_SLOTS)
+  if (totalSlots % 2 !== 0 && emptySlots < MAX_EMPTY_SLOTS) {
+    emptySlots = MAX_EMPTY_SLOTS;
+    totalSlots = occupiedSlots + emptySlots;
+  }
+  
+  // If still odd, add one more to make it even (but this should rarely happen)
+  if (totalSlots % 2 !== 0) {
+    totalSlots++;
+  }
+  
+  // Minimum 2 slots (1 per side)
+  if (totalSlots < 2) totalSlots = 2;
+  
   const TOTAL_SLOTS = totalSlots;
 
   // Responsive cell size based on container width and gap
