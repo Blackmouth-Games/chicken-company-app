@@ -186,11 +186,36 @@ export const getBuildingDisplay = (
     return { type: 'image', src: image };
   }
   
+  // If we didn't get an image, try to get the default 'A' variant one more time
+  // This ensures we always try to show an image before falling back to emoji
+  if (!image) {
+    const images = BUILDING_IMAGES[type];
+    if (images) {
+      const structure = getBuildingStructure(type);
+      const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+      const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+      if (defaultImage) {
+        console.log(`[getBuildingDisplay] Using fallback default image for ${type} level ${validLevel}:`, defaultImage);
+        return { type: 'image', src: defaultImage };
+      }
+    }
+  }
+  
   // If skinInfo has an image_url, check if it's a valid URL or emoji
   if (skinInfo?.image_url) {
     // Ignore paths that start with /src/ as they don't work in the browser
     // These are development paths that should be handled by getBuildingImage
     if (skinInfo.image_url.startsWith('/src/')) {
+      // Try one more time to get default image before falling back to emoji
+      const images = BUILDING_IMAGES[type];
+      if (images) {
+        const structure = getBuildingStructure(type);
+        const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+        const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+        if (defaultImage) {
+          return { type: 'image', src: defaultImage };
+        }
+      }
       // Fallback to default emoji since the path won't work
       return { type: 'emoji', emoji: '🏚️' };
     }
@@ -217,10 +242,34 @@ export const getBuildingDisplay = (
       return { type: 'emoji', emoji: skinInfo.image_url };
     }
     
+    // If it doesn't look like an emoji or valid URL, try default image one more time
+    const images = BUILDING_IMAGES[type];
+    if (images) {
+      const structure = getBuildingStructure(type);
+      const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+      const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+      if (defaultImage) {
+        return { type: 'image', src: defaultImage };
+      }
+    }
+    
     // If it doesn't look like an emoji or valid URL, use default
     return { type: 'emoji', emoji: '🏚️' };
   }
   
-  // Fallback to default emoji
+  // Final fallback: try to get default image one more time
+  const images = BUILDING_IMAGES[type];
+  if (images) {
+    const structure = getBuildingStructure(type);
+    const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
+    const defaultImage = images[validLevel]?.A || images[1]?.A || null;
+    if (defaultImage) {
+      console.log(`[getBuildingDisplay] Final fallback: using default image for ${type} level ${validLevel}:`, defaultImage);
+      return { type: 'image', src: defaultImage };
+    }
+  }
+  
+  // Last resort: fallback to default emoji
+  console.warn(`[getBuildingDisplay] No image found for ${type} level ${level}, falling back to emoji`);
   return { type: 'emoji', emoji: '🏚️' };
 };

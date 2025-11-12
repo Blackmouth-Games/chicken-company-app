@@ -1099,7 +1099,7 @@ const Home = () => {
                       className="w-full h-full object-contain pointer-events-none"
                     />
                   ) : (
-                    <div className="text-4xl md:text-5xl pointer-events-none">{warehouseDisplay?.emoji || '🏭'}</div>
+                    <div className="text-4xl md:text-5xl pointer-events-none">{warehouseDisplay?.emoji || '🏚️'}</div>
                   )}
                   {isEditMode && (
                     <>

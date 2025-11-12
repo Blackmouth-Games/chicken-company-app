@@ -46,7 +46,8 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const buildingDisplay = useMemo(() => {
     if (!warehouse) return null;
     
-    // Explicitly pass null for skinKey if selected_skin is null/undefined to trigger default 'A' variant
+    // If selected_skin is null/undefined, use null to trigger default 'A' variant
+    // If selected_skin exists, use it (it will be mapped to local variant via mapSkinKeyToLocal)
     const skinKeyToUse = warehouse.selected_skin || null;
     
     const display = getBuildingDisplay(
@@ -69,6 +70,12 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       emoji: display?.type === 'emoji' ? display.emoji : null,
       skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
     });
+    
+    // If we got an emoji but we should have an image, log a warning
+    if (display?.type === 'emoji') {
+      console.warn('[WarehouseDialog] Got emoji instead of image. This might indicate missing warehouse images.');
+    }
+    
     return display;
   }, [warehouse, warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
 
@@ -84,7 +91,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100/50">
-              <h2 className="text-2xl font-bold text-blue-900">🏭 Almacén</h2>
+              <h2 className="text-2xl font-bold text-blue-900">🏚️ Almacén</h2>
               <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-blue-200/50">
                 ✕
               </Button>
