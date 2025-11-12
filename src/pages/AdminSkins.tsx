@@ -12,7 +12,34 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 
-const assetUrls = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { eager: true, as: 'url' }) as Record<string, string>;
+// Map all assets in /src/assets to URLs and normalize keys for robust lookup
+const assetModules = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { eager: true, as: 'url' }) as Record<string, string>;
+const assetMap: Record<string, string> = {};
+for (const [key, url] of Object.entries(assetModules)) {
+  assetMap[key] = url;
+  // Add variants without leading slash
+  if (key.startsWith('/')) assetMap[key.slice(1)] = url;
+  // Add variant removing accidental spaces before extension (e.g., "market_5A .png")
+  const noSpace = key.replace(/\s+(?=\.[a-zA-Z]+$)/, '');
+  assetMap[noSpace] = url;
+  if (noSpace.startsWith('/')) assetMap[noSpace.slice(1)] = url;
+}
+
+const resolveAssetUrl = (p?: string | null) => {
+  if (!p) return undefined;
+  const candidate = p.trim();
+  const variants = [
+    candidate,
+    candidate.startsWith('/') ? candidate.slice(1) : `/${candidate}`,
+    candidate.replace(/\s+(?=\.[a-zA-Z]+$)/, ''),
+    (candidate.startsWith('/') ? candidate.slice(1) : candidate).replace(/\s+(?=\.[a-zA-Z]+$)/, ''),
+  ];
+  for (const v of variants) {
+    const found = assetMap[v];
+    if (found) return found;
+  }
+  return undefined;
+};
 
 const AdminSkins = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAdminAuth();
@@ -21,7 +48,7 @@ const AdminSkins = () => {
   const [checking, setChecking] = useState(false);
   const [existingSkins, setExistingSkins] = useState<any[] | null>(null);
   const { toast } = useToast();
-  const placeholderUrl = (assetUrls['/src/assets/placeholder.png'] as string) ?? '/placeholder.svg';
+  const placeholderUrl = resolveAssetUrl('/src/assets/placeholder.png') ?? '/placeholder.svg';
 
   // Show loading while checking auth
   if (authLoading) {
@@ -153,10 +180,8 @@ const AdminSkins = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {existingSkins.map((skin) => {
                 // Resolve local /src assets to actual URLs via Vite
-                const imageUrl =
-                  skin.image_url && skin.image_url.startsWith('/src/assets/')
-                    ? ((assetUrls[skin.image_url] as string) ?? placeholderUrl)
-                    : (skin.image_url || placeholderUrl);
+                const resolved = resolveAssetUrl(skin.image_url);
+                const imageUrl = resolved ?? placeholderUrl;
                 
                 return (
                   <div
