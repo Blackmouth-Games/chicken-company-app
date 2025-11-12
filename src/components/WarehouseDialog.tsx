@@ -42,35 +42,16 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   }, [warehouse?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
-  // Depend on warehouse?.selected_skin and warehouse?.level explicitly to ensure updates
+  // Use the same pattern as CorralDialog for consistency
   const buildingDisplay = useMemo(() => {
     if (!warehouse) return null;
-    
-    // If selected_skin is null/undefined, use null to trigger default 'A' variant
-    // If selected_skin exists, use it (it will be mapped to local variant via mapSkinKeyToLocal)
-    const skinKeyToUse = warehouse.selected_skin || null;
-    
-    const display = getBuildingDisplay(
+    return getBuildingDisplay(
       'warehouse',
-      currentLevel,
-      skinKeyToUse,
+      warehouse.level,
+      warehouse.selected_skin || null,
       skinInfo || undefined
     );
-    
-    // Debug log to see what's being returned
-    console.log('[WarehouseDialog] buildingDisplay:', {
-      warehouse: warehouse?.id,
-      selected_skin: warehouse.selected_skin,
-      skinKeyToUse,
-      currentLevel,
-      displayType: display?.type,
-      hasImage: display?.type === 'image',
-      imageSrc: display?.type === 'image' ? display.src : null,
-      skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
-    });
-    
-    return display;
-  }, [warehouse, warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
+  }, [warehouse?.selected_skin, warehouse?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();

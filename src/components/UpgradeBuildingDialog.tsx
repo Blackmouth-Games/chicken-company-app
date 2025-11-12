@@ -75,24 +75,28 @@ export const UpgradeBuildingDialog = ({
   }, [building?.selected_skin, getSkinByKey]);
 
   // Get building display for current level
+  // Use the same pattern as CorralDialog for consistency
   const currentDisplay = useMemo(() => {
+    if (!building) return null;
     return getBuildingDisplay(
       buildingType as BuildingType,
       currentLevel,
-      building?.selected_skin || null,
+      building.selected_skin || null,
       skinInfo || undefined
     );
-  }, [buildingType, currentLevel, building?.selected_skin, skinInfo]);
+  }, [buildingType, currentLevel, building?.selected_skin, building?.level, skinInfo]);
 
   // Get building display for next level (same skin)
+  // Use the same pattern as CorralDialog for consistency
   const nextDisplay = useMemo(() => {
+    if (!building) return null;
     return getBuildingDisplay(
       buildingType as BuildingType,
       nextLevel,
-      building?.selected_skin || null,
+      building.selected_skin || null,
       skinInfo || undefined
     );
-  }, [buildingType, nextLevel, building?.selected_skin, skinInfo]);
+  }, [buildingType, nextLevel, building?.selected_skin, building?.level, skinInfo]);
 
   // Building emojis and labels (only used as fallback if images fail to load)
   const buildingInfo: Record<string, { emoji: string; label: string; capacityLabel: string }> = {
