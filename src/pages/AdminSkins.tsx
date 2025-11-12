@@ -12,6 +12,8 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 
+const assetUrls = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { eager: true, as: 'url' }) as Record<string, string>;
+
 const AdminSkins = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAdminAuth();
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ const AdminSkins = () => {
   const [checking, setChecking] = useState(false);
   const [existingSkins, setExistingSkins] = useState<any[] | null>(null);
   const { toast } = useToast();
+  const placeholderUrl = (assetUrls['/src/assets/placeholder.png'] as string) ?? '/placeholder.svg';
 
   // Show loading while checking auth
   if (authLoading) {
@@ -149,10 +152,11 @@ const AdminSkins = () => {
           <div className="bg-card border rounded-lg p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {existingSkins.map((skin) => {
-                // Resolve the image URL from /src/assets to actual URL
-                const imageUrl = skin.image_url.startsWith('/src/assets/') 
-                  ? skin.image_url.replace('/src/assets/', '/src/assets/')
-                  : skin.image_url;
+                // Resolve local /src assets to actual URLs via Vite
+                const imageUrl =
+                  skin.image_url && skin.image_url.startsWith('/src/assets/')
+                    ? ((assetUrls[skin.image_url] as string) ?? placeholderUrl)
+                    : (skin.image_url || placeholderUrl);
                 
                 return (
                   <div
@@ -166,7 +170,7 @@ const AdminSkins = () => {
                         className="w-full h-full object-contain"
                         onError={(e) => {
                           console.error(`Failed to load image: ${imageUrl}`);
-                          e.currentTarget.src = '/src/assets/placeholder.png';
+                          e.currentTarget.src = placeholderUrl;
                         }}
                       />
                     </div>
