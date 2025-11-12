@@ -31,12 +31,6 @@ const LayoutEditor = () => {
     const newMode = !isEditMode;
     setIsEditMode(newMode);
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
-    toast({
-      title: newMode ? t('layoutEditor.editModeActivated') : t('layoutEditor.editModeDeactivated'),
-      description: newMode 
-        ? t('layoutEditor.editDescription')
-        : t('layoutEditor.changesSaved'),
-    });
   };
 
   const addBelt = () => {
@@ -57,12 +51,6 @@ const LayoutEditor = () => {
     const newState = !paintMode;
     setPaintMode(newState);
     window.dispatchEvent(new CustomEvent('paintModeChange', { detail: newState }));
-    toast({
-      title: newState ? 'Modo pintado activado' : 'Modo pintado desactivado',
-      description: newState 
-        ? 'Haz clic en las celdas vacías para colocar cintas'
-        : 'Modo pintado desactivado',
-    });
   };
 
   const handlePaintDirectionChange = (direction: 'north' | 'south' | 'east' | 'west') => {

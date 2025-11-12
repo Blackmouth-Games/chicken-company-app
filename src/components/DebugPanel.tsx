@@ -150,10 +150,6 @@ const DebugPanel = () => {
     const next = !isEditMode;
     setIsEditMode(next);
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: next }));
-    toast({
-      title: next ? t('layoutEditor.editModeActivated') : t('layoutEditor.editModeDeactivated'),
-      description: next ? t('layoutEditor.editDescription') : t('layoutEditor.changesSaved'),
-    });
   };
 
   const addBelt = () => {
