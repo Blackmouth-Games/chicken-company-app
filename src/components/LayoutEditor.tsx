@@ -12,6 +12,26 @@ const LayoutEditor = () => {
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
   const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
   const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
+  
+  // Listen to edit mode changes from header
+  useEffect(() => {
+    const handleEditModeChange = (e: CustomEvent<boolean>) => {
+      setIsEditMode(e.detail);
+    };
+    
+    window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
+    
+    // Initialize from localStorage or default
+    const saved = localStorage.getItem('layoutEditMode');
+    if (saved) {
+      const savedMode = JSON.parse(saved);
+      setIsEditMode(savedMode);
+    }
+    
+    return () => {
+      window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
+    };
+  }, []);
   const [isVisible, setIsVisible] = useState(() => {
     const saved = localStorage.getItem('layoutEditorVisible');
     return saved ? JSON.parse(saved) : true;
@@ -30,6 +50,7 @@ const LayoutEditor = () => {
   const toggleEditMode = () => {
     const newMode = !isEditMode;
     setIsEditMode(newMode);
+    localStorage.setItem('layoutEditMode', JSON.stringify(newMode));
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
   };
 
@@ -483,8 +504,7 @@ const LayoutEditor = () => {
     );
   }
 
-  // When edit mode is inactive, don't show the compact button (it's now in the header)
-  // Only show the editor when edit mode is active
+  // When edit mode is inactive, don't show anything (button is now in the header)
   return null;
 };
 

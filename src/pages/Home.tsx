@@ -233,6 +233,7 @@ const Home = () => {
   const toggleEditModeFromHeader = () => {
     const newMode = !headerEditMode;
     setHeaderEditMode(newMode);
+    localStorage.setItem('layoutEditMode', JSON.stringify(newMode));
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
   };
   const [paintOptions, setPaintOptions] = useState<{
