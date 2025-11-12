@@ -130,7 +130,9 @@ export const getBuildingImage = (
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
     const defaultImage = images[validLevel]?.A || images[1]?.A || null;
     if (!defaultImage) {
-      console.warn(`[getBuildingImage] No default image found for ${type} level ${validLevel}, available levels:`, Object.keys(images));
+      console.warn(`[getBuildingImage] No default image found for ${type} level ${validLevel}, available levels:`, Object.keys(images), `available variants for level ${validLevel}:`, images[validLevel] ? Object.keys(images[validLevel]) : 'none');
+    } else {
+      console.log(`[getBuildingImage] Using default 'A' variant for ${type} level ${validLevel}:`, defaultImage);
     }
     return defaultImage;
   }

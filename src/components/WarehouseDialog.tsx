@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
@@ -9,7 +9,6 @@ import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette, Edit } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
-import { useMemo } from "react";
 
 interface WarehouseDialogProps {
   open: boolean;
@@ -29,6 +28,13 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const nextLevelPrice = getPrice(BUILDING_TYPES.WAREHOUSE, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
 
+  // Refetch warehouse data when modal opens to ensure we have the latest selected_skin
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
+
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
     if (!warehouse?.selected_skin) return null;
@@ -39,22 +45,32 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   // Depend on warehouse?.selected_skin and warehouse?.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!warehouse) return null;
+    
+    // Explicitly pass null for skinKey if selected_skin is null/undefined to trigger default 'A' variant
+    const skinKeyToUse = warehouse.selected_skin || null;
+    
     const display = getBuildingDisplay(
       'warehouse',
       currentLevel,
-      warehouse.selected_skin || null,
+      skinKeyToUse,
       skinInfo || undefined
     );
+    
     // Debug log to see what's being returned
     console.log('[WarehouseDialog] buildingDisplay:', {
+      warehouse: warehouse?.id,
       selected_skin: warehouse.selected_skin,
+      skinKeyToUse,
       currentLevel,
       displayType: display?.type,
       hasImage: display?.type === 'image',
       hasEmoji: display?.type === 'emoji',
+      imageSrc: display?.type === 'image' ? display.src : null,
+      emoji: display?.type === 'emoji' ? display.emoji : null,
+      skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
     });
     return display;
-  }, [warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
+  }, [warehouse, warehouse?.selected_skin, warehouse?.level, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -93,14 +109,27 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay && buildingDisplay.type === 'image' ? (
-                      <img 
-                        src={buildingDisplay.src} 
-                        alt="Warehouse" 
-                        className="w-52 h-52 object-contain"
-                      />
+                    {buildingDisplay ? (
+                      buildingDisplay.type === 'image' ? (
+                        <img 
+                          src={buildingDisplay.src} 
+                          alt="Warehouse" 
+                          className="w-52 h-52 object-contain"
+                          onError={(e) => {
+                            console.error('[WarehouseDialog] Image failed to load:', buildingDisplay.src);
+                            // Fallback to emoji if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            const emojiDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (emojiDiv) {
+                              emojiDiv.style.display = 'block';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="text-9xl">{buildingDisplay.emoji || '🏭'}</div>
+                      )
                     ) : (
-                      <div className="text-9xl">{buildingDisplay?.emoji || '🏭'}</div>
+                      <div className="text-9xl">🏭</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-blue-900 text-lg">Almacén</h3>
