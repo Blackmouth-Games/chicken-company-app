@@ -7,13 +7,29 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addAllBuildingSkins, checkExistingSkins } from "@/scripts/addAllBuildingSkins";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Loader2, CheckCircle, RefreshCw, LogOut } from "lucide-react";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNavigate } from "react-router-dom";
+import { LoadingScreen } from "@/components/LoadingScreen";
 
 const AdminSkins = () => {
+  const { user, isAdmin, loading: authLoading, signOut } = useAdminAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [existingSkins, setExistingSkins] = useState<any[] | null>(null);
   const { toast } = useToast();
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return <LoadingScreen message="Verificando permisos..." />;
+  }
+
+  // Redirect to login if not authenticated or not admin
+  if (!user || isAdmin === false) {
+    navigate("/admin/login");
+    return null;
+  }
 
   const handleAddSkins = async () => {
     setLoading(true);
@@ -73,7 +89,16 @@ const AdminSkins = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6">Administración de Skins</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Administración de Skins</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">{user.email}</span>
+          <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Cerrar Sesión
+          </Button>
+        </div>
+      </div>
       
       <div className="space-y-4 mb-6">
         <div className="flex gap-4">

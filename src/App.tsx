@@ -18,6 +18,7 @@ import Wallet from "./pages/Wallet";
 import Friends from "./pages/Friends";
 import Store from "./pages/Store";
 import AdminSkins from "./pages/AdminSkins";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -76,8 +77,9 @@ const AppRoutes = () => {
       <MetricsProvider>
         <ErrorBoundary>
           <Routes>
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/skins" element={<AdminSkins />} />
-            <Route path="*" element={<Navigate to="/admin/skins" replace />} />
+            <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
         </ErrorBoundary>
       </MetricsProvider>
