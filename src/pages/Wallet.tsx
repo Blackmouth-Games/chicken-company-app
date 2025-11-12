@@ -6,38 +6,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { normalizeTonAddress } from "@/lib/ton";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 const Wallet = () => {
   const wallet = useTonWallet();
   const telegramUser = getTelegramUser();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authenticating, setAuthenticating] = useState(false);
   const { toast } = useToast();
 
+  // Autenticación automática al conectar wallet
   useEffect(() => {
-    loadTransactions();
+    if (wallet && telegramUser?.id) {
+      handleAutoAuth();
+    }
+  }, [wallet, telegramUser]);
+
+  useEffect(() => {
+    if (telegramUser) {
+      loadTransactions();
+    }
   }, [telegramUser]);
 
-  const handleSignIn = async () => {
-    if (!wallet) {
-      toast({
-        title: "Error",
-        description: "Primero conecta tu wallet",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setAuthenticating(true);
+  const handleAutoAuth = async () => {
+    if (!wallet || !telegramUser?.id) return;
 
     try {
       const walletAddress = wallet.account.address;
       const normalizedAddress = normalizeTonAddress(walletAddress);
 
-      // Step 1: Get nonce from server
-      console.log('Requesting nonce for authentication...');
+      console.log('🔐 Autenticando automáticamente con wallet...');
+
+      // Step 1: Get nonce
       const { data: nonceData, error: nonceError } = await supabase.functions.invoke('auth-wallet', {
         body: {
           action: 'get-nonce',
@@ -50,54 +49,37 @@ const Wallet = () => {
       }
 
       const { nonce } = nonceData;
-      console.log('Received nonce, authenticating...');
 
-      // Step 2: Verify and authenticate (TON Connect handles signature automatically)
+      // Step 2: Authenticate automatically
       const { data: authData, error: authError } = await supabase.functions.invoke('auth-wallet', {
         body: {
           action: 'verify-signature',
           walletAddress: normalizedAddress,
-          signature: 'wallet-proof', // TON Connect proof mechanism
+          signature: 'wallet-proof',
           nonce,
-          telegramId: telegramUser?.id
+          telegramId: telegramUser.id
         }
       });
 
       if (authError || !authData?.success) {
-        throw new Error(authData?.error || 'Authentication failed');
+        console.error('Auth error:', authData?.error || authError);
+        return;
       }
 
-      console.log('Authentication successful:', authData);
-
-      // Step 3: Set the session using the magic link
+      // Step 3: Set session silently
       if (authData.session?.hashed_token) {
-        const { error: sessionError } = await supabase.auth.verifyOtp({
+        await supabase.auth.verifyOtp({
           token_hash: authData.session.hashed_token,
           type: 'magiclink'
         });
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-        }
       }
 
-      toast({
-        title: "✅ Autenticación exitosa",
-        description: "Has iniciado sesión con tu wallet TON",
-      });
-
+      console.log('✅ Usuario autenticado automáticamente');
       loadTransactions();
 
     } catch (error) {
-      console.error("Error authenticating:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      toast({
-        title: "Error de autenticación",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setAuthenticating(false);
+      console.error("Error en autenticación automática:", error);
+      // No mostramos toast de error para no molestar al usuario
     }
   };
 
@@ -191,17 +173,10 @@ const Wallet = () => {
                   </p>
                 </div>
                 <div className="pt-2 border-t">
-                  <Button 
-                    onClick={handleSignIn} 
-                    disabled={authenticating}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {authenticating ? "Autenticando..." : "🔐 Iniciar sesión con Wallet"}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Tu wallet firmará un mensaje para verificar tu identidad
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+                    <span>Autenticado</span>
+                  </div>
                 </div>
               </div>
             )}
