@@ -59,7 +59,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   market: { gridColumn: '11 / 15', gridRow: '9 / 17' },
   boxes: { gridColumn: '5 / 7', gridRow: '12 / 17' },
   leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 20, rowSpan: 10 },
-  rightCorrals: { gridColumn: '9 / 15', gap: '20px', startRow: 20, rowSpan: 10 },
+  rightCorrals: { gridColumn: '8 / 14', gap: '20px', startRow: 20, rowSpan: 10 },
   belts: [
     { id: 'belt-1762856882265', gridColumn: '7 / 8', gridRow: '18 / 19', direction: 'west', type: 'straight' },
     { id: 'belt-1762856882801', gridColumn: '6 / 7', gridRow: '18 / 19', direction: 'west', type: 'straight' },
@@ -199,10 +199,15 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Convert pixel position to grid coordinates
+  // Uses getBoundingClientRect which automatically accounts for scroll
+  // Both clientX/clientY and getBoundingClientRect are relative to viewport
   const pixelToGrid = (x: number, y: number): { col: number; row: number } => {
     if (!gridRef.current) return { col: 1, row: 1 };
     
     const rect = gridRef.current.getBoundingClientRect();
+    
+    // Calculate position relative to grid element
+    // getBoundingClientRect() already accounts for scroll, so this is correct
     const relativeX = x - rect.left;
     const relativeY = y - rect.top;
     
@@ -215,7 +220,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     const cellWidth = (rect.width - totalGapWidth) / TOTAL_COLUMNS;
     const cellHeight = (rect.height - totalGapHeight) / totalRows;
     
-    // Add gapPx / 2 to account for rounding and ensure we get the correct cell
+    // Calculate column: divide relative position by (cellWidth + gap), add 1 for 1-based indexing
+    // Add gapPx/2 to account for rounding and ensure we get the correct cell
     const col = Math.max(1, Math.min(TOTAL_COLUMNS, Math.floor((relativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
     const row = Math.max(1, Math.min(totalRows, Math.floor((relativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
     

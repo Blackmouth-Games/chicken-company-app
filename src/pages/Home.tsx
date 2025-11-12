@@ -721,18 +721,20 @@ const Home = () => {
                 const totalRows = getTotalRows();
                 
                 // Calculate cell dimensions - account for gaps
-                const totalGapWidth = gapPx * (30 - 1);
+                const totalGapWidth = gapPx * (15 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (gridRect.width - totalGapWidth) / 30;
+                const cellWidth = (gridRect.width - totalGapWidth) / 15;
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
-                // Calculate position relative to grid (accounting for scroll if any)
+                // Calculate position relative to grid element
+                // getBoundingClientRect() already accounts for scroll automatically
+                // Both clientX/clientY and getBoundingClientRect are relative to viewport
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
                 // Calculate which cell the mouse is over
-                // Add 0.5 to account for rounding and ensure we get the correct cell
-                const col = Math.max(1, Math.min(30, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+                // Add gapPx/2 to account for rounding and ensure we get the correct cell
+                const col = Math.max(1, Math.min(15, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
                 const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
                 
                 setHoveredCell({ col, row });
@@ -758,18 +760,10 @@ const Home = () => {
               
               if (paintMode && isEditMode && !isDragging) {
                 e.stopPropagation();
-                // Use gridRef to get the correct container position
-                const gridContainer = gridRef.current;
-                if (!gridContainer) return;
-                
-                const rect = gridContainer.getBoundingClientRect();
-                
-                const relativeX = e.clientX - rect.left;
-                const relativeY = e.clientY - rect.top;
                 const gapPx = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
                 const totalRows = getTotalRows();
                 
-                // Get the actual grid element to calculate cell size
+                // Use the grid element that triggered the event for accurate positioning
                 const gridElement = e.currentTarget as HTMLElement;
                 const gridRect = gridElement.getBoundingClientRect();
                 
@@ -779,22 +773,20 @@ const Home = () => {
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
                 // Calculate column and row from click position relative to grid element
+                // Use the gridElement's getBoundingClientRect for consistency
+                // getBoundingClientRect() automatically accounts for scroll
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
-                const col = Math.max(1, Math.min(15, Math.floor(gridRelativeX / (cellWidth + gapPx)) + 1));
-                const row = Math.max(1, Math.min(totalRows, Math.floor(gridRelativeY / (cellHeight + gapPx)) + 1));
+                const col = Math.max(1, Math.min(15, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+                const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
                 
                 // Debug: Send click position to DebugPanel
                 const clickInfo = {
                   clientX: e.clientX,
                   clientY: e.clientY,
-                  rectLeft: rect.left,
-                  rectTop: rect.top,
                   gridRectLeft: gridRect.left,
                   gridRectTop: gridRect.top,
-                  relativeX,
-                  relativeY,
                   gridRelativeX,
                   gridRelativeY,
                   cellWidth,
@@ -802,8 +794,6 @@ const Home = () => {
                   gapPx,
                   calculatedCol: col,
                   calculatedRow: row,
-                  rectWidth: rect.width,
-                  rectHeight: rect.height,
                   gridRectWidth: gridRect.width,
                   gridRectHeight: gridRect.height,
                   totalRows,

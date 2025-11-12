@@ -99,7 +99,7 @@ const LayoutEditor = () => {
       market: { gridColumn: '11 / 15', gridRow: '9 / 17' },
       boxes: { gridColumn: '5 / 7', gridRow: '12 / 17' },
       leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 20, rowSpan: 10 },
-      rightCorrals: { gridColumn: '9 / 15', gap: '20px', startRow: 20, rowSpan: 10 },
+      rightCorrals: { gridColumn: '8 / 14', gap: '20px', startRow: 20, rowSpan: 10 },
       belts: [
         { id: 'belt-1762856882265', gridColumn: '7 / 8', gridRow: '18 / 19', direction: 'west', type: 'straight' },
         { id: 'belt-1762856882801', gridColumn: '6 / 7', gridRow: '18 / 19', direction: 'west', type: 'straight' },
