@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
-import { Address, Cell } from "https://esm.sh/@ton/core@0.62.0";
+import { Address } from "https://esm.sh/@ton/core@0.62.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -203,8 +203,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in auth-wallet function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

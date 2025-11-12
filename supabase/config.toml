@@ -1,1 +1,4 @@
 project_id = "allexcdmfjigijunipxz"
+
+[functions.auth-wallet]
+verify_jwt = false

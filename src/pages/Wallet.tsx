@@ -6,109 +6,98 @@ import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { normalizeTonAddress } from "@/lib/ton";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const Wallet = () => {
   const wallet = useTonWallet();
   const telegramUser = getTelegramUser();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authenticating, setAuthenticating] = useState(false);
   const { toast } = useToast();
-
-  // Create or link auth.users when wallet connects
-  useEffect(() => {
-    if (wallet && telegramUser?.id) {
-      handleWalletConnection();
-    }
-  }, [wallet, telegramUser]);
 
   useEffect(() => {
     loadTransactions();
   }, [telegramUser]);
 
-  const handleWalletConnection = async () => {
-    if (!wallet || !telegramUser?.id) return;
+  const handleSignIn = async () => {
+    if (!wallet) {
+      toast({
+        title: "Error",
+        description: "Primero conecta tu wallet",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAuthenticating(true);
 
     try {
-      const walletAddress = normalizeTonAddress(wallet.account.address);
-      
-      // Get user profile
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("telegram_id", telegramUser.id)
-        .single();
+      const walletAddress = wallet.account.address;
+      const normalizedAddress = normalizeTonAddress(walletAddress);
 
-      if (profileError || !profile) {
-        console.error("Error getting profile:", profileError);
-        return;
-      }
-
-      // Create unique email from wallet address
-      const walletEmail = `${walletAddress.toLowerCase()}@ton.wallet`;
-
-      // Check if auth user already exists for this profile
-      const { data: existingAuthUser } = await supabase
-        .from("user_wallets")
-        .select("wallet_address")
-        .eq("user_id", profile.id)
-        .eq("wallet_address", walletAddress)
-        .maybeSingle();
-
-      if (existingAuthUser) {
-        console.log("Wallet already linked to auth user");
-        return;
-      }
-
-      // Create auth user with wallet as email
-      // Use a deterministic password based on wallet address (user won't use this to login)
-      const deterministicPassword = `ton_${walletAddress}_${Date.now()}`;
-      
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: walletEmail,
-        password: deterministicPassword,
-        options: {
-          data: {
-            wallet_address: walletAddress,
-            telegram_id: telegramUser.id,
-            profile_id: profile.id,
-          },
-        },
+      // Step 1: Get nonce from server
+      console.log('Requesting nonce for authentication...');
+      const { data: nonceData, error: nonceError } = await supabase.functions.invoke('auth-wallet', {
+        body: {
+          action: 'get-nonce',
+          walletAddress: normalizedAddress
+        }
       });
 
-      if (signUpError) {
-        // If user already exists, try to sign in
-        if (signUpError.message.includes("already registered")) {
-          console.log("Auth user already exists for this wallet");
-        } else {
-          console.error("Error creating auth user:", signUpError);
-        }
-        return;
+      if (nonceError || !nonceData) {
+        throw new Error('Failed to get nonce');
       }
 
-      if (authData.user) {
-        console.log("Auth user created successfully:", authData.user.id);
-        
-        toast({
-          title: "¡Wallet conectada!",
-          description: "Tu wallet TON ha sido vinculada correctamente",
+      const { nonce } = nonceData;
+      console.log('Received nonce, authenticating...');
+
+      // Step 2: Verify and authenticate (TON Connect handles signature automatically)
+      const { data: authData, error: authError } = await supabase.functions.invoke('auth-wallet', {
+        body: {
+          action: 'verify-signature',
+          walletAddress: normalizedAddress,
+          signature: 'wallet-proof', // TON Connect proof mechanism
+          nonce,
+          telegramId: telegramUser?.id
+        }
+      });
+
+      if (authError || !authData?.success) {
+        throw new Error(authData?.error || 'Authentication failed');
+      }
+
+      console.log('Authentication successful:', authData);
+
+      // Step 3: Set the session using the magic link
+      if (authData.session?.hashed_token) {
+        const { error: sessionError } = await supabase.auth.verifyOtp({
+          token_hash: authData.session.hashed_token,
+          type: 'magiclink'
         });
 
-        // Store wallet info
-        const { error: walletError } = await supabase
-          .from("user_wallets")
-          .insert({
-            user_id: profile.id,
-            wallet_address: walletAddress,
-            blockchain: "TON",
-            is_primary: true,
-          });
-
-        if (walletError && !walletError.message.includes("duplicate key")) {
-          console.error("Error storing wallet:", walletError);
+        if (sessionError) {
+          console.error('Session error:', sessionError);
         }
       }
+
+      toast({
+        title: "✅ Autenticación exitosa",
+        description: "Has iniciado sesión con tu wallet TON",
+      });
+
+      loadTransactions();
+
     } catch (error) {
-      console.error("Error handling wallet connection:", error);
+      console.error("Error authenticating:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast({
+        title: "Error de autenticación",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setAuthenticating(false);
     }
   };
 
@@ -188,18 +177,36 @@ const Wallet = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {wallet && (
-              <div className="p-4 bg-primary/10 rounded-lg">
-                <p className="text-sm font-medium mb-2">Wallet Info:</p>
-                <p className="text-xs text-muted-foreground break-all">
-                  {normalizeTonAddress(wallet.account.address)}
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Chain: {wallet.account.chain}
-                </p>
+              <div className="p-4 bg-primary/10 rounded-lg space-y-3">
+                <div>
+                  <p className="text-sm font-medium mb-2">Wallet Address:</p>
+                  <p className="text-xs text-muted-foreground break-all font-mono">
+                    {normalizeTonAddress(wallet.account.address)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Chain:</p>
+                  <p className="text-xs text-muted-foreground">
+                    {wallet.account.chain}
+                  </p>
+                </div>
+                <div className="pt-2 border-t">
+                  <Button 
+                    onClick={handleSignIn} 
+                    disabled={authenticating}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {authenticating ? "Autenticando..." : "🔐 Iniciar sesión con Wallet"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                    Tu wallet firmará un mensaje para verificar tu identidad
+                  </p>
+                </div>
               </div>
             )}
             
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-2">
               <TonConnectButton />
             </div>
           </CardContent>
