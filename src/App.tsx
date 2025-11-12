@@ -57,17 +57,34 @@ const AppRoutes = () => {
     setIsFromTelegram(forced);
   }, []);
 
-  // Show splash screen first
-  if (showSplash && isFromTelegram !== false) {
+  // Check if current path is an admin route
+  const isAdminRoute = window.location.pathname.startsWith('/admin');
+
+  // Show splash screen first (skip for admin routes)
+  if (showSplash && isFromTelegram !== false && !isAdminRoute) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
-  // Show loading while checking Telegram status
-  if (isFromTelegram === null) {
+  // Show loading while checking Telegram status (skip for admin routes)
+  if (isFromTelegram === null && !isAdminRoute) {
     return <LoadingScreen message="Loading" />;
   }
 
-  // If not from Telegram, show Coming Soon page
+  // Allow admin routes from web without Telegram requirement
+  if (isAdminRoute) {
+    return (
+      <MetricsProvider>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/admin/skins" element={<AdminSkins />} />
+            <Route path="*" element={<Navigate to="/admin/skins" replace />} />
+          </Routes>
+        </ErrorBoundary>
+      </MetricsProvider>
+    );
+  }
+
+  // If not from Telegram and not admin route, show Coming Soon page
   if (!isFromTelegram) {
     return <ComingSoon />;
   }
