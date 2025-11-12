@@ -59,7 +59,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   market: { gridColumn: '10 / 15', gridRow: '7 / 11' },
   boxes: { gridColumn: '6 / 8', gridRow: '10 / 13' },
   leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 16, rowSpan: 7 },
-  rightCorrals: { gridColumn: '10 / 17', gap: '20px', startRow: 16, rowSpan: 7 },
+  rightCorrals: { gridColumn: '10 / 16', gap: '20px', startRow: 16, rowSpan: 7 },
   belts: [
     { id: 'belt-1762856883705', gridColumn: '7 / 8', gridRow: '14 / 15', direction: 'west', type: 'straight' },
     { id: 'belt-1762856884083', gridColumn: '6 / 7', gridRow: '14 / 15', direction: 'west', type: 'straight' },
@@ -73,7 +73,7 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   grid: { gap: '1px', maxWidth: '1600px', totalRows: 40 },
 };
 
-const TOTAL_COLUMNS = 17;
+const TOTAL_COLUMNS = 16;
 const MAX_TOTAL_ROWS = 40;
 
 export const useLayoutEditor = (beltSpanForRows: number = 20) => {

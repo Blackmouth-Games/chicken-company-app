@@ -90,8 +90,8 @@ export const getAllBuildingAreas = (
 ): { name: string; area: GridArea }[] => {
   const areas: { name: string; area: GridArea }[] = [];
   
-  // Add warehouse
-  if (excludeBuilding !== 'warehouse' && layoutConfig.warehouse) {
+  // Add warehouse (but exclude it if we're checking for boxes, since boxes can be inside warehouse)
+  if (excludeBuilding !== 'warehouse' && excludeBuilding !== 'boxes' && layoutConfig.warehouse) {
     areas.push({
       name: 'warehouse',
       area: parseGridArea(layoutConfig.warehouse.gridColumn, layoutConfig.warehouse.gridRow),
@@ -106,6 +106,22 @@ export const getAllBuildingAreas = (
     });
   }
   
+  // Add house
+  if (excludeBuilding !== 'house' && layoutConfig.house) {
+    areas.push({
+      name: 'house',
+      area: parseGridArea(layoutConfig.house.gridColumn, layoutConfig.house.gridRow),
+    });
+  }
+  
+  // Add boxes (but exclude it if we're checking for warehouse, since boxes can be inside warehouse)
+  if (excludeBuilding !== 'boxes' && excludeBuilding !== 'warehouse' && layoutConfig.boxes) {
+    areas.push({
+      name: 'boxes',
+      area: parseGridArea(layoutConfig.boxes.gridColumn, layoutConfig.boxes.gridRow),
+    });
+  }
+  
   // Add belts
   if (layoutConfig.belts) {
     layoutConfig.belts.forEach((belt: any) => {
@@ -113,6 +129,18 @@ export const getAllBuildingAreas = (
         areas.push({
           name: belt.id,
           area: parseGridArea(belt.gridColumn, belt.gridRow),
+        });
+      }
+    });
+  }
+  
+  // Add roads
+  if (layoutConfig.roads) {
+    layoutConfig.roads.forEach((road: any) => {
+      if (excludeBuilding !== road.id) {
+        areas.push({
+          name: road.id,
+          area: parseGridArea(road.gridColumn, road.gridRow),
         });
       }
     });

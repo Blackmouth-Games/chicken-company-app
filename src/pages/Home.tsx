@@ -117,13 +117,13 @@ const Home = () => {
       const el = gridRef.current as HTMLDivElement | null;
       if (!el) return;
 
-      const columns = 17;
+      const columns = 16;
       const gapVal = parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0;
       const rect = el.getBoundingClientRect();
-      // Usar el ancho del viewport para garantizar 17 columnas visibles
+      // Usar el ancho del viewport para garantizar 16 columnas visibles
       const width = Math.max(rect.width, window.innerWidth);
 
-      // Escala 100% por ancho: 17 columnas siempre visibles y celdas 1:1
+      // Escala 100% por ancho: 16 columnas siempre visibles y celdas 1:1
       const sizeByWidth = (width - gapVal * (columns - 1)) / columns;
       const candidate = Math.floor(sizeByWidth);
       const clamped = Math.max(8, Number.isFinite(candidate) ? candidate : 8);
@@ -708,7 +708,7 @@ const Home = () => {
             data-grid-container
             className={`grid items-stretch relative w-full mx-auto ${paintMode && isEditMode ? 'cursor-crosshair' : ''}`}
             style={{
-              gridTemplateColumns: `repeat(17, ${cellSize}px)`,
+              gridTemplateColumns: `repeat(16, ${cellSize}px)`,
               gridAutoRows: `${cellSize}px`,
               gap: layoutConfig.grid.gap
             }}
@@ -778,9 +778,9 @@ const Home = () => {
                 const gridElement = e.currentTarget as HTMLElement;
                 const gridRect = gridElement.getBoundingClientRect();
                 
-                const totalGapWidth = gapPx * (17 - 1);
+                const totalGapWidth = gapPx * (16 - 1);
                 const totalGapHeight = gapPx * (totalRows - 1);
-                const cellWidth = (gridRect.width - totalGapWidth) / 17;
+                const cellWidth = (gridRect.width - totalGapWidth) / 16;
                 const cellHeight = (gridRect.height - totalGapHeight) / totalRows;
                 
                 // Calculate column and row from click position relative to grid element
@@ -789,7 +789,7 @@ const Home = () => {
                 const gridRelativeX = e.clientX - gridRect.left;
                 const gridRelativeY = e.clientY - gridRect.top;
                 
-                const col = Math.max(1, Math.min(17, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
+                const col = Math.max(1, Math.min(16, Math.floor((gridRelativeX + gapPx / 2) / (cellWidth + gapPx)) + 1));
                 const row = Math.max(1, Math.min(totalRows, Math.floor((gridRelativeY + gapPx / 2) / (cellHeight + gapPx)) + 1));
                 
                 // Debug: Send click position to DebugPanel
@@ -1204,10 +1204,10 @@ const Home = () => {
             </div>
             )}
 
-            {/* BOXES - Independent from warehouse */}
+            {/* BOXES - Can be placed inside warehouse */}
             {!hideBuildings && (
             <div 
-              className={`flex items-center justify-center relative group z-10 ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
+              className={`flex items-center justify-center relative group z-20 ${isEditMode ? 'ring-2 ring-amber-500 ring-offset-2' : ''} ${
                 isDragging && draggedBuilding === 'boxes' ? 'ring-4 ring-amber-600 ring-offset-4' : ''
               } ${selectedObject?.type === 'building' && selectedObject?.id === 'boxes' ? 'ring-4 ring-yellow-400 ring-offset-4' : ''}`}
               style={{ 
