@@ -56,33 +56,16 @@ const allSkins: SkinData[] = [
 export const addAllBuildingSkins = async () => {
   console.log('Iniciando inserción de skins...');
   
-  // First, delete all existing skins to start fresh
-  const { error: deleteError } = await supabase
-    .from('building_skins')
-    .delete()
-    .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
-  
-  if (deleteError) {
-    console.error('Error eliminando skins antiguas:', deleteError);
-    return {
-      success: false,
-      successCount: 0,
-      errorCount: 1,
-      errors: [`Error eliminando skins antiguas: ${deleteError.message}`],
-    };
-  }
-  
-  console.log('Skins antiguas eliminadas. Insertando nuevas skins...');
-  
   let successCount = 0;
   let errorCount = 0;
   const errors: string[] = [];
 
   for (const skin of allSkins) {
     try {
+      // Use upsert to avoid conflicts if skin already exists
       const { error } = await supabase
         .from('building_skins')
-        .insert(skin);
+        .upsert(skin, { onConflict: 'skin_key' });
 
       if (error) {
         console.error(`Error insertando ${skin.skin_key}:`, error.message);
