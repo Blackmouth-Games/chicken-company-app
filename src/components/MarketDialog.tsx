@@ -1,6 +1,6 @@
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
@@ -9,7 +9,6 @@ import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette, Edit } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
-import { useMemo } from "react";
 
 interface MarketDialogProps {
   open: boolean;
@@ -29,6 +28,13 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   const nextLevelPrice = getPrice(BUILDING_TYPES.MARKET, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
 
+  // Refetch market data when modal opens to ensure we have the latest selected_skin
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
+
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
     if (!market?.selected_skin) return null;
@@ -39,13 +45,39 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   // Depend on market?.selected_skin and market?.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!market) return null;
-    return getBuildingDisplay(
+    
+    // If selected_skin is null/undefined, use null to trigger default 'A' variant
+    // If selected_skin exists, use it (it will be mapped to local variant via mapSkinKeyToLocal)
+    const skinKeyToUse = market.selected_skin || null;
+    
+    const display = getBuildingDisplay(
       'market',
       currentLevel,
-      market.selected_skin || null,
+      skinKeyToUse,
       skinInfo || undefined
     );
-  }, [market?.selected_skin, market?.level, currentLevel, skinInfo]);
+    
+    // Debug log to see what's being returned
+    console.log('[MarketDialog] buildingDisplay:', {
+      market: market?.id,
+      selected_skin: market.selected_skin,
+      skinKeyToUse,
+      currentLevel,
+      displayType: display?.type,
+      hasImage: display?.type === 'image',
+      hasEmoji: display?.type === 'emoji',
+      imageSrc: display?.type === 'image' ? display.src : null,
+      emoji: display?.type === 'emoji' ? display.emoji : null,
+      skinInfo: skinInfo ? { image_url: skinInfo.image_url } : null,
+    });
+    
+    // If we got an emoji but we should have an image, log a warning
+    if (display?.type === 'emoji') {
+      console.warn('[MarketDialog] Got emoji instead of image. This might indicate missing market images.');
+    }
+    
+    return display;
+  }, [market, market?.selected_skin, market?.level, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -88,14 +120,27 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay && buildingDisplay.type === 'image' ? (
-                      <img 
-                        src={buildingDisplay.src} 
-                        alt="Market" 
-                        className="w-52 h-52 object-contain"
-                      />
+                    {buildingDisplay ? (
+                      buildingDisplay.type === 'image' ? (
+                        <img 
+                          src={buildingDisplay.src} 
+                          alt="Market" 
+                          className="w-52 h-52 object-contain"
+                          onError={(e) => {
+                            console.error('[MarketDialog] Image failed to load:', buildingDisplay.src);
+                            // Fallback to emoji if image fails to load
+                            e.currentTarget.style.display = 'none';
+                            const emojiDiv = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (emojiDiv) {
+                              emojiDiv.style.display = 'block';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="text-9xl">{buildingDisplay.emoji || '🏪'}</div>
+                      )
                     ) : (
-                      <div className="text-9xl">{buildingDisplay?.emoji || '🏪'}</div>
+                      <div className="text-9xl">🏪</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-green-900 text-lg">Market</h3>
