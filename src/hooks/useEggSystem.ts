@@ -24,7 +24,7 @@ interface Belt {
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
-const EGG_SPAWN_INTERVAL = 1000; // Spawn egg every 1 second per corral (more frequent)
+const EGG_SPAWN_INTERVAL = 3000; // Spawn egg every 3 seconds per corral
 
 export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const [eggs, setEggs] = useState<Egg[]>([]);
@@ -140,12 +140,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           return null;
         }
         
-        // Check if egg reached destiny
-        if (currentBelt.isDestiny && egg.progress >= 1) {
-          // Remove egg when it reaches destiny
-          return null;
-        }
-        
         // Update progress
         let newProgress = egg.progress + EGG_SPEED;
         
@@ -153,18 +147,36 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         if (newProgress >= 1) {
           const nextPathIndex = egg.pathIndex + 1;
           if (nextPathIndex >= egg.path.length) {
-            // Reached end of path, remove egg if not at destiny
+            // Reached end of path - check if we're at destiny belt
             if (currentBelt.isDestiny) {
+              // Remove egg when it reaches destiny
               return null;
             }
-            // No more path, keep at current position
-            return { ...egg, progress: 1 };
+            // No more path and not at destiny, remove egg to prevent accumulation
+            return null;
           }
           
           const nextBeltId = egg.path[nextPathIndex];
           const nextBelt = belts.find(b => b.id === nextBeltId);
           if (!nextBelt) {
+            // Next belt doesn't exist, remove egg
             return null;
+          }
+          
+          // Check if next belt is destiny - if so, we'll remove it when progress reaches 1
+          if (nextBelt.isDestiny) {
+            // Move to destiny belt
+            const nextPos = parseGridNotation(nextBelt.gridColumn);
+            const nextRow = parseGridNotation(nextBelt.gridRow);
+            
+            return {
+              ...egg,
+              currentBeltId: nextBeltId,
+              currentCol: nextPos.start,
+              currentRow: nextRow.start,
+              progress: 0,
+              pathIndex: nextPathIndex,
+            };
           }
           
           const nextPos = parseGridNotation(nextBelt.gridColumn);
@@ -180,6 +192,12 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           };
         }
         
+        // Check if egg reached destiny (after progress update)
+        if (currentBelt.isDestiny && newProgress >= 1) {
+          // Remove egg when it reaches destiny
+          return null;
+        }
+        
         return { ...egg, progress: newProgress };
       }).filter((egg): egg is Egg => egg !== null);
     });
@@ -187,11 +205,22 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
 
   // Spawn eggs from corrals periodically with async delays
   useEffect(() => {
+    // Don't spawn if no corrals
+    if (corrals.length === 0) return;
+    
     // Initialize random initial delays for each corral to stagger spawns
     const corralInitialDelays = new Map<string, number>();
     corrals.forEach((corral, index) => {
       // Each corral gets a random initial delay to make spawning async
-      corralInitialDelays.set(corral.id, index * 150 + Math.random() * 400);
+      corralInitialDelays.set(corral.id, index * 200 + Math.random() * 500);
+    });
+
+    // Reset spawn times for corrals that no longer exist
+    const existingCorralIds = new Set(corrals.map(c => c.id));
+    lastSpawnTimeRef.current.forEach((_, corralId) => {
+      if (!existingCorralIds.has(corralId)) {
+        lastSpawnTimeRef.current.delete(corralId);
+      }
     });
 
     const interval = setInterval(() => {
@@ -201,26 +230,36 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         const slotPosition = corral.position_index;
         if (slotPosition === undefined || slotPosition === null) return;
         
-        const lastSpawn = lastSpawnTimeRef.current.get(corral.id) || -Infinity;
+        const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
         const initialDelay = corralInitialDelays.get(corral.id) || 0;
         
         // For first spawn, wait for initial delay. For subsequent spawns, use normal interval
-        const timeSinceLastSpawn = now - lastSpawn;
-        const shouldSpawn = lastSpawn === -Infinity 
-          ? now >= initialDelay 
-          : timeSinceLastSpawn >= EGG_SPAWN_INTERVAL;
-        
-        if (shouldSpawn) {
-          // Add a small random delay (0-200ms) for each individual spawn to make it more async
-          const randomDelay = Math.random() * 200;
-          setTimeout(() => {
-            spawnEgg(corral.id, slotPosition);
-          }, randomDelay);
-          
-          lastSpawnTimeRef.current.set(corral.id, now);
+        if (lastSpawn === undefined) {
+          // First spawn - wait for initial delay
+          if (now >= initialDelay) {
+            // Add a small random delay (0-200ms) for each individual spawn to make it more async
+            const randomDelay = Math.random() * 200;
+            setTimeout(() => {
+              spawnEgg(corral.id, slotPosition);
+            }, randomDelay);
+            
+            lastSpawnTimeRef.current.set(corral.id, now);
+          }
+        } else {
+          // Subsequent spawns - use normal interval
+          const timeSinceLastSpawn = now - lastSpawn;
+          if (timeSinceLastSpawn >= EGG_SPAWN_INTERVAL) {
+            // Add a small random delay (0-200ms) for each individual spawn to make it more async
+            const randomDelay = Math.random() * 200;
+            setTimeout(() => {
+              spawnEgg(corral.id, slotPosition);
+            }, randomDelay);
+            
+            lastSpawnTimeRef.current.set(corral.id, now);
+          }
         }
       });
-    }, 100); // Check more frequently for smoother async spawning
+    }, 500); // Check every 500ms (less frequent to reduce overhead)
     
     return () => clearInterval(interval);
   }, [corrals, spawnEgg]);

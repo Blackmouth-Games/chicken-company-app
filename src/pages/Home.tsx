@@ -89,6 +89,7 @@ const Home = () => {
     toggleRoadTransport,
     setLayoutConfig,
     addBeltAtPosition,
+    addRoadAtPosition,
     deleteSelected,
     duplicateSelected,
     rotateSelected,
@@ -149,7 +150,8 @@ const Home = () => {
   const [paintOptions, setPaintOptions] = useState<{
     direction: 'north' | 'south' | 'east' | 'west';
     type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
-  }>({ direction: 'east', type: 'straight' });
+    objectType: 'belt' | 'road';
+  }>({ direction: 'east', type: 'straight', objectType: 'belt' });
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
   
   useEffect(() => {
@@ -175,7 +177,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' }>) => {
+    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'; objectType: 'belt' | 'road' }>) => {
       setPaintOptions(event.detail);
     };
 
@@ -825,13 +827,59 @@ const Home = () => {
                   (parseGridNotation(layoutConfig.boxes.gridColumn).start <= col && parseGridNotation(layoutConfig.boxes.gridColumn).end > col &&
                    parseGridNotation(layoutConfig.boxes.gridRow).start <= row && parseGridNotation(layoutConfig.boxes.gridRow).end > row);
                 
-                // Don't add belt if there's already a road or belt here
-                if (!existingRoad && !existingBelt && !hasBuilding) {
-                  // Use paint options for direction and type
-                  addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type);
-                } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
-                  // Remove belt if clicking on an existing manual belt
-                  removeBelt(existingBelt.id);
+                // Handle painting based on object type
+                if (paintOptions.objectType === 'belt') {
+                  // Don't add belt if there's already a road or belt here
+                  if (!existingRoad && !existingBelt && !hasBuilding) {
+                    // Use paint options for direction and type
+                    addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type);
+                  } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
+                    // Remove belt if clicking on an existing manual belt
+                    removeBelt(existingBelt.id);
+                  }
+                } else if (paintOptions.objectType === 'road') {
+                  // For roads, check if the 2x2 area is available
+                  // Check if there's a road that overlaps with this 2x2 area
+                  const roadAreaCol = { start: col, end: col + 2 };
+                  const roadAreaRow = { start: row, end: row + 2 };
+                  
+                  const overlappingRoad = layoutConfig.roads?.find(road => {
+                    const roadCol = parseGridNotation(road.gridColumn);
+                    const roadRow = parseGridNotation(road.gridRow);
+                    return !(
+                      roadAreaCol.end <= roadCol.start ||
+                      roadAreaCol.start >= roadCol.end ||
+                      roadAreaRow.end <= roadRow.start ||
+                      roadAreaRow.start >= roadRow.end
+                    );
+                  });
+                  
+                  // Check if there's a building in the 2x2 area
+                  const hasBuildingInArea = 
+                    (parseGridNotation(layoutConfig.house.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.house.gridColumn).end > roadAreaCol.start &&
+                     parseGridNotation(layoutConfig.house.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.house.gridRow).end > roadAreaRow.start) ||
+                    (parseGridNotation(layoutConfig.warehouse.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.warehouse.gridColumn).end > roadAreaCol.start &&
+                     parseGridNotation(layoutConfig.warehouse.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.warehouse.gridRow).end > roadAreaRow.start) ||
+                    (parseGridNotation(layoutConfig.market.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.market.gridColumn).end > roadAreaCol.start &&
+                     parseGridNotation(layoutConfig.market.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.market.gridRow).end > roadAreaRow.start) ||
+                    (parseGridNotation(layoutConfig.boxes.gridColumn).start < roadAreaCol.end && parseGridNotation(layoutConfig.boxes.gridColumn).end > roadAreaCol.start &&
+                     parseGridNotation(layoutConfig.boxes.gridRow).start < roadAreaRow.end && parseGridNotation(layoutConfig.boxes.gridRow).end > roadAreaRow.start);
+                  
+                  // Check if there's a belt in the 2x2 area
+                  const hasBeltInArea = allBelts.some(belt => {
+                    const beltCol = parseGridNotation(belt.gridColumn);
+                    const beltRow = parseGridNotation(belt.gridRow);
+                    return beltCol.start >= roadAreaCol.start && beltCol.end <= roadAreaCol.end &&
+                           beltRow.start >= roadAreaRow.start && beltRow.end <= roadAreaRow.end;
+                  });
+                  
+                  if (!overlappingRoad && !hasBuildingInArea && !hasBeltInArea) {
+                    // Use paint options for direction and type
+                    addRoadAtPosition(col, row, paintOptions.direction, paintOptions.type);
+                  } else if (overlappingRoad) {
+                    // Remove road if clicking on an existing road
+                    removeRoad(overlappingRoad.id);
+                  }
                 }
               } else if (isEditMode && !isDragging && selectedObject) {
                 // Deselect when clicking on empty cell (not in paint mode)

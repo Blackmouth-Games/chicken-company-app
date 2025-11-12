@@ -11,6 +11,7 @@ const LayoutEditor = () => {
   const [paintMode, setPaintMode] = useState(false);
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
   const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
+  const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
   const [isVisible, setIsVisible] = useState(() => {
     const saved = localStorage.getItem('layoutEditorVisible');
     return saved ? JSON.parse(saved) : true;
@@ -67,14 +68,21 @@ const LayoutEditor = () => {
   const handlePaintDirectionChange = (direction: 'north' | 'south' | 'east' | 'west') => {
     setPaintDirection(direction);
     window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
-      detail: { direction, type: paintType } 
+      detail: { direction, type: paintType, objectType: paintObjectType } 
     }));
   };
 
   const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => {
     setPaintType(type);
     window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
-      detail: { direction: paintDirection, type } 
+      detail: { direction: paintDirection, type, objectType: paintObjectType } 
+    }));
+  };
+
+  const handlePaintObjectTypeChange = (objectType: 'belt' | 'road') => {
+    setPaintObjectType(objectType);
+    window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
+      detail: { direction: paintDirection, type: paintType, objectType } 
     }));
   };
 
@@ -317,6 +325,31 @@ const LayoutEditor = () => {
           {/* Paint Mode Options - Only show when paint mode is active */}
           {paintMode && (
             <>
+              {/* Object Type Selector */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">Objeto:</label>
+                <div className="grid grid-cols-2 gap-1">
+                  <Button
+                    onClick={() => handlePaintObjectTypeChange('belt')}
+                    size="sm"
+                    variant={paintObjectType === 'belt' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Pintar cintas"
+                  >
+                    Cinta
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintObjectTypeChange('road')}
+                    size="sm"
+                    variant={paintObjectType === 'road' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Pintar carreteras"
+                  >
+                    Carretera
+                  </Button>
+                </div>
+              </div>
+
               {/* Direction Selector */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">Dirección:</label>

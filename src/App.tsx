@@ -17,6 +17,7 @@ import Home from "./pages/Home";
 import Wallet from "./pages/Wallet";
 import Friends from "./pages/Friends";
 import Store from "./pages/Store";
+import AdminSkins from "./pages/AdminSkins";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -81,6 +82,7 @@ const AppRoutes = () => {
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/store" element={<Store />} />
             <Route path="/friends" element={<Friends />} />
+            <Route path="/admin/skins" element={<AdminSkins />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TelegramLayout>

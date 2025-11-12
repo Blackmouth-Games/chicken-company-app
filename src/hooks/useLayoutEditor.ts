@@ -669,12 +669,58 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Road management - Add road with default position (2x2)
+  // Each time a road is added, find an empty position to avoid overlaps
   const addRoad = () => {
     setLayoutConfig(prev => {
+      // Find an empty position for the new road (2x2 cells)
+      let foundPosition = false;
+      let newCol = 13;
+      let newRow = 10;
+      
+      // Try to find an empty 2x2 area
+      for (let row = 1; row <= getTotalRows() - 1 && !foundPosition; row++) {
+        for (let col = 1; col <= TOTAL_COLUMNS - 1 && !foundPosition; col++) {
+          // Check if this 2x2 area is empty
+          const areaCol = parseGridNotation(`${col} / ${col + 2}`);
+          const areaRow = parseGridNotation(`${row} / ${row + 2}`);
+          
+          // Check for collisions with existing roads
+          const hasRoadCollision = prev.roads.some(road => {
+            const roadCol = parseGridNotation(road.gridColumn);
+            const roadRow = parseGridNotation(road.gridRow);
+            return !(
+              areaCol.end <= roadCol.start || 
+              areaCol.start >= roadCol.end ||
+              areaRow.end <= roadRow.start || 
+              areaRow.start >= roadRow.end
+            );
+          });
+          
+          // Check for collisions with buildings
+          const testArea: GridArea = {
+            colStart: areaCol.start,
+            colEnd: areaCol.end,
+            rowStart: areaRow.start,
+            rowEnd: areaRow.end,
+          };
+          const hasBuildingCollision = wouldCollide(
+            testArea,
+            prev,
+            'house' // Just check, doesn't matter which building type
+          );
+          
+          if (!hasRoadCollision && !hasBuildingCollision.collides) {
+            newCol = col;
+            newRow = row;
+            foundPosition = true;
+          }
+        }
+      }
+      
       const newRoad: RoadConfig = {
         id: `road-${Date.now()}`,
-        gridColumn: '13 / 15',
-        gridRow: '10 / 12',
+        gridColumn: `${newCol} / ${newCol + 2}`,
+        gridRow: `${newRow} / ${newRow + 2}`,
         direction: 'east',
         type: 'straight',
       };
