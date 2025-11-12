@@ -4,7 +4,6 @@ import { useStorePurchases } from "@/hooks/useStorePurchases";
 import { ProductDetailDialog } from "@/components/ProductDetailDialog";
 import { StoreProduct } from "@/hooks/useStoreProducts";
 import { Loader2 } from "lucide-react";
-import { updateStoreProducts } from "@/scripts/updateStoreProducts";
 import { getTelegramUser } from "@/lib/telegram";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -34,14 +33,152 @@ const Store = () => {
     loadProfile();
   }, [telegramUser]);
 
-  // Update products on mount (run once to fix images)
+  // All product data including image URLs are managed in the database via migrations
+  // No need to update products from the client side
+
+  // Run migration on mount (one-time execution)
   useEffect(() => {
-    const initProducts = async () => {
-      await updateStoreProducts();
-      refetch();
+    const runMigration = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('run-migration', {
+          body: {}
+        });
+
+        if (error) {
+          // If function not deployed, try direct execution
+          if (error.message?.includes('not found') || error.message?.includes('404')) {
+            console.log('Edge Function not deployed, executing migration directly...');
+            await executeMigrationDirect();
+          } else {
+            console.error('Migration error:', error);
+          }
+        } else {
+          console.log('Migration completed via Edge Function:', data);
+        }
+      } catch (err) {
+        console.error('Error running migration:', err);
+      }
     };
-    initProducts();
+
+    // Only run once on mount
+    runMigration();
   }, []);
+
+  const executeMigrationDirect = async () => {
+    // Update basic_skins_pack
+    const { data: existingSkinsPack } = await supabase
+      .from('store_products')
+      .select('content_items')
+      .eq('product_key', 'basic_skins_pack')
+      .single();
+
+    if (existingSkinsPack) {
+      const contentItems = existingSkinsPack.content_items as string[] | null;
+      const hasOldFormat = contentItems && (
+        contentItems.includes('skin_corral_red') ||
+        contentItems.includes('skin_corral_blue') ||
+        contentItems.includes('skin_corral_green') ||
+        contentItems.includes('skin_warehouse_premium') ||
+        contentItems.includes('skin_market_deluxe')
+      );
+
+      if (hasOldFormat) {
+        await supabase
+          .from('store_products')
+          .update({
+            content_items: ['corral_1B', 'corral_2B', 'corral_3B', 'warehouse_1B', 'market_1B']
+          })
+          .eq('product_key', 'basic_skins_pack');
+      }
+    }
+
+    // Insert or update all products
+    const products = [
+      {
+        product_key: 'starter_pack',
+        name: 'Starter Pack',
+        description: 'Paquete inicial para comenzar tu granja',
+        price_ton: 15,
+        content_items: ['Subida de nivel de Maria la Pollera a nivel 2', 'Nuevo corral', 'Nuevo Granjero Juan'],
+        store_image_url: '/images/store/starter-pack.png',
+        detail_image_url: '/images/store/starter-pack-detail.png',
+        is_active: true,
+        sort_order: 1
+      },
+      {
+        product_key: 'christmas_pack',
+        name: 'Christmas Pack',
+        description: 'Edición especial de Navidad',
+        price_ton: 2.5,
+        content_items: ['Decoraciones navideñas', 'Market especial', 'Bonus de temporada'],
+        store_image_url: '/images/store/christmas-pack.png',
+        detail_image_url: '/images/store/christmas-pack-detail.png',
+        is_active: true,
+        sort_order: 2
+      },
+      {
+        product_key: 'winter_chickens',
+        name: 'Winter Chickens',
+        description: 'Pack de 200 gallinas de invierno',
+        price_ton: 202,
+        content_items: ['200 gallinas de invierno', 'Resistentes al frío'],
+        store_image_url: '/images/store/winter-chickens.png',
+        detail_image_url: '/images/store/winter-chickens-detail.png',
+        is_active: true,
+        sort_order: 3
+      },
+      {
+        product_key: 'support_builders',
+        name: 'Support Builders',
+        description: 'Apoyo a los constructores',
+        price_ton: 10,
+        content_items: ['Trabajador adicional', 'Velocidad de construcción aumentada'],
+        store_image_url: '/images/store/support-builders.png',
+        detail_image_url: '/images/store/support-builders-detail.png',
+        is_active: true,
+        sort_order: 4
+      },
+      {
+        product_key: 'basic_skins_pack',
+        name: 'Pack de Skins Básico',
+        description: 'Colección de 5 skins únicos para tus edificios',
+        price_ton: 0.5,
+        content_items: ['corral_1B', 'corral_2B', 'corral_3B', 'warehouse_1B', 'market_1B'],
+        store_image_url: '/images/store/skins-pack.png',
+        detail_image_url: '/images/store/skins-pack-detail.png',
+        is_active: true,
+        sort_order: 5
+      }
+    ];
+
+    for (const product of products) {
+      const { data: existing } = await supabase
+        .from('store_products')
+        .select('id, store_image_url, detail_image_url')
+        .eq('product_key', product.product_key)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('store_products')
+          .update({
+            name: product.name,
+            description: product.description,
+            price_ton: product.price_ton,
+            content_items: product.content_items,
+            store_image_url: product.store_image_url || existing.store_image_url,
+            detail_image_url: product.detail_image_url || existing.detail_image_url,
+            is_active: product.is_active,
+            sort_order: product.sort_order
+          })
+          .eq('product_key', product.product_key);
+      } else {
+        await supabase
+          .from('store_products')
+          .insert(product);
+      }
+    }
+  };
 
   const handleProductClick = (product: StoreProduct) => {
     setSelectedProduct(product);

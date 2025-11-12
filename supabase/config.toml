@@ -2,3 +2,9 @@ project_id = "allexcdmfjigijunipxz"
 
 [functions.auth-wallet]
 verify_jwt = false
+
+[functions.process-store-purchase]
+verify_jwt = false
+
+[functions.run-migration]
+verify_jwt = false

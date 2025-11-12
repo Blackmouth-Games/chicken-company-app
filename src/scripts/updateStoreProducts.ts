@@ -1,13 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Script to update store products with new image URLs and add the skins pack
- * Run this once to fix the product images
+ * Script to update store product image URLs only
+ * All product data (name, description, price, content_items) should be managed in the database via migrations
+ * This script only updates image URLs for existing products
  */
 export async function updateStoreProducts() {
-  console.log("Updating store products...");
+  console.log("Updating store product images...");
 
-  // Update Starter Pack
+  // Update Starter Pack images
   await supabase
     .from("store_products")
     .update({
@@ -16,7 +17,7 @@ export async function updateStoreProducts() {
     })
     .eq("product_key", "starter_pack");
 
-  // Update Christmas Pack
+  // Update Christmas Pack images
   await supabase
     .from("store_products")
     .update({
@@ -25,7 +26,7 @@ export async function updateStoreProducts() {
     })
     .eq("product_key", "christmas_pack");
 
-  // Update Winter Chickens
+  // Update Winter Chickens images
   await supabase
     .from("store_products")
     .update({
@@ -34,7 +35,7 @@ export async function updateStoreProducts() {
     })
     .eq("product_key", "winter_chickens");
 
-  // Update Support Builders
+  // Update Support Builders images
   await supabase
     .from("store_products")
     .update({
@@ -43,33 +44,14 @@ export async function updateStoreProducts() {
     })
     .eq("product_key", "support_builders");
 
-  // Check if basic skins pack already exists
-  const { data: existing } = await supabase
+  // Update Basic Skins Pack images
+  await supabase
     .from("store_products")
-    .select("id")
-    .eq("product_key", "basic_skins_pack")
-    .single();
-
-  // Insert the new skins pack product if it doesn't exist
-  if (!existing) {
-    await supabase.from("store_products").insert({
-      product_key: "basic_skins_pack",
-      name: "Pack de Skins Básico",
-      description: "Colección de 5 skins únicos para tus edificios",
-      price_ton: 0.5,
-      content_items: [
-        "skin_corral_red",
-        "skin_corral_blue",
-        "skin_corral_green",
-        "skin_warehouse_premium",
-        "skin_market_deluxe",
-      ],
+    .update({
       store_image_url: "/images/store/skins-pack.png",
       detail_image_url: "/images/store/skins-pack-detail.png",
-      is_active: true,
-      sort_order: 5,
-    });
-  }
+    })
+    .eq("product_key", "basic_skins_pack");
 
-  console.log("Store products updated successfully!");
+  console.log("Store product images updated successfully!");
 }

@@ -111,43 +111,22 @@ export const ProductDetailDialog = ({ open, onOpenChange, product, isPurchased =
       const result = await tonConnectUI.sendTransaction(transaction);
       console.log("Transaction sent:", result);
 
-      // 4. Parse content items and add to user inventory
-      if (product.content_items && product.content_items.length > 0) {
-        const itemsToInsert = product.content_items.map((itemDesc: string) => {
-          // Parse item description to extract type and quantity
-          // Format examples: "Subida de nivel de Maria la Pollera a nivel 2", "Nuevo corral", "Nuevo Granjero Juan"
-          let itemType = "pack_item";
-          let itemKey = product.product_key;
-          
-          if (itemDesc.toLowerCase().includes("corral")) {
-            itemType = "building";
-            itemKey = "corral";
-          } else if (itemDesc.toLowerCase().includes("granjero")) {
-            itemType = "character";
-            itemKey = "farmer";
-          } else if (itemDesc.toLowerCase().includes("nivel")) {
-            itemType = "upgrade";
-            itemKey = "level_boost";
-          }
+      // 4. Call Edge Function to process purchase and add items to inventory
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('process-store-purchase', {
+        body: {
+          purchase_id: purchase.id,
+          transaction_hash: result.boc,
+        },
+      });
 
-          return {
-            user_id: userId,
-            item_type: itemType,
-            item_key: itemKey,
-            quantity: 1,
-          };
-        });
-
-        const { error: itemsError } = await supabase
-          .from("user_items")
-          .insert(itemsToInsert);
-
-        if (itemsError) {
-          console.error("Error adding items to inventory:", itemsError);
-        }
+      if (functionError) {
+        console.error("Error calling process-store-purchase function:", functionError);
+        // Don't throw here, we'll still update the purchase status
+      } else {
+        console.log("Purchase processed by Edge Function:", functionData);
       }
 
-      // 5. Update purchase as completed
+      // 5. Update purchase as completed (fallback if Edge Function fails)
       const { error: updateError } = await supabase
         .from("store_purchases")
         .update({
