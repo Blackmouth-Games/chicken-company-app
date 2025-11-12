@@ -105,6 +105,7 @@ const Home = () => {
 
   // Get building skins hooks
   const { getSkinByKey: getMarketSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
+  const { getSkinByKey: getWarehouseSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
 
   // Get market building
   const marketBuilding = buildings.find(b => b.building_type === 'market');
@@ -125,6 +126,26 @@ const Home = () => {
       marketSkinInfo || undefined
     );
   }, [marketBuilding?.selected_skin, marketLevel, marketSkinInfo]);
+
+  // Get warehouse building
+  const warehouseBuilding = buildings.find(b => b.building_type === 'warehouse');
+  const warehouseLevel = warehouseBuilding?.level || 1;
+  
+  // Get warehouse skin info
+  const warehouseSkinInfo = useMemo(() => {
+    if (!warehouseBuilding?.selected_skin) return null;
+    return getWarehouseSkinByKey(warehouseBuilding.selected_skin);
+  }, [warehouseBuilding?.selected_skin, getWarehouseSkinByKey]);
+
+  // Get warehouse display (image or emoji)
+  const warehouseDisplay = useMemo(() => {
+    return getBuildingDisplay(
+      'warehouse',
+      warehouseLevel,
+      warehouseBuilding?.selected_skin || null,
+      warehouseSkinInfo || undefined
+    );
+  }, [warehouseBuilding?.selected_skin, warehouseLevel, warehouseSkinInfo]);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
@@ -1079,13 +1100,17 @@ const Home = () => {
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
-                    {buildings.find(b => b.building_type === 'warehouse')?.level || 1}
+                    {warehouseLevel}
                   </div>
-                  <img 
-                    src={getBuildingImage('warehouse', buildings.find(b => b.building_type === 'warehouse')?.level || 1, 'A')} 
-                    alt="Warehouse" 
-                    className="w-full h-full object-contain pointer-events-none"
-                  />
+                  {warehouseDisplay?.type === 'image' ? (
+                    <img 
+                      src={warehouseDisplay.src} 
+                      alt="Warehouse" 
+                      className="w-full h-full object-contain pointer-events-none"
+                    />
+                  ) : (
+                    <div className="text-4xl md:text-5xl pointer-events-none">{warehouseDisplay?.emoji || '🏭'}</div>
+                  )}
                   {isEditMode && (
                     <>
                       <div className="absolute top-1 right-1 bg-blue-600 text-white text-xs px-2 py-1 rounded font-mono">
