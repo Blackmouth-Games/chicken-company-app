@@ -44,7 +44,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       market.selected_skin || null,
       skinInfo || undefined
     );
-  }, [market, currentLevel, skinInfo]);
+  }, [market?.selected_skin, currentLevel, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -77,7 +77,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay?.type === 'image' ? (
+                    {buildingDisplay && buildingDisplay.type === 'image' ? (
                       <img 
                         src={buildingDisplay.src} 
                         alt="Market" 

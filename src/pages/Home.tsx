@@ -5,7 +5,10 @@ import box1Image from "@/assets/box_1.png";
 import box2Image from "@/assets/box_2.png";
 import box3Image from "@/assets/box_3.png";
 import { getTelegramUser } from "@/lib/telegram";
-import { getBuildingImage, type BuildingType } from "@/lib/buildingImages";
+import { getBuildingImage, getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
+import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { BUILDING_TYPES } from "@/lib/constants";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, Info } from "lucide-react";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -99,6 +102,29 @@ const Home = () => {
     toggleBeltTransport,
     pixelToGrid,
   } = useLayoutEditor(20);
+
+  // Get building skins hooks
+  const { getSkinByKey: getMarketSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
+
+  // Get market building
+  const marketBuilding = buildings.find(b => b.building_type === 'market');
+  const marketLevel = marketBuilding?.level || 1;
+  
+  // Get market skin info
+  const marketSkinInfo = useMemo(() => {
+    if (!marketBuilding?.selected_skin) return null;
+    return getMarketSkinByKey(marketBuilding.selected_skin);
+  }, [marketBuilding?.selected_skin, getMarketSkinByKey]);
+
+  // Get market display (image or emoji)
+  const marketDisplay = useMemo(() => {
+    return getBuildingDisplay(
+      'market',
+      marketLevel,
+      marketBuilding?.selected_skin || null,
+      marketSkinInfo || undefined
+    );
+  }, [marketBuilding?.selected_skin, marketLevel, marketSkinInfo]);
 
   // Dynamic slots: always even number, min 6, max based on buildings + min 4-6 empty
   const occupiedSlots = buildings.length;
@@ -1144,13 +1170,17 @@ const Home = () => {
               >
                 <div className="flex flex-col items-center">
                   <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
-                    {buildings.find(b => b.building_type === 'market')?.level || 1}
+                    {marketLevel}
                   </div>
-                  <img 
-                    src={getBuildingImage('market', buildings.find(b => b.building_type === 'market')?.level || 1, 'A')} 
-                    alt="Market" 
-                    className="w-full h-full object-contain pointer-events-none"
-                  />
+                  {marketDisplay?.type === 'image' ? (
+                    <img 
+                      src={marketDisplay.src} 
+                      alt="Market" 
+                      className="w-full h-full object-contain pointer-events-none"
+                    />
+                  ) : (
+                    <div className="text-4xl md:text-5xl pointer-events-none">{marketDisplay?.emoji || '🏪'}</div>
+                  )}
                   {isEditMode && (
                     <>
                       <div className="absolute top-1 right-1 bg-green-600 text-white text-xs px-2 py-1 rounded font-mono">
