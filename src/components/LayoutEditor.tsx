@@ -483,42 +483,9 @@ const LayoutEditor = () => {
     );
   }
 
-  // When edit mode is inactive, show compact button
-  return (
-    <div
-      className="fixed z-50"
-      style={{
-        right: `${position.x}px`,
-        top: `${position.y}px`,
-      }}
-    >
-      <div
-        className="cursor-move bg-background/95 backdrop-blur-sm rounded-lg border shadow-lg p-2"
-        onMouseDown={handleMouseDown}
-      >
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={toggleVisibility}
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            title="Ocultar editor"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={toggleEditMode}
-            size="sm"
-            variant="outline"
-            className="gap-2"
-          >
-            <Layout className="h-4 w-4" />
-            {t('layoutEditor.activateEdit')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  // When edit mode is inactive, don't show the compact button (it's now in the header)
+  // Only show the editor when edit mode is active
+  return null;
 };
 
 export default LayoutEditor;

@@ -673,13 +673,13 @@ const DebugPanel = () => {
               )}
 
               {/* Vehicle System Debug */}
-              {vehicleDebugInfo && (
+              {vehicleDebugInfo ? (
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div>
                       <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles} / {vehicleDebugInfo.maxVehicles}</p>
-                      <p><strong>Spawn Interval:</strong> {vehicleDebugInfo.spawnInterval}ms ({vehicleDebugInfo.spawnInterval / 1000}s)</p>
+                      <p><strong>Spawn Interval:</strong> {vehicleDebugInfo.spawnInterval}ms ({(vehicleDebugInfo.spawnInterval / 1000).toFixed(1)}s)</p>
                       <p><strong>Time Until Next Spawn:</strong> {vehicleDebugInfo.timeUntilSpawn > 0 
                         ? `${(vehicleDebugInfo.timeUntilSpawn / 1000).toFixed(1)}s` 
                         : 'Ready to spawn'}</p>
@@ -687,10 +687,25 @@ const DebugPanel = () => {
                       <p><strong>Has Point A:</strong> {vehicleDebugInfo.hasPointA ? '✅ Yes' : '❌ No'}</p>
                       <p><strong>Has Point B:</strong> {vehicleDebugInfo.hasPointB ? '✅ Yes' : '❌ No'}</p>
                       <p><strong>Can Spawn:</strong> {vehicleDebugInfo.canSpawn ? '✅ Yes' : '❌ No'}</p>
+                      {vehicleDebugInfo.pointAId && (
+                        <p className="text-xs text-muted-foreground"><strong>Point A ID:</strong> {vehicleDebugInfo.pointAId}</p>
+                      )}
+                      {vehicleDebugInfo.pointBId && (
+                        <p className="text-xs text-muted-foreground"><strong>Point B ID:</strong> {vehicleDebugInfo.pointBId}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground"><strong>Roads Count:</strong> {vehicleDebugInfo.roadsCount || 0}</p>
                       {vehicleDebugInfo.lastSpawn && (
                         <p><strong>Last Spawn:</strong> {new Date(vehicleDebugInfo.lastSpawn).toLocaleTimeString()}</p>
                       )}
                     </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <p className="text-muted-foreground">No vehicle debug information available</p>
+                    <p className="text-xs text-muted-foreground">Make sure you have Point A and Point B roads configured</p>
                   </div>
                 </div>
               )}
