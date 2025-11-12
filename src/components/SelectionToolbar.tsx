@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SelectionToolbarProps {
-  selectedObject: { type: 'building' | 'belt'; id: string } | null;
+  selectedObject: { type: 'building' | 'belt' | 'road' | 'box'; id: string } | null;
   onRotate: () => void;
   onDuplicate: () => void;
   onDelete: () => void;

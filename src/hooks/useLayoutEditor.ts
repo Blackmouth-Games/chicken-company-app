@@ -37,7 +37,7 @@ interface RoadConfig {
 }
 
 type SelectableObject = {
-  type: 'building' | 'belt' | 'road';
+  type: 'building' | 'belt' | 'road' | 'box';
   id: string; // belt id, road id, or building name (warehouse, market, house, boxes)
 };
 
@@ -298,7 +298,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle drag start
-  const handleBuildingMouseDown = (e: MouseEvent, buildingName: string) => {
+  const handleBuildingMouseDown = (e: React.MouseEvent | MouseEvent, buildingName: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
@@ -312,7 +312,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle belt drag start
-  const handleBeltMouseDown = (e: MouseEvent, beltId: string) => {
+  const handleBeltMouseDown = (e: React.MouseEvent | MouseEvent, beltId: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();
@@ -393,7 +393,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
   };
 
   // Handle resize start
-  const handleResizeStart = (e: MouseEvent, buildingName: string, handle: string) => {
+  const handleResizeStart = (e: React.MouseEvent | MouseEvent, buildingName: string, handle: string) => {
     if (!isEditMode) return;
     e.preventDefault();
     e.stopPropagation();

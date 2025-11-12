@@ -137,11 +137,15 @@ export const getBuildingImage = (
     const images = BUILDING_IMAGES[type];
     if (!images) return warehouse1A;
     const validLevel = Math.max(1, Math.min(5, level)) as 1 | 2 | 3 | 4 | 5;
+    const levelImages = images[validLevel];
+    
     // For C variant, fallback to B if not available, then to A
-    if (skinKey === 'C' && !images[validLevel]?.C) {
-      return images[validLevel]?.B || images[validLevel]?.A || images[1]?.A || warehouse1A;
+    if (skinKey === 'C') {
+      const cImage = levelImages && 'C' in levelImages ? levelImages.C : null;
+      if (cImage) return cImage;
+      return levelImages?.B || levelImages?.A || images[1]?.A || warehouse1A;
     }
-    return images[validLevel]?.[skinKey] || images[1]?.A || warehouse1A;
+    return levelImages?.[skinKey] || images[1]?.A || warehouse1A;
   }
   
   // Try to map skin_key to local image
