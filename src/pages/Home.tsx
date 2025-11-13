@@ -597,11 +597,14 @@ const Home = () => {
         });
         
         if (!existingBelt) {
-          // At convergence row, use funnel belt instead of straight
-          // Funnel receives from West (left corrals), North (above), South (below) and exits East (right)
-          // But in vertical line context, it should exit North (up) to continue the vertical flow
-          // So we'll rotate the funnel image 270° to make it exit north
-          if (beltRow === convergenceRow) {
+          // First funnel at position 4, then every 8 rows after that
+          // Funnel receives from West (left corrals), North (above), South (below) and exits North (up)
+          // Calculate relative position from start of center line
+          const relativeRow = beltRow - centerLineStartRow;
+          // First funnel at position 4 (relativeRow === 3, since it's 0-indexed), then every 8 after that
+          const isFunnelRow = relativeRow === 3 || (relativeRow > 3 && (relativeRow - 3) % 8 === 0);
+          
+          if (beltRow === convergenceRow || isFunnelRow) {
             autoBelts.push({
               id: `belt-auto-center-row-${beltRow}`,
               gridColumn: createGridNotation(centerCol, centerCol + 1),
