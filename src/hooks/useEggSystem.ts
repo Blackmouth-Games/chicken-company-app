@@ -40,13 +40,59 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
   const eggCreationTimeRef = useRef<Map<string, number>>(new Map());
   const isPageVisibleRef = useRef(true);
+  const corralBeltMappingRef = useRef<Map<string, string>>(new Map()); // Maps corralId to beltId
 
   // Get corrals from buildings - handle undefined/null
   const corrals = (buildings || []).filter(b => b && b.building_type === 'corral');
 
   // Find output belt for a corral by slot position
-  const findOutputBelt = useCallback((slotPosition: number): Belt | null => {
-    return belts.find(b => b.isOutput && b.slotPosition === slotPosition) || null;
+  // First tries exact match, then finds an available output belt for this corral
+  const findOutputBelt = useCallback((slotPosition: number, corralId: string): Belt | null => {
+    // First, try exact slotPosition match
+    const exactMatch = belts.find(b => b.isOutput && b.slotPosition === slotPosition);
+    if (exactMatch) {
+      corralBeltMappingRef.current.set(corralId, exactMatch.id);
+      return exactMatch;
+    }
+    
+    // Check if this corral already has a belt assigned
+    const assignedBeltId = corralBeltMappingRef.current.get(corralId);
+    if (assignedBeltId) {
+      const assignedBelt = belts.find(b => b.id === assignedBeltId && b.isOutput);
+      if (assignedBelt) return assignedBelt;
+    }
+    
+    // Find all available output belts (not assigned to other corrals or without slotPosition)
+    const allOutputBelts = belts.filter(b => 
+      b.isOutput && 
+      !b.isDestiny &&
+      !b.isTransport
+    );
+    
+    // Get belts already assigned to other corrals
+    const assignedBeltIds = new Set(Array.from(corralBeltMappingRef.current.values()));
+    
+    // Find an unassigned output belt, prioritizing those without slotPosition
+    const unassignedBelt = allOutputBelts.find(b => 
+      !assignedBeltIds.has(b.id) && 
+      (b.slotPosition === undefined || b.slotPosition === null)
+    ) || allOutputBelts.find(b => !assignedBeltIds.has(b.id));
+    
+    if (unassignedBelt) {
+      corralBeltMappingRef.current.set(corralId, unassignedBelt.id);
+      return unassignedBelt;
+    }
+    
+    // Last resort: if all belts are assigned, allow sharing (round-robin style)
+    // Use the belt that matches the slotPosition modulo number of available belts
+    if (allOutputBelts.length > 0) {
+      const index = slotPosition % allOutputBelts.length;
+      const sharedBelt = allOutputBelts[index];
+      corralBeltMappingRef.current.set(corralId, sharedBelt.id);
+      return sharedBelt;
+    }
+    
+    return null;
   }, [belts]);
 
   // Find next belt in the path based on direction
@@ -116,8 +162,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
 
   // Spawn egg from a corral
   const spawnEgg = useCallback((corralId: string, slotPosition: number) => {
-    const outputBelt = findOutputBelt(slotPosition);
-    if (!outputBelt) return;
+    const outputBelt = findOutputBelt(slotPosition, corralId);
+    if (!outputBelt) {
+      console.warn(`[useEggSystem] No output belt found for corral ${corralId} at position ${slotPosition}`);
+      return;
+    }
     
     const path = calculatePath(outputBelt, belts);
     if (path.length === 0) return;
@@ -263,6 +312,22 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     // Don't spawn if no corrals
     if (corrals.length === 0) return;
     
+    // Clean up belt mappings for corrals that no longer exist
+    const existingCorralIds = new Set(corrals.map(c => c.id));
+    corralBeltMappingRef.current.forEach((_, corralId) => {
+      if (!existingCorralIds.has(corralId)) {
+        corralBeltMappingRef.current.delete(corralId);
+      }
+    });
+    
+    // Clean up belt mappings for belts that no longer exist
+    const existingBeltIds = new Set(belts.map(b => b.id));
+    corralBeltMappingRef.current.forEach((beltId, corralId) => {
+      if (!existingBeltIds.has(beltId)) {
+        corralBeltMappingRef.current.delete(corralId);
+      }
+    });
+    
     // Initialize random initial delays for each corral to stagger spawns
     const corralInitialDelays = new Map<string, number>();
     corrals.forEach((corral, index) => {
@@ -271,7 +336,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     });
 
     // Reset spawn times for corrals that no longer exist
-    const existingCorralIds = new Set(corrals.map(c => c.id));
     lastSpawnTimeRef.current.forEach((_, corralId) => {
       if (!existingCorralIds.has(corralId)) {
         lastSpawnTimeRef.current.delete(corralId);
@@ -349,7 +413,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       timers.forEach(timer => clearTimeout(timer));
       timers.clear();
     };
-  }, [corrals, spawnEgg]);
+  }, [corrals, belts, spawnEgg]);
 
   // Animation loop
   useEffect(() => {

@@ -70,47 +70,85 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     const currentPos = parseGridNotation(currentRoad.gridColumn);
     const currentRow = parseGridNotation(currentRoad.gridRow);
     
-    // Roads are 2x2, so we check adjacent positions
-    // Check all 4 directions (north, south, east, west)
-    const directions = [
-      { col: currentPos.start, row: currentRow.start - 1, name: 'north' }, // Above
-      { col: currentPos.start, row: currentRow.end, name: 'south' }, // Below
-      { col: currentPos.end, row: currentRow.start, name: 'east' }, // Right
-      { col: currentPos.start - 1, row: currentRow.start, name: 'west' }, // Left
-    ];
-    
-    // Find all adjacent roads
-    const adjacentRoads = directions
-      .map(dir => {
-        const road = roads.find(r => {
-          const rCol = parseGridNotation(r.gridColumn);
-          const rRow = parseGridNotation(r.gridRow);
-          // Check if the adjacent position is within the road (roads are 2x2)
-          return rCol.start <= dir.col && rCol.end > dir.col && rRow.start <= dir.row && rRow.end > dir.row;
-        });
-        return road ? { ...dir, road } : null;
+    // Find all adjacent roads by checking for overlap or adjacency
+    // Two roads are adjacent if they share a border (for 2x2 roads)
+    const adjacentRoads = roads
+      .filter(r => r.id !== currentRoad.id) // Exclude current road
+      .map(r => {
+        const rCol = parseGridNotation(r.gridColumn);
+        const rRow = parseGridNotation(r.gridRow);
+        
+        // Check if roads are adjacent (share a border)
+        // North: current road's top row touches other road's bottom row
+        const isNorth = currentRow.start === rRow.end;
+        // South: current road's bottom row touches other road's top row
+        const isSouth = currentRow.end === rRow.start;
+        // East: current road's right column touches other road's left column
+        const isEast = currentPos.end === rCol.start;
+        // West: current road's left column touches other road's right column
+        const isWest = currentPos.start === rCol.end;
+        
+        // Also check for overlap (roads that share cells)
+        const overlapsCol = !(currentPos.end <= rCol.start || rCol.end <= currentPos.start);
+        const overlapsRow = !(currentRow.end <= rRow.start || rRow.end <= currentRow.start);
+        const overlaps = overlapsCol && overlapsRow;
+        
+        // Roads are adjacent if they share a border or overlap
+        if (isNorth || isSouth || isEast || isWest || overlaps) {
+          // Determine direction
+          let direction = '';
+          if (isNorth) direction = 'north';
+          else if (isSouth) direction = 'south';
+          else if (isEast) direction = 'east';
+          else if (isWest) direction = 'west';
+          else if (overlaps) {
+            // If overlapping, determine primary direction based on center positions
+            const currentCenterCol = (currentPos.start + currentPos.end) / 2;
+            const currentCenterRow = (currentRow.start + currentRow.end) / 2;
+            const rCenterCol = (rCol.start + rCol.end) / 2;
+            const rCenterRow = (rRow.start + rRow.end) / 2;
+            
+            const colDiff = rCenterCol - currentCenterCol;
+            const rowDiff = rCenterRow - currentCenterRow;
+            
+            if (Math.abs(colDiff) > Math.abs(rowDiff)) {
+              direction = colDiff > 0 ? 'east' : 'west';
+            } else {
+              direction = rowDiff > 0 ? 'south' : 'north';
+            }
+          }
+          
+          return { road: r, direction };
+        }
+        return null;
       })
-      .filter((item): item is { col: number; row: number; name: string; road: Road } => item !== null);
+      .filter((item): item is { road: Road; direction: string } => item !== null);
     
-    // Filter roads based on destination
-    for (const adjacent of adjacentRoads) {
-      const nextRoad = adjacent.road;
+    // Filter roads based on destination and prioritize by type
+    // If going to B, prioritize point B, then transport, then any road
+    if (goingToB) {
+      // First, try to find point B
+      const pointB = adjacentRoads.find(a => a.road.isPointB);
+      if (pointB) return pointB.road;
       
-      // If going to B, prioritize point B, then transport, then point A
-      if (goingToB) {
-        if (nextRoad.isPointB) return nextRoad;
-        if (nextRoad.isTransport) return nextRoad;
-        if (nextRoad.isPointA && nextRoad.id !== currentRoad.id) return nextRoad;
-      } else {
-        // If going to A, prioritize point A, then transport, then point B
-        if (nextRoad.isPointA) return nextRoad;
-        if (nextRoad.isTransport) return nextRoad;
-        if (nextRoad.isPointB && nextRoad.id !== currentRoad.id) return nextRoad;
-      }
+      // Then try transport roads
+      const transport = adjacentRoads.find(a => a.road.isTransport);
+      if (transport) return transport.road;
+      
+      // Then any other road (including point A if it's not the starting point)
+      if (adjacentRoads.length > 0) return adjacentRoads[0].road;
+    } else {
+      // If going to A, prioritize point A, then transport, then any road
+      const pointA = adjacentRoads.find(a => a.road.isPointA);
+      if (pointA) return pointA.road;
+      
+      const transport = adjacentRoads.find(a => a.road.isTransport);
+      if (transport) return transport.road;
+      
+      if (adjacentRoads.length > 0) return adjacentRoads[0].road;
     }
     
-    // If no specific type found, return first adjacent road (for flexibility)
-    return adjacentRoads.length > 0 ? adjacentRoads[0].road : null;
+    return null;
   }, []);
 
   // Calculate path from point A to point B (or reverse)
