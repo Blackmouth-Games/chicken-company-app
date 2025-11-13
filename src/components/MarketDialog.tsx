@@ -45,12 +45,28 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   // Use the same pattern as CorralDialog for consistency
   const buildingDisplay = useMemo(() => {
     if (!market) return null;
-    return getBuildingDisplay(
-      'market',
-      market.level,
-      market.selected_skin || null,
-      skinInfo || undefined
-    );
+    try {
+      return getBuildingDisplay(
+        'market',
+        market.level,
+        market.selected_skin || null,
+        skinInfo || undefined
+      );
+    } catch (error) {
+      console.error('[MarketDialog] Error getting building display:', error);
+      // Return a fallback display using level 1
+      try {
+        return getBuildingDisplay(
+          'market',
+          1,
+          null,
+          undefined
+        );
+      } catch (fallbackError) {
+        console.error('[MarketDialog] Fallback also failed:', fallbackError);
+        return null;
+      }
+    }
   }, [market?.selected_skin, market?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {

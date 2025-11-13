@@ -237,8 +237,26 @@ export const getBuildingDisplay = (
     }
   }
   
+  // Last resort: try to get ANY image from ANY level for this building type
+  if (images) {
+    for (let levelNum = 1; levelNum <= 5; levelNum++) {
+      if (images[levelNum]) {
+        const anyImage = images[levelNum]['A'] || images[levelNum]['B'] || images[levelNum]['C'] ||
+                        Object.values(images[levelNum])[0] || null;
+        if (anyImage) {
+          console.warn(`[getBuildingDisplay] Using last resort fallback image for ${type} from level ${levelNum}:`, anyImage);
+          return { type: 'image', src: anyImage };
+        }
+      }
+    }
+  }
+  
   // This should NEVER happen if images are properly set up
-  // But if it does, we'll throw an error instead of showing an emoji
-  console.error(`[getBuildingDisplay] CRITICAL: No image found for ${type} level ${level}. This should not happen!`);
-  throw new Error(`No image available for building type: ${type}, level: ${level}. Please ensure ${type}_1A.png exists in assets/buildings/`);
+  // But if it does, we'll return a placeholder instead of throwing
+  console.error(`[getBuildingDisplay] CRITICAL: No image found for ${type} level ${level}. Using placeholder.`);
+  // Return a placeholder data URL instead of throwing
+  return { 
+    type: 'image', 
+    src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gaW1hZ2U8L3RleHQ+PC9zdmc+' 
+  };
 };
