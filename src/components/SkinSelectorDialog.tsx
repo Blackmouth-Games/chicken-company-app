@@ -45,8 +45,8 @@ export const SkinSelectorDialog = ({
   // Log when dialog opens/closes
   useEffect(() => {
     if (open) {
-      const defaultSkins = skins.filter(s => s.is_default);
-      console.log("SkinSelectorDialog opened", { 
+      const defaultSkins = skins.filter(s => s.is_default === true);
+      console.log("🔍 SkinSelectorDialog opened - DEBUG INFO", { 
         buildingId, 
         buildingType, 
         buildingLevel,
@@ -54,11 +54,21 @@ export const SkinSelectorDialog = ({
         currentSkin,
         skinsCount: skins.length,
         defaultSkinsCount: defaultSkins.length,
-        defaultSkins: defaultSkins.map(s => s.skin_key),
+        defaultSkins: defaultSkins.map(s => ({
+          skin_key: s.skin_key,
+          is_default: s.is_default,
+          building_type: s.building_type
+        })),
+        allSkins: skins.map(s => ({
+          skin_key: s.skin_key,
+          is_default: s.is_default,
+          building_type: s.building_type
+        })),
         localImagesCount: localImages.length,
         localImages: localImages.map(img => `${img.level}${img.variant}`),
         userItemsCount: userItems?.length || 0,
-        userItems: userItems?.map((item: any) => item.item_key) || []
+        userItems: userItems?.map((item: any) => item.item_key) || [],
+        itemsLoading
       });
       
       // House doesn't have a buildingId in database, so this is expected
@@ -145,24 +155,18 @@ export const SkinSelectorDialog = ({
     }
 
     try {
-      if (buildingType === BUILDING_TYPES.HOUSE) {
-        // House skin is stored in user profile, not in user_buildings
-        const { error } = await supabase
-          .from("users")
-          .update({ selected_house_skin: skinKey })
-          .eq("id", userId);
-
-        if (error) throw error;
-      } else {
-        // Other buildings store skin in user_buildings
-        const { error } = await supabase
-          .from("user_buildings")
-          .update({ selected_skin: skinKey })
-          .eq("id", buildingId)
-          .eq("user_id", userId);
-
-        if (error) throw error;
+      // All buildings (including house) store skin in user_buildings
+      if (!buildingId) {
+        throw new Error("Building ID is required");
       }
+      
+      const { error } = await supabase
+        .from("user_buildings")
+        .update({ selected_skin: skinKey })
+        .eq("id", buildingId)
+        .eq("user_id", userId);
+
+      if (error) throw error;
 
       toast({
         title: "¡Éxito!",
@@ -214,7 +218,11 @@ export const SkinSelectorDialog = ({
     // For each level to show, create slots for all variants that exist locally or in database
     for (const level of levelsToShow) {
       for (const variant of variants) {
-        const skinKey = `${buildingType}_${level}${variant}`;
+        // For corral, use "coop_" format (as that's what's in the database and assets)
+        // For other buildings, use the buildingType directly
+        const skinKey = buildingType === 'corral' 
+          ? `coop_${level}${variant}` 
+          : `${buildingType}_${level}${variant}`;
         
         // Check if image exists locally
         const localImage = localImages.find(img => img.level === level && img.variant === variant);
@@ -227,11 +235,22 @@ export const SkinSelectorDialog = ({
           if (dbSkin) {
             // Database skin exists - check if owned
             const isOwned = hasItem("skin", dbSkin.skin_key);
-            const isDefault = dbSkin.is_default;
+            const isDefault = dbSkin.is_default === true; // Explicitly check for true
             const isVariantA = variant === 'A';
             
             // Check if user has any skins at all
             const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
+            
+            // Debug log for default skins
+            if (isDefault) {
+              console.log(`[SkinSelector] Found default skin: ${skinKey}`, {
+                level,
+                variant,
+                buildingLevel,
+                isDefault: dbSkin.is_default,
+                canUse: isOwned || isDefault || (!userHasAnySkins && isVariantA)
+              });
+            }
             
             // Always show skins if:
             // 1. User owns it (in user_items), OR
@@ -241,12 +260,22 @@ export const SkinSelectorDialog = ({
             const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
             const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
             
-            // Show skin if:
-            // - User can use it (owned, default, or variant A when no skins), OR
-            // - It's for the current level (to show as locked), OR
-            // - It's a default skin (always show defaults)
-            if (canUse || isCurrentLevel || isDefault) {
+            // ALWAYS show default skins, regardless of other conditions
+            // Also show if user can use it, or if it's for the current level
+            if (isDefault || canUse || isCurrentLevel) {
               slots.push({ level, variant, skin: dbSkin, isLocal: false });
+            } else {
+              // Debug: why wasn't this skin added?
+              console.log(`[SkinSelector] Skin NOT added: ${skinKey}`, {
+                isOwned,
+                isDefault,
+                isVariantA,
+                userHasAnySkins,
+                canUse,
+                isCurrentLevel,
+                buildingLevel,
+                level
+              });
             }
           } else if (localImage) {
             // Only local image exists - show it but it's not available (user doesn't own it)
@@ -264,19 +293,39 @@ export const SkinSelectorDialog = ({
     });
 
     // Debug: Log slots for default skins
-    const defaultSlots = slots.filter(s => s.skin?.is_default);
-    if (defaultSlots.length > 0) {
-      console.log("Default skins in slots:", defaultSlots.map(s => ({
+    const defaultSlots = slots.filter(s => s.skin?.is_default === true);
+    const allDefaultSkinsInDB = skins.filter(s => s.is_default === true);
+    console.log("🔍 [SkinSelector] Slot generation complete", {
+      totalSlots: slots.length,
+      defaultSlotsInSlots: defaultSlots.length,
+      defaultSkinsInDBCount: allDefaultSkinsInDB.length,
+      defaultSkinsInDBList: allDefaultSkinsInDB.map(s => ({
+        skin_key: s.skin_key,
+        building_type: s.building_type,
+        is_default: s.is_default
+      })),
+      defaultSlots: defaultSlots.map(s => ({
         level: s.level,
         variant: s.variant,
         skinKey: s.skin?.skin_key,
         isDefault: s.skin?.is_default
-      })));
-    } else {
-      console.warn("No default skins found in slots!", {
+      })),
+      buildingType,
+      buildingLevel
+    });
+    
+    if (defaultSlots.length === 0 && allDefaultSkinsInDB.length > 0) {
+      console.error("❌ [SkinSelector] Default skins exist in DB but not in slots!", {
+        buildingType,
+        buildingLevel,
+        defaultSkinsInDB: allDefaultSkinsInDB.map(s => s.skin_key),
         totalSlots: slots.length,
-        skinsWithDefault: skins.filter(s => s.is_default).map(s => s.skin_key),
-        buildingLevel
+        slots: slots.map(s => ({
+          level: s.level,
+          variant: s.variant,
+          skinKey: s.skin?.skin_key,
+          isDefault: s.skin?.is_default
+        }))
       });
     }
 
@@ -421,7 +470,7 @@ export const SkinSelectorDialog = ({
                                     className="w-24 h-24 object-contain"
                                   />
                                 ) : (
-                                  <div className="text-6xl">{skinDisplay?.emoji || skin?.image_url || '🏚️'}</div>
+                                  <div className="text-6xl">{skin?.image_url || '🏚️'}</div>
                                 )}
                               </div>
 
