@@ -19,6 +19,7 @@ import Friends from "./pages/Friends";
 import Store from "./pages/Store";
 import AdminSkins from "./pages/AdminSkins";
 import AdminLogin from "./pages/AdminLogin";
+import { AdminStore } from "./pages/AdminStore";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -79,6 +80,7 @@ const AppRoutes = () => {
           <Routes>
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/skins" element={<AdminSkins />} />
+            <Route path="/admin/store" element={<AdminStore />} />
             <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
         </ErrorBoundary>
@@ -102,6 +104,7 @@ const AppRoutes = () => {
             <Route path="/store" element={<Store />} />
             <Route path="/friends" element={<Friends />} />
             <Route path="/admin/skins" element={<AdminSkins />} />
+            <Route path="/admin/store" element={<AdminStore />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TelegramLayout>

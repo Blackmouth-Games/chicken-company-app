@@ -377,12 +377,31 @@ const Home = () => {
 
   // Listen for skin selection events to refresh buildings
   useEffect(() => {
+    let isHandling = false; // Prevent multiple simultaneous calls
+    
     const handleSkinSelected = async () => {
-      // Reload buildings to get updated selected_skin
-      if (userId) {
-        await loadBuildings(userId);
-      } else {
-        await loadUserProfile();
+      // Prevent multiple simultaneous calls
+      if (isHandling) {
+        console.log("[Home] Skin selection event already being handled, skipping...");
+        return;
+      }
+      
+      isHandling = true;
+      try {
+        // Reload buildings to get updated selected_skin
+        if (userId) {
+          await loadBuildings(userId);
+        } else {
+          // Only call loadUserProfile if we have telegramUser
+          if (telegramUser?.id) {
+            await loadUserProfile();
+          }
+        }
+      } catch (error) {
+        console.error("[Home] Error handling skin selection:", error);
+        // Don't show toast here - loadBuildings already shows it
+      } finally {
+        isHandling = false;
       }
     };
 
@@ -390,7 +409,7 @@ const Home = () => {
     return () => {
       window.removeEventListener('skinSelected', handleSkinSelected);
     };
-  }, [userId]);
+  }, [userId, telegramUser]);
 
   useEffect(() => {
     // Initialize music
@@ -488,6 +507,11 @@ const Home = () => {
   };
 
   const loadBuildings = async (profileId: string) => {
+    if (!profileId) {
+      console.warn("[Home] loadBuildings called without profileId");
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from("user_buildings")
@@ -495,7 +519,10 @@ const Home = () => {
         .eq("user_id", profileId)
         .order("position_index");
 
-      if (error) throw error;
+      if (error) {
+        console.error("[Home] Error loading buildings from Supabase:", error);
+        throw error;
+      }
       
       // Sort buildings: corrals by level (desc), then others by position
       const sorted = (data || []).sort((a, b) => {

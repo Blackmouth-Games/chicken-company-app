@@ -123,6 +123,13 @@ const AdminSkins = () => {
         <h1 className="text-3xl font-bold">Administración de Skins</h1>
         <div className="flex items-center gap-4">
           <span className="text-sm text-muted-foreground">{user.email}</span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/admin/store")}
+          >
+            Gestionar Tienda
+          </Button>
           <Button variant="outline" size="sm" onClick={signOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Cerrar Sesión

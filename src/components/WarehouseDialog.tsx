@@ -168,10 +168,25 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   <Button 
                     className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base" 
                     size="lg"
-                    onClick={() => {
-                      setShowUpgrade(true);
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      console.log("Upgrade button clicked", { 
+                        warehouse: warehouse?.id, 
+                        currentLevel, 
+                        nextLevelPrice,
+                        canUpgrade 
+                      });
+                      if (warehouse && nextLevelPrice) {
+                        setShowUpgrade(true);
+                      } else {
+                        console.error("Cannot upgrade: missing warehouse or nextLevelPrice", {
+                          warehouse: !!warehouse,
+                          nextLevelPrice: !!nextLevelPrice
+                        });
+                      }
                     }}
-                    disabled={pricesLoading}
+                    disabled={pricesLoading || !nextLevelPrice}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -188,12 +203,13 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         </DialogContent>
       </Dialog>
 
-      {warehouse && showUpgrade && nextLevelPrice && (
+      {warehouse && (
         <UpgradeBuildingDialog
           open={showUpgrade}
           onOpenChange={(open) => {
             setShowUpgrade(open);
             if (!open) {
+              // Keep warehouse dialog open when upgrade dialog closes
               onOpenChange(true);
             }
           }}
@@ -202,8 +218,8 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           currentLevel={currentLevel}
           nextLevel={currentLevel + 1}
           userId={userId || ""}
-          upgradePrice={nextLevelPrice.price_ton}
-          newCapacity={nextLevelPrice.capacity}
+          upgradePrice={nextLevelPrice?.price_ton || 0}
+          newCapacity={nextLevelPrice?.capacity || 0}
           onUpgradeComplete={handleUpgradeComplete}
         />
       )}
