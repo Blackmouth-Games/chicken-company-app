@@ -173,7 +173,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                     }}
                     disabled={pricesLoading}
                   >
-                    <span className="font-bold">⬆️ Subir de nivel - {nextLevelPrice?.price_ton} TON</span>
+                    <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
                 </div>
               )}
