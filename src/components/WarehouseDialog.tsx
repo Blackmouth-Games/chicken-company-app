@@ -24,9 +24,18 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
 
   const warehouse = getBuildingByType(BUILDING_TYPES.WAREHOUSE);
-  const currentLevel = warehouse?.level || 1;
+  // If warehouse doesn't exist, treat it as level 1 (default building)
+  const currentLevel = warehouse?.level ?? 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.WAREHOUSE, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+  
+  // Create a virtual warehouse object if it doesn't exist
+  const warehouseData = warehouse || {
+    id: '', // Will be created when upgrading
+    level: 1,
+    capacity: 100, // Default capacity for level 1
+    selected_skin: null,
+  };
 
   // Debug: Log warehouse status
   useEffect(() => {
@@ -53,28 +62,19 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
 
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
-    if (!warehouse?.selected_skin) return null;
-    return getSkinByKey(warehouse.selected_skin);
-  }, [warehouse?.selected_skin, getSkinByKey]);
+    if (!warehouseData?.selected_skin) return null;
+    return getSkinByKey(warehouseData.selected_skin);
+  }, [warehouseData?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
   // Use the same pattern as CorralDialog for consistency
   // Always return an image - use warehouse skin if available, otherwise default to level 1
   const buildingDisplay = useMemo(() => {
-    if (!warehouse) {
-      // If no warehouse, use default level 1 image
-      return getBuildingDisplay(
-        'warehouse',
-        1,
-        null,
-        undefined
-      );
-    }
     try {
       return getBuildingDisplay(
         'warehouse',
-        warehouse.level,
-        warehouse.selected_skin || null,
+        warehouseData.level,
+        warehouseData.selected_skin || null,
         skinInfo || undefined
       );
     } catch (error) {
@@ -87,7 +87,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         undefined
       );
     }
-  }, [warehouse?.selected_skin, warehouse?.level, skinInfo]);
+  }, [warehouseData?.selected_skin, warehouseData?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -162,7 +162,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
               <div className="space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center p-3 bg-blue-100 rounded-lg border border-blue-200">
                   <span className="text-xs md:text-sm text-blue-900">Capacidad de almacenamiento</span>
-                  <span className="font-semibold text-sm md:text-base text-blue-900">{warehouse?.capacity.toLocaleString() || 0}</span>
+                  <span className="font-semibold text-sm md:text-base text-blue-900">{warehouseData.capacity.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -208,7 +208,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                         });
                       }
                     }}
-                    disabled={pricesLoading || !nextLevelPrice || !warehouse}
+                    disabled={pricesLoading || !nextLevelPrice}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -226,7 +226,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       </Dialog>
 
       <UpgradeBuildingDialog
-        open={showUpgrade && !!warehouse && !!nextLevelPrice}
+        open={showUpgrade && !!nextLevelPrice}
         onOpenChange={(open) => {
           setShowUpgrade(open);
           if (!open) {
@@ -234,7 +234,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
             onOpenChange(true);
           }
         }}
-        buildingId={warehouse?.id || ""}
+        buildingId={warehouseData.id || ""}
         buildingType={BUILDING_TYPES.WAREHOUSE}
         currentLevel={currentLevel}
         nextLevel={currentLevel + 1}
@@ -247,11 +247,11 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
       <SkinSelectorDialog
         open={showSkinSelector}
         onOpenChange={setShowSkinSelector}
-        buildingId={warehouse?.id}
+        buildingId={warehouseData.id || undefined}
         buildingType={BUILDING_TYPES.WAREHOUSE}
         buildingLevel={currentLevel}
         userId={userId}
-        currentSkin={warehouse?.selected_skin || null}
+        currentSkin={warehouseData.selected_skin || null}
         onSkinSelected={() => {
           refetch();
           setShowSkinSelector(false);

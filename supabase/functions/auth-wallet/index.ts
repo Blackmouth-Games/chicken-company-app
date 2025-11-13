@@ -107,6 +107,73 @@ serve(async (req) => {
         }
 
         profile = newProfile;
+        
+        // Create default buildings (warehouse, market, and one corral) for new users
+        console.log('Creating default buildings for new user:', profile.id);
+        try {
+          // Get default prices for level 1
+          const { data: prices } = await supabase
+            .from('building_prices')
+            .select('*')
+            .in('building_type', ['warehouse', 'market', 'corral'])
+            .eq('level', 1);
+
+          const warehousePrice = prices?.find(p => p.building_type === 'warehouse');
+          const marketPrice = prices?.find(p => p.building_type === 'market');
+          const corralPrice = prices?.find(p => p.building_type === 'corral');
+
+          const buildingsToCreate: any[] = [];
+
+          if (warehousePrice) {
+            buildingsToCreate.push({
+              user_id: profile.id,
+              building_type: 'warehouse',
+              level: 1,
+              position_index: -1,
+              capacity: warehousePrice.capacity,
+              current_chickens: 0,
+            });
+          }
+
+          if (marketPrice) {
+            buildingsToCreate.push({
+              user_id: profile.id,
+              building_type: 'market',
+              level: 1,
+              position_index: -2,
+              capacity: marketPrice.capacity,
+              current_chickens: 0,
+            });
+          }
+
+          // Create one corral (coop) of level 1 for new users
+          if (corralPrice) {
+            buildingsToCreate.push({
+              user_id: profile.id,
+              building_type: 'corral',
+              level: 1,
+              position_index: 0, // First position for the default corral
+              capacity: corralPrice.capacity,
+              current_chickens: 0,
+            });
+          }
+
+          if (buildingsToCreate.length > 0) {
+            const { error: buildingsError } = await supabase
+              .from('user_buildings')
+              .insert(buildingsToCreate);
+
+            if (buildingsError) {
+              console.error('Error creating default buildings:', buildingsError);
+              // Don't fail the auth if buildings creation fails
+            } else {
+              console.log('Successfully created default buildings:', buildingsToCreate.map(b => b.building_type));
+            }
+          }
+        } catch (buildingsError) {
+          console.error('Error in default buildings creation:', buildingsError);
+          // Don't fail the auth if buildings creation fails
+        }
       }
 
       // Create unique email from wallet address

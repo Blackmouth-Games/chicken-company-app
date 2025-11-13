@@ -486,6 +486,8 @@ const Home = () => {
 
       if (created?.profile_id) {
         setUserId(created.profile_id);
+        // Ensure default buildings are created for new profiles
+        await ensureDefaultBuildings(created.profile_id);
         await loadBuildings(created.profile_id);
         return;
       }
@@ -499,10 +501,100 @@ const Home = () => {
 
       if (profile) {
         setUserId(profile.id);
+        // Ensure default buildings exist (in case they weren't created during auth)
+        await ensureDefaultBuildings(profile.id);
         loadBuildings(profile.id);
       }
     } catch (error) {
       console.error("Error loading/creating profile:", error);
+    }
+  };
+
+  // Ensure default buildings (warehouse, market, and one corral) exist
+  const ensureDefaultBuildings = async (profileId: string) => {
+    try {
+      // Get existing buildings
+      const { data: existingBuildings } = await supabase
+        .from("user_buildings")
+        .select("building_type")
+        .eq("user_id", profileId);
+
+      const existingTypes = (existingBuildings || []).map(b => b.building_type);
+      const needsWarehouse = !existingTypes.includes('warehouse');
+      const needsMarket = !existingTypes.includes('market');
+      // Check if user has at least one corral (limit: 1 default corral)
+      const existingCorrals = (existingBuildings || []).filter(b => b.building_type === 'corral');
+      const needsCorral = existingCorrals.length === 0;
+
+      if (!needsWarehouse && !needsMarket && !needsCorral) {
+        return; // All default buildings exist, nothing to do
+      }
+
+      // Get default prices for level 1
+      const buildingTypesToCheck: string[] = [];
+      if (needsWarehouse) buildingTypesToCheck.push('warehouse');
+      if (needsMarket) buildingTypesToCheck.push('market');
+      if (needsCorral) buildingTypesToCheck.push('corral');
+
+      const { data: prices } = await supabase
+        .from("building_prices")
+        .select("*")
+        .in("building_type", buildingTypesToCheck)
+        .eq("level", 1);
+
+      const warehousePrice = prices?.find(p => p.building_type === 'warehouse');
+      const marketPrice = prices?.find(p => p.building_type === 'market');
+      const corralPrice = prices?.find(p => p.building_type === 'corral');
+
+      const buildingsToCreate: any[] = [];
+
+      if (needsWarehouse) {
+        buildingsToCreate.push({
+          user_id: profileId,
+          building_type: 'warehouse',
+          level: 1,
+          position_index: -1, // Special position for default buildings
+          capacity: warehousePrice?.capacity || 100, // Default capacity if price not found
+          current_chickens: 0,
+        });
+      }
+
+      if (needsMarket) {
+        buildingsToCreate.push({
+          user_id: profileId,
+          building_type: 'market',
+          level: 1,
+          position_index: -2, // Special position for default buildings
+          capacity: marketPrice?.capacity || 100, // Default capacity if price not found
+          current_chickens: 0,
+        });
+      }
+
+      // Create one corral (coop) of level 1 if user has none (limit: 1)
+      if (needsCorral) {
+        buildingsToCreate.push({
+          user_id: profileId,
+          building_type: 'corral',
+          level: 1,
+          position_index: 0, // First position for the default corral
+          capacity: corralPrice?.capacity || 50, // Default capacity if price not found
+          current_chickens: 0,
+        });
+      }
+
+      if (buildingsToCreate.length > 0) {
+        const { error: createError } = await supabase
+          .from("user_buildings")
+          .insert(buildingsToCreate);
+
+        if (createError) {
+          console.error("[Home] Error creating default buildings:", createError);
+        } else {
+          console.log("[Home] Created default buildings:", buildingsToCreate.map(b => b.building_type));
+        }
+      }
+    } catch (error) {
+      console.error("[Home] Error ensuring default buildings:", error);
     }
   };
 
@@ -513,6 +605,9 @@ const Home = () => {
     }
     
     try {
+      // First, ensure default buildings exist
+      await ensureDefaultBuildings(profileId);
+
       const { data, error } = await supabase
         .from("user_buildings")
         .select("*")

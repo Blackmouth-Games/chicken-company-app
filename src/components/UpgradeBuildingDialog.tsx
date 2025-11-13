@@ -110,8 +110,8 @@ export const UpgradeBuildingDialog = ({
   const info = buildingInfo[buildingType] || buildingInfo.corral;
 
   const handleUpgrade = async () => {
-    // Validate required data
-    if (!buildingId || !userId || !buildingType) {
+    // Validate required data (buildingId can be empty for warehouse/market that don't exist yet)
+    if (!userId || !buildingType) {
       console.error("[UpgradeBuildingDialog] Missing required data:", {
         buildingId,
         userId,
@@ -144,19 +144,59 @@ export const UpgradeBuildingDialog = ({
         newCapacity,
       });
 
-      // Verify building exists before proceeding
-      const { data: existingBuilding, error: fetchError } = await supabase
-        .from("user_buildings")
-        .select("*")
-        .eq("id", buildingId)
-        .eq("user_id", userId)
-        .single();
+      // Verify building exists, or create it if it doesn't (for warehouse/market default buildings)
+      let existingBuilding;
+      if (buildingId) {
+        const { data, error: fetchError } = await supabase
+          .from("user_buildings")
+          .select("*")
+          .eq("id", buildingId)
+          .eq("user_id", userId)
+          .single();
 
-      if (fetchError || !existingBuilding) {
-        throw new Error(`Edificio no encontrado: ${fetchError?.message || "No existe"}`);
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = not found
+          throw new Error(`Error al buscar edificio: ${fetchError.message}`);
+        }
+
+        existingBuilding = data;
       }
 
-      console.log("[UpgradeBuildingDialog] Building found:", existingBuilding);
+      // If building doesn't exist and it's warehouse or market, create it first
+      if (!existingBuilding && (buildingType === 'warehouse' || buildingType === 'market')) {
+        console.log("[UpgradeBuildingDialog] Creating default building:", buildingType);
+        
+        // Get level 1 price to get default capacity
+        const { data: level1Price } = await supabase
+          .from("building_prices")
+          .select("capacity")
+          .eq("building_type", buildingType)
+          .eq("level", 1)
+          .single();
+
+        const { data: newBuilding, error: createError } = await supabase
+          .from("user_buildings")
+          .insert({
+            user_id: userId,
+            building_type: buildingType,
+            level: 1,
+            position_index: buildingType === 'warehouse' ? -1 : -2,
+            capacity: level1Price?.capacity || 100,
+            current_chickens: 0,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          throw new Error(`Error al crear edificio: ${createError.message}`);
+        }
+
+        existingBuilding = newBuilding;
+        console.log("[UpgradeBuildingDialog] Default building created:", existingBuilding);
+      } else if (!existingBuilding) {
+        throw new Error(`Edificio no encontrado y no se puede crear automáticamente`);
+      } else {
+        console.log("[UpgradeBuildingDialog] Building found:", existingBuilding);
+      }
 
       // Insert pending purchase record
       const { data: purchaseData, error: purchaseError } = await supabase
@@ -164,7 +204,7 @@ export const UpgradeBuildingDialog = ({
         .insert({
           user_id: userId,
           building_type: buildingType,
-          building_id: buildingId,
+          building_id: existingBuilding.id,
           level: nextLevel,
           price_ton: upgradePrice,
           status: "pending",
@@ -196,9 +236,10 @@ export const UpgradeBuildingDialog = ({
       };
       const result = await tonConnectUI.sendTransaction(transaction);
 
-      // Update building
+      // Update building (use existingBuilding.id if buildingId was empty)
+      const actualBuildingId = existingBuilding.id;
       console.log("[UpgradeBuildingDialog] Updating building", {
-        buildingId,
+        buildingId: actualBuildingId,
         userId,
         nextLevel,
         newCapacity,
@@ -211,7 +252,7 @@ export const UpgradeBuildingDialog = ({
           capacity: newCapacity,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", buildingId)
+        .eq("id", actualBuildingId)
         .eq("user_id", userId)
         .select()
         .single();

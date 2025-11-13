@@ -24,9 +24,18 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
 
   const market = getBuildingByType(BUILDING_TYPES.MARKET);
-  const currentLevel = market?.level || 1;
+  // If market doesn't exist, treat it as level 1 (default building)
+  const currentLevel = market?.level ?? 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.MARKET, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+  
+  // Create a virtual market object if it doesn't exist
+  const marketData = market || {
+    id: '', // Will be created when upgrading
+    level: 1,
+    capacity: 100, // Default capacity for level 1
+    selected_skin: null,
+  };
 
   // Debug: Log market status
   useEffect(() => {
@@ -53,28 +62,19 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
 
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
-    if (!market?.selected_skin) return null;
-    return getSkinByKey(market.selected_skin);
-  }, [market?.selected_skin, getSkinByKey]);
+    if (!marketData?.selected_skin) return null;
+    return getSkinByKey(marketData.selected_skin);
+  }, [marketData?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
   // Use the same pattern as WarehouseDialog for consistency
   // Always return an image - use market skin if available, otherwise default to level 1
   const buildingDisplay = useMemo(() => {
-    if (!market) {
-      // If no market, use default level 1 image
-      return getBuildingDisplay(
-        'market',
-        1,
-        null,
-        undefined
-      );
-    }
     try {
       return getBuildingDisplay(
         'market',
-        market.level,
-        market.selected_skin || null,
+        marketData.level,
+        marketData.selected_skin || null,
         skinInfo || undefined
       );
     } catch (error) {
@@ -87,7 +87,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         undefined
       );
     }
-  }, [market?.selected_skin, market?.level, skinInfo]);
+  }, [marketData?.selected_skin, marketData?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -161,7 +161,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
               <div className="space-y-2 md:space-y-3">
                 <div className="flex justify-between items-center p-3 bg-green-100 rounded-lg border border-green-200">
                   <span className="text-xs md:text-sm text-green-900">Capacidad de venta</span>
-                  <span className="font-semibold text-sm md:text-base text-green-900">{market?.capacity.toLocaleString() || 0}</span>
+                  <span className="font-semibold text-sm md:text-base text-green-900">{marketData.capacity.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -207,7 +207,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                         });
                       }
                     }}
-                    disabled={pricesLoading || !nextLevelPrice || !market}
+                    disabled={pricesLoading || !nextLevelPrice}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -225,7 +225,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       </Dialog>
 
       <UpgradeBuildingDialog
-        open={showUpgrade && !!market && !!nextLevelPrice}
+        open={showUpgrade && !!nextLevelPrice}
         onOpenChange={(open) => {
           setShowUpgrade(open);
           if (!open) {
@@ -233,7 +233,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
             onOpenChange(true);
           }
         }}
-        buildingId={market?.id || ""}
+        buildingId={marketData.id || ""}
         buildingType={BUILDING_TYPES.MARKET}
         currentLevel={currentLevel}
         nextLevel={currentLevel + 1}
@@ -246,11 +246,11 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       <SkinSelectorDialog
         open={showSkinSelector}
         onOpenChange={setShowSkinSelector}
-        buildingId={market?.id}
+        buildingId={marketData.id || undefined}
         buildingType={BUILDING_TYPES.MARKET}
         buildingLevel={currentLevel}
         userId={userId}
-        currentSkin={market?.selected_skin || null}
+        currentSkin={marketData.selected_skin || null}
         onSkinSelected={() => {
           refetch();
           setShowSkinSelector(false);
