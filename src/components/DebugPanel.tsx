@@ -162,7 +162,6 @@ const DebugPanel = () => {
     loadUserId();
   }, [telegramUser?.id]);
   
-  const { buildings } = useUserBuildings(userId || undefined);
   const { items: userItems } = useUserItems(userId || undefined);
   
   // Listen for skin selector errors
