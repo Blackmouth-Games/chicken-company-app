@@ -434,41 +434,98 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   // Expose debug information
   const getDebugInfo = useCallback(() => {
     const now = Date.now();
+    const spawnPoints: Array<{
+      corralId: string;
+      positionIndex: number;
+      level: number;
+      spawnInterval: number;
+      timeUntilSpawn: number;
+      lastSpawn?: number;
+      assignedBeltId?: string;
+      assignedBeltPosition?: string;
+      hasBelt: boolean;
+      beltSlotPosition?: number;
+      status: 'ready' | 'waiting' | 'no-belt';
+    }> = [];
+
+    corrals.forEach(corral => {
+      const slotPosition = corral.position_index;
+      const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
+      const spawnInterval = getEggSpawnInterval(corral.level || 1);
+      
+      // Find assigned belt
+      const assignedBeltId = corralBeltMappingRef.current.get(corral.id);
+      const assignedBelt = assignedBeltId ? belts.find(b => b.id === assignedBeltId) : null;
+      
+      // Try to find output belt
+      const outputBelt = findOutputBelt(slotPosition, corral.id);
+      
+      let timeUntilSpawn = 0;
+      if (lastSpawn === undefined) {
+        timeUntilSpawn = 0; // Will spawn soon
+      } else {
+        const timeSinceLastSpawn = now - lastSpawn;
+        timeUntilSpawn = Math.max(0, spawnInterval - timeSinceLastSpawn);
+      }
+
+      const hasBelt = !!(outputBelt || assignedBelt);
+      let status: 'ready' | 'waiting' | 'no-belt' = 'no-belt';
+      if (!hasBelt) {
+        status = 'no-belt';
+      } else if (timeUntilSpawn <= 0) {
+        status = 'ready';
+      } else {
+        status = 'waiting';
+      }
+
+      spawnPoints.push({
+        corralId: corral.id,
+        positionIndex: slotPosition,
+        level: corral.level || 1,
+        spawnInterval,
+        timeUntilSpawn,
+        lastSpawn,
+        assignedBeltId: assignedBelt?.id || outputBelt?.id,
+        assignedBeltPosition: assignedBelt ? `${assignedBelt.gridColumn} / ${assignedBelt.gridRow}` : 
+                              outputBelt ? `${outputBelt.gridColumn} / ${outputBelt.gridRow}` : undefined,
+        hasBelt,
+        beltSlotPosition: assignedBelt?.slotPosition ?? outputBelt?.slotPosition,
+        status,
+      });
+    });
+
+    // Sort by time until spawn (ready first, then by time)
+    spawnPoints.sort((a, b) => {
+      if (a.status === 'ready' && b.status !== 'ready') return -1;
+      if (a.status !== 'ready' && b.status === 'ready') return 1;
+      if (a.status === 'no-belt' && b.status !== 'no-belt') return 1;
+      if (a.status !== 'no-belt' && b.status === 'no-belt') return -1;
+      return a.timeUntilSpawn - b.timeUntilSpawn;
+    });
+
     const debugInfo: any = {
       totalEggs: eggs.length,
       maxEggs: MAX_EGGS,
       baseSpawnInterval: BASE_EGG_SPAWN_INTERVAL,
-      nextSpawns: [] as Array<{ corralId: string; level: number; spawnInterval: number; timeUntilSpawn: number; lastSpawn?: number }>,
-      corrals: corrals.length,
+      spawnPoints,
+      totalCorrals: corrals.length,
+      corralsWithBelts: spawnPoints.filter(sp => sp.hasBelt).length,
+      corralsWithoutBelts: spawnPoints.filter(sp => !sp.hasBelt).length,
+      readyToSpawn: spawnPoints.filter(sp => sp.status === 'ready').length,
       pageVisible: isPageVisibleRef.current,
+      // Keep old format for backwards compatibility
+      nextSpawns: spawnPoints.map(sp => ({
+        corralId: sp.corralId,
+        level: sp.level,
+        spawnInterval: sp.spawnInterval,
+        timeUntilSpawn: sp.timeUntilSpawn,
+        lastSpawn: sp.lastSpawn,
+      })),
+      corrals: corrals.length,
     };
 
-    corrals.forEach(corral => {
-      const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
-      const spawnInterval = getEggSpawnInterval(corral.level || 1);
-      if (lastSpawn === undefined) {
-        debugInfo.nextSpawns.push({
-          corralId: corral.id,
-          level: corral.level || 1,
-          spawnInterval,
-          timeUntilSpawn: 0, // Will spawn soon
-          lastSpawn: undefined,
-        });
-      } else {
-        const timeSinceLastSpawn = now - lastSpawn;
-        const timeUntilSpawn = Math.max(0, spawnInterval - timeSinceLastSpawn);
-        debugInfo.nextSpawns.push({
-          corralId: corral.id,
-          level: corral.level || 1,
-          spawnInterval,
-          timeUntilSpawn,
-          lastSpawn,
-        });
-      }
-    });
-
     return debugInfo;
-  }, [eggs, corrals]);
+  }, [eggs, corrals, belts, findOutputBelt]);
 
   return { eggs, getDebugInfo };
 };

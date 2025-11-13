@@ -484,21 +484,38 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     const timeSinceLastSpawn = now - lastSpawn;
     const timeUntilSpawn = Math.max(0, vehicleSpawnInterval - timeSinceLastSpawn);
     
-    // Debug log
-    console.log('[useVehicleSystem] Debug Info:', {
-      currentVehicles: vehicles.length,
-      maxVehicles: MAX_VEHICLES,
-      spawnInterval: vehicleSpawnInterval,
+    // Calculate path if points exist
+    let pathInfo: any = null;
+    if (pointA && pointB) {
+      const path = calculatePath(pointA, pointB, roads, true);
+      const transportRoads = path.map(id => roads.find(r => r.id === id)).filter(Boolean);
+      pathInfo = {
+        pathLength: path.length,
+        isValid: path.length > 0 && path[path.length - 1] === pointB.id,
+        transportRoadsCount: transportRoads.filter(r => r?.isTransport).length,
+        pathRoads: path.map(id => {
+          const road = roads.find(r => r.id === id);
+          return road ? {
+            id: road.id,
+            position: `${road.gridColumn} / ${road.gridRow}`,
+            type: road.isPointA ? 'Point A' : road.isPointB ? 'Point B' : road.isTransport ? 'Transport' : 'Normal',
+            direction: road.direction,
+          } : null;
+        }).filter(Boolean),
+      };
+    }
+
+    const spawnPoint = pointA ? {
+      roadId: pointA.id,
+      position: `${pointA.gridColumn} / ${pointA.gridRow}`,
+      direction: pointA.direction,
+      type: 'Point A',
+      status: vehicles.length >= MAX_VEHICLES ? 'blocked' : 
+              !pointB ? 'no-destination' :
+              timeUntilSpawn <= 0 ? 'ready' : 'waiting',
       timeUntilSpawn,
-      lastSpawn: lastSpawn || null,
-      hasPointA: !!pointA,
-      hasPointB: !!pointB,
-      canSpawn: vehicles.length < MAX_VEHICLES && !!pointA && !!pointB,
-      vehicleSpeed,
-      pointAId: pointA?.id,
-      pointBId: pointB?.id,
-      roadsCount: roads.length,
-    });
+      lastSpawn: lastSpawn || undefined,
+    } : null;
 
     return {
       currentVehicles: vehicles.length,
@@ -512,9 +529,14 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
       vehicleSpeed,
       pointAId: pointA?.id,
       pointBId: pointB?.id,
+      pointAPosition: pointA ? `${pointA.gridColumn} / ${pointA.gridRow}` : null,
+      pointBPosition: pointB ? `${pointB.gridColumn} / ${pointB.gridRow}` : null,
       roadsCount: roads.length,
+      transportRoadsCount: roads.filter(r => r.isTransport).length,
+      pathInfo,
+      spawnPoint,
     };
-  }, [vehicles, vehicleSpawnInterval, vehicleSpeed, findPointA, findPointB, roads]);
+  }, [vehicles, vehicleSpawnInterval, vehicleSpeed, findPointA, findPointB, roads, calculatePath]);
 
   return { vehicles, getDebugInfo };
 };

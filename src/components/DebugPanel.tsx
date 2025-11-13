@@ -643,29 +643,67 @@ const DebugPanel = () => {
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">🥚 Egg System</h3>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
-                    <div>
+                    <div className="grid grid-cols-2 gap-2">
                       <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs} / {eggDebugInfo.maxEggs}</p>
-                      <p><strong>Spawn Interval:</strong> {eggDebugInfo.spawnInterval}ms ({eggDebugInfo.spawnInterval / 1000}s)</p>
-                      <p><strong>Corrals:</strong> {eggDebugInfo.corrals}</p>
+                      <p><strong>Base Interval:</strong> {eggDebugInfo.baseSpawnInterval / 1000}s</p>
+                      <p><strong>Total Corrals:</strong> {eggDebugInfo.totalCorrals || eggDebugInfo.corrals}</p>
+                      <p><strong>With Belts:</strong> {eggDebugInfo.corralsWithBelts || 0}</p>
+                      <p><strong>Without Belts:</strong> {eggDebugInfo.corralsWithoutBelts || 0}</p>
+                      <p><strong>Ready to Spawn:</strong> <span className={eggDebugInfo.readyToSpawn > 0 ? 'text-green-600 font-bold' : ''}>{eggDebugInfo.readyToSpawn || 0}</span></p>
                       <p><strong>Page Visible:</strong> {eggDebugInfo.pageVisible ? '✅ Yes' : '❌ No'}</p>
                     </div>
-                    {eggDebugInfo.nextSpawns && eggDebugInfo.nextSpawns.length > 0 && (
-                      <div className="border-t pt-2">
-                        <p><strong>Next Spawns:</strong></p>
-                        <ul className="text-xs mt-1 space-y-1">
-                          {eggDebugInfo.nextSpawns.map((spawn: any, idx: number) => (
-                            <li key={idx}>
-                              Corral {spawn.corralId.slice(0, 8)}...: {spawn.timeUntilSpawn > 0 
-                                ? `${(spawn.timeUntilSpawn / 1000).toFixed(1)}s` 
-                                : 'Ready to spawn'}
-                              {spawn.lastSpawn && (
-                                <span className="text-muted-foreground ml-2">
-                                  (Last: {new Date(spawn.lastSpawn).toLocaleTimeString()})
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
+                    
+                    {eggDebugInfo.spawnPoints && eggDebugInfo.spawnPoints.length > 0 && (
+                      <div className="border-t pt-3 mt-3">
+                        <p className="font-semibold mb-2">📋 Spawn Points (Dinámico):</p>
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {eggDebugInfo.spawnPoints.map((spawn: any, idx: number) => {
+                            const statusColor = spawn.status === 'ready' ? 'text-green-600' : 
+                                              spawn.status === 'waiting' ? 'text-yellow-600' : 
+                                              'text-red-600';
+                            const statusIcon = spawn.status === 'ready' ? '✅' : 
+                                             spawn.status === 'waiting' ? '⏳' : 
+                                             '❌';
+                            return (
+                              <div key={idx} className="border rounded p-2 bg-background/50">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <p className="font-medium">
+                                      {statusIcon} <span className={statusColor}>Posición {spawn.positionIndex}</span>
+                                      {spawn.status === 'ready' && <span className="ml-2 text-green-600 font-bold">LISTO</span>}
+                                    </p>
+                                    <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                      <p>Corral ID: {spawn.corralId.slice(0, 12)}...</p>
+                                      <p>Nivel: {spawn.level} | Intervalo: {(spawn.spawnInterval / 1000).toFixed(1)}s</p>
+                                      {spawn.hasBelt ? (
+                                        <>
+                                          <p className="text-green-600">✅ Tiene cinta asignada</p>
+                                          {spawn.assignedBeltId && (
+                                            <p>Cinta: {spawn.assignedBeltId.slice(0, 20)}...</p>
+                                          )}
+                                          {spawn.assignedBeltPosition && (
+                                            <p>Posición cinta: {spawn.assignedBeltPosition}</p>
+                                          )}
+                                          {spawn.beltSlotPosition !== undefined && (
+                                            <p>Slot Position: {spawn.beltSlotPosition}</p>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <p className="text-red-600">❌ NO tiene cinta asignada</p>
+                                      )}
+                                      {spawn.timeUntilSpawn > 0 && (
+                                        <p>Tiempo hasta spawn: <strong>{(spawn.timeUntilSpawn / 1000).toFixed(1)}s</strong></p>
+                                      )}
+                                      {spawn.lastSpawn && (
+                                        <p>Último spawn: {new Date(spawn.lastSpawn).toLocaleTimeString()}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -677,26 +715,77 @@ const DebugPanel = () => {
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
-                    <div>
+                    <div className="grid grid-cols-2 gap-2">
                       <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles} / {vehicleDebugInfo.maxVehicles}</p>
-                      <p><strong>Spawn Interval:</strong> {vehicleDebugInfo.spawnInterval}ms ({(vehicleDebugInfo.spawnInterval / 1000).toFixed(1)}s)</p>
-                      <p><strong>Time Until Next Spawn:</strong> {vehicleDebugInfo.timeUntilSpawn > 0 
-                        ? `${(vehicleDebugInfo.timeUntilSpawn / 1000).toFixed(1)}s` 
-                        : 'Ready to spawn'}</p>
-                      <p><strong>Vehicle Speed:</strong> {vehicleDebugInfo.vehicleSpeed.toFixed(4)}</p>
-                      <p><strong>Has Point A:</strong> {vehicleDebugInfo.hasPointA ? '✅ Yes' : '❌ No'}</p>
-                      <p><strong>Has Point B:</strong> {vehicleDebugInfo.hasPointB ? '✅ Yes' : '❌ No'}</p>
+                      <p><strong>Spawn Interval:</strong> {(vehicleDebugInfo.spawnInterval / 1000).toFixed(1)}s</p>
+                      <p><strong>Vehicle Speed:</strong> {vehicleDebugInfo.vehicleSpeed?.toFixed(4) || 'N/A'}</p>
+                      <p><strong>Total Roads:</strong> {vehicleDebugInfo.roadsCount || 0}</p>
+                      <p><strong>Transport Roads:</strong> {vehicleDebugInfo.transportRoadsCount || 0}</p>
                       <p><strong>Can Spawn:</strong> {vehicleDebugInfo.canSpawn ? '✅ Yes' : '❌ No'}</p>
-                      {vehicleDebugInfo.pointAId && (
-                        <p className="text-xs text-muted-foreground"><strong>Point A ID:</strong> {vehicleDebugInfo.pointAId}</p>
-                      )}
-                      {vehicleDebugInfo.pointBId && (
-                        <p className="text-xs text-muted-foreground"><strong>Point B ID:</strong> {vehicleDebugInfo.pointBId}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground"><strong>Roads Count:</strong> {vehicleDebugInfo.roadsCount || 0}</p>
-                      {vehicleDebugInfo.lastSpawn && (
-                        <p><strong>Last Spawn:</strong> {new Date(vehicleDebugInfo.lastSpawn).toLocaleTimeString()}</p>
-                      )}
+                    </div>
+
+                    {vehicleDebugInfo.spawnPoint && (
+                      <div className="border-t pt-3 mt-3">
+                        <p className="font-semibold mb-2">📍 Spawn Point (Dinámico):</p>
+                        <div className="border rounded p-2 bg-background/50">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium">
+                                {vehicleDebugInfo.spawnPoint.status === 'ready' ? '✅' : 
+                                 vehicleDebugInfo.spawnPoint.status === 'waiting' ? '⏳' : 
+                                 vehicleDebugInfo.spawnPoint.status === 'blocked' ? '🚫' : '❌'} 
+                                <span className={vehicleDebugInfo.spawnPoint.status === 'ready' ? 'text-green-600' : 
+                                               vehicleDebugInfo.spawnPoint.status === 'waiting' ? 'text-yellow-600' : 
+                                               'text-red-600'}>
+                                  {vehicleDebugInfo.spawnPoint.type} - {vehicleDebugInfo.spawnPoint.status === 'ready' ? 'LISTO' : 
+                                                                        vehicleDebugInfo.spawnPoint.status === 'waiting' ? 'ESPERANDO' :
+                                                                        vehicleDebugInfo.spawnPoint.status === 'blocked' ? 'BLOQUEADO' :
+                                                                        'SIN DESTINO'}
+                                </span>
+                              </p>
+                              <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                                <p>Road ID: {vehicleDebugInfo.spawnPoint.roadId?.slice(0, 20)}...</p>
+                                <p>Posición: {vehicleDebugInfo.spawnPoint.position}</p>
+                                <p>Dirección: {vehicleDebugInfo.spawnPoint.direction}</p>
+                                {vehicleDebugInfo.spawnPoint.timeUntilSpawn > 0 && (
+                                  <p>Tiempo hasta spawn: <strong>{(vehicleDebugInfo.spawnPoint.timeUntilSpawn / 1000).toFixed(1)}s</strong></p>
+                                )}
+                                {vehicleDebugInfo.spawnPoint.lastSpawn && (
+                                  <p>Último spawn: {new Date(vehicleDebugInfo.spawnPoint.lastSpawn).toLocaleTimeString()}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {vehicleDebugInfo.pathInfo && (
+                      <div className="border-t pt-3 mt-3">
+                        <p className="font-semibold mb-2">🛣️ Path Info:</p>
+                        <div className="text-xs space-y-1">
+                          <p><strong>Path Length:</strong> {vehicleDebugInfo.pathInfo.pathLength}</p>
+                          <p><strong>Is Valid:</strong> {vehicleDebugInfo.pathInfo.isValid ? '✅ Yes' : '❌ No'}</p>
+                          <p><strong>Transport Roads in Path:</strong> {vehicleDebugInfo.pathInfo.transportRoadsCount}</p>
+                          {vehicleDebugInfo.pathInfo.pathRoads && vehicleDebugInfo.pathInfo.pathRoads.length > 0 && (
+                            <div className="mt-2">
+                              <p className="font-medium mb-1">Path Details:</p>
+                              <div className="space-y-1 max-h-40 overflow-y-auto">
+                                {vehicleDebugInfo.pathInfo.pathRoads.map((road: any, idx: number) => (
+                                  <div key={idx} className="pl-2 border-l-2 border-muted-foreground/30">
+                                    <p><strong>{idx + 1}.</strong> {road.type} - {road.position} ({road.direction})</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-t pt-2 mt-2 text-xs text-muted-foreground">
+                      <p><strong>Point A:</strong> {vehicleDebugInfo.pointAPosition || 'Not set'}</p>
+                      <p><strong>Point B:</strong> {vehicleDebugInfo.pointBPosition || 'Not set'}</p>
                     </div>
                   </div>
                 </div>
