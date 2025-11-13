@@ -61,6 +61,17 @@ export const Road = ({
     }
   };
 
+  // Get opposite arrow direction for bidirectional display
+  const getOppositeArrowTransform = () => {
+    switch (road.direction) {
+      case 'north': return 'rotate(90deg)'; // south
+      case 'south': return 'rotate(270deg)'; // north
+      case 'east': return 'rotate(180deg)'; // west
+      case 'west': return 'rotate(0deg)'; // east
+      default: return 'rotate(180deg)';
+    }
+  };
+
   const isCurve = road.type.startsWith('curve-');
   const isVertical = road.direction === 'north' || road.direction === 'south';
 
@@ -104,6 +115,24 @@ export const Road = ({
     if (road.isPointB) return 'ring-2 ring-red-400';
     if (road.isTransport) return 'ring-2 ring-blue-400';
     return 'ring-2 ring-blue-400';
+  };
+
+  // Get overlay color for edit mode based on road type
+  const getEditModeOverlay = () => {
+    if (!isEditMode) return '';
+    if (road.isPointA) return 'bg-green-500/30';
+    if (road.isPointB) return 'bg-red-500/30';
+    if (road.isTransport) return 'bg-blue-500/30';
+    return '';
+  };
+
+  // Get road type indicator for edit mode
+  const getRoadTypeIndicator = () => {
+    if (!isEditMode) return null;
+    if (road.isPointA) return { icon: '🟢', label: 'A', color: 'bg-green-500' };
+    if (road.isPointB) return { icon: '🔴', label: 'B', color: 'bg-red-500' };
+    if (road.isTransport) return { icon: '🚚', label: 'T', color: 'bg-blue-500' };
+    return null;
   };
 
   const position = getPosition();
@@ -159,15 +188,36 @@ export const Road = ({
           }}
         />
         
-        {/* Direction indicator arrow */}
+        {/* Color overlay for edit mode based on road type */}
+        {isEditMode && getEditModeOverlay() && (
+          <div className={`absolute inset-0 ${getEditModeOverlay()} pointer-events-none`} />
+        )}
+        
+        {/* Direction indicator arrows - both directions */}
         {isEditMode && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div
-              className="text-white text-xs font-bold"
-              style={{ transform: getArrowTransform() }}
-            >
-              →
+            <div className="flex items-center gap-1">
+              <div
+                className="text-white text-xs font-bold drop-shadow-lg"
+                style={{ transform: getArrowTransform() }}
+              >
+                →
+              </div>
+              <div
+                className="text-white text-xs font-bold drop-shadow-lg"
+                style={{ transform: getOppositeArrowTransform() }}
+              >
+                →
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Road type indicator badge */}
+        {isEditMode && getRoadTypeIndicator() && (
+          <div className={`absolute top-1 left-1 ${getRoadTypeIndicator()?.color} text-white text-xs font-bold px-1.5 py-0.5 rounded shadow-lg pointer-events-none flex items-center gap-1`}>
+            <span>{getRoadTypeIndicator()?.icon}</span>
+            <span>{getRoadTypeIndicator()?.label}</span>
           </div>
         )}
       </div>
@@ -175,7 +225,7 @@ export const Road = ({
       {/* Action buttons - outside the road */}
       {isEditMode && isSelected && !isDragging && (
         <div
-          className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-blue-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap"
+          className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-blue-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-[100] whitespace-nowrap"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
