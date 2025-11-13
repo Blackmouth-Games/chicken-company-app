@@ -1,6 +1,6 @@
 import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
-import roadImage from "@/assets/Road_A.jpg";
+import roadImage from "@/assets/Road_A.png";
 
 interface RoadProps {
   road: {
