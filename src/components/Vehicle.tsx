@@ -11,55 +11,57 @@ interface VehicleProps {
   isLoaded: boolean; // true when going from B to A (lleno), false when going from A to B (vacío)
   reverseDirection?: boolean; // true if moving in reverse direction (from 1 to 0)
   goingToB?: boolean; // true if going A->B, false if going B->A (for visual flip)
+  cellSize?: number; // Size of a grid cell in pixels for offset calculation
   onReachDestination?: () => void;
 }
 
-export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded, reverseDirection = false, goingToB = true, onReachDestination }: VehicleProps) => {
+export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded, reverseDirection = false, goingToB = true, cellSize = 20, onReachDestination }: VehicleProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   // Calculate position within the cell based on progress and road direction
   // No rotation or flip - image orientation is as default
+  // Apply -1 cell offset in Y axis (upward)
   const getPosition = () => {
     // Progress determines position within the cell (0 = start, 1 = end)
     // Position changes based on road direction
-    // Only apply translate for centering, no rotation
-    const transforms = 'translate(-50%, -50%)';
+    // Apply translate for centering and -1 cell offset in Y axis
+    const yOffset = -cellSize; // -1 cell in Y axis (upward)
     
     switch (direction) {
       case 'east':
         // Move from left (0%) to right (100%)
         return {
           left: `${progress * 100}%`,
-          top: '50%',
-          transform: transforms,
+          top: `calc(50% + ${yOffset}px)`,
+          transform: 'translate(-50%, -50%)',
         };
       case 'west':
         // Move from right (100%) to left (0%)
         return {
           left: `${(1 - progress) * 100}%`,
-          top: '50%',
-          transform: transforms,
+          top: `calc(50% + ${yOffset}px)`,
+          transform: 'translate(-50%, -50%)',
         };
       case 'south':
         // Move from top (0%) to bottom (100%)
         return {
           left: '50%',
-          top: `${progress * 100}%`,
-          transform: transforms,
+          top: `calc(${progress * 100}% + ${yOffset}px)`,
+          transform: 'translate(-50%, -50%)',
         };
       case 'north':
         // Move from bottom (100%) to top (0%)
         return {
           left: '50%',
-          top: `${(1 - progress) * 100}%`,
-          transform: transforms,
+          top: `calc(${(1 - progress) * 100}% + ${yOffset}px)`,
+          transform: 'translate(-50%, -50%)',
         };
       default:
         // Default to east
         return {
           left: `${progress * 100}%`,
-          top: '50%',
-          transform: transforms,
+          top: `calc(50% + ${yOffset}px)`,
+          transform: 'translate(-50%, -50%)',
         };
     }
   };
