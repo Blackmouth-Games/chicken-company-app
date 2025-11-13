@@ -144,13 +144,13 @@ export const ConveyorBelt = ({
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
 
   // Get turn belt image based on entry and exit directions
-  // RT: Right to Top (entra desde East, sale hacia North)
-  // LT: Left to Top (entra desde West, sale hacia North)
-  // For clockwise 90° turn, calculate entry from exit:
-  // - Exit North -> Entry West (use LT)
-  // - Exit East -> Entry North (use RT rotated, or LT rotated)
-  // - Exit South -> Entry East (use RT rotated, or LT rotated)  
-  // - Exit West -> Entry South (use RT rotated, or LT rotated)
+  // RT: Right to Top (entra desde East, sale hacia North) - giro antihorario
+  // LT: Left to Top (entra desde West, sale hacia North) - giro horario
+  // For clockwise 90° turn, we need to select the correct base image
+  // The images are designed for North exit, so we need to:
+  // 1. Determine the actual entry direction (from belt.entryDirection or calculate from exit)
+  // 2. For North exit: use RT if entry is East, LT if entry is West
+  // 3. For other exits: we need to "rotate" the entry/exit conceptually to match North exit pattern
   const getTurnBeltImage = () => {
     // Calculate expected entry direction from exit direction (clockwise 90°)
     const getEntryFromExit = (exit: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
@@ -166,20 +166,46 @@ export const ConveyorBelt = ({
     const entryDir = belt.entryDirection || expectedEntry;
     
     // RT and LT images are designed for North exit
-    // RT: East -> North (antihorario)
-    // LT: West -> North (horario)
+    // RT: East -> North (entra desde la derecha, sale hacia arriba)
+    // LT: West -> North (entra desde la izquierda, sale hacia arriba)
     
     // For North exit, choose based on entry
     if (belt.direction === 'north') {
       if (entryDir === 'east') {
-        return beltRT; // East -> North
+        return beltRT; // East -> North (RT)
       } else if (entryDir === 'west') {
-        return beltLT; // West -> North
+        return beltLT; // West -> North (LT)
       }
     }
     
-    // For other exits, we'll use LT and rotate it
-    // (RT could also be used with different rotation, but LT is more consistent)
+    // For other exits, we need to conceptually "rotate" to match North exit pattern
+    // East exit: entry should be North -> use RT (North is "right" relative to East exit)
+    // South exit: entry should be West -> use LT (West is "left" relative to South exit)  
+    // West exit: entry should be South -> use RT (South is "right" relative to West exit)
+    if (belt.direction === 'east') {
+      // East exit: if entry is North, use RT; if entry is South, use LT
+      if (entryDir === 'north') {
+        return beltRT; // North -> East (conceptually like East -> North)
+      } else if (entryDir === 'south') {
+        return beltLT; // South -> East (conceptually like West -> North)
+      }
+    } else if (belt.direction === 'south') {
+      // South exit: if entry is West, use LT; if entry is East, use RT
+      if (entryDir === 'west') {
+        return beltLT; // West -> South (conceptually like West -> North)
+      } else if (entryDir === 'east') {
+        return beltRT; // East -> South (conceptually like East -> North)
+      }
+    } else if (belt.direction === 'west') {
+      // West exit: if entry is South, use RT; if entry is North, use LT
+      if (entryDir === 'south') {
+        return beltRT; // South -> West (conceptually like East -> North)
+      } else if (entryDir === 'north') {
+        return beltLT; // North -> West (conceptually like West -> North)
+      }
+    }
+    
+    // Fallback: use LT for consistency
     return beltLT;
   };
 
