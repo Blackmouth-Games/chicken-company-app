@@ -1,6 +1,9 @@
 import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
 import beltImage from "@/assets/Belt_A.jpg";
+import beltRT from "@/assets/belts/Belt_RT.png";
+import beltLT from "@/assets/belts/Belt_LT.png";
+import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
 
 interface ConveyorBeltProps {
   belt: {
@@ -8,11 +11,12 @@ interface ConveyorBeltProps {
     gridColumn: string;
     gridRow: string;
     direction: 'north' | 'south' | 'east' | 'west';
-    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
-  isOutput?: boolean;
-  isDestiny?: boolean;
-  isTransport?: boolean;
-  corralId?: string;
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
+    entryDirection?: 'north' | 'south' | 'east' | 'west'; // For turn belts: direction from which items enter
+    isOutput?: boolean;
+    isDestiny?: boolean;
+    isTransport?: boolean;
+    corralId?: string;
   };
   idx: number;
   isEditMode: boolean;
@@ -62,6 +66,67 @@ export const ConveyorBelt = ({
     }
   };
 
+  // Get transform for funnel belt image
+  // Belt_funnel.jpg: entrada desde West (izquierda), North (arriba), South (abajo) -> salida East (derecha)
+  // For other exit directions, rotate the image
+  const getFunnelBeltTransform = () => {
+    // Base image: West/North/South -> East
+    // Rotate based on exit direction
+    switch (belt.direction) {
+      case 'east':
+        // Exit east - image is already correct
+        return 'rotate(0deg)';
+      case 'south':
+        // Exit south - rotate 90° clockwise
+        return 'rotate(90deg)';
+      case 'west':
+        // Exit west - rotate 180°
+        return 'rotate(180deg)';
+      case 'north':
+        // Exit north - rotate 270° (or -90°)
+        return 'rotate(270deg)';
+      default:
+        return 'rotate(0deg)';
+    }
+  };
+
+  // Get transform for turn belt image based on exit direction
+  // RT image base: East -> North (antihorario)
+  // LT image base: West -> North (horario)
+  // For other exit directions, rotate the appropriate image
+  const getTurnBeltTransform = () => {
+    const getEntryFromExit = (exit: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(exit);
+      const entryIndex = (exitIndex - 1 + 4) % 4; // -1 for clockwise
+      return directions[entryIndex];
+    };
+    
+    const entryDir = belt.entryDirection || getEntryFromExit(belt.direction);
+    const image = getTurnBeltImage();
+    
+    // If using RT or LT for North exit, no rotation needed
+    if (belt.direction === 'north') {
+      return 'rotate(0deg)';
+    }
+    
+    // For other exits, rotate based on how much we need to rotate from North
+    // RT/LT are designed for North exit, so we rotate them to match other exits
+    switch (belt.direction) {
+      case 'east':
+        // Exit east - rotate 90° clockwise from north
+        return 'rotate(90deg)';
+      case 'south':
+        // Exit south - rotate 180° from north
+        return 'rotate(180deg)';
+      case 'west':
+        // Exit west - rotate 270° (or -90°) from north
+        return 'rotate(270deg)';
+      default:
+        return 'rotate(0deg)';
+    }
+  };
+
   // Get curve path for curved belts
   const getCurvePath = () => {
     switch (belt.type) {
@@ -74,7 +139,49 @@ export const ConveyorBelt = ({
   };
 
   const isCurve = belt.type.startsWith('curve-');
+  const isTurn = belt.type === 'turn';
+  const isFunnel = belt.type === 'funnel';
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
+
+  // Get turn belt image based on entry and exit directions
+  // RT: Right to Top (entra desde East, sale hacia North)
+  // LT: Left to Top (entra desde West, sale hacia North)
+  // For clockwise 90° turn, calculate entry from exit:
+  // - Exit North -> Entry West (use LT)
+  // - Exit East -> Entry North (use RT rotated, or LT rotated)
+  // - Exit South -> Entry East (use RT rotated, or LT rotated)  
+  // - Exit West -> Entry South (use RT rotated, or LT rotated)
+  const getTurnBeltImage = () => {
+    // Calculate expected entry direction from exit direction (clockwise 90°)
+    const getEntryFromExit = (exit: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(exit);
+      const entryIndex = (exitIndex - 1 + 4) % 4; // -1 for clockwise (go back one)
+      return directions[entryIndex];
+    };
+    
+    const expectedEntry = getEntryFromExit(belt.direction);
+    
+    // Use entry direction from belt if available, otherwise use calculated
+    const entryDir = belt.entryDirection || expectedEntry;
+    
+    // RT and LT images are designed for North exit
+    // RT: East -> North (antihorario)
+    // LT: West -> North (horario)
+    
+    // For North exit, choose based on entry
+    if (belt.direction === 'north') {
+      if (entryDir === 'east') {
+        return beltRT; // East -> North
+      } else if (entryDir === 'west') {
+        return beltLT; // West -> North
+      }
+    }
+    
+    // For other exits, we'll use LT and rotate it
+    // (RT could also be used with different rotation, but LT is more consistent)
+    return beltLT;
+  };
 
   // Get gradient for belt animation based on direction - designed for seamless 100% loop
   // Pattern size: 60px for perfect loop
@@ -206,16 +313,42 @@ export const ConveyorBelt = ({
         }}
       >
         {/* Belt image */}
-        <img 
-          src={beltImage} 
-          alt="Conveyor belt" 
-          className="w-full h-full object-cover"
-          style={{
-            transform: getArrowTransform(),
-            width: '100%',
-            height: '100%',
-          }}
-        />
+        {!isTurn && !isFunnel && (
+          <img 
+            src={beltImage} 
+            alt="Conveyor belt" 
+            className="w-full h-full object-cover"
+            style={{
+              transform: getArrowTransform(),
+              width: '100%',
+              height: '100%',
+            }}
+          />
+        )}
+        
+        {/* Turn belt visual - shows curved belt image */}
+        {isTurn && (
+          <img 
+            src={getTurnBeltImage()} 
+            alt="Turn belt" 
+            className="w-full h-full object-cover"
+            style={{
+              transform: getTurnBeltTransform(),
+            }}
+          />
+        )}
+        
+        {/* Funnel belt visual - uses Belt_funnel.jpg image */}
+        {isFunnel && (
+          <img 
+            src={beltFunnel} 
+            alt="Funnel belt" 
+            className="w-full h-full object-cover"
+            style={{
+              transform: getFunnelBeltTransform(),
+            }}
+          />
+        )}
         
         {/* Animated moving overlay to simulate belt movement - 100% perfect loop */}
         <div 

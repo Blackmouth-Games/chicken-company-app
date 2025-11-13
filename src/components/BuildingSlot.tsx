@@ -58,7 +58,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
         </div>
         <div
           onClick={onBuildingClick}
-          className="rounded-xl cursor-pointer transition-all shadow-md hover:shadow-xl relative h-full flex flex-col overflow-hidden"
+          className="rounded-xl cursor-pointer transition-all duration-300 shadow-md hover:scale-105 relative h-full flex flex-col overflow-hidden"
           style={{
             backgroundImage: `url(${slotBgCoop})`,
             backgroundSize: 'cover',
@@ -121,7 +121,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     <div className="relative z-10 h-full">
       <div 
         onClick={() => onBuyClick(position)}
-        className="rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all shadow-sm hover:shadow-lg h-full overflow-hidden"
+        className="rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm hover:scale-105 h-full overflow-hidden"
         style={{
           backgroundImage: `url(${slotBgEmpty})`,
           backgroundSize: 'cover',

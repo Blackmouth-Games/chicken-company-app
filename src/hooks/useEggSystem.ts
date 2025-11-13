@@ -10,6 +10,7 @@ interface Egg {
   path: string[]; // Array of belt IDs representing the path
   pathIndex: number; // Current index in the path
   corralId: string; // ID of the corral that emitted this egg
+  entryDirection?: 'north' | 'south' | 'east' | 'west'; // Direction from which egg entered current belt (for turn belts)
 }
 
 interface Belt {
@@ -17,6 +18,7 @@ interface Belt {
   gridColumn: string;
   gridRow: string;
   direction: 'north' | 'south' | 'east' | 'west';
+  type?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
   isOutput?: boolean;
   isDestiny?: boolean;
   slotPosition?: number; // Position index of the slot this output belongs to
@@ -95,16 +97,32 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     return null;
   }, [belts]);
 
-  // Find next belt in the path based on direction
-  const findNextBelt = useCallback((currentBelt: Belt, belts: Belt[]): Belt | null => {
+  // Find next belt in the path based on direction and belt type
+  const findNextBelt = useCallback((currentBelt: Belt, belts: Belt[], entryDirection?: 'north' | 'south' | 'east' | 'west'): Belt | null => {
     const currentPos = parseGridNotation(currentBelt.gridColumn);
     const currentRow = parseGridNotation(currentBelt.gridRow);
     
     let nextCol: number;
     let nextRow: number;
+    let exitDirection: 'north' | 'south' | 'east' | 'west';
     
-    // Calculate next position based on direction
-    switch (currentBelt.direction) {
+    // Handle special belt types
+    if (currentBelt.type === 'funnel') {
+      // Funnel: always exit in the belt's direction, regardless of entry
+      exitDirection = currentBelt.direction;
+    } else if (currentBelt.type === 'turn' && entryDirection) {
+      // Turn: rotate 90 degrees clockwise from entry direction
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const currentIndex = directions.indexOf(entryDirection);
+      const nextIndex = (currentIndex + 1) % 4;
+      exitDirection = directions[nextIndex];
+    } else {
+      // Default: use belt's direction
+      exitDirection = currentBelt.direction;
+    }
+    
+    // Calculate next position based on exit direction
+    switch (exitDirection) {
       case 'east':
         nextCol = currentPos.end;
         nextRow = currentRow.start;
@@ -126,11 +144,13 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     }
     
     // Find belt at next position
-    return belts.find(b => {
+    const nextBelt = belts.find(b => {
       const bCol = parseGridNotation(b.gridColumn);
       const bRow = parseGridNotation(b.gridRow);
       return bCol.start === nextCol && bRow.start === nextRow;
     }) || null;
+    
+    return nextBelt;
   }, []);
 
   // Calculate path from output belt to destiny belt
@@ -138,6 +158,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const path: string[] = [startBelt.id];
     const visited = new Set<string>([startBelt.id]);
     let currentBelt = startBelt;
+    let entryDirection: 'north' | 'south' | 'east' | 'west' = startBelt.direction;
     const maxPathLength = 100; // Prevent infinite loops
     
     for (let i = 0; i < maxPathLength; i++) {
@@ -146,7 +167,21 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         return path;
       }
       
-      const nextBelt = findNextBelt(currentBelt, belts);
+      // Calculate exit direction for special belt types
+      let exitDirection = entryDirection;
+      if (currentBelt.type === 'funnel') {
+        exitDirection = currentBelt.direction;
+      } else if (currentBelt.type === 'turn') {
+        // Turn: rotate 90 degrees clockwise
+        const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+        const currentIndex = directions.indexOf(entryDirection);
+        const nextIndex = (currentIndex + 1) % 4;
+        exitDirection = directions[nextIndex];
+      } else {
+        exitDirection = currentBelt.direction;
+      }
+      
+      const nextBelt = findNextBelt(currentBelt, belts, entryDirection);
       if (!nextBelt || visited.has(nextBelt.id)) {
         // No path found or loop detected
         return path;
@@ -154,6 +189,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       
       path.push(nextBelt.id);
       visited.add(nextBelt.id);
+      entryDirection = exitDirection; // Next belt's entry direction is this belt's exit direction
       currentBelt = nextBelt;
     }
     
@@ -190,6 +226,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         path,
         pathIndex: 0,
         corralId,
+        entryDirection: outputBelt.direction, // Initial entry direction is the belt's direction
       };
       
       // Track creation time for age-based removal
@@ -252,6 +289,31 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             const nextPos = parseGridNotation(nextBelt.gridColumn);
             const nextRow = parseGridNotation(nextBelt.gridRow);
             
+            // Calculate entry direction for destiny belt
+            const currentPos = parseGridNotation(currentBelt.gridColumn);
+            const currentRow = parseGridNotation(currentBelt.gridRow);
+            
+            let exitDirection = currentBelt.direction;
+            if (currentBelt.type === 'funnel') {
+              exitDirection = currentBelt.direction;
+            } else if (currentBelt.type === 'turn') {
+              const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+              const entryIndex = directions.indexOf(egg.entryDirection || currentBelt.direction);
+              const exitIndex = (entryIndex + 1) % 4;
+              exitDirection = directions[exitIndex];
+            }
+            
+            const getOppositeDirection = (dir: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
+              switch (dir) {
+                case 'north': return 'south';
+                case 'south': return 'north';
+                case 'east': return 'west';
+                case 'west': return 'east';
+              }
+            };
+            
+            const nextEntryDirection = getOppositeDirection(exitDirection);
+            
             return {
               ...egg,
               currentBeltId: nextBeltId,
@@ -259,11 +321,40 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
               currentRow: nextRow.start,
               progress: 0,
               pathIndex: nextPathIndex,
+              entryDirection: nextEntryDirection,
             };
           }
           
           const nextPos = parseGridNotation(nextBelt.gridColumn);
           const nextRow = parseGridNotation(nextBelt.gridRow);
+          
+          // Calculate entry direction for next belt
+          const currentPos = parseGridNotation(currentBelt.gridColumn);
+          const currentRow = parseGridNotation(currentBelt.gridRow);
+          
+          // Calculate exit direction from current belt
+          let exitDirection = currentBelt.direction;
+          if (currentBelt.type === 'funnel') {
+            exitDirection = currentBelt.direction;
+          } else if (currentBelt.type === 'turn') {
+            // Turn: rotate 90 degrees clockwise from entry
+            const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+            const entryIndex = directions.indexOf(egg.entryDirection || currentBelt.direction);
+            const exitIndex = (entryIndex + 1) % 4;
+            exitDirection = directions[exitIndex];
+          }
+          
+          // Entry direction for next belt is opposite of exit direction from current belt
+          const getOppositeDirection = (dir: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
+            switch (dir) {
+              case 'north': return 'south';
+              case 'south': return 'north';
+              case 'east': return 'west';
+              case 'west': return 'east';
+            }
+          };
+          
+          const nextEntryDirection = getOppositeDirection(exitDirection);
           
           return {
             ...egg,
@@ -272,6 +363,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             currentRow: nextRow.start,
             progress: 0,
             pathIndex: nextPathIndex,
+            entryDirection: nextEntryDirection,
           };
         }
         

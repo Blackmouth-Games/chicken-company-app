@@ -8,14 +8,14 @@ interface AddBeltDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   gridPosition: { col: number; row: number } | null;
-  onAddBelt: (direction: 'north' | 'south' | 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => void;
+  onAddBelt: (direction: 'north' | 'south' | 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel') => void;
   showVertical?: boolean;
 }
 
 export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, showVertical = false }: AddBeltDialogProps) => {
   const { t } = useLanguage();
   const [selectedDirection, setSelectedDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
-  const [selectedType, setSelectedType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
+  const [selectedType, setSelectedType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'>('straight');
 
   const handleConfirm = () => {
     onAddBelt(selectedDirection, selectedType);
@@ -34,11 +34,13 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
   const directions = showVertical ? allDirections : allDirections.filter(d => d.value === 'east' || d.value === 'west');
 
   const types = [
-    { value: 'straight' as const, label: t('layoutEditor.type_straight') },
-    { value: 'curve-ne' as const, label: t('layoutEditor.type_curve_ne') },
-    { value: 'curve-nw' as const, label: t('layoutEditor.type_curve_nw') },
-    { value: 'curve-se' as const, label: t('layoutEditor.type_curve_se') },
-    { value: 'curve-sw' as const, label: t('layoutEditor.type_curve_sw') },
+    { value: 'straight' as const, label: t('layoutEditor.type_straight') || 'Recta' },
+    { value: 'curve-ne' as const, label: t('layoutEditor.type_curve_ne') || 'Curva NE' },
+    { value: 'curve-nw' as const, label: t('layoutEditor.type_curve_nw') || 'Curva NW' },
+    { value: 'curve-se' as const, label: t('layoutEditor.type_curve_se') || 'Curva SE' },
+    { value: 'curve-sw' as const, label: t('layoutEditor.type_curve_sw') || 'Curva SW' },
+    { value: 'turn' as const, label: 'Giro' },
+    { value: 'funnel' as const, label: 'Embudo' },
   ];
 
   return (
@@ -79,7 +81,7 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
           {/* Type Selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium">{t('layoutEditor.selectType')}</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {types.map(({ value, label }) => (
                 <Button
                   key={value}

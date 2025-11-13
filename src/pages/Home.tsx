@@ -480,12 +480,20 @@ const Home = () => {
     
     // Generate central vertical line: continuous line from first slot to last slot
     // Create one belt per row from firstSlotRow to lastSlotRow + 1
+    // BUT: Remove the last 3 belts from the vertical line
     const centerLineStartRow = firstSlotRow;
     const centerLineEndRow = lastSlotRow + 1; // Extend one row below the last slot
+    const actualEndRow = centerLineEndRow - 3; // Remove last 3 belts
     
-    // Generate continuous vertical line: one belt per row
+    // Find where the two output belts converge (where left and right output belts meet the center line)
+    // This is typically at the row where the first output belts from left and right corrals meet
+    const firstLeftBeltRow = leftStartRow + 3; // First left output belt row
+    const firstRightBeltRow = rightStartRow + 3; // First right output belt row
+    const convergenceRow = Math.max(firstLeftBeltRow, firstRightBeltRow); // Where they converge
+    
+    // Generate continuous vertical line: one belt per row (excluding last 3)
     // Generate regardless of getTotalRows() limit - belts can be outside visible area
-    for (let beltRow = centerLineStartRow; beltRow <= centerLineEndRow; beltRow++) {
+    for (let beltRow = centerLineStartRow; beltRow <= actualEndRow; beltRow++) {
       if (beltRow >= 1 && centerCol >= 1 && centerCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
@@ -495,14 +503,29 @@ const Home = () => {
         });
         
         if (!existingBelt) {
-          autoBelts.push({
-            id: `belt-auto-center-row-${beltRow}`,
-            gridColumn: createGridNotation(centerCol, centerCol + 1),
-            gridRow: createGridNotation(beltRow, beltRow + 1),
-            direction: 'north' as const,
-            type: 'straight' as const,
-            isTransport: true, // Center line belts are transport
-          });
+          // At convergence row, use funnel belt instead of straight
+          // Funnel receives from West (left corrals), North (above), South (below) and exits East (right)
+          // But in vertical line context, it should exit North (up) to continue the vertical flow
+          // So we'll rotate the funnel image 270° to make it exit north
+          if (beltRow === convergenceRow) {
+            autoBelts.push({
+              id: `belt-auto-center-row-${beltRow}`,
+              gridColumn: createGridNotation(centerCol, centerCol + 1),
+              gridRow: createGridNotation(beltRow, beltRow + 1),
+              direction: 'north' as const, // Funnel exits up (north) in vertical line
+              type: 'funnel' as const,
+              isTransport: true, // Center line belts are transport
+            });
+          } else {
+            autoBelts.push({
+              id: `belt-auto-center-row-${beltRow}`,
+              gridColumn: createGridNotation(centerCol, centerCol + 1),
+              gridRow: createGridNotation(beltRow, beltRow + 1),
+              direction: 'north' as const,
+              type: 'straight' as const,
+              isTransport: true, // Center line belts are transport
+            });
+          }
         }
       }
     }
@@ -1472,6 +1495,8 @@ const Home = () => {
                   gridRow={currentBelt.gridRow}
                   progress={egg.progress}
                   direction={currentBelt.direction}
+                  beltType={currentBelt.type}
+                  entryDirection={egg.entryDirection}
                 />
               );
             })}

@@ -15,8 +15,9 @@ interface BeltConfig {
   gridColumn: string;
   gridRow: string;
   direction: 'north' | 'south' | 'east' | 'west';
-  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
+  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
   rotation?: number; // 0, 90, 180, 270
+  entryDirection?: 'north' | 'south' | 'east' | 'west'; // For turn belts: direction from which items enter
   isOutput?: boolean; // Marks this belt as output for a corral
   isDestiny?: boolean; // Marks this belt as final destination where eggs are removed
   isTransport?: boolean; // Marks this belt as transport belt
@@ -946,7 +947,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     col: number, 
     row: number, 
     direction: 'north' | 'south' | 'east' | 'west',
-    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'
   ) => {
     const newBelt: BeltConfig = {
       id: `belt-${Date.now()}`,
