@@ -577,7 +577,7 @@ const Home = () => {
     // BUT: Remove the last 3 belts from the vertical line
     const centerLineStartRow = firstSlotRow;
     const centerLineEndRow = lastSlotRow + 1; // Extend one row below the last slot
-    const actualEndRow = centerLineEndRow - 3; // Remove last 3 belts
+    const actualEndRow = centerLineEndRow - 4; // Remove last 4 belts
     
     // Find where the two output belts converge (where left and right output belts meet the center line)
     // This is typically at the row where the first output belts from left and right corrals meet
