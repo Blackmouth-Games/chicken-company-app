@@ -627,30 +627,6 @@ const Home = () => {
       }
     }
     
-    // Add turn belt at the bottom of vertical line: enters from south (below) and exits east (right)
-    // This is placed just after the last vertical belt (at actualEndRow + 1)
-    const bottomTurnRow = actualEndRow + 1;
-    if (bottomTurnRow >= 1 && centerCol >= 1 && centerCol <= 30) {
-      // Check if there's already a belt at this position
-      const existingBelt = autoBelts.find(b => {
-        const beltRowNotation = parseGridNotation(b.gridRow);
-        const beltColNotation = parseGridNotation(b.gridColumn);
-        return beltRowNotation.start === bottomTurnRow && beltColNotation.start === centerCol;
-      });
-      
-      if (!existingBelt) {
-        autoBelts.push({
-          id: `belt-auto-center-turn-bottom`,
-          gridColumn: createGridNotation(centerCol, centerCol + 1),
-          gridRow: createGridNotation(bottomTurnRow, bottomTurnRow + 1),
-          direction: 'east' as const, // Exits to the right
-          type: 'turn' as const, // Turn belt: 90° clockwise turn
-          entryDirection: 'south' as const, // Enters from below (south)
-          isTransport: true,
-        });
-      }
-    }
-    
     // Generate ONE belt per corral pointing to center
     // Left corrals: belts point east (towards center)
     // Only one belt per corral, positioned 3 rows from the top of each corral
