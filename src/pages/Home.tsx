@@ -1492,6 +1492,7 @@ const Home = () => {
                   progress={vehicle.progress}
                   direction={currentRoad.direction}
                   isLoaded={vehicle.isLoaded}
+                  reverseDirection={vehicle.reverseDirection}
                 />
               );
             })}

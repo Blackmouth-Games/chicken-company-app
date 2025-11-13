@@ -13,6 +13,7 @@ interface Vehicle {
   goingToB: boolean; // true if going A->B, false if going B->A
   pointAId: string; // ID of point A road
   pointBId: string; // ID of point B road
+  reverseDirection?: boolean; // true if moving in reverse direction (from 1 to 0)
 }
 
 interface Road {
@@ -252,22 +253,30 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
         }
         
         // Check if vehicle reached destination
-        if (vehicle.goingToB && currentRoad.isPointB && vehicle.progress >= 1) {
+        const progressAtEnd = vehicle.reverseDirection ? vehicle.progress <= 0 : vehicle.progress >= 1;
+        if (vehicle.goingToB && currentRoad.isPointB && progressAtEnd) {
           // Reached point B, start waiting
           vehicleWaitTimeRef.current.set(waitKey, Date.now());
           return vehicle;
         }
         
-        if (!vehicle.goingToB && currentRoad.isPointA && vehicle.progress >= 1) {
+        if (!vehicle.goingToB && currentRoad.isPointA && progressAtEnd) {
           // Reached point A, remove vehicle (completed cycle)
           return null;
         }
         
         // Update progress (speed varies by market level)
-        let newProgress = vehicle.progress + vehicleSpeed;
+        // If reverseDirection is true, decrease progress instead of increase
+        let newProgress = vehicle.reverseDirection 
+          ? vehicle.progress - vehicleSpeed 
+          : vehicle.progress + vehicleSpeed;
         
-        // If progress >= 1, move to next road in path
-        if (newProgress >= 1) {
+        // Check if we've reached the end (either 0 or 1 depending on direction)
+        const reachedEnd = vehicle.reverseDirection ? newProgress <= 0 : newProgress >= 1;
+        
+        if (reachedEnd) {
+          // Clamp progress to valid range
+          newProgress = vehicle.reverseDirection ? 0 : 1;
           const nextPathIndex = vehicle.pathIndex + 1;
           if (nextPathIndex >= vehicle.path.length) {
             // Reached end of path
@@ -281,7 +290,8 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
               return null;
             }
             // No more path, keep at current position
-            return { ...vehicle, progress: 1 };
+            const finalProgress = vehicle.reverseDirection ? 0 : 1;
+            return { ...vehicle, progress: finalProgress };
           }
           
           const nextRoadId = vehicle.path[nextPathIndex];
@@ -292,14 +302,57 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
           
           const nextPos = parseGridNotation(nextRoad.gridColumn);
           const nextRow = parseGridNotation(nextRoad.gridRow);
+          const currentPos = parseGridNotation(currentRoad.gridColumn);
+          const currentRow = parseGridNotation(currentRoad.gridRow);
+          
+          // Calculate initial progress based on entry side
+          // Determine which side of the new road the vehicle enters from
+          let initialProgress = 0;
+          
+          // Calculate center positions
+          const currentCenterCol = (currentPos.start + currentPos.end) / 2;
+          const currentCenterRow = (currentRow.start + currentRow.end) / 2;
+          const nextCenterCol = (nextPos.start + nextPos.end) / 2;
+          const nextCenterRow = (nextRow.start + nextRow.end) / 2;
+          
+          // Determine entry side based on relative positions
+          const colDiff = nextCenterCol - currentCenterCol;
+          const rowDiff = nextCenterRow - currentCenterRow;
+          
+          // Based on the road direction and where we're coming from, set initial progress
+          let reverseDirection = false;
+          if (Math.abs(colDiff) > Math.abs(rowDiff)) {
+            // Horizontal movement (east/west)
+            if (nextRoad.direction === 'east') {
+              // Road points east: enter from left (0) or right (1)
+              initialProgress = colDiff > 0 ? 0 : 1; // Coming from left = 0, from right = 1
+              reverseDirection = colDiff <= 0; // If coming from right, reverse
+            } else if (nextRoad.direction === 'west') {
+              // Road points west: enter from right (0) or left (1)
+              initialProgress = colDiff > 0 ? 1 : 0; // Coming from left = 1, from right = 0
+              reverseDirection = colDiff > 0; // If coming from left, reverse
+            }
+          } else {
+            // Vertical movement (north/south)
+            if (nextRoad.direction === 'south') {
+              // Road points south: enter from top (0) or bottom (1)
+              initialProgress = rowDiff > 0 ? 0 : 1; // Coming from above = 0, from below = 1
+              reverseDirection = rowDiff <= 0; // If coming from below, reverse
+            } else if (nextRoad.direction === 'north') {
+              // Road points north: enter from bottom (0) or top (1)
+              initialProgress = rowDiff > 0 ? 1 : 0; // Coming from above = 1, from below = 0
+              reverseDirection = rowDiff > 0; // If coming from above, reverse
+            }
+          }
           
           return {
             ...vehicle,
             currentRoadId: nextRoadId,
             currentCol: nextPos.start,
             currentRow: nextRow.start,
-            progress: 0,
+            progress: initialProgress,
             pathIndex: nextPathIndex,
+            reverseDirection,
           };
         }
         
