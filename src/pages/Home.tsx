@@ -236,11 +236,7 @@ const Home = () => {
     localStorage.setItem('layoutEditMode', JSON.stringify(newMode));
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
   };
-  const [paintOptions, setPaintOptions] = useState<{
-    direction: 'north' | 'south' | 'east' | 'west';
-    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw';
-    objectType: 'belt' | 'road';
-  }>({ direction: 'east', type: 'straight', objectType: 'belt' });
+  const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
   
   useEffect(() => {
@@ -266,7 +262,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'; objectType: 'belt' | 'road' }>) => {
+    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'; objectType: 'belt' | 'road' }>) => {
       setPaintOptions(event.detail);
     };
 

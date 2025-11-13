@@ -10,7 +10,7 @@ const LayoutEditor = () => {
   const [hideBuildings, setHideBuildings] = useState(false);
   const [paintMode, setPaintMode] = useState(false);
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
-  const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'>('straight');
+  const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'>('straight');
   const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
   
   // Listen to edit mode changes from header
@@ -81,7 +81,7 @@ const LayoutEditor = () => {
     }));
   };
 
-  const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw') => {
+  const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel') => {
     setPaintType(type);
     window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
       detail: { direction: paintDirection, type, objectType: paintObjectType } 
@@ -399,12 +399,12 @@ const LayoutEditor = () => {
               {/* Type Selector */}
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground">Tipo:</label>
-                <div className="flex gap-1">
+                <div className="grid grid-cols-3 gap-1">
                   <Button
                     onClick={() => handlePaintTypeChange('straight')}
                     size="sm"
                     variant={paintType === 'straight' ? "default" : "outline"}
-                    className="h-7 flex-1 text-xs"
+                    className="h-7 text-xs"
                     title="Recta"
                   >
                     ─
@@ -413,7 +413,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-ne')}
                     size="sm"
                     variant={paintType === 'curve-ne' ? "default" : "outline"}
-                    className="h-7 flex-1 text-xs"
+                    className="h-7 text-xs"
                     title="Curva NE"
                   >
                     └
@@ -422,7 +422,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-nw')}
                     size="sm"
                     variant={paintType === 'curve-nw' ? "default" : "outline"}
-                    className="h-7 flex-1 text-xs"
+                    className="h-7 text-xs"
                     title="Curva NW"
                   >
                     ┘
@@ -431,7 +431,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-se')}
                     size="sm"
                     variant={paintType === 'curve-se' ? "default" : "outline"}
-                    className="h-7 flex-1 text-xs"
+                    className="h-7 text-xs"
                     title="Curva SE"
                   >
                     ┌
@@ -440,10 +440,28 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-sw')}
                     size="sm"
                     variant={paintType === 'curve-sw' ? "default" : "outline"}
-                    className="h-7 flex-1 text-xs"
+                    className="h-7 text-xs"
                     title="Curva SW"
                   >
                     ┐
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn')}
+                    size="sm"
+                    variant={paintType === 'turn' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Giro"
+                  >
+                    ↻
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('funnel')}
+                    size="sm"
+                    variant={paintType === 'funnel' ? "default" : "outline"}
+                    className="h-7 text-xs"
+                    title="Embudo"
+                  >
+                    ⬇
                   </Button>
                 </div>
               </div>
