@@ -76,37 +76,38 @@ export const ConveyorBelt = ({
   const isCurve = belt.type.startsWith('curve-');
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
 
-  // Get gradient for belt animation based on direction - designed for seamless loop
+  // Get gradient for belt animation based on direction - designed for seamless 100% loop
+  // Pattern size: 60px for perfect loop
   const getBeltAnimationGradient = () => {
     switch (belt.direction) {
       case 'east':
         // Gradient that repeats seamlessly - bright spot moves from left to right
-        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
+        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 60%, transparent 100%)';
       case 'west':
         // Gradient that repeats seamlessly - bright spot moves from right to left
-        return 'repeating-linear-gradient(270deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
+        return 'repeating-linear-gradient(270deg, transparent 0%, transparent 40%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 60%, transparent 100%)';
       case 'south':
         // Gradient that repeats seamlessly - bright spot moves from top to bottom
-        return 'repeating-linear-gradient(180deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
+        return 'repeating-linear-gradient(180deg, transparent 0%, transparent 40%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 60%, transparent 100%)';
       case 'north':
         // Gradient that repeats seamlessly - bright spot moves from bottom to top
-        return 'repeating-linear-gradient(0deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
+        return 'repeating-linear-gradient(0deg, transparent 0%, transparent 40%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 60%, transparent 100%)';
       default:
-        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.5) 55%, transparent 60%, transparent 100%)';
+        return 'repeating-linear-gradient(90deg, transparent 0%, transparent 40%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 60%, transparent 100%)';
     }
   };
 
-  // Get pattern gradient for additional movement effect
+  // Get pattern gradient for additional movement effect - 20px pattern for perfect loop
   const getBeltPatternGradient = () => {
     switch (belt.direction) {
       case 'east':
       case 'west':
-        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.15) 8px, rgba(0,0,0,0.15) 10px, transparent 10px, transparent 18px, rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px)';
       case 'south':
       case 'north':
-        return 'repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+        return 'repeating-linear-gradient(90deg, transparent 0px, transparent 8px, rgba(0,0,0,0.15) 8px, rgba(0,0,0,0.15) 10px, transparent 10px, transparent 18px, rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px)';
       default:
-        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.1) 8px, rgba(0,0,0,0.1) 10px)';
+        return 'repeating-linear-gradient(0deg, transparent 0px, transparent 8px, rgba(0,0,0,0.15) 8px, rgba(0,0,0,0.15) 10px, transparent 10px, transparent 18px, rgba(0,0,0,0.15) 18px, rgba(0,0,0,0.15) 20px)';
     }
   };
 
@@ -216,26 +217,26 @@ export const ConveyorBelt = ({
           }}
         />
         
-        {/* Animated moving overlay to simulate belt movement */}
+        {/* Animated moving overlay to simulate belt movement - 100% perfect loop */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
             background: getBeltAnimationGradient(),
-            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '50px 100%' : '100% 50px',
-            animation: `beltMove${belt.direction} 1.5s linear infinite`,
-            opacity: 0.4,
+            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '60px 100%' : '100% 60px',
+            animation: `beltMove${belt.direction} 1.2s linear infinite`,
+            opacity: 0.5,
             mixBlendMode: 'screen',
           }}
         />
         
-        {/* Additional moving pattern for more realistic effect */}
+        {/* Additional moving pattern for more realistic effect - 100% perfect loop */}
         <div 
           className="absolute inset-0 pointer-events-none"
           style={{
             background: getBeltPatternGradient(),
             backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '20px 100%' : '100% 20px',
-            animation: `beltMove${belt.direction} 1.5s linear infinite`,
-            opacity: 0.2,
+            animation: `beltPatternMove${belt.direction} 0.8s linear infinite`,
+            opacity: 0.25,
             mixBlendMode: 'multiply',
           }}
         />
@@ -347,39 +348,77 @@ export const ConveyorBelt = ({
       )}
       
       <style>{`
+        /* Main gradient animation - 100% perfect loop (60px pattern) */
         @keyframes beltMoveeast {
           0% {
-            backgroundPosition: 0% 0%;
+            backgroundPosition: 0px 0%;
           }
           100% {
-            backgroundPosition: 50px 0%;
+            backgroundPosition: 60px 0%;
           }
         }
         
         @keyframes beltMovewest {
           0% {
-            backgroundPosition: 0% 0%;
+            backgroundPosition: 0px 0%;
           }
           100% {
-            backgroundPosition: -50px 0%;
+            backgroundPosition: -60px 0%;
           }
         }
         
         @keyframes beltMovesouth {
           0% {
-            backgroundPosition: 0% 0%;
+            backgroundPosition: 0% 0px;
           }
           100% {
-            backgroundPosition: 0% 50px;
+            backgroundPosition: 0% 60px;
           }
         }
         
         @keyframes beltMovenorth {
           0% {
-            backgroundPosition: 0% 0%;
+            backgroundPosition: 0% 0px;
           }
           100% {
-            backgroundPosition: 0% -50px;
+            backgroundPosition: 0% -60px;
+          }
+        }
+        
+        /* Pattern animation - 100% perfect loop (20px pattern) */
+        @keyframes beltPatternMoveeast {
+          0% {
+            backgroundPosition: 0px 0%;
+          }
+          100% {
+            backgroundPosition: 20px 0%;
+          }
+        }
+        
+        @keyframes beltPatternMovewest {
+          0% {
+            backgroundPosition: 0px 0%;
+          }
+          100% {
+            backgroundPosition: -20px 0%;
+          }
+        }
+        
+        @keyframes beltPatternMovesouth {
+          0% {
+            backgroundPosition: 0% 0px;
+          }
+          100% {
+            backgroundPosition: 0% 20px;
+          }
+        }
+        
+        @keyframes beltPatternMovenorth {
+          0% {
+            backgroundPosition: 0% 0px;
+          }
+          100% {
+            backgroundPosition: 0% -20px;
           }
         }
       `}</style>
