@@ -191,8 +191,8 @@ const Home = () => {
       totalSlots = 2;
     }
   } else {
-    // Wallet not connected: NO slots should be shown (completely empty)
-    totalSlots = 0;
+    // Wallet not connected: show 2 empty slots (1 per side) to encourage wallet connection
+    totalSlots = 2;
   }
   
   const TOTAL_SLOTS = totalSlots;
