@@ -42,9 +42,18 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   }, [market?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
-  // Use the same pattern as CorralDialog for consistency
+  // Use the same pattern as WarehouseDialog for consistency
+  // Always return an image - use market skin if available, otherwise default to level 1
   const buildingDisplay = useMemo(() => {
-    if (!market) return null;
+    if (!market) {
+      // If no market, use default level 1 image
+      return getBuildingDisplay(
+        'market',
+        1,
+        null,
+        undefined
+      );
+    }
     try {
       return getBuildingDisplay(
         'market',
@@ -54,18 +63,13 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
       );
     } catch (error) {
       console.error('[MarketDialog] Error getting building display:', error);
-      // Return a fallback display using level 1
-      try {
-        return getBuildingDisplay(
-          'market',
-          1,
-          null,
-          undefined
-        );
-      } catch (fallbackError) {
-        console.error('[MarketDialog] Fallback also failed:', fallbackError);
-        return null;
-      }
+      // Fallback to level 1 if there's an error
+      return getBuildingDisplay(
+        'market',
+        1,
+        null,
+        undefined
+      );
     }
   }, [market?.selected_skin, market?.level, skinInfo]);
 
@@ -110,16 +114,20 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay && (
+                    {buildingDisplay && buildingDisplay.src ? (
                       <img 
                         src={buildingDisplay.src} 
                         alt="Market" 
-                        className="w-52 h-52 object-contain"
+                        className="w-32 h-32 md:w-40 md:h-40 object-contain"
                         onError={(e) => {
                           console.error('[MarketDialog] Image failed to load:', buildingDisplay.src);
                           console.error('[MarketDialog] This should not happen - image should always be available');
                         }}
                       />
+                    ) : (
+                      <div className="w-32 h-32 md:w-40 md:h-40 flex items-center justify-center text-4xl">
+                        🏪
+                      </div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-green-900 text-lg">Market</h3>
