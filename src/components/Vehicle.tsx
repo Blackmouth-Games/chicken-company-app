@@ -31,10 +31,10 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     return reverseDirection ? baseRotation + 180 : baseRotation;
   };
 
-  // Get flip transform for return journey (visual flip)
+  // Get flip transform - always flip horizontally (mirror the image)
   const getFlipTransform = () => {
-    // When returning (goingToB = false), flip horizontally
-    return goingToB ? '' : 'scaleX(-1)';
+    // Always flip horizontally to correct the image orientation
+    return 'scaleX(-1)';
   };
 
   // Calculate position within the cell based on progress and road direction
