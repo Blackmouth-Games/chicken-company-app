@@ -17,7 +17,7 @@ interface WarehouseDialogProps {
 }
 
 export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogProps) => {
-  const { getBuildingByType, refetch } = useUserBuildings(userId);
+  const { getBuildingByType, refetch, buildings } = useUserBuildings(userId);
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
@@ -27,6 +27,22 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const currentLevel = warehouse?.level || 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.WAREHOUSE, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+
+  // Debug: Log warehouse status
+  useEffect(() => {
+    if (open) {
+      console.log("[WarehouseDialog] Warehouse status:", {
+        warehouse,
+        warehouseId: warehouse?.id,
+        currentLevel,
+        nextLevelPrice,
+        canUpgrade,
+        userId,
+        buildingsCount: buildings.length,
+        allBuildings: buildings.map(b => ({ type: b.building_type, id: b.id, level: b.level }))
+      });
+    }
+  }, [open, warehouse, currentLevel, nextLevelPrice, canUpgrade, userId, buildings]);
 
   // Refetch warehouse data when modal opens to ensure we have the latest selected_skin
   useEffect(() => {
@@ -171,22 +187,28 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
-                      console.log("Upgrade button clicked", { 
+                      console.log("[WarehouseDialog] Upgrade button clicked", { 
                         warehouse: warehouse?.id, 
+                        warehouseExists: !!warehouse,
                         currentLevel, 
                         nextLevelPrice,
-                        canUpgrade 
+                        nextLevelPriceExists: !!nextLevelPrice,
+                        canUpgrade,
+                        userId
                       });
                       if (warehouse && nextLevelPrice) {
+                        console.log("[WarehouseDialog] Opening upgrade dialog");
                         setShowUpgrade(true);
                       } else {
-                        console.error("Cannot upgrade: missing warehouse or nextLevelPrice", {
+                        console.error("[WarehouseDialog] Cannot upgrade: missing warehouse or nextLevelPrice", {
                           warehouse: !!warehouse,
-                          nextLevelPrice: !!nextLevelPrice
+                          warehouseId: warehouse?.id,
+                          nextLevelPrice: !!nextLevelPrice,
+                          userId
                         });
                       }
                     }}
-                    disabled={pricesLoading || !nextLevelPrice}
+                    disabled={pricesLoading || !nextLevelPrice || !warehouse}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -203,26 +225,24 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         </DialogContent>
       </Dialog>
 
-      {warehouse && (
-        <UpgradeBuildingDialog
-          open={showUpgrade}
-          onOpenChange={(open) => {
-            setShowUpgrade(open);
-            if (!open) {
-              // Keep warehouse dialog open when upgrade dialog closes
-              onOpenChange(true);
-            }
-          }}
-          buildingId={warehouse.id}
-          buildingType={BUILDING_TYPES.WAREHOUSE}
-          currentLevel={currentLevel}
-          nextLevel={currentLevel + 1}
-          userId={userId || ""}
-          upgradePrice={nextLevelPrice?.price_ton || 0}
-          newCapacity={nextLevelPrice?.capacity || 0}
-          onUpgradeComplete={handleUpgradeComplete}
-        />
-      )}
+      <UpgradeBuildingDialog
+        open={showUpgrade && !!warehouse && !!nextLevelPrice}
+        onOpenChange={(open) => {
+          setShowUpgrade(open);
+          if (!open) {
+            // Keep warehouse dialog open when upgrade dialog closes
+            onOpenChange(true);
+          }
+        }}
+        buildingId={warehouse?.id || ""}
+        buildingType={BUILDING_TYPES.WAREHOUSE}
+        currentLevel={currentLevel}
+        nextLevel={currentLevel + 1}
+        userId={userId || ""}
+        upgradePrice={nextLevelPrice?.price_ton || 0}
+        newCapacity={nextLevelPrice?.capacity || 0}
+        onUpgradeComplete={handleUpgradeComplete}
+      />
 
       <SkinSelectorDialog
         open={showSkinSelector}

@@ -17,7 +17,7 @@ interface MarketDialogProps {
 }
 
 export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) => {
-  const { getBuildingByType, refetch } = useUserBuildings(userId);
+  const { getBuildingByType, refetch, buildings } = useUserBuildings(userId);
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
@@ -27,6 +27,22 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   const currentLevel = market?.level || 1;
   const nextLevelPrice = getPrice(BUILDING_TYPES.MARKET, currentLevel + 1);
   const canUpgrade = currentLevel < 5 && nextLevelPrice;
+
+  // Debug: Log market status
+  useEffect(() => {
+    if (open) {
+      console.log("[MarketDialog] Market status:", {
+        market,
+        marketId: market?.id,
+        currentLevel,
+        nextLevelPrice,
+        canUpgrade,
+        userId,
+        buildingsCount: buildings.length,
+        allBuildings: buildings.map(b => ({ type: b.building_type, id: b.id, level: b.level }))
+      });
+    }
+  }, [open, market, currentLevel, nextLevelPrice, canUpgrade, userId, buildings]);
 
   // Refetch market data when modal opens to ensure we have the latest selected_skin
   useEffect(() => {
@@ -170,11 +186,28 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
+                      console.log("[MarketDialog] Upgrade button clicked", { 
+                        market: market?.id, 
+                        marketExists: !!market,
+                        currentLevel, 
+                        nextLevelPrice,
+                        nextLevelPriceExists: !!nextLevelPrice,
+                        canUpgrade,
+                        userId
+                      });
                       if (market && nextLevelPrice) {
+                        console.log("[MarketDialog] Opening upgrade dialog");
                         setShowUpgrade(true);
+                      } else {
+                        console.error("[MarketDialog] Cannot upgrade: missing market or nextLevelPrice", {
+                          market: !!market,
+                          marketId: market?.id,
+                          nextLevelPrice: !!nextLevelPrice,
+                          userId
+                        });
                       }
                     }}
-                    disabled={pricesLoading || !nextLevelPrice}
+                    disabled={pricesLoading || !nextLevelPrice || !market}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -191,26 +224,24 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         </DialogContent>
       </Dialog>
 
-      {market && (
-        <UpgradeBuildingDialog
-          open={showUpgrade}
-          onOpenChange={(open) => {
-            setShowUpgrade(open);
-            if (!open) {
-              // Keep market dialog open when upgrade dialog closes
-              onOpenChange(true);
-            }
-          }}
-          buildingId={market.id}
-          buildingType={BUILDING_TYPES.MARKET}
-          currentLevel={currentLevel}
-          nextLevel={currentLevel + 1}
-          userId={userId || ""}
-          upgradePrice={nextLevelPrice?.price_ton || 0}
-          newCapacity={nextLevelPrice?.capacity || 0}
-          onUpgradeComplete={handleUpgradeComplete}
-        />
-      )}
+      <UpgradeBuildingDialog
+        open={showUpgrade && !!market && !!nextLevelPrice}
+        onOpenChange={(open) => {
+          setShowUpgrade(open);
+          if (!open) {
+            // Keep market dialog open when upgrade dialog closes
+            onOpenChange(true);
+          }
+        }}
+        buildingId={market?.id || ""}
+        buildingType={BUILDING_TYPES.MARKET}
+        currentLevel={currentLevel}
+        nextLevel={currentLevel + 1}
+        userId={userId || ""}
+        upgradePrice={nextLevelPrice?.price_ton || 0}
+        newCapacity={nextLevelPrice?.capacity || 0}
+        onUpgradeComplete={handleUpgradeComplete}
+      />
 
       <SkinSelectorDialog
         open={showSkinSelector}

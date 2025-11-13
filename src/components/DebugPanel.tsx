@@ -41,6 +41,10 @@ const DebugPanel = () => {
   const [defaultSkins, setDefaultSkins] = useState<any[]>([]);
   const [loadingSkins, setLoadingSkins] = useState(false);
   
+  // Buildings debug state
+  const { buildings, getBuildingByType, refetch: refetchBuildings } = useUserBuildings(userId || undefined);
+  const [buildingsDebugInfo, setBuildingsDebugInfo] = useState<any>(null);
+  
   // Function to add logs (defined before use)
   const addSkinLog = (level: string, message: string, error?: any) => {
     setSkinsLogs(prev => [...prev.slice(-49), {
@@ -93,6 +97,48 @@ const DebugPanel = () => {
       setLoadingSkins(false);
     }
   };
+
+  // Update buildings debug info when buildings change
+  useEffect(() => {
+    if (userId && buildings) {
+      const warehouse = getBuildingByType('warehouse');
+      const market = getBuildingByType('market');
+      
+      setBuildingsDebugInfo({
+        userId,
+        totalBuildings: buildings.length,
+        buildings: buildings.map(b => ({
+          id: b.id,
+          type: b.building_type,
+          level: b.level,
+          capacity: b.capacity,
+          position_index: b.position_index,
+          selected_skin: b.selected_skin,
+        })),
+        warehouse: warehouse ? {
+          id: warehouse.id,
+          level: warehouse.level,
+          capacity: warehouse.capacity,
+          selected_skin: warehouse.selected_skin,
+          exists: true,
+        } : {
+          exists: false,
+          error: 'Warehouse no encontrado en la base de datos',
+        },
+        market: market ? {
+          id: market.id,
+          level: market.level,
+          capacity: market.capacity,
+          selected_skin: market.selected_skin,
+          exists: true,
+        } : {
+          exists: false,
+          error: 'Market no encontrado en la base de datos',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }, [userId, buildings, getBuildingByType]);
 
   // Get user profile ID
   useEffect(() => {
@@ -369,6 +415,92 @@ const DebugPanel = () => {
                   <p><strong>Platform:</strong> {debugInfo.environment.platform}</p>
                   <p className="break-all"><strong>User Agent:</strong> {debugInfo.environment.userAgent}</p>
                 </div>
+              </div>
+
+              {/* Buildings Debug */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">🏗️ Edificios (Warehouse & Market)</h3>
+                  <Button
+                    onClick={() => refetchBuildings()}
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                  >
+                    🔄 Actualizar
+                  </Button>
+                </div>
+                {buildingsDebugInfo ? (
+                  <div className="bg-muted p-3 rounded-md space-y-3 text-sm">
+                    <div>
+                      <p><strong>Total edificios:</strong> {buildingsDebugInfo.totalBuildings}</p>
+                      <p><strong>User ID:</strong> <span className="text-xs break-all">{buildingsDebugInfo.userId}</span></p>
+                    </div>
+                    
+                    {/* Warehouse Status */}
+                    <div className={`p-2 rounded border-2 ${buildingsDebugInfo.warehouse.exists ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                      <p className="font-semibold">📦 Warehouse:</p>
+                      {buildingsDebugInfo.warehouse.exists ? (
+                        <div className="ml-2 space-y-1 text-xs">
+                          <p><strong>ID:</strong> <span className="break-all">{buildingsDebugInfo.warehouse.id}</span></p>
+                          <p><strong>Nivel:</strong> {buildingsDebugInfo.warehouse.level}</p>
+                          <p><strong>Capacidad:</strong> {buildingsDebugInfo.warehouse.capacity.toLocaleString()}</p>
+                          <p><strong>Skin:</strong> {buildingsDebugInfo.warehouse.selected_skin || 'Ninguna'}</p>
+                          <p className="text-green-700">✅ Existe en BD</p>
+                        </div>
+                      ) : (
+                        <div className="ml-2 text-xs">
+                          <p className="text-red-700">❌ {buildingsDebugInfo.warehouse.error}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Market Status */}
+                    <div className={`p-2 rounded border-2 ${buildingsDebugInfo.market.exists ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                      <p className="font-semibold">🏪 Market:</p>
+                      {buildingsDebugInfo.market.exists ? (
+                        <div className="ml-2 space-y-1 text-xs">
+                          <p><strong>ID:</strong> <span className="break-all">{buildingsDebugInfo.market.id}</span></p>
+                          <p><strong>Nivel:</strong> {buildingsDebugInfo.market.level}</p>
+                          <p><strong>Capacidad:</strong> {buildingsDebugInfo.market.capacity.toLocaleString()}</p>
+                          <p><strong>Skin:</strong> {buildingsDebugInfo.market.selected_skin || 'Ninguna'}</p>
+                          <p className="text-green-700">✅ Existe en BD</p>
+                        </div>
+                      ) : (
+                        <div className="ml-2 text-xs">
+                          <p className="text-red-700">❌ {buildingsDebugInfo.market.error}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* All Buildings List */}
+                    <div className="p-2 rounded border border-border bg-background">
+                      <p className="font-semibold mb-1">📋 Todos los edificios:</p>
+                      <div className="space-y-1 text-xs max-h-32 overflow-y-auto">
+                        {buildingsDebugInfo.buildings.length > 0 ? (
+                          buildingsDebugInfo.buildings.map((b: any, idx: number) => (
+                            <div key={idx} className="flex gap-2 text-xs">
+                              <span className="font-mono">{idx + 1}.</span>
+                              <span className="font-semibold">{b.type}</span>
+                              <span>Lv.{b.level}</span>
+                              <span className="text-muted-foreground">ID: {b.id.slice(0, 8)}...</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">No hay edificios</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      Actualizado: {new Date(buildingsDebugInfo.timestamp).toLocaleTimeString()}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-muted p-3 rounded-md text-sm text-muted-foreground">
+                    Cargando información de edificios...
+                  </div>
+                )}
               </div>
 
               {/* Raw Data */}

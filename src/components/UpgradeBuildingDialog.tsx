@@ -110,6 +110,21 @@ export const UpgradeBuildingDialog = ({
   const info = buildingInfo[buildingType] || buildingInfo.corral;
 
   const handleUpgrade = async () => {
+    // Validate required data
+    if (!buildingId || !userId || !buildingType) {
+      console.error("[UpgradeBuildingDialog] Missing required data:", {
+        buildingId,
+        userId,
+        buildingType,
+      });
+      toast({
+        title: "Error",
+        description: "Faltan datos necesarios para mejorar el edificio",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!tonConnectUI.connected) {
       onOpenChange(false);
       setTimeout(() => setShowConnectWallet(true), 0);
@@ -119,6 +134,30 @@ export const UpgradeBuildingDialog = ({
     setIsUpgrading(true);
 
     try {
+      console.log("[UpgradeBuildingDialog] Starting upgrade process", {
+        buildingId,
+        buildingType,
+        userId,
+        currentLevel,
+        nextLevel,
+        upgradePrice,
+        newCapacity,
+      });
+
+      // Verify building exists before proceeding
+      const { data: existingBuilding, error: fetchError } = await supabase
+        .from("user_buildings")
+        .select("*")
+        .eq("id", buildingId)
+        .eq("user_id", userId)
+        .single();
+
+      if (fetchError || !existingBuilding) {
+        throw new Error(`Edificio no encontrado: ${fetchError?.message || "No existe"}`);
+      }
+
+      console.log("[UpgradeBuildingDialog] Building found:", existingBuilding);
+
       // Insert pending purchase record
       const { data: purchaseData, error: purchaseError } = await supabase
         .from("building_purchases")
@@ -133,7 +172,10 @@ export const UpgradeBuildingDialog = ({
         .select()
         .single();
 
-      if (purchaseError) throw purchaseError;
+      if (purchaseError) {
+        console.error("[UpgradeBuildingDialog] Error creating purchase record:", purchaseError);
+        throw purchaseError;
+      }
 
       // Send TON transaction
       const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
@@ -155,7 +197,14 @@ export const UpgradeBuildingDialog = ({
       const result = await tonConnectUI.sendTransaction(transaction);
 
       // Update building
-      const { error: updateError } = await supabase
+      console.log("[UpgradeBuildingDialog] Updating building", {
+        buildingId,
+        userId,
+        nextLevel,
+        newCapacity,
+      });
+      
+      const { data: updatedBuilding, error: updateError } = await supabase
         .from("user_buildings")
         .update({
           level: nextLevel,
@@ -163,9 +212,16 @@ export const UpgradeBuildingDialog = ({
           updated_at: new Date().toISOString(),
         })
         .eq("id", buildingId)
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .select()
+        .single();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("[UpgradeBuildingDialog] Error updating building:", updateError);
+        throw updateError;
+      }
+
+      console.log("[UpgradeBuildingDialog] Building updated successfully:", updatedBuilding);
 
       // Update purchase record as completed
       await supabase
