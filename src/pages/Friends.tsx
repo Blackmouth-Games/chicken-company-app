@@ -64,16 +64,19 @@ const Friends = () => {
           .select("id, telegram_first_name, telegram_username")
           .in("id", referredIds);
 
-        // Check if each user has a chicken (corral)
+        // Check if each user has chickens (corral with current_chickens > 0)
         const { data: buildings } = await supabase
           .from("user_buildings")
-          .select("user_id, building_type")
+          .select("user_id, building_type, current_chickens")
           .in("user_id", referredIds)
           .eq("building_type", "corral");
 
         const referralsList: ReferralInfo[] = referralData.map(ref => {
           const userProfile = profiles?.find(p => p.id === ref.referred_id);
-          const hasChicken = buildings?.some(b => b.user_id === ref.referred_id) || false;
+          // User has chicken if they have at least one coop with current_chickens > 0
+          const hasChicken = buildings?.some(b => 
+            b.user_id === ref.referred_id && b.current_chickens > 0
+          ) || false;
 
           return {
             id: ref.id,
@@ -90,8 +93,21 @@ const Friends = () => {
         const qualified = referralsList.filter(r => r.has_chicken).length;
         setQualifiedReferrals(qualified);
         
-        // Calculate rewards: 1 corral por cada 3 amigos con gallina
-        const corralsEarned = Math.floor(qualified / 3);
+        // Calculate rewards: incremental system
+        // Coop 1: 1 amigo con gallina
+        // Coop 2: 3 amigos totales (1 + 2 nuevos)
+        // Coop 3: 5 amigos totales (3 + 2 nuevos)
+        // Coop N: (2*N - 1) amigos totales
+        // Formula: coop N requires 2*N - 1 friends
+        let corralsEarned = 0;
+        for (let coopNumber = 1; coopNumber <= 100; coopNumber++) { // Max 100 coops
+          const requiredFriends = 2 * coopNumber - 1;
+          if (qualified >= requiredFriends) {
+            corralsEarned = coopNumber;
+          } else {
+            break;
+          }
+        }
         setRewardsEarned(corralsEarned);
 
         // Auto-grant corrals if eligible
@@ -195,16 +211,31 @@ const Friends = () => {
                 🎁 Recompensa Especial
               </p>
               <p className="text-xs text-center text-muted-foreground">
-                Por cada 3 amigos con gallina = 1 corral gratis
+                Sistema incremental: 1er coop = 1 amigo, 2do coop = 3 amigos (2 nuevos), 3er coop = 5 amigos (2 nuevos), etc.
               </p>
               
               {/* Progress bar to next corral */}
               <div className="mt-3">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Progreso al próximo corral</span>
-                  <span className="font-semibold text-green-700">{qualifiedReferrals % 3}/3</span>
-                </div>
-                <Progress value={(qualifiedReferrals % 3) * 33.33} className="h-2" />
+                {(() => {
+                  const nextCoopNumber = rewardsEarned + 1;
+                  const requiredForNext = 2 * nextCoopNumber - 1;
+                  const currentProgress = qualifiedReferrals;
+                  const progressPercent = Math.min((currentProgress / requiredForNext) * 100, 100);
+                  const remaining = Math.max(0, requiredForNext - currentProgress);
+                  
+                  return (
+                    <>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-muted-foreground">Progreso al próximo coop</span>
+                        <span className="font-semibold text-green-700">{currentProgress}/{requiredForNext}</span>
+                      </div>
+                      <Progress value={progressPercent} className="h-2" />
+                      <p className="text-xs text-center text-muted-foreground mt-1">
+                        Faltan {remaining} amigo{remaining !== 1 ? 's' : ''} con gallina{remaining !== 1 ? 's' : ''}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
