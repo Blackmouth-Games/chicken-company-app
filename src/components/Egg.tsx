@@ -62,6 +62,52 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     }
   };
 
+  // Check if this is an RT belt (Right to Top)
+  // RT belt conditions based on getTurnBeltImage logic:
+  // - direction === 'north' && entryDirection === 'east'
+  // - direction === 'east' && entryDirection === 'north'
+  // - direction === 'south' && entryDirection === 'east'
+  // - direction === 'west' && entryDirection === 'south'
+  const isRTBelt = () => {
+    if (beltType !== 'turn' || !entryDirection) return false;
+    
+    if (direction === 'north' && entryDirection === 'east') return true;
+    if (direction === 'east' && entryDirection === 'north') return true;
+    if (direction === 'south' && entryDirection === 'east') return true;
+    if (direction === 'west' && entryDirection === 'south') return true;
+    
+    return false;
+  };
+
+  // Get color filter for RT belt animation: red -> green -> blue
+  const getRTColorFilter = (prog: number) => {
+    // Progress 0 = red, 0.5 = green, 1 = blue
+    let r, g, b;
+    
+    if (prog <= 0.5) {
+      // Red to Green (0 to 0.5)
+      const t = prog * 2; // 0 to 1
+      r = Math.round(255 * (1 - t));
+      g = Math.round(255 * t);
+      b = 0;
+    } else {
+      // Green to Blue (0.5 to 1)
+      const t = (prog - 0.5) * 2; // 0 to 1
+      r = 0;
+      g = Math.round(255 * (1 - t));
+      b = Math.round(255 * t);
+    }
+    
+    // Use a combination of filters to tint the emoji
+    // We'll use a colored drop-shadow and a brightness/contrast adjustment
+    const brightness = 1.2;
+    const contrast = 1.1;
+    
+    // Create a color matrix filter to tint the emoji
+    // This is a simplified approach using drop-shadow for the glow effect
+    return `drop-shadow(0 0 6px rgb(${r}, ${g}, ${b})) drop-shadow(0 0 12px rgb(${r}, ${g}, ${b})) brightness(${brightness}) contrast(${contrast})`;
+  };
+
   // Calculate curved position for turn belts (90 degree turn)
   const getCurvedPosition = (prog: number, entryDir: 'north' | 'south' | 'east' | 'west') => {
     // Calculate exit direction (90 degrees clockwise from entry)
@@ -108,6 +154,30 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     };
   };
 
+  const isRT = isRTBelt();
+  const colorFilter = isRT ? getRTColorFilter(progress) : undefined;
+  
+  // Get background color for RT belt animation
+  const getRTBackgroundColor = (prog: number) => {
+    let r, g, b;
+    
+    if (prog <= 0.5) {
+      // Red to Green (0 to 0.5)
+      const t = prog * 2; // 0 to 1
+      r = Math.round(255 * (1 - t));
+      g = Math.round(255 * t);
+      b = 0;
+    } else {
+      // Green to Blue (0.5 to 1)
+      const t = (prog - 0.5) * 2; // 0 to 1
+      r = 0;
+      g = Math.round(255 * (1 - t));
+      b = Math.round(255 * t);
+    }
+    
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
   return isVisible ? (
     <div
       className="absolute z-15 pointer-events-none"
@@ -117,7 +187,24 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
         ...getPosition(),
       }}
     >
-      <div className="text-lg">🥚</div>
+      {isRT ? (
+        <div 
+          className="relative"
+          style={{
+            filter: colorFilter,
+          }}
+        >
+          <div
+            className="absolute inset-0 rounded-full opacity-30 blur-sm"
+            style={{
+              backgroundColor: getRTBackgroundColor(progress),
+            }}
+          />
+          <div className="text-lg relative z-10">🥚</div>
+        </div>
+      ) : (
+        <div className="text-lg">🥚</div>
+      )}
     </div>
   ) : null;
 };
