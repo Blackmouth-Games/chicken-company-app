@@ -6,6 +6,7 @@ import { Users, Share2, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getTelegramUser } from "@/lib/telegram";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReferralInfo {
   id: string;
@@ -18,6 +19,7 @@ interface ReferralInfo {
 const Friends = () => {
   const telegramUser = getTelegramUser();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [userId, setUserId] = useState<string | null>(null);
   const [referralCode, setReferralCode] = useState<string>("");
   const [referrals, setReferrals] = useState<ReferralInfo[]>([]);
@@ -158,9 +160,26 @@ const Friends = () => {
 
         await supabase.from("user_buildings").insert(newCorrals);
 
+        // Record metric: referral reward earned
+        if (userId) {
+          await supabase.rpc("record_metric_event", {
+            p_user_id: userId,
+            p_event_type: "referral_reward_earned",
+            p_event_value: corralsNeeded,
+            p_metadata: {
+              corrals_granted: corralsNeeded,
+              qualified_friends: qualifiedCount,
+              total_referrals: qualifiedCount,
+            },
+          });
+        }
+
         toast({
-          title: "🎉 ¡Recompensa desbloqueada!",
-          description: `Has ganado ${corralsNeeded} corral${corralsNeeded > 1 ? 'es' : ''} por invitar amigos`,
+          title: t("friends.rewardUnlocked"),
+          description: t("friends.rewardUnlockedDesc", { 
+            count: corralsNeeded, 
+            plural: corralsNeeded > 1 ? 'es' : '' 
+          }),
         });
       }
     } catch (error) {
@@ -172,16 +191,69 @@ const Friends = () => {
     ? `https://t.me/ChickenCompany_bot?start=${referralCode}`
     : "";
 
-  const handleShare = () => {
-    if (navigator.share) {
+  const handleShare = async () => {
+    if (!referralLink) {
+      toast({
+        title: t("friends.shareError"),
+        description: t("friends.shareErrorDesc"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Record metric: referral link shared
+    if (userId) {
+      await supabase.rpc("record_metric_event", {
+        p_user_id: userId,
+        p_event_type: "referral_link_shared",
+        p_event_value: null,
+        p_metadata: {
+          referral_code: referralCode,
+          total_referrals: totalReferrals,
+          qualified_referrals: qualifiedReferrals,
+        },
+      });
+    }
+
+    // Check if we're in Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      // Use Telegram's share URL scheme to open the share dialog
+      // tg://msg_url?url=<encoded_url>&text=<encoded_text>
+      const shareText = encodeURIComponent(t("friends.shareText"));
+      const shareUrl = encodeURIComponent(referralLink);
+      const telegramShareUrl = `tg://msg_url?url=${shareUrl}&text=${shareText}`;
+      
+      // Try to open Telegram share dialog using openLink or openTelegramLink
+      if (window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(telegramShareUrl);
+      } else if (window.Telegram.WebApp.openTelegramLink) {
+        window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+      } else {
+        // Fallback: try to open the link directly
+        window.open(telegramShareUrl, '_blank');
+      }
+    } else if (navigator.share) {
+      // Fallback to Web Share API
       navigator.share({
         title: 'Join Chicken Company',
-        text: 'Play with me and earn rewards!',
+        text: t("friends.shareText"),
         url: referralLink
+      }).catch((error) => {
+        console.error('Error sharing:', error);
+        // Fallback to clipboard
+        navigator.clipboard.writeText(referralLink);
+        toast({
+          title: t("friends.linkCopied"),
+          description: t("friends.linkCopiedDesc"),
+        });
       });
     } else {
+      // Final fallback: copy to clipboard
       navigator.clipboard.writeText(referralLink);
-      // You could add a toast notification here
+      toast({
+        title: t("friends.linkCopied"),
+        description: t("friends.linkCopiedDesc"),
+      });
     }
   };
 
@@ -189,9 +261,9 @@ const Friends = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Invite Friends</h1>
+          <h1 className="text-3xl font-bold mb-2">{t("friends.title")}</h1>
           <p className="text-muted-foreground">
-            Earn rewards by inviting your friends
+            {t("friends.subtitle")}
           </p>
         </div>
 
@@ -199,19 +271,19 @@ const Friends = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Gift className="w-5 h-5" />
-              Referral Rewards
+              {t("friends.referralRewards")}
             </CardTitle>
             <CardDescription>
-              Get bonuses when your friends join and play
+              {t("friends.referralRewardsDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
               <p className="text-sm font-semibold text-green-700 text-center mb-1">
-                🎁 Recompensa Especial
+                {t("friends.specialReward")}
               </p>
               <p className="text-xs text-center text-muted-foreground">
-                Sistema incremental: 1er coop = 1 amigo, 2do coop = 3 amigos (2 nuevos), 3er coop = 5 amigos (2 nuevos), etc.
+                {t("friends.incrementalSystem")}
               </p>
               
               {/* Progress bar to next corral */}
@@ -226,12 +298,15 @@ const Friends = () => {
                   return (
                     <>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Progreso al próximo coop</span>
+                        <span className="text-muted-foreground">{t("friends.progressToNextCoop")}</span>
                         <span className="font-semibold text-green-700">{currentProgress}/{requiredForNext}</span>
                       </div>
                       <Progress value={progressPercent} className="h-2" />
                       <p className="text-xs text-center text-muted-foreground mt-1">
-                        Faltan {remaining} amigo{remaining !== 1 ? 's' : ''} con gallina{remaining !== 1 ? 's' : ''}
+                        {t("friends.remainingFriends", { 
+                          count: remaining, 
+                          plural: remaining !== 1 ? 's' : '' 
+                        })}
                       </p>
                     </>
                   );
@@ -242,15 +317,15 @@ const Friends = () => {
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-3 bg-primary/10 rounded-lg">
                 <p className="text-xl font-bold text-primary">{totalReferrals}</p>
-                <p className="text-xs text-muted-foreground">Invitados</p>
+                <p className="text-xs text-muted-foreground">{t("friends.invited")}</p>
               </div>
               <div className="text-center p-3 bg-green-500/10 rounded-lg">
                 <p className="text-xl font-bold text-green-600">{qualifiedReferrals}</p>
-                <p className="text-xs text-muted-foreground">Con gallina</p>
+                <p className="text-xs text-muted-foreground">{t("friends.withChicken")}</p>
               </div>
               <div className="text-center p-3 bg-amber-500/10 rounded-lg">
                 <p className="text-xl font-bold text-amber-600">{rewardsEarned}</p>
-                <p className="text-xs text-muted-foreground">Corrales</p>
+                <p className="text-xs text-muted-foreground">{t("friends.coops")}</p>
               </div>
             </div>
 
@@ -261,7 +336,7 @@ const Friends = () => {
               disabled={!referralLink}
             >
               <Share2 className="w-4 h-4 mr-2" />
-              Compartir enlace
+              {t("friends.shareLink")}
             </Button>
           </CardContent>
         </Card>
@@ -270,15 +345,15 @@ const Friends = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Tus Amigos ({referrals.length})
+              {t("friends.yourFriends")} ({referrals.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {referrals.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Aún no has invitado amigos</p>
-                <p className="text-sm">Comparte tu enlace para empezar</p>
+                <p>{t("friends.noFriendsYet")}</p>
+                <p className="text-sm">{t("friends.shareLinkToStart")}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -293,7 +368,7 @@ const Friends = () => {
                       </div>
                       <div>
                         <p className="font-medium text-sm">
-                          {referral.telegram_first_name}
+                          {referral.telegram_first_name || t("friends.user")}
                           {referral.telegram_username && (
                             <span className="text-xs text-muted-foreground ml-1">
                               @{referral.telegram_username}
@@ -307,11 +382,11 @@ const Friends = () => {
                     </div>
                     {referral.has_chicken ? (
                       <div className="bg-green-500/20 text-green-700 text-xs px-2 py-1 rounded-full font-semibold">
-                        ✓ Con gallina
+                        {t("friends.withChickenBadge")}
                       </div>
                     ) : (
                       <div className="bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
-                        Sin gallina
+                        {t("friends.withoutChickenBadge")}
                       </div>
                     )}
                   </div>

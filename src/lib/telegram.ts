@@ -14,6 +14,8 @@ declare global {
         };
         ready: () => void;
         expand: () => void;
+        openTelegramLink?: (url: string) => void;
+        openLink?: (url: string) => void;
       };
     };
   }

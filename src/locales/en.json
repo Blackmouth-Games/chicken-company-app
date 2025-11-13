@@ -98,5 +98,32 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success"
+  },
+  "friends": {
+    "title": "Invite Friends",
+    "subtitle": "Earn rewards by inviting your friends",
+    "referralRewards": "Referral Rewards",
+    "referralRewardsDesc": "Get bonuses when your friends join and play",
+    "specialReward": "🎁 Special Reward",
+    "incrementalSystem": "Incremental system: 1st coop = 1 friend, 2nd coop = 3 friends (2 new), 3rd coop = 5 friends (2 new), etc.",
+    "progressToNextCoop": "Progress to next coop",
+    "remainingFriends": "{{count}} friend{{plural}} with chicken{{plural}} remaining",
+    "invited": "Invited",
+    "withChicken": "With chicken",
+    "coops": "Coops",
+    "shareLink": "Share link",
+    "yourFriends": "Your Friends",
+    "noFriendsYet": "You haven't invited friends yet",
+    "shareLinkToStart": "Share your link to get started",
+    "user": "User",
+    "withChickenBadge": "✓ With chicken",
+    "withoutChickenBadge": "Without chicken",
+    "rewardUnlocked": "🎉 Reward unlocked!",
+    "rewardUnlockedDesc": "You've earned {{count}} coop{{plural}} by inviting friends",
+    "linkCopied": "Link copied",
+    "linkCopiedDesc": "The link has been copied to clipboard",
+    "shareError": "Error",
+    "shareErrorDesc": "Could not generate referral link",
+    "shareText": "Join Chicken Company and earn rewards! 🐔"
   }
 }

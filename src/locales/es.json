@@ -98,5 +98,32 @@
     "loading": "Cargando...",
     "error": "Error",
     "success": "Éxito"
+  },
+  "friends": {
+    "title": "Invitar Amigos",
+    "subtitle": "Gana recompensas invitando a tus amigos",
+    "referralRewards": "Recompensas por Referidos",
+    "referralRewardsDesc": "Obtén bonificaciones cuando tus amigos se unan y jueguen",
+    "specialReward": "🎁 Recompensa Especial",
+    "incrementalSystem": "Sistema incremental: 1er coop = 1 amigo, 2do coop = 3 amigos (2 nuevos), 3er coop = 5 amigos (2 nuevos), etc.",
+    "progressToNextCoop": "Progreso al próximo coop",
+    "remainingFriends": "Faltan {{count}} amigo{{plural}} con gallina{{plural}}",
+    "invited": "Invitados",
+    "withChicken": "Con gallina",
+    "coops": "Corrales",
+    "shareLink": "Compartir enlace",
+    "yourFriends": "Tus Amigos",
+    "noFriendsYet": "Aún no has invitado amigos",
+    "shareLinkToStart": "Comparte tu enlace para empezar",
+    "user": "Usuario",
+    "withChickenBadge": "✓ Con gallina",
+    "withoutChickenBadge": "Sin gallina",
+    "rewardUnlocked": "🎉 ¡Recompensa desbloqueada!",
+    "rewardUnlockedDesc": "Has ganado {{count}} corral{{plural}} por invitar amigos",
+    "linkCopied": "Enlace copiado",
+    "linkCopiedDesc": "El enlace se ha copiado al portapapeles",
+    "shareError": "Error",
+    "shareErrorDesc": "No se pudo generar el enlace de referido",
+    "shareText": "¡Únete a Chicken Company y gana recompensas! 🐔"
   }
 }
