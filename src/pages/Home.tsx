@@ -4,6 +4,10 @@ import defaultAvatar from "@/assets/default-avatar.png";
 import box1Image from "@/assets/box_1.png";
 import box2Image from "@/assets/box_2.png";
 import box3Image from "@/assets/box_3.png";
+import beltImage from "@/assets/Belt_A.jpg";
+import beltRT from "@/assets/belts/Belt_RT.png";
+import beltLT from "@/assets/belts/Belt_LT.png";
+import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
 import { getTelegramUser } from "@/lib/telegram";
 import { getBuildingImage, getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
@@ -238,6 +242,67 @@ const Home = () => {
   };
   const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
+
+  // Helper functions for belt preview
+  const getBeltPreviewImage = (type: string, direction: 'north' | 'south' | 'east' | 'west') => {
+    if (type === 'turn') {
+      // For turn belts, calculate entry direction from exit (clockwise 90°)
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(direction);
+      const entryIndex = (exitIndex - 1 + 4) % 4; // -1 for clockwise
+      const entryDir = directions[entryIndex];
+      
+      // RT: East -> North, LT: West -> North
+      // For North exit: RT if entry is East, LT if entry is West
+      if (direction === 'north') {
+        return entryDir === 'east' ? beltRT : beltLT;
+      }
+      // For other exits, conceptually match to North pattern
+      if (direction === 'east') {
+        return entryDir === 'north' ? beltRT : beltLT;
+      } else if (direction === 'south') {
+        return entryDir === 'west' ? beltLT : beltRT;
+      } else if (direction === 'west') {
+        return entryDir === 'south' ? beltRT : beltLT;
+      }
+      return beltLT;
+    } else if (type === 'funnel') {
+      return beltFunnel;
+    } else {
+      return beltImage;
+    }
+  };
+
+  const getBeltPreviewTransform = (type: string, direction: 'north' | 'south' | 'east' | 'west') => {
+    if (type === 'turn') {
+      // Turn belts: rotate based on exit direction
+      switch (direction) {
+        case 'north': return 'rotate(0deg)';
+        case 'east': return 'rotate(90deg)';
+        case 'south': return 'rotate(180deg)';
+        case 'west': return 'rotate(270deg)';
+        default: return 'rotate(0deg)';
+      }
+    } else if (type === 'funnel') {
+      // Funnel belts: rotate based on exit direction
+      switch (direction) {
+        case 'east': return 'rotate(0deg)';
+        case 'south': return 'rotate(90deg)';
+        case 'west': return 'rotate(180deg)';
+        case 'north': return 'rotate(270deg)';
+        default: return 'rotate(0deg)';
+      }
+    } else {
+      // Straight and curve belts: rotate based on direction
+      switch (direction) {
+        case 'north': return 'rotate(270deg)';
+        case 'south': return 'rotate(90deg)';
+        case 'east': return 'rotate(0deg)';
+        case 'west': return 'rotate(180deg)';
+        default: return 'rotate(0deg)';
+      }
+    }
+  };
   
   useEffect(() => {
     const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
@@ -1052,13 +1117,34 @@ const Home = () => {
               }
             }}
           >
-            {/* Hover cell highlight */}
-            {hoveredCell && paintMode && isEditMode && (
+            {/* Hover cell highlight - Belt preview */}
+            {hoveredCell && paintMode && isEditMode && paintOptions.objectType === 'belt' && (
               <div
-                className="absolute pointer-events-none z-10 border-2 border-red-500 bg-red-500/20"
+                className="absolute pointer-events-none z-10 w-full h-full flex items-center justify-center"
                 style={{
                   gridColumn: `${hoveredCell.col} / ${hoveredCell.col + 1}`,
                   gridRow: `${hoveredCell.row} / ${hoveredCell.row + 1}`,
+                  opacity: 0.7,
+                }}
+              >
+                <img
+                  src={getBeltPreviewImage(paintOptions.type, paintOptions.direction)}
+                  alt="Belt preview"
+                  className="w-full h-full object-cover"
+                  style={{
+                    transform: getBeltPreviewTransform(paintOptions.type, paintOptions.direction),
+                  }}
+                />
+              </div>
+            )}
+            
+            {/* Hover cell highlight - Road preview */}
+            {hoveredCell && paintMode && isEditMode && paintOptions.objectType === 'road' && (
+              <div
+                className="absolute pointer-events-none z-10 border-2 border-red-500 bg-red-500/20"
+                style={{
+                  gridColumn: `${hoveredCell.col} / ${hoveredCell.col + 2}`,
+                  gridRow: `${hoveredCell.row} / ${hoveredCell.row + 2}`,
                 }}
               />
             )}
