@@ -91,36 +91,26 @@ export const ConveyorBelt = ({
   };
 
   // Get transform for turn belt image based on exit direction
-  // RT image base: East -> North (antihorario)
-  // LT image base: West -> North (horario)
-  // For other exit directions, rotate the appropriate image
+  // RT image base: East -> North (entra desde la derecha, sale hacia arriba)
+  // LT image base: West -> North (entra desde la izquierda, sale hacia arriba)
+  // Las imágenes están diseñadas para salir hacia North, así que solo necesitamos rotarlas según la salida
+  // IMPORTANTE: La rotación solo orienta la salida, NO cambia el giro de 90° de la cinta
   const getTurnBeltTransform = () => {
-    const getEntryFromExit = (exit: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
-      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
-      const exitIndex = directions.indexOf(exit);
-      const entryIndex = (exitIndex - 1 + 4) % 4; // -1 for clockwise
-      return directions[entryIndex];
-    };
-    
-    const entryDir = belt.entryDirection || getEntryFromExit(belt.direction);
-    const image = getTurnBeltImage();
-    
-    // If using RT or LT for North exit, no rotation needed
-    if (belt.direction === 'north') {
-      return 'rotate(0deg)';
-    }
-    
-    // For other exits, rotate based on how much we need to rotate from North
-    // RT/LT are designed for North exit, so we rotate them to match other exits
+    // Las imágenes LT y RT están diseñadas para salir hacia North (arriba)
+    // Solo necesitamos rotar la imagen según la dirección de salida
+    // La cinta siempre hace un giro de 90° (no 180°), solo rotamos la imagen para orientar la salida
     switch (belt.direction) {
+      case 'north':
+        // Salida norte - imagen ya está correcta (sin rotación)
+        return 'rotate(0deg)';
       case 'east':
-        // Exit east - rotate 90° clockwise from north
+        // Salida este - rotar 90° en sentido horario desde north
         return 'rotate(90deg)';
       case 'south':
-        // Exit south - rotate 180° from north
+        // Salida sur - rotar 180° desde north (esto orienta la salida hacia abajo, pero el giro sigue siendo 90°)
         return 'rotate(180deg)';
       case 'west':
-        // Exit west - rotate 270° (or -90°) from north
+        // Salida oeste - rotar 270° (o -90°) desde north
         return 'rotate(270deg)';
       default:
         return 'rotate(0deg)';
