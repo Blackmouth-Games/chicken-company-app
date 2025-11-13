@@ -75,15 +75,25 @@ function parseImageFileName(fileName: string): ParsedImage | null {
   // The key in buildingImageModules is the full file path like '/src/assets/buildings/warehouse_1A.png'
   let imageUrl: string | undefined;
   
-  // Try exact match first
+  // Try exact match first (with and without spaces)
   const exactKey = `/src/assets/buildings/${baseName}`;
+  const exactKeyWithSpace = `/src/assets/buildings/${baseName.replace(/(\d+)([A-J])\./, '$1$2 .')}`; // Add space before extension
+  
   if (buildingImageModules[exactKey]) {
     imageUrl = buildingImageModules[exactKey];
+  } else if (buildingImageModules[exactKeyWithSpace]) {
+    imageUrl = buildingImageModules[exactKeyWithSpace];
   } else {
-    // Fallback: search by filename
+    // Fallback: search by filename (with or without spaces)
+    const nameWithoutExt = baseName.replace(/\.[^.]+$/, '');
     for (const [key, url] of Object.entries(buildingImageModules)) {
-      // Match by filename (with or without path)
-      if (key.includes(baseName) || key.endsWith(`/${baseName}`) || key.endsWith(`\\${baseName}`)) {
+      // Match by filename (with or without path, with or without spaces)
+      const keyWithoutPath = key.replace(/^.*[\/\\]/, '').replace(/\.[^.]+$/, '');
+      const keyWithoutSpaces = keyWithoutPath.replace(/\s+/g, '');
+      if (key.includes(baseName) || 
+          key.endsWith(`/${baseName}`) || 
+          key.endsWith(`\\${baseName}`) ||
+          keyWithoutSpaces === nameWithoutExt) {
         imageUrl = url;
         break;
       }
