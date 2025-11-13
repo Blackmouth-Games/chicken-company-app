@@ -105,7 +105,11 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
       <img
         src={getVehicleImage()}
         alt={isLoaded ? "Truck loaded" : "Truck empty"}
-        className="w-16 h-16 md:w-20 md:h-20 object-contain"
+        className="object-contain"
+        style={{
+          width: '64px',
+          height: '64px',
+        }}
       />
     </div>
   ) : null;
