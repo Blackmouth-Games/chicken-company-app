@@ -167,10 +167,14 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   <Button 
                     className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base"
                     size="lg"
-                    onClick={() => {
-                      setShowUpgrade(true);
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (market && nextLevelPrice) {
+                        setShowUpgrade(true);
+                      }
                     }}
-                    disabled={pricesLoading}
+                    disabled={pricesLoading || !nextLevelPrice}
                   >
                     <span className="font-bold">⬆️ Subir de nivel</span>
                   </Button>
@@ -187,12 +191,13 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         </DialogContent>
       </Dialog>
 
-      {market && showUpgrade && nextLevelPrice && (
+      {market && (
         <UpgradeBuildingDialog
           open={showUpgrade}
           onOpenChange={(open) => {
             setShowUpgrade(open);
             if (!open) {
+              // Keep market dialog open when upgrade dialog closes
               onOpenChange(true);
             }
           }}
@@ -201,8 +206,8 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
           currentLevel={currentLevel}
           nextLevel={currentLevel + 1}
           userId={userId || ""}
-          upgradePrice={nextLevelPrice.price_ton}
-          newCapacity={nextLevelPrice.capacity}
+          upgradePrice={nextLevelPrice?.price_ton || 0}
+          newCapacity={nextLevelPrice?.capacity || 0}
           onUpgradeComplete={handleUpgradeComplete}
         />
       )}

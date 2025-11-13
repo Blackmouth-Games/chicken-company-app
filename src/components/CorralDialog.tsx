@@ -61,8 +61,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const handleUpgradeComplete = () => {
     refetch();
     setShowUpgrade(false);
-    // Close dialog to allow reordering to be visible
-    setTimeout(() => onOpenChange(false), 500);
+    // Keep dialog open after upgrade (same as warehouse and market)
   };
 
   const handleStakeChickens = () => {
@@ -225,18 +224,26 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
         </DialogContent>
       </Dialog>
 
-      <UpgradeBuildingDialog
-        open={showUpgrade}
-        onOpenChange={setShowUpgrade}
-        buildingId={buildingId || ''}
-        buildingType="corral"
-        currentLevel={corral?.level || 1}
-        nextLevel={nextLevel}
-        userId={userId || ''}
-        upgradePrice={upgradePrice}
-        newCapacity={nextLevelCapacity}
-        onUpgradeComplete={handleUpgradeComplete}
-      />
+      {corral && (
+        <UpgradeBuildingDialog
+          open={showUpgrade}
+          onOpenChange={(open) => {
+            setShowUpgrade(open);
+            if (!open) {
+              // Keep corral dialog open when upgrade dialog closes
+              onOpenChange(true);
+            }
+          }}
+          buildingId={buildingId || ''}
+          buildingType="corral"
+          currentLevel={corral?.level || 1}
+          nextLevel={nextLevel}
+          userId={userId || ''}
+          upgradePrice={upgradePrice}
+          newCapacity={nextLevelCapacity}
+          onUpgradeComplete={handleUpgradeComplete}
+        />
+      )}
 
       <SkinSelectorDialog
         open={showSkinSelector}
