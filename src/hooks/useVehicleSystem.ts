@@ -228,19 +228,72 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
             const returnPath = calculatePath(pointB, pointA, roads, false);
             if (returnPath.length === 0) return null;
             
+            // Calculate initial progress and reverse direction for return journey
+            // When returning, we start from point B and need to calculate which side to exit from
             const roadPos = parseGridNotation(pointB.gridColumn);
             const roadRow = parseGridNotation(pointB.gridRow);
+            
+            // For return journey, we need to determine initial direction
+            // Check if there's a next road in the return path
+            let initialProgress = 0;
+            let reverseDirection = false;
+            
+            if (returnPath.length > 1) {
+              const nextRoadId = returnPath[1];
+              const nextRoad = roads.find(r => r.id === nextRoadId);
+              if (nextRoad) {
+                const nextPos = parseGridNotation(nextRoad.gridColumn);
+                const nextRow = parseGridNotation(nextRoad.gridRow);
+                
+                // Calculate center positions
+                const currentCenterCol = (roadPos.start + roadPos.end) / 2;
+                const currentCenterRow = (roadRow.start + roadRow.end) / 2;
+                const nextCenterCol = (nextPos.start + nextPos.end) / 2;
+                const nextCenterRow = (nextRow.start + nextRow.end) / 2;
+                
+                // Determine exit side based on relative positions (where we're going TO)
+                const colDiff = nextCenterCol - currentCenterCol;
+                const rowDiff = nextCenterRow - currentCenterRow;
+                
+                // Based on the road direction and where we're going, set initial progress
+                // For return journey, we want to exit from the side closest to the next road
+                if (Math.abs(colDiff) > Math.abs(rowDiff)) {
+                  // Horizontal movement (east/west)
+                  if (pointB.direction === 'east') {
+                    // Road points east: exit from right side (progress 1) if next is to the right, or left (0) if next is to the left
+                    initialProgress = colDiff > 0 ? 1 : 0; // Exit from right if going right, left if going left
+                    reverseDirection = colDiff <= 0; // Reverse if going left (from right to left)
+                  } else if (pointB.direction === 'west') {
+                    // Road points west: exit from left side (progress 1) if next is to the left, or right (0) if next is to the right
+                    initialProgress = colDiff > 0 ? 0 : 1; // Exit from left if going right, right if going left
+                    reverseDirection = colDiff > 0; // Reverse if going right (from left to right)
+                  }
+                } else {
+                  // Vertical movement (north/south)
+                  if (pointB.direction === 'south') {
+                    // Road points south: exit from bottom (progress 1) if next is below, or top (0) if next is above
+                    initialProgress = rowDiff > 0 ? 1 : 0; // Exit from bottom if going down, top if going up
+                    reverseDirection = rowDiff <= 0; // Reverse if going up (from bottom to top)
+                  } else if (pointB.direction === 'north') {
+                    // Road points north: exit from top (progress 1) if next is above, or bottom (0) if next is below
+                    initialProgress = rowDiff > 0 ? 0 : 1; // Exit from top if going down, bottom if going up
+                    reverseDirection = rowDiff > 0; // Reverse if going down (from top to bottom)
+                  }
+                }
+              }
+            }
             
             return {
               ...vehicle,
               currentRoadId: pointB.id,
               currentCol: roadPos.start,
               currentRow: roadRow.start,
-              progress: 0,
+              progress: initialProgress,
               path: returnPath,
               pathIndex: 0,
               isLoaded: true, // Now loaded (lleno)
               goingToB: false, // Going from B to A
+              reverseDirection,
             };
           }
         }
