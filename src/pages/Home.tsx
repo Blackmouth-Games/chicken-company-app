@@ -1262,14 +1262,12 @@ const Home = () => {
                   <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
                     {marketLevel}
                   </div>
-                  {marketDisplay && marketDisplay.type === 'image' ? (
+                  {marketDisplay && (
                     <img 
                       src={marketDisplay.src} 
                       alt="Market" 
                       className="w-full h-full object-contain pointer-events-none"
                     />
-                  ) : (
-                    <div className="text-4xl md:text-5xl pointer-events-none">🏪</div>
                   )}
                   {isEditMode && (
                     <>

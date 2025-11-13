@@ -98,11 +98,11 @@ export const UpgradeBuildingDialog = ({
     );
   }, [buildingType, nextLevel, building?.selected_skin, building?.level, skinInfo]);
 
-  // Building emojis and labels (only used as fallback if images fail to load)
-  const buildingInfo: Record<string, { emoji: string; label: string; capacityLabel: string }> = {
-    corral: { emoji: "🏠", label: "Corral", capacityLabel: "Max. Capacity:" },
-    warehouse: { emoji: "🏚️", label: "Almacén", capacityLabel: "Max. Capacity:" },
-    market: { emoji: "🏪", label: "Market", capacityLabel: "Velocidad in" },
+  // Building labels
+  const buildingInfo: Record<string, { label: string; capacityLabel: string }> = {
+    corral: { label: "Corral", capacityLabel: "Max. Capacity:" },
+    warehouse: { label: "Almacén", capacityLabel: "Max. Capacity:" },
+    market: { label: "Market", capacityLabel: "Velocidad in" },
   };
 
   const info = buildingInfo[buildingType] || buildingInfo.corral;
@@ -221,16 +221,12 @@ export const UpgradeBuildingDialog = ({
             <div className="relative flex items-center justify-center gap-4 p-4 bg-gradient-to-br from-muted/50 to-muted/30 rounded-xl">
               {/* Current Level */}
               <div className="flex flex-col items-center animate-in fade-in slide-in-from-left-5 duration-500">
-                {currentDisplay && currentDisplay.type === 'image' ? (
+                {currentDisplay && (
                   <img 
                     src={currentDisplay.src} 
                     alt={`${info.label} Nivel ${currentLevel}`}
                     className="w-16 h-16 object-contain mb-2 transform transition-transform duration-300 hover:scale-110"
                   />
-                ) : (
-                  <div className="text-5xl mb-2 transform transition-transform duration-300 hover:scale-110">
-                    {info.emoji}
-                  </div>
                 )}
                 <div className="px-2.5 py-1 bg-muted rounded-full">
                   <span className="text-xs font-semibold text-muted-foreground">Nivel {currentLevel}</span>
@@ -244,16 +240,12 @@ export const UpgradeBuildingDialog = ({
               
               {/* Next Level */}
               <div className="flex flex-col items-center animate-in fade-in slide-in-from-right-5 duration-500 delay-150">
-                {nextDisplay && nextDisplay.type === 'image' ? (
+                {nextDisplay && (
                   <img 
                     src={nextDisplay.src} 
                     alt={`${info.label} Nivel ${nextLevel}`}
                     className="w-16 h-16 object-contain mb-2 transform transition-transform duration-300 hover:scale-110 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]"
                   />
-                ) : (
-                  <div className="text-5xl mb-2 transform transition-transform duration-300 hover:scale-110 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
-                    {info.emoji}
-                  </div>
                 )}
                 <div className="px-2.5 py-1 bg-primary/20 rounded-full border-2 border-primary/50">
                   <span className="text-xs font-bold text-primary">Nivel {nextLevel}</span>

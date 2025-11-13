@@ -65,7 +65,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-green-200 bg-green-100/50">
-              <h2 className="text-2xl font-bold text-green-900">🏪 Market</h2>
+              <h2 className="text-2xl font-bold text-green-900">Market</h2>
               <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-green-200/50">
                 ✕
               </Button>
@@ -94,7 +94,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay && buildingDisplay.type === 'image' ? (
+                    {buildingDisplay && (
                       <img 
                         src={buildingDisplay.src} 
                         alt="Market" 
@@ -104,8 +104,6 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                           console.error('[MarketDialog] This should not happen - image should always be available');
                         }}
                       />
-                    ) : (
-                      <div className="text-9xl">🏪</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-green-900 text-lg">Market</h3>
