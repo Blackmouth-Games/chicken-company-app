@@ -31,7 +31,7 @@ const BottomNav = () => {
             </>
           )}
         </NavLink>
-        
+      
         <NavLink
           to="/store"
           className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground transition-colors"

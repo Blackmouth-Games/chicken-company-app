@@ -8,13 +8,12 @@ import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useAudio } from "@/contexts/AudioContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { X } from "lucide-react";
+import { getVersionString } from "@/lib/version";
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || new Date().toISOString().split('T')[0];
 
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
@@ -98,6 +97,14 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             TOS & EULA
           </Button>
 
+          {/* Version Info */}
+          <div className="space-y-2 border border-border rounded-lg p-4">
+            <label className="text-sm font-medium">Versión</label>
+            <p className="text-xs text-muted-foreground">
+              {getVersionString()}
+            </p>
+          </div>
+
           {/* Social Media Links */}
           <div className="flex gap-2 justify-center">
             <Button
@@ -114,11 +121,6 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             >
               X
             </Button>
-          </div>
-
-          {/* Version */}
-          <div className="text-center text-sm text-muted-foreground italic">
-            Version {APP_VERSION}
           </div>
         </div>
 

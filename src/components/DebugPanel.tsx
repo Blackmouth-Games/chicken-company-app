@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useUserItems } from "@/hooks/useUserItems";
 import { checkWinterSkin } from "@/scripts/checkWinterSkin";
+import { getVersion, getVersionString } from "@/lib/version";
 
 const DebugPanel = () => {
   const { t } = useLanguage();

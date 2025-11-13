@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "prebuild": "node scripts/get-version.js",
+    "build": "npm run prebuild && vite build",
+    "build:dev": "npm run prebuild && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "migrate:store": "tsx src/scripts/applyStoreProductsMigration.ts",
-    "update-store-prices": "tsx src/scripts/updateStorePrices.ts"
+    "update-store-prices": "tsx src/scripts/updateStorePrices.ts",
+    "version": "node scripts/get-version.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
