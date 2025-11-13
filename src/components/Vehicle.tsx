@@ -101,7 +101,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         style={{
           width: '64px',
           height: '64px',
-          transform: 'scaleX(1) scaleY(-1)', // Mirror both vehicle images horizontally and vertically
+          transform: 'scaleX(-1) scaleY(-1)', // Mirror both vehicle images horizontally and vertically
         }}
       />
     </div>
