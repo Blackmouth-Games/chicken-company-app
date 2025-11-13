@@ -18,7 +18,7 @@ interface Belt {
   gridColumn: string;
   gridRow: string;
   direction: 'north' | 'south' | 'east' | 'west';
-  type?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
+  type?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel';
   isOutput?: boolean;
   isDestiny?: boolean;
   slotPosition?: number; // Position index of the slot this output belongs to
@@ -110,12 +110,22 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     if (currentBelt.type === 'funnel') {
       // Funnel: always exit in the belt's direction, regardless of entry
       exitDirection = currentBelt.direction;
-    } else if (currentBelt.type === 'turn' && entryDirection) {
-      // Turn: rotate 90 degrees clockwise from entry direction
+    } else if ((currentBelt.type === 'turn' || currentBelt.type?.startsWith('turn-')) && entryDirection) {
+      // Turn belts: rotate 90 degrees based on type
+      // turn-lt: counterclockwise (antihorario)
+      // All others: clockwise (horario)
       const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
       const currentIndex = directions.indexOf(entryDirection);
-      const nextIndex = (currentIndex + 1) % 4;
-      exitDirection = directions[nextIndex];
+      
+      if (currentBelt.type === 'turn-lt') {
+        // Counterclockwise: go back one direction
+        const prevIndex = (currentIndex - 1 + 4) % 4;
+        exitDirection = directions[prevIndex];
+      } else {
+        // Clockwise: go forward one direction (RT, NE, NW, SE, SW, and legacy 'turn')
+        const nextIndex = (currentIndex + 1) % 4;
+        exitDirection = directions[nextIndex];
+      }
     } else {
       // Default: use belt's direction
       exitDirection = currentBelt.direction;
@@ -171,12 +181,22 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       let exitDirection = entryDirection;
       if (currentBelt.type === 'funnel') {
         exitDirection = currentBelt.direction;
-      } else if (currentBelt.type === 'turn') {
-        // Turn: rotate 90 degrees clockwise
+      } else if (currentBelt.type === 'turn' || currentBelt.type?.startsWith('turn-')) {
+        // Turn belts: rotate 90 degrees based on type
+        // turn-lt: counterclockwise (antihorario)
+        // All others: clockwise (horario)
         const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
         const currentIndex = directions.indexOf(entryDirection);
-        const nextIndex = (currentIndex + 1) % 4;
-        exitDirection = directions[nextIndex];
+        
+        if (currentBelt.type === 'turn-lt') {
+          // Counterclockwise: go back one direction
+          const prevIndex = (currentIndex - 1 + 4) % 4;
+          exitDirection = directions[prevIndex];
+        } else {
+          // Clockwise: go forward one direction
+          const nextIndex = (currentIndex + 1) % 4;
+          exitDirection = directions[nextIndex];
+        }
       } else {
         exitDirection = currentBelt.direction;
       }
@@ -296,11 +316,23 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             let exitDirection = currentBelt.direction;
             if (currentBelt.type === 'funnel') {
               exitDirection = currentBelt.direction;
-            } else if (currentBelt.type === 'turn') {
+            } else if (currentBelt.type === 'turn' || currentBelt.type?.startsWith('turn-')) {
+              const entryDir = egg.entryDirection || currentBelt.direction;
+              // Turn belts: rotate 90 degrees based on type
+              // turn-lt: counterclockwise (antihorario)
+              // All others: clockwise (horario)
               const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
-              const entryIndex = directions.indexOf(egg.entryDirection || currentBelt.direction);
-              const exitIndex = (entryIndex + 1) % 4;
-              exitDirection = directions[exitIndex];
+              const entryIndex = directions.indexOf(entryDir);
+              
+              if (currentBelt.type === 'turn-lt') {
+                // Counterclockwise: go back one direction
+                const prevIndex = (entryIndex - 1 + 4) % 4;
+                exitDirection = directions[prevIndex];
+              } else {
+                // Clockwise: go forward one direction
+                const exitIndex = (entryIndex + 1) % 4;
+                exitDirection = directions[exitIndex];
+              }
             }
             
             const getOppositeDirection = (dir: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
@@ -336,12 +368,23 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           let exitDirection = currentBelt.direction;
           if (currentBelt.type === 'funnel') {
             exitDirection = currentBelt.direction;
-          } else if (currentBelt.type === 'turn') {
-            // Turn: rotate 90 degrees clockwise from entry
+          } else if (currentBelt.type === 'turn' || currentBelt.type?.startsWith('turn-')) {
+            // Turn belts: rotate 90 degrees based on type
+            // turn-lt: counterclockwise (antihorario)
+            // All others: clockwise (horario)
+            const entryDir = egg.entryDirection || currentBelt.direction;
             const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
-            const entryIndex = directions.indexOf(egg.entryDirection || currentBelt.direction);
-            const exitIndex = (entryIndex + 1) % 4;
-            exitDirection = directions[exitIndex];
+            const entryIndex = directions.indexOf(entryDir);
+            
+            if (currentBelt.type === 'turn-lt') {
+              // Counterclockwise: go back one direction
+              const prevIndex = (entryIndex - 1 + 4) % 4;
+              exitDirection = directions[prevIndex];
+            } else {
+              // Clockwise: go forward one direction
+              const exitIndex = (entryIndex + 1) % 4;
+              exitDirection = directions[exitIndex];
+            }
           }
           
           // Entry direction for next belt is opposite of exit direction from current belt

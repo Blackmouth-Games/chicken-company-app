@@ -8,14 +8,14 @@ interface AddBeltDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   gridPosition: { col: number; row: number } | null;
-  onAddBelt: (direction: 'north' | 'south' | 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel') => void;
+  onAddBelt: (direction: 'north' | 'south' | 'east' | 'west', type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel') => void;
   showVertical?: boolean;
 }
 
 export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, showVertical = false }: AddBeltDialogProps) => {
   const { t } = useLanguage();
   const [selectedDirection, setSelectedDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
-  const [selectedType, setSelectedType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'>('straight');
+  const [selectedType, setSelectedType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'>('straight');
 
   const handleConfirm = () => {
     onAddBelt(selectedDirection, selectedType);
@@ -39,7 +39,13 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
     { value: 'curve-nw' as const, label: t('layoutEditor.type_curve_nw') || 'Curva NW' },
     { value: 'curve-se' as const, label: t('layoutEditor.type_curve_se') || 'Curva SE' },
     { value: 'curve-sw' as const, label: t('layoutEditor.type_curve_sw') || 'Curva SW' },
-    { value: 'turn' as const, label: 'Giro' },
+    { value: 'turn-rt' as const, label: 'Giro RT' },
+    { value: 'turn-lt' as const, label: 'Giro LT' },
+    { value: 'turn-ne' as const, label: 'Giro NE' },
+    { value: 'turn-nw' as const, label: 'Giro NW' },
+    { value: 'turn-se' as const, label: 'Giro SE' },
+    { value: 'turn-sw' as const, label: 'Giro SW' },
+    { value: 'turn' as const, label: 'Giro (legacy)' },
     { value: 'funnel' as const, label: 'Embudo' },
   ];
 
@@ -81,7 +87,7 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
           {/* Type Selection */}
           <div className="space-y-1">
             <label className="text-xs font-medium">{t('layoutEditor.selectType')}</label>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-4 gap-1">
               {types.map(({ value, label }) => (
                 <Button
                   key={value}

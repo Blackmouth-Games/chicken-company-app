@@ -10,7 +10,7 @@ const LayoutEditor = () => {
   const [hideBuildings, setHideBuildings] = useState(false);
   const [paintMode, setPaintMode] = useState(false);
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
-  const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'>('straight');
+  const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'>('straight');
   const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
   
   // Listen to edit mode changes from header
@@ -81,7 +81,7 @@ const LayoutEditor = () => {
     }));
   };
 
-  const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel') => {
+  const handlePaintTypeChange = (type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel') => {
     setPaintType(type);
     window.dispatchEvent(new CustomEvent('paintOptionsChange', { 
       detail: { direction: paintDirection, type, objectType: paintObjectType } 
@@ -455,11 +455,65 @@ const LayoutEditor = () => {
                     ┐
                   </Button>
                   <Button
+                    onClick={() => handlePaintTypeChange('turn-rt')}
+                    size="sm"
+                    variant={paintType === 'turn-rt' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro RT"
+                  >
+                    RT
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn-lt')}
+                    size="sm"
+                    variant={paintType === 'turn-lt' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro LT"
+                  >
+                    LT
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn-ne')}
+                    size="sm"
+                    variant={paintType === 'turn-ne' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro NE"
+                  >
+                    NE
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn-nw')}
+                    size="sm"
+                    variant={paintType === 'turn-nw' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro NW"
+                  >
+                    NW
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn-se')}
+                    size="sm"
+                    variant={paintType === 'turn-se' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro SE"
+                  >
+                    SE
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('turn-sw')}
+                    size="sm"
+                    variant={paintType === 'turn-sw' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Giro SW"
+                  >
+                    SW
+                  </Button>
+                  <Button
                     onClick={() => handlePaintTypeChange('turn')}
                     size="sm"
                     variant={paintType === 'turn' ? "default" : "outline"}
                     className="h-6 text-xs"
-                    title="Giro"
+                    title="Giro (legacy)"
                   >
                     ↻
                   </Button>

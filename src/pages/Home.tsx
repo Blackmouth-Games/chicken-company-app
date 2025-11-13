@@ -240,11 +240,20 @@ const Home = () => {
     localStorage.setItem('layoutEditMode', JSON.stringify(newMode));
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
   };
-  const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
+  const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
 
   // Helper functions for belt preview
   const getBeltPreviewImage = (type: string, direction: 'north' | 'south' | 'east' | 'west') => {
+    if (type === 'turn-rt' || type === 'turn-lt' || type.startsWith('turn-')) {
+      // Handle specific turn types
+      if (type === 'turn-rt' || type === 'turn-ne' || type === 'turn-sw') {
+        return beltRT;
+      }
+      if (type === 'turn-lt' || type === 'turn-nw' || type === 'turn-se') {
+        return beltLT;
+      }
+    }
     if (type === 'turn') {
       // For turn belts, calculate entry direction from exit (clockwise 90°)
       const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
@@ -274,7 +283,31 @@ const Home = () => {
   };
 
   const getBeltPreviewTransform = (type: string, direction: 'north' | 'south' | 'east' | 'west') => {
-    if (type === 'turn') {
+    if (type === 'turn-rt') {
+      switch (direction) {
+        case 'north': return 'rotate(0deg)';
+        case 'east': return 'rotate(90deg)';
+        case 'south': return 'rotate(180deg)';
+        case 'west': return 'rotate(270deg)';
+        default: return 'rotate(0deg)';
+      }
+    } else if (type === 'turn-lt') {
+      switch (direction) {
+        case 'north': return 'rotate(0deg)';
+        case 'east': return 'rotate(90deg)';
+        case 'south': return 'rotate(180deg)';
+        case 'west': return 'rotate(270deg)';
+        default: return 'rotate(0deg)';
+      }
+    } else if (type === 'turn-ne') {
+      return 'rotate(90deg)';
+    } else if (type === 'turn-nw') {
+      return 'rotate(270deg)';
+    } else if (type === 'turn-se') {
+      return 'rotate(90deg)';
+    } else if (type === 'turn-sw') {
+      return 'rotate(270deg)';
+    } else if (type === 'turn') {
       // Turn belts: rotate based on exit direction
       switch (direction) {
         case 'north': return 'rotate(0deg)';
@@ -327,7 +360,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'; objectType: 'belt' | 'road' }>) => {
+    const handlePaintOptionsChange = (event: CustomEvent<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'; objectType: 'belt' | 'road' }>) => {
       setPaintOptions(event.detail);
     };
 

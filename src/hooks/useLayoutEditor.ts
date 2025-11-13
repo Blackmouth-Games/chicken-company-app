@@ -15,7 +15,7 @@ interface BeltConfig {
   gridColumn: string;
   gridRow: string;
   direction: 'north' | 'south' | 'east' | 'west';
-  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
+  type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel';
   rotation?: number; // 0, 90, 180, 270
   entryDirection?: 'north' | 'south' | 'east' | 'west'; // For turn belts: direction from which items enter
   isOutput?: boolean; // Marks this belt as output for a corral
