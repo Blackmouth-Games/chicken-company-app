@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle } from "lucide-react";
+import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle, Snowflake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useUserItems } from "@/hooks/useUserItems";
+import { checkWinterSkin } from "@/scripts/checkWinterSkin";
 
 const DebugPanel = () => {
   const { t } = useLanguage();
@@ -33,6 +34,11 @@ const DebugPanel = () => {
   // Skins tab state
   const [userId, setUserId] = useState<string | null>(null);
   const [skinsLogs, setSkinsLogs] = useState<Array<{ timestamp: string; level: string; message: string; error?: any }>>([]);
+  const [winterSkinCheck, setWinterSkinCheck] = useState<any>(null);
+  const [checkingWinterSkin, setCheckingWinterSkin] = useState(false);
+  const [allSkinsFromDB, setAllSkinsFromDB] = useState<any[]>([]);
+  const [defaultSkins, setDefaultSkins] = useState<any[]>([]);
+  const [loadingSkins, setLoadingSkins] = useState(false);
   
   // Function to add logs (defined before use)
   const addSkinLog = (level: string, message: string, error?: any) => {
@@ -44,6 +50,49 @@ const DebugPanel = () => {
     }]);
   };
   
+  // Load all skins from database and default skins
+  const loadAllSkinsData = async (profileId: string) => {
+    setLoadingSkins(true);
+    try {
+      // Get all skins from building_skins table
+      const { data: allSkins, error: skinsError } = await supabase
+        .from("building_skins")
+        .select("*")
+        .order("building_type")
+        .order("skin_key");
+
+      if (skinsError) {
+        console.error("Error loading skins:", skinsError);
+        addSkinLog("error", "Error loading skins from database", skinsError);
+      } else {
+        setAllSkinsFromDB(allSkins || []);
+        // Get default skins (is_default = true)
+        const defaults = (allSkins || []).filter(s => s.is_default);
+        setDefaultSkins(defaults);
+        addSkinLog("info", `Loaded ${allSkins?.length || 0} skins from database, ${defaults.length} are default`);
+      }
+
+      // Verify user items are correctly loaded
+      const { data: userItemsData, error: itemsError } = await supabase
+        .from("user_items")
+        .select("*")
+        .eq("user_id", profileId)
+        .eq("item_type", "skin");
+
+      if (itemsError) {
+        console.error("Error loading user items:", itemsError);
+        addSkinLog("error", "Error loading user items", itemsError);
+      } else {
+        addSkinLog("info", `User has ${userItemsData?.length || 0} skins in inventory`);
+      }
+    } catch (error: any) {
+      console.error("Error in loadAllSkinsData:", error);
+      addSkinLog("error", "Error loading skins data", error);
+    } finally {
+      setLoadingSkins(false);
+    }
+  };
+
   // Get user profile ID
   useEffect(() => {
     const loadUserId = async () => {
@@ -56,6 +105,8 @@ const DebugPanel = () => {
           .maybeSingle();
         if (profile) {
           setUserId(profile.id);
+          // Load all skins data when user is loaded
+          loadAllSkinsData(profile.id);
         }
       } catch (error) {
         addSkinLog('error', 'Error loading user ID', error);
@@ -570,31 +621,190 @@ const DebugPanel = () => {
                 </div>
               </div>
 
-              {/* Owned Skins */}
+              {/* Owned Skins - Detailed Check */}
               <div className="space-y-2">
-                <h3 className="font-semibold text-sm">💎 Owned Skins</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-sm">💎 Owned Skins (Verificado en BD)</h3>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => userId && loadAllSkinsData(userId)}
+                      size="sm"
+                      variant="outline"
+                      disabled={loadingSkins || !userId}
+                      className="gap-1"
+                    >
+                      {loadingSkins ? "Cargando..." : "🔄 Actualizar"}
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        setCheckingWinterSkin(true);
+                        const result = await checkWinterSkin();
+                        setWinterSkinCheck(result);
+                        setCheckingWinterSkin(false);
+                        toast({
+                          title: result.hasWinterSkin ? "✅ Tienes skin de invierno" : "❌ No tienes skin de invierno",
+                          description: result.hasWinterSkin 
+                            ? `Tienes ${result.userWinterSkins.length} skin(s) de invierno`
+                            : "No se encontraron skins de invierno en tu inventario",
+                        });
+                      }}
+                      size="sm"
+                      variant="outline"
+                      disabled={checkingWinterSkin}
+                      className="gap-1"
+                    >
+                      <Snowflake className="h-3 w-3" />
+                      {checkingWinterSkin ? "Verificando..." : "Verificar Invierno"}
+                    </Button>
+                  </div>
+                </div>
+                
+                {loadingSkins && (
+                  <div className="bg-muted p-3 rounded-md text-sm text-center">
+                    <p>Cargando datos de skins desde la base de datos...</p>
+                  </div>
+                )}
+
+                {/* User Items from user_items table */}
                 <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold text-xs">📦 En user_items (BD):</p>
+                    <span className="text-xs text-muted-foreground">
+                      {userItems?.filter((item: any) => item.item_type === 'skin').length || 0} skins
+                    </span>
+                  </div>
                   {userItems && userItems.length > 0 ? (
                     <div className="space-y-1">
                       {userItems
                         .filter((item: any) => item.item_type === 'skin')
-                        .map((item: any) => (
-                          <div key={item.id} className="border-b pb-1 last:border-0">
-                            <p><strong>{item.item_key}</strong> (x{item.quantity})</p>
-                            <p className="text-xs text-muted-foreground">
-                              Acquired: {new Date(item.acquired_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        ))}
+                        .map((item: any) => {
+                          // Verify this skin exists in building_skins
+                          const skinInDB = allSkinsFromDB.find(s => s.skin_key === item.item_key);
+                          return (
+                            <div key={item.id} className="border-b pb-1 last:border-0">
+                              <div className="flex items-center justify-between">
+                                <p><strong>{item.item_key}</strong> (x{item.quantity})</p>
+                                {skinInDB ? (
+                                  <span className="text-xs text-green-600">✓ En BD</span>
+                                ) : (
+                                  <span className="text-xs text-yellow-600">⚠ No en building_skins</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Acquired: {new Date(item.acquired_at).toLocaleDateString()}
+                              </p>
+                              {skinInDB && (
+                                <p className="text-xs text-muted-foreground">
+                                  Tipo: {skinInDB.building_type} | Default: {skinInDB.is_default ? 'Sí' : 'No'}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
                       {userItems.filter((item: any) => item.item_type === 'skin').length === 0 && (
-                        <p className="text-muted-foreground">No owned skins</p>
+                        <p className="text-muted-foreground text-xs">❌ No tienes skins en user_items</p>
                       )}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">No items found</p>
+                    <p className="text-muted-foreground text-xs">❌ No se encontraron items en user_items</p>
                   )}
                 </div>
+
+                {/* Default Skins (is_default = true) */}
+                <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-semibold text-xs">⭐ Skins por defecto (is_default = true):</p>
+                    <span className="text-xs text-muted-foreground">{defaultSkins.length} skins</span>
+                  </div>
+                  {defaultSkins.length > 0 ? (
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {defaultSkins.map((skin: any) => {
+                        const userHasIt = userItems?.some((item: any) => 
+                          item.item_type === 'skin' && item.item_key === skin.skin_key
+                        );
+                        return (
+                          <div key={skin.id} className="border-b pb-1 last:border-0 text-xs">
+                            <div className="flex items-center justify-between">
+                              <p><strong>{skin.skin_key}</strong> ({skin.building_type})</p>
+                              {userHasIt ? (
+                                <span className="text-green-600">✓ También en user_items</span>
+                              ) : (
+                                <span className="text-blue-600">Solo default</span>
+                              )}
+                            </div>
+                            <p className="text-muted-foreground">{skin.name}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">No hay skins por defecto</p>
+                  )}
+                </div>
+
+                {/* Summary */}
+                <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded-md text-sm">
+                  <p className="font-semibold mb-1">📊 Resumen:</p>
+                  <ul className="text-xs space-y-1 text-muted-foreground">
+                    <li>• Skins en user_items: {userItems?.filter((item: any) => item.item_type === 'skin').length || 0}</li>
+                    <li>• Skins por defecto: {defaultSkins.length}</li>
+                    <li>• Total skins en BD: {allSkinsFromDB.length}</li>
+                    <li>• Skins que puedes usar: {defaultSkins.length + (userItems?.filter((item: any) => item.item_type === 'skin').length || 0)}</li>
+                  </ul>
+                </div>
               </div>
+
+              {/* Winter Skin Check Result */}
+              {winterSkinCheck && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    <Snowflake className="h-4 w-4" />
+                    Verificación de Skin de Invierno
+                  </h3>
+                  <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                    <div className={`p-2 rounded ${winterSkinCheck.hasWinterSkin ? 'bg-green-500/20 border border-green-500' : 'bg-red-500/20 border border-red-500'}`}>
+                      <p className="font-bold">
+                        {winterSkinCheck.hasWinterSkin ? '✅ Tienes skin de invierno' : '❌ No tienes skin de invierno'}
+                      </p>
+                      {winterSkinCheck.userId && (
+                        <p className="text-xs text-muted-foreground">User ID: {winterSkinCheck.userId}</p>
+                      )}
+                    </div>
+                    
+                    {winterSkinCheck.winterSkins && winterSkinCheck.winterSkins.length > 0 && (
+                      <div className="border-t pt-2 mt-2">
+                        <p className="font-semibold mb-1">Skins de invierno disponibles en BD:</p>
+                        <div className="space-y-1">
+                          {winterSkinCheck.winterSkins.map((skin: any) => (
+                            <div key={skin.id} className="text-xs">
+                              <p><strong>{skin.skin_key}</strong> - {skin.name} ({skin.building_type})</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {winterSkinCheck.userWinterSkins && winterSkinCheck.userWinterSkins.length > 0 && (
+                      <div className="border-t pt-2 mt-2">
+                        <p className="font-semibold mb-1">Tus skins de invierno:</p>
+                        <div className="space-y-1">
+                          {winterSkinCheck.userWinterSkins.map((item: any) => (
+                            <div key={item.id} className="text-xs">
+                              <p><strong>{item.item_key}</strong> (x{item.quantity})</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {winterSkinCheck.error && (
+                      <div className="border-t pt-2 mt-2">
+                        <p className="text-xs text-red-600">Error: {winterSkinCheck.error}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Error Logs */}
               <div className="space-y-2">
