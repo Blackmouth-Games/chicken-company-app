@@ -225,7 +225,7 @@ export const Road = ({
       {/* Action buttons - outside the road */}
       {isEditMode && isSelected && !isDragging && (
         <div
-          className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-blue-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-[100] whitespace-nowrap"
+          className="absolute left-full ml-1 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border border-blue-400 rounded shadow-lg p-1 flex flex-col gap-1 z-[100] whitespace-nowrap"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -244,11 +244,11 @@ export const Road = ({
                 e.stopPropagation();
                 onRemove();
               }}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Eliminar carretera"
             >
-              <X className="h-4 w-4 mr-1" />
-              Eliminar
+              <X className="h-3 w-3 mr-0.5" />
+              <span className="text-[10px]">Eliminar</span>
             </Button>
           )}
           {isManualRoad && onRotate && (
@@ -260,11 +260,11 @@ export const Road = ({
                 e.stopPropagation();
                 onRotate();
               }}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Rotar carretera"
             >
-              <RotateCw className="h-4 w-4 mr-1" />
-              Rotar
+              <RotateCw className="h-3 w-3 mr-0.5" />
+              <span className="text-[10px]">Rotar</span>
             </Button>
           )}
           {isManualRoad && onTogglePointA && (
@@ -276,10 +276,10 @@ export const Road = ({
                 e.stopPropagation();
                 onTogglePointA();
               }}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como punto A (inicio)"
             >
-              🟢 Punto A
+              <span className="text-[10px]">🟢 A</span>
             </Button>
           )}
           {isManualRoad && onToggleTransport && (
@@ -291,10 +291,10 @@ export const Road = ({
                 e.stopPropagation();
                 onToggleTransport();
               }}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como transporte"
             >
-              🚚 Transporte
+              <span className="text-[10px]">🚚 T</span>
             </Button>
           )}
           {isManualRoad && onTogglePointB && (
@@ -306,10 +306,10 @@ export const Road = ({
                 e.stopPropagation();
                 onTogglePointB();
               }}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como punto B (destino)"
             >
-              🔴 Punto B
+              <span className="text-[10px]">🔴 B</span>
             </Button>
           )}
         </div>

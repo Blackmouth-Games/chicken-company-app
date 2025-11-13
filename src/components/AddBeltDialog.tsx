@@ -45,14 +45,14 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-lg">
+      <DialogContent className="w-full max-w-xs">
         <DialogHeader>
-          <DialogTitle>{t('layoutEditor.addBelt')}</DialogTitle>
+          <DialogTitle className="text-sm">{t('layoutEditor.addBelt')}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-3 py-2">
           {gridPosition && (
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               {t('layoutEditor.addBeltPrompt', { 
                 col: gridPosition.col.toString(), 
                 row: gridPosition.row.toString() 
@@ -61,33 +61,33 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
           )}
 
           {/* Direction Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('layoutEditor.selectDirection')}</label>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <label className="text-xs font-medium">{t('layoutEditor.selectDirection')}</label>
+            <div className="grid grid-cols-2 gap-1">
               {directions.map(({ value, icon: Icon, label }) => (
                 <Button
                   key={value}
                   onClick={() => setSelectedDirection(value)}
                   variant={selectedDirection === value ? "default" : "outline"}
-                  className="h-16 flex flex-col gap-1"
+                  className="h-8 flex flex-col gap-0.5 text-xs"
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs">{label}</span>
+                  <Icon className="h-3 w-3" />
+                  <span className="text-[10px]">{label}</span>
                 </Button>
               ))}
             </div>
           </div>
 
           {/* Type Selection */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('layoutEditor.selectType')}</label>
-            <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1">
+            <label className="text-xs font-medium">{t('layoutEditor.selectType')}</label>
+            <div className="grid grid-cols-3 gap-1">
               {types.map(({ value, label }) => (
                 <Button
                   key={value}
                   onClick={() => setSelectedType(value)}
                   variant={selectedType === value ? "default" : "outline"}
-                  className="h-12 text-xs"
+                  className="h-7 text-[10px]"
                 >
                   {label}
                 </Button>
@@ -96,17 +96,17 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
           </div>
 
           {/* Confirm Button */}
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-1 pt-1">
             <Button
               onClick={() => onOpenChange(false)}
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-7 text-xs"
             >
               {t('common.cancel')}
             </Button>
             <Button
               onClick={handleConfirm}
-              className="flex-1"
+              className="flex-1 h-7 text-xs"
             >
               {t('common.confirm')}
             </Button>

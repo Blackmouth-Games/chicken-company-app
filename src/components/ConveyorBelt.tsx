@@ -406,7 +406,7 @@ export const ConveyorBelt = ({
       {/* Action buttons outside the belt - positioned to the right */}
       {isEditMode && isSelected && !isDragging && (
         <div 
-          className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border-2 border-yellow-400 rounded-lg shadow-lg p-2 flex flex-col gap-2 z-50 whitespace-nowrap"
+          className="absolute left-full ml-1 top-1/2 -translate-y-1/2 bg-background/95 backdrop-blur-sm border border-yellow-400 rounded shadow-lg p-1 flex flex-col gap-1 z-50 whitespace-nowrap"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -425,11 +425,11 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant="destructive"
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Eliminar cinta"
             >
-              <X className="h-4 w-4 mr-1" />
-              Eliminar
+              <X className="h-3 w-3 mr-0.5" />
+              <span className="text-[10px]">Eliminar</span>
             </Button>
           )}
           {onRotate && (
@@ -441,11 +441,11 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant="default"
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Rotar cinta"
             >
-              <RotateCw className="h-4 w-4 mr-1" />
-              Rotar
+              <RotateCw className="h-3 w-3 mr-0.5" />
+              <span className="text-[10px]">Rotar</span>
             </Button>
           )}
           {onToggleOutput && (
@@ -457,10 +457,10 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant={belt.isOutput ? "default" : "outline"}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como salida de corral"
             >
-              🥚 Output
+              <span className="text-[10px]">🥚 Out</span>
             </Button>
           )}
           {onToggleDestiny && (
@@ -472,10 +472,10 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant={belt.isDestiny ? "default" : "outline"}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como destino final"
             >
-              🎯 Destiny
+              <span className="text-[10px]">🎯 Dest</span>
             </Button>
           )}
           {onToggleTransport && (
@@ -487,10 +487,10 @@ export const ConveyorBelt = ({
               }}
               size="sm"
               variant={belt.isTransport ? "default" : "outline"}
-              className="h-8 px-3"
+              className="h-6 px-2 text-xs"
               title="Marcar como cinta de transporte"
             >
-              🚚 Transporte
+              <span className="text-[10px]">🚚 Trans</span>
             </Button>
           )}
         </div>

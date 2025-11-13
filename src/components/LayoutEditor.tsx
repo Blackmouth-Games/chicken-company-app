@@ -256,20 +256,20 @@ const LayoutEditor = () => {
         }}
       >
         <div
-          className="cursor-move bg-background/95 backdrop-blur-sm rounded-lg border-2 border-primary shadow-2xl p-3 flex flex-col gap-2 min-w-[180px]"
+          className="cursor-move bg-background/95 backdrop-blur-sm rounded-lg border border-primary shadow-2xl p-1.5 flex flex-col gap-1 min-w-[120px]"
           onMouseDown={handleMouseDown}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-2 pb-2 border-b">
-            <h3 className="text-sm font-semibold text-primary">Editor</h3>
+          <div className="flex items-center justify-between mb-1 pb-1 border-b">
+            <h3 className="text-xs font-semibold text-primary">Editor</h3>
             <Button
               onClick={toggleVisibility}
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0"
+              className="h-5 w-5 p-0"
               title="Ocultar editor"
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3 w-3" />
             </Button>
           </div>
 
@@ -278,25 +278,25 @@ const LayoutEditor = () => {
             onClick={toggleEditMode}
             size="sm"
             variant="default"
-            className="gap-2 w-full justify-start"
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
           >
-            <Layout className="h-4 w-4" />
-            {t('layoutEditor.deactivateEdit')}
+            <Layout className="h-3 w-3" />
+            <span className="text-[10px]">Desactivar</span>
           </Button>
 
           {/* Divider */}
-          <div className="h-px bg-border my-1" />
+          <div className="h-px bg-border my-0.5" />
 
           {/* Hide Buildings */}
           <Button
             onClick={toggleHideBuildings}
             size="sm"
             variant={hideBuildings ? "default" : "outline"}
-            className="gap-2 w-full justify-start"
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
             title={hideBuildings ? "Mostrar edificios" : "Ocultar edificios"}
           >
-            {hideBuildings ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {hideBuildings ? "Mostrar" : "Ocultar"} Edificios
+            {hideBuildings ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            <span className="text-[10px]">{hideBuildings ? "Mostrar" : "Ocultar"}</span>
           </Button>
 
           {/* Add Belt */}
@@ -304,22 +304,22 @@ const LayoutEditor = () => {
             onClick={addBelt}
             size="sm"
             variant="outline"
-            className="gap-2 w-full justify-start"
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
             title={t('layoutEditor.addBeltTitle')}
           >
-            <Plus className="h-4 w-4" />
-            {t('layoutEditor.addBelt')}
+            <Plus className="h-3 w-3" />
+            <span className="text-[10px]">Cinta</span>
           </Button>
 
           <Button
             onClick={addRoad}
             size="sm"
             variant="outline"
-            className="gap-2 w-full justify-start"
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
             title="Agregar carretera"
           >
-            <Plus className="h-4 w-4" />
-            Agregar carretera
+            <Plus className="h-3 w-3" />
+            <span className="text-[10px]">Carretera</span>
           </Button>
 
           {/* Paint Mode */}
@@ -327,25 +327,25 @@ const LayoutEditor = () => {
             onClick={togglePaintMode}
             size="sm"
             variant={paintMode ? "default" : "outline"}
-            className="gap-2 w-full justify-start"
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
             title={paintMode ? "Desactivar modo pintado" : "Activar modo pintado"}
           >
-            <Paintbrush className="h-4 w-4" />
-            {paintMode ? "Pintar ON" : "Modo Pintar"}
+            <Paintbrush className="h-3 w-3" />
+            <span className="text-[10px]">{paintMode ? "ON" : "Pintar"}</span>
           </Button>
 
           {/* Paint Mode Options - Only show when paint mode is active */}
           {paintMode && (
             <>
               {/* Object Type Selector */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">Objeto:</label>
-                <div className="grid grid-cols-2 gap-1">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Objeto:</label>
+                <div className="grid grid-cols-2 gap-0.5">
                   <Button
                     onClick={() => handlePaintObjectTypeChange('belt')}
                     size="sm"
                     variant={paintObjectType === 'belt' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     title="Pintar cintas"
                   >
                     Cinta
@@ -354,7 +354,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintObjectTypeChange('road')}
                     size="sm"
                     variant={paintObjectType === 'road' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-[10px]"
                     title="Pintar carreteras"
                   >
                     Carretera
@@ -363,14 +363,14 @@ const LayoutEditor = () => {
               </div>
 
               {/* Direction Selector */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">Dirección:</label>
-                <div className="grid grid-cols-2 gap-1">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Dirección:</label>
+                <div className="grid grid-cols-2 gap-0.5">
                   <Button
                     onClick={() => handlePaintDirectionChange('north')}
                     size="sm"
                     variant={paintDirection === 'north' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Norte (↑)"
                   >
                     ↑
@@ -379,7 +379,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintDirectionChange('south')}
                     size="sm"
                     variant={paintDirection === 'south' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Sur (↓)"
                   >
                     ↓
@@ -388,7 +388,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintDirectionChange('east')}
                     size="sm"
                     variant={paintDirection === 'east' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Este (→)"
                   >
                     →
@@ -397,7 +397,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintDirectionChange('west')}
                     size="sm"
                     variant={paintDirection === 'west' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Oeste (←)"
                   >
                     ←
@@ -406,14 +406,14 @@ const LayoutEditor = () => {
               </div>
 
               {/* Type Selector */}
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-muted-foreground">Tipo:</label>
-                <div className="grid grid-cols-3 gap-1">
+              <div className="flex flex-col gap-0.5">
+                <label className="text-[10px] font-medium text-muted-foreground">Tipo:</label>
+                <div className="grid grid-cols-3 gap-0.5">
                   <Button
                     onClick={() => handlePaintTypeChange('straight')}
                     size="sm"
                     variant={paintType === 'straight' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Recta"
                   >
                     ─
@@ -422,7 +422,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-ne')}
                     size="sm"
                     variant={paintType === 'curve-ne' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Curva NE"
                   >
                     └
@@ -431,7 +431,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-nw')}
                     size="sm"
                     variant={paintType === 'curve-nw' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Curva NW"
                   >
                     ┘
@@ -440,7 +440,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-se')}
                     size="sm"
                     variant={paintType === 'curve-se' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Curva SE"
                   >
                     ┌
@@ -449,7 +449,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('curve-sw')}
                     size="sm"
                     variant={paintType === 'curve-sw' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Curva SW"
                   >
                     ┐
@@ -458,7 +458,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('turn')}
                     size="sm"
                     variant={paintType === 'turn' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Giro"
                   >
                     ↻
@@ -467,7 +467,7 @@ const LayoutEditor = () => {
                     onClick={() => handlePaintTypeChange('funnel')}
                     size="sm"
                     variant={paintType === 'funnel' ? "default" : "outline"}
-                    className="h-7 text-xs"
+                    className="h-6 text-xs"
                     title="Embudo"
                   >
                     ⬇
