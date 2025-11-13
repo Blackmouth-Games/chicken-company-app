@@ -104,6 +104,34 @@ export const SkinSelectorDialog = ({
       return;
     }
 
+    // Verify user owns the skin or it's the default for the building's level
+    const skin = skins.find(s => s.skin_key === skinKey);
+    if (skin) {
+      const userOwnsSkin = hasItem("skin", skinKey);
+      const isDefault = skin.is_default;
+      const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
+      const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
+      
+      // Can only select if:
+      // 1. User owns it, OR
+      // 2. It's default AND it's for the building's current level
+      const canUse = userOwnsSkin || (isDefault && buildingLevel && skinLevel === buildingLevel);
+      
+      if (!canUse) {
+        const errorMsg = "No tienes esta skin";
+        console.error("Error selecting skin:", errorMsg);
+        window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+          detail: { message: errorMsg, error: new Error(errorMsg) } 
+        }));
+        toast({
+          title: "Error",
+          description: "No tienes esta skin en tu inventario",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     try {
       if (buildingType === BUILDING_TYPES.HOUSE) {
         // House skin is stored in user profile, not in user_buildings
@@ -185,20 +213,25 @@ export const SkinSelectorDialog = ({
         // If we have a local image or a database skin, create a slot
         if (localImage || dbSkin) {
           if (dbSkin) {
-            // Database skin exists - check if owned or default
-            const isOwned = dbSkin.is_default || hasItem("skin", dbSkin.skin_key);
+            // Database skin exists - check if owned
+            const isOwned = hasItem("skin", dbSkin.skin_key);
             const isDefault = dbSkin.is_default;
             
-            // Add if owned or default
-            if (isOwned || isDefault) {
+            // Only add if:
+            // 1. User owns it (in user_items), OR
+            // 2. It's default AND it's for the building's current level, OR
+            // 3. It's for the building's current level (to show as locked if not owned)
+            const canUse = isOwned || (isDefault && buildingLevel && level === buildingLevel);
+            const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
+            
+            // Show skin if user can use it, or if it's for the current level (to show as locked)
+            if (canUse || isCurrentLevel) {
               slots.push({ level, variant, skin: dbSkin, isLocal: false });
-            } else if (localImage) {
-              // Database skin exists but not owned, but we have local image - show as local
-              slots.push({ level, variant, skin: null, isLocal: true });
             }
           } else if (localImage) {
-            // Only local image exists - show it (treat as available)
-            slots.push({ level, variant, skin: null, isLocal: true });
+            // Only local image exists - show it but it's not available (user doesn't own it)
+            // Don't add it as available, only show if there's a database entry
+            // For now, we won't show local-only images as they're not in the database
           }
         }
       }
@@ -276,7 +309,15 @@ export const SkinSelectorDialog = ({
                           const skin = slot.skin;
                           const isLocal = slot.isLocal || false;
                           const skinKey = `${buildingType}_${slot.level}${slot.variant}`;
-                          const isOwned = skin ? (skin.is_default || hasItem("skin", skin.skin_key)) : isLocal; // Local images are always "owned"
+                          
+                          // Check if user actually owns this skin
+                          const userOwnsSkin = skin ? hasItem("skin", skin.skin_key) : false;
+                          const isDefault = skin ? skin.is_default : false;
+                          
+                          // Can only use if:
+                          // 1. User owns it, OR
+                          // 2. It's default AND it's for the building's current level
+                          const canUse = userOwnsSkin || (isDefault && buildingLevel && slot.level === buildingLevel);
                           
                           // Determine if this skin is selected:
                           // 1. If currentSkin matches this skin's key
@@ -290,8 +331,9 @@ export const SkinSelectorDialog = ({
                             currentSkin === null && slot.level === buildingLevel && slot.variant === 'A'
                           );
                           
-                          // Only show select button for skins of the building's current level
+                          // Only show select button for skins of the building's current level AND if user can use it
                           const isCurrentLevel = buildingLevel ? slot.level === buildingLevel : true;
+                          const canSelect = isCurrentLevel && canUse;
                           
                           const isEmpty = !skin && !isLocal;
                           
@@ -316,7 +358,7 @@ export const SkinSelectorDialog = ({
                                   ? "border-muted/30 bg-muted/10 opacity-50"
                                   : isSelected
                                   ? "border-primary bg-primary/10"
-                                  : isOwned
+                                  : canUse
                                   ? "border-border hover:border-primary/50 cursor-pointer"
                                   : "border-muted/50 bg-muted/5 opacity-60"
                               }`}
@@ -350,16 +392,11 @@ export const SkinSelectorDialog = ({
                                   </div>
                                 )}
 
-                                {/* Action Button - Only show for current level */}
-                                {isCurrentLevel && (skin || isLocal) && (
+                                {/* Action Button - Only show for current level AND if user can use it */}
+                                {canSelect && skin && (
                                   <Button
                                     onClick={() => {
-                                      if (skin) {
-                                        handleSelectSkin(skin.skin_key);
-                                      } else if (isLocal) {
-                                        // For local images, set selected_skin to null to use default
-                                        handleSelectSkin(skinKey);
-                                      }
+                                      handleSelectSkin(skin.skin_key);
                                     }}
                                     disabled={isSelected || !buildingId}
                                     className="w-full"
@@ -383,8 +420,16 @@ export const SkinSelectorDialog = ({
                                   </Button>
                                 )}
                                 
+                                {/* Locked message if can't use */}
+                                {isCurrentLevel && skin && !canUse && (
+                                  <div className="text-center text-xs text-muted-foreground py-2">
+                                    <Lock className="w-4 h-4 mx-auto mb-1 opacity-50" />
+                                    No disponible
+                                  </div>
+                                )}
+                                
                                 {/* Info text for other levels */}
-                                {!isCurrentLevel && (skin || isLocal) && (
+                                {!isCurrentLevel && skin && (
                                   <div className="text-center text-xs text-muted-foreground py-2">
                                     Nivel {slot.level}
                                   </div>
@@ -398,8 +443,8 @@ export const SkinSelectorDialog = ({
                                 </div>
                               )}
 
-                              {/* Lock Badge for unowned skins */}
-                              {skin && !isOwned && (
+                              {/* Lock Badge for unowned/unavailable skins */}
+                              {skin && !canUse && (
                                 <div className="absolute top-2 right-2 bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
                                   <Lock className="w-3 h-3" />
                                 </div>
