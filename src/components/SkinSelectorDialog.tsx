@@ -34,7 +34,7 @@ export const SkinSelectorDialog = ({
   onSkinSelected,
 }: SkinSelectorDialogProps) => {
   const { skins, loading: skinsLoading } = useBuildingSkins(buildingType);
-  const { hasItem, loading: itemsLoading } = useUserItems(userId);
+  const { hasItem, loading: itemsLoading, items: userItems } = useUserItems(userId);
   const { toast } = useToast();
 
   // Get all local images for this building type
@@ -111,11 +111,17 @@ export const SkinSelectorDialog = ({
       const isDefault = skin.is_default;
       const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
       const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
+      const skinVariant = skinLevelMatch ? skinLevelMatch[2] : null;
+      const isVariantA = skinVariant === 'A';
+      
+      // Check if user has any skins at all
+      const userHasAnySkins = userItems?.some((item: any) => item.item_type === 'skin') || false;
       
       // Can only select if:
       // 1. User owns it, OR
-      // 2. It's default AND it's for the building's current level
-      const canUse = userOwnsSkin || (isDefault && buildingLevel && skinLevel === buildingLevel);
+      // 2. It's default (always allow default skins), OR
+      // 3. User has no skins at all AND it's variant A (allow default A skins)
+      const canUse = userOwnsSkin || isDefault || (!userHasAnySkins && isVariantA);
       
       if (!canUse) {
         const errorMsg = "No tienes esta skin";
@@ -216,12 +222,17 @@ export const SkinSelectorDialog = ({
             // Database skin exists - check if owned
             const isOwned = hasItem("skin", dbSkin.skin_key);
             const isDefault = dbSkin.is_default;
+            const isVariantA = variant === 'A';
+            
+            // Check if user has any skins at all
+            const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
             
             // Only add if:
             // 1. User owns it (in user_items), OR
-            // 2. It's default AND it's for the building's current level, OR
-            // 3. It's for the building's current level (to show as locked if not owned)
-            const canUse = isOwned || (isDefault && buildingLevel && level === buildingLevel);
+            // 2. It's default (always show default skins), OR
+            // 3. User has no skins at all AND it's variant A (show default A skins), OR
+            // 4. It's for the building's current level (to show as locked if not owned)
+            const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
             const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
             
             // Show skin if user can use it, or if it's for the current level (to show as locked)
@@ -244,7 +255,7 @@ export const SkinSelectorDialog = ({
     });
 
     return slots;
-  }, [skins, buildingType, buildingLevel, hasItem, localImages]);
+  }, [skins, buildingType, buildingLevel, hasItem, localImages, userItems, itemsLoading]);
 
   // Find the default skin for the building's level
   const defaultSkinForLevel = useMemo(() => {
@@ -313,11 +324,16 @@ export const SkinSelectorDialog = ({
                           // Check if user actually owns this skin
                           const userOwnsSkin = skin ? hasItem("skin", skin.skin_key) : false;
                           const isDefault = skin ? skin.is_default : false;
+                          const isVariantA = slot.variant === 'A';
+                          
+                          // Check if user has any skins at all
+                          const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
                           
                           // Can only use if:
                           // 1. User owns it, OR
-                          // 2. It's default AND it's for the building's current level
-                          const canUse = userOwnsSkin || (isDefault && buildingLevel && slot.level === buildingLevel);
+                          // 2. It's default (always allow default skins), OR
+                          // 3. User has no skins at all AND it's variant A (show default A skins)
+                          const canUse = userOwnsSkin || isDefault || (!userHasAnySkins && isVariantA);
                           
                           // Determine if this skin is selected:
                           // 1. If currentSkin matches this skin's key
