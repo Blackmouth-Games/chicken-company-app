@@ -34,7 +34,7 @@ export const SkinSelectorDialog = ({
   onSkinSelected,
 }: SkinSelectorDialogProps) => {
   const { skins, loading: skinsLoading } = useBuildingSkins(buildingType);
-  const { hasItem, loading: itemsLoading, items: userItems } = useUserItems(userId);
+  const { hasItem, loading: itemsLoading, items: userItems, refetch: refetchUserItems } = useUserItems(userId);
   const { toast } = useToast();
 
   // Get all local images for this building type
@@ -120,39 +120,55 @@ export const SkinSelectorDialog = ({
       return;
     }
 
-    // Verify user owns the skin or it's the default for the building's level
-    const skin = skins.find(s => s.skin_key === skinKey);
-    if (skin) {
-      const userOwnsSkin = hasItem("skin", skinKey);
-      const isDefault = skin.is_default;
-      const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
-      const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
-      const skinVariant = skinLevelMatch ? skinLevelMatch[2] : null;
-      const isVariantA = skinVariant === 'A';
-      
-      // Check if user has any skins at all
-      const userHasAnySkins = userItems?.some((item: any) => item.item_type === 'skin') || false;
-      
-      // Can only select if:
-      // 1. User owns it, OR
-      // 2. It's default (always allow default skins), OR
-      // 3. User has no skins at all AND it's variant A (allow default A skins)
-      const canUse = userOwnsSkin || isDefault || (!userHasAnySkins && isVariantA);
-      
-      if (!canUse) {
-        const errorMsg = "No tienes esta skin";
-        console.error("Error selecting skin:", errorMsg);
-        window.dispatchEvent(new CustomEvent('skinSelectorError', { 
-          detail: { message: errorMsg, error: new Error(errorMsg) } 
-        }));
-        toast({
-          title: "Error",
-          description: "No tienes esta skin en tu inventario",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+        // Verify user owns the skin or it's the default for the building's level
+        // AND verify it's for the building's current level
+        const skin = skins.find(s => s.skin_key === skinKey);
+        if (skin) {
+          const userOwnsSkin = hasItem("skin", skinKey);
+          const isDefault = skin.is_default;
+          const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
+          const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
+          const skinVariant = skinLevelMatch ? skinLevelMatch[2] : null;
+          const isVariantA = skinVariant === 'A';
+          
+          // Check if skin is for the building's current level
+          if (buildingLevel && skinLevel !== buildingLevel) {
+            const errorMsg = `Esta skin es del nivel ${skinLevel}, pero el edificio es nivel ${buildingLevel}`;
+            console.error("Error selecting skin:", errorMsg);
+            window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+              detail: { message: errorMsg, error: new Error(errorMsg) } 
+            }));
+            toast({
+              title: "Error",
+              description: `Solo puedes seleccionar skins del nivel ${buildingLevel}`,
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // Check if user has any skins at all
+          const userHasAnySkins = userItems?.some((item: any) => item.item_type === 'skin') || false;
+          
+          // Can only select if:
+          // 1. User owns it, OR
+          // 2. It's default for the building's level, OR
+          // 3. User has no skins at all AND it's variant A (allow default A skins)
+          const canUse = userOwnsSkin || (isDefault && skinLevel === buildingLevel) || (!userHasAnySkins && isVariantA && skinLevel === buildingLevel);
+          
+          if (!canUse) {
+            const errorMsg = "No tienes esta skin";
+            console.error("Error selecting skin:", errorMsg);
+            window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+              detail: { message: errorMsg, error: new Error(errorMsg) } 
+            }));
+            toast({
+              title: "Error",
+              description: "No tienes esta skin en tu inventario",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
 
     try {
       // All buildings (including house) store skin in user_buildings
@@ -172,6 +188,19 @@ export const SkinSelectorDialog = ({
         title: "¡Éxito!",
         description: "Skin aplicada correctamente",
       });
+
+      // Refresh user items in case they were updated (though selecting a skin doesn't change items)
+      await refetchUserItems();
+
+      // Emit event to notify all components that a skin was selected
+      window.dispatchEvent(new CustomEvent('skinSelected', { 
+        detail: { 
+          buildingId, 
+          buildingType, 
+          skinKey,
+          userId 
+        } 
+      }));
 
       onSkinSelected();
       onOpenChange(false);
@@ -422,11 +451,11 @@ export const SkinSelectorDialog = ({
                             currentSkin === null && slot.level === buildingLevel && slot.variant === 'A'
                           );
                           
-                          // Show select button if:
-                          // - It's a default skin (always allow), OR
+                          // Show select button ONLY if:
                           // - It's for the building's current level AND user can use it
+                          // No skins from other levels can be selected, even if they're default
                           const isCurrentLevel = buildingLevel ? slot.level === buildingLevel : true;
-                          const canSelect = isDefault || (isCurrentLevel && canUse);
+                          const canSelect = isCurrentLevel && canUse;
                           
                           const isEmpty = !skin && !isLocal;
                           

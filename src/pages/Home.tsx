@@ -375,6 +375,23 @@ const Home = () => {
     loadUserProfile();
   }, [telegramUser]);
 
+  // Listen for skin selection events to refresh buildings
+  useEffect(() => {
+    const handleSkinSelected = async () => {
+      // Reload buildings to get updated selected_skin
+      if (userId) {
+        await loadBuildings(userId);
+      } else {
+        await loadUserProfile();
+      }
+    };
+
+    window.addEventListener('skinSelected', handleSkinSelected);
+    return () => {
+      window.removeEventListener('skinSelected', handleSkinSelected);
+    };
+  }, [userId]);
+
   useEffect(() => {
     // Initialize music
     if (!musicRef.current) {
