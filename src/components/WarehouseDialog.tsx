@@ -213,6 +213,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
         onOpenChange={setShowSkinSelector}
         buildingId={warehouse?.id}
         buildingType={BUILDING_TYPES.WAREHOUSE}
+        buildingLevel={currentLevel}
         userId={userId}
         currentSkin={warehouse?.selected_skin || null}
         onSkinSelected={() => {

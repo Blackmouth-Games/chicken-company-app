@@ -17,6 +17,7 @@ interface SkinSelectorDialogProps {
   onOpenChange: (open: boolean) => void;
   buildingId: string | undefined;
   buildingType: ConstantsBuildingType;
+  buildingLevel?: number; // Level of the building - only show skins for this level
   userId: string | undefined;
   currentSkin: string | null;
   onSkinSelected: () => void;
@@ -27,6 +28,7 @@ export const SkinSelectorDialog = ({
   onOpenChange,
   buildingId,
   buildingType,
+  buildingLevel,
   userId,
   currentSkin,
   onSkinSelected,
@@ -147,18 +149,16 @@ export const SkinSelectorDialog = ({
   // Create inventory slots organized by level and variant
   // Now supports 10 skins per level (A-J or 1-10)
   // Shows: all local images + database skins (owned/default)
+  // If buildingLevel is provided, only show skins for that level
   const inventorySlots = useMemo(() => {
     let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean }> = [];
     
-    // Extract all unique levels from local images and database skins
+    // Determine which levels to show
+    // Show all levels, but only allow selection for the building's current level
     const levelSet = new Set<number>();
-    
-    // Add levels from local images
     for (const img of localImages) {
       levelSet.add(img.level);
     }
-    
-    // Add levels from database skins
     for (const skin of skins) {
       const levelMatch = skin.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
       if (levelMatch) {
@@ -166,16 +166,13 @@ export const SkinSelectorDialog = ({
         levelSet.add(level);
       }
     }
-    
-    // Get max level from local images or database, default to 5
-    const levels = levelSet.size > 0 ? Array.from(levelSet).sort((a, b) => a - b) : [1, 2, 3, 4, 5];
-    const maxLevel = levels.length > 0 ? Math.max(...levels) : 5;
+    const levelsToShow = levelSet.size > 0 ? Array.from(levelSet).sort((a, b) => a - b) : [1, 2, 3, 4, 5];
     
     // Generate 10 variants per level (A-J)
     const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     
-    // For each level, create slots for all variants that exist locally or in database
-    for (let level = 1; level <= maxLevel; level++) {
+    // For each level to show, create slots for all variants that exist locally or in database
+    for (const level of levelsToShow) {
       for (const variant of variants) {
         const skinKey = `${buildingType}_${level}${variant}`;
         
@@ -214,7 +211,21 @@ export const SkinSelectorDialog = ({
     });
 
     return slots;
-  }, [skins, buildingType, hasItem, localImages]);
+  }, [skins, buildingType, buildingLevel, hasItem, localImages]);
+
+  // Find the default skin for the building's level
+  const defaultSkinForLevel = useMemo(() => {
+    if (!buildingLevel) return null;
+    // Find the default skin (is_default = true) for this level
+    return skins.find(s => {
+      const levelMatch = s.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
+      if (levelMatch) {
+        const level = parseInt(levelMatch[1], 10);
+        return level === buildingLevel && s.is_default;
+      }
+      return false;
+    });
+  }, [skins, buildingLevel]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -266,7 +277,22 @@ export const SkinSelectorDialog = ({
                           const isLocal = slot.isLocal || false;
                           const skinKey = `${buildingType}_${slot.level}${slot.variant}`;
                           const isOwned = skin ? (skin.is_default || hasItem("skin", skin.skin_key)) : isLocal; // Local images are always "owned"
-                          const isSelected = skin ? (currentSkin === skin.skin_key || (!currentSkin && skin.is_default)) : (currentSkin === null && slot.level === 1 && slot.variant === 'A'); // Default to 1A if no skin selected
+                          
+                          // Determine if this skin is selected:
+                          // 1. If currentSkin matches this skin's key
+                          // 2. If no currentSkin and this is the default skin for the building's level
+                          // 3. If no currentSkin and no default found, and this is the first variant (A) of the building's level
+                          const isSelected = skin ? (
+                            currentSkin === skin.skin_key || 
+                            (!currentSkin && skin.is_default && slot.level === buildingLevel) ||
+                            (!currentSkin && !defaultSkinForLevel && slot.level === buildingLevel && slot.variant === 'A')
+                          ) : (
+                            currentSkin === null && slot.level === buildingLevel && slot.variant === 'A'
+                          );
+                          
+                          // Only show select button for skins of the building's current level
+                          const isCurrentLevel = buildingLevel ? slot.level === buildingLevel : true;
+                          
                           const isEmpty = !skin && !isLocal;
                           
                           // Get building display - use local image if available, otherwise use skin from database
@@ -324,8 +350,8 @@ export const SkinSelectorDialog = ({
                                   </div>
                                 )}
 
-                                {/* Action Button */}
-                                {(skin || isLocal) && (
+                                {/* Action Button - Only show for current level */}
+                                {isCurrentLevel && (skin || isLocal) && (
                                   <Button
                                     onClick={() => {
                                       if (skin) {
@@ -355,6 +381,13 @@ export const SkinSelectorDialog = ({
                                       "Seleccionar"
                                     )}
                                   </Button>
+                                )}
+                                
+                                {/* Info text for other levels */}
+                                {!isCurrentLevel && (skin || isLocal) && (
+                                  <div className="text-center text-xs text-muted-foreground py-2">
+                                    Nivel {slot.level}
+                                  </div>
                                 )}
                               </div>
 

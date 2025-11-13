@@ -212,6 +212,7 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
         onOpenChange={setShowSkinSelector}
         buildingId={market?.id}
         buildingType={BUILDING_TYPES.MARKET}
+        buildingLevel={currentLevel}
         userId={userId}
         currentSkin={market?.selected_skin || null}
         onSkinSelected={() => {

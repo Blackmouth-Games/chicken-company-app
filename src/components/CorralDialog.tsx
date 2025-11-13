@@ -243,6 +243,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
         onOpenChange={setShowSkinSelector}
         buildingId={buildingId}
         buildingType={BUILDING_TYPES.CORRAL}
+        buildingLevel={corral?.level}
         userId={userId}
         currentSkin={corral?.selected_skin || null}
         onSkinSelected={() => {
