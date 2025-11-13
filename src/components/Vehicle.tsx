@@ -31,22 +31,14 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     return reverseDirection ? baseRotation + 180 : baseRotation;
   };
 
-  // Get flip transform - always flip horizontally (mirror the image)
-  const getFlipTransform = () => {
-    // Always flip horizontally to correct the image orientation
-    return 'scaleX(-1)';
-  };
-
   // Calculate position within the cell based on progress and road direction
   const getPosition = () => {
     // Progress determines position within the cell (0 = start, 1 = end)
     // Position changes based on road direction
     const rotation = getRotation();
-    const flip = getFlipTransform();
     const transforms = [
       'translate(-50%, -50%)',
-      `rotate(${rotation})`,
-      flip
+      `rotate(${rotation}deg)`,
     ].filter(Boolean).join(' ');
     
     switch (direction) {
@@ -109,6 +101,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         style={{
           width: '64px',
           height: '64px',
+          transform: 'scaleX(-1)', // Mirror both vehicle images horizontally
         }}
       />
     </div>
