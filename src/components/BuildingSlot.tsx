@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 import { useMemo } from "react";
+import slotBgEmpty from "@/assets/bg/slot_bg_empty.png";
+import slotBgCoop from "@/assets/bg/slot_bg_coop.png";
 
 interface BuildingSlotProps {
   position: number;
@@ -52,7 +54,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
       <div className="relative z-10 h-full">
         <div
           onClick={onBuildingClick}
-          className="border-2 border-green-500 rounded-xl bg-gradient-to-br from-green-100 to-green-50 cursor-pointer hover:from-green-200 hover:to-green-100 transition-all shadow-md hover:shadow-xl relative h-full flex flex-col"
+          className="border-2 border-green-500 rounded-xl cursor-pointer transition-all shadow-md hover:shadow-xl relative h-full flex flex-col overflow-hidden"
+          style={{
+            backgroundImage: `url(${slotBgCoop})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
         >
           {/* Level badge - Positioned outside to avoid clipping */}
           <div className="absolute -top-3 -left-3 bg-green-600 text-white rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center text-xs md:text-sm font-bold shadow-lg z-50 border-2 border-white">
@@ -114,7 +122,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     <div className="relative z-10 h-full">
       <div 
         onClick={() => onBuyClick(position)}
-        className="border-2 border-dashed border-amber-400 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 p-4 flex items-center justify-center cursor-pointer hover:from-amber-100 hover:to-yellow-100 transition-all shadow-sm hover:shadow-lg h-full"
+        className="border-2 border-dashed border-amber-400 rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all shadow-sm hover:shadow-lg h-full overflow-hidden"
+        style={{
+          backgroundImage: `url(${slotBgEmpty})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
       >
         <div className="flex items-center justify-center h-20 w-20 md:h-24 md:w-24 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
           <Plus className="h-10 w-10 md:h-12 md:w-12 text-amber-600" />
