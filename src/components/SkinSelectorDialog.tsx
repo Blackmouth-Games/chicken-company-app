@@ -45,14 +45,20 @@ export const SkinSelectorDialog = ({
   // Log when dialog opens/closes
   useEffect(() => {
     if (open) {
+      const defaultSkins = skins.filter(s => s.is_default);
       console.log("SkinSelectorDialog opened", { 
         buildingId, 
         buildingType, 
+        buildingLevel,
         userId, 
         currentSkin,
         skinsCount: skins.length,
+        defaultSkinsCount: defaultSkins.length,
+        defaultSkins: defaultSkins.map(s => s.skin_key),
         localImagesCount: localImages.length,
-        localImages: localImages.map(img => `${img.level}${img.variant}`)
+        localImages: localImages.map(img => `${img.level}${img.variant}`),
+        userItemsCount: userItems?.length || 0,
+        userItems: userItems?.map((item: any) => item.item_key) || []
       });
       
       // House doesn't have a buildingId in database, so this is expected
@@ -227,7 +233,7 @@ export const SkinSelectorDialog = ({
             // Check if user has any skins at all
             const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
             
-            // Only add if:
+            // Always show skins if:
             // 1. User owns it (in user_items), OR
             // 2. It's default (always show default skins), OR
             // 3. User has no skins at all AND it's variant A (show default A skins), OR
@@ -235,8 +241,11 @@ export const SkinSelectorDialog = ({
             const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
             const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
             
-            // Show skin if user can use it, or if it's for the current level (to show as locked)
-            if (canUse || isCurrentLevel) {
+            // Show skin if:
+            // - User can use it (owned, default, or variant A when no skins), OR
+            // - It's for the current level (to show as locked), OR
+            // - It's a default skin (always show defaults)
+            if (canUse || isCurrentLevel || isDefault) {
               slots.push({ level, variant, skin: dbSkin, isLocal: false });
             }
           } else if (localImage) {
@@ -253,6 +262,23 @@ export const SkinSelectorDialog = ({
       if (a.level !== b.level) return a.level - b.level;
       return a.variant.localeCompare(b.variant);
     });
+
+    // Debug: Log slots for default skins
+    const defaultSlots = slots.filter(s => s.skin?.is_default);
+    if (defaultSlots.length > 0) {
+      console.log("Default skins in slots:", defaultSlots.map(s => ({
+        level: s.level,
+        variant: s.variant,
+        skinKey: s.skin?.skin_key,
+        isDefault: s.skin?.is_default
+      })));
+    } else {
+      console.warn("No default skins found in slots!", {
+        totalSlots: slots.length,
+        skinsWithDefault: skins.filter(s => s.is_default).map(s => s.skin_key),
+        buildingLevel
+      });
+    }
 
     return slots;
   }, [skins, buildingType, buildingLevel, hasItem, localImages, userItems, itemsLoading]);
@@ -347,9 +373,11 @@ export const SkinSelectorDialog = ({
                             currentSkin === null && slot.level === buildingLevel && slot.variant === 'A'
                           );
                           
-                          // Only show select button for skins of the building's current level AND if user can use it
+                          // Show select button if:
+                          // - It's a default skin (always allow), OR
+                          // - It's for the building's current level AND user can use it
                           const isCurrentLevel = buildingLevel ? slot.level === buildingLevel : true;
-                          const canSelect = isCurrentLevel && canUse;
+                          const canSelect = isDefault || (isCurrentLevel && canUse);
                           
                           const isEmpty = !skin && !isLocal;
                           
