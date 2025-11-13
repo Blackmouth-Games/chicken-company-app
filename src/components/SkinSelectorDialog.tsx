@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Check, X } from "lucide-react";
 import { getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
 import { BUILDING_TYPES, type BuildingType as ConstantsBuildingType } from "@/lib/constants";
+import { getParsedImagesForType } from "@/lib/buildingImagesDynamic";
 
 interface SkinSelectorDialogProps {
   open: boolean;
@@ -34,10 +35,23 @@ export const SkinSelectorDialog = ({
   const { hasItem, loading: itemsLoading } = useUserItems(userId);
   const { toast } = useToast();
 
+  // Get all local images for this building type
+  const localImages = useMemo(() => {
+    return getParsedImagesForType(buildingType);
+  }, [buildingType]);
+
   // Log when dialog opens/closes
   useEffect(() => {
     if (open) {
-      console.log("SkinSelectorDialog opened", { buildingId, buildingType, userId, currentSkin });
+      console.log("SkinSelectorDialog opened", { 
+        buildingId, 
+        buildingType, 
+        userId, 
+        currentSkin,
+        skinsCount: skins.length,
+        localImagesCount: localImages.length,
+        localImages: localImages.map(img => `${img.level}${img.variant}`)
+      });
       
       // House doesn't have a buildingId in database, so this is expected
       if (!buildingId && buildingType !== BUILDING_TYPES.HOUSE) {
@@ -56,7 +70,7 @@ export const SkinSelectorDialog = ({
         }));
       }
     }
-  }, [open, buildingId, buildingType, userId, currentSkin]);
+  }, [open, buildingId, buildingType, userId, currentSkin, skins.length, localImages.length]);
 
   const handleSelectSkin = async (skinKey: string) => {
     if (!userId) {
@@ -73,7 +87,8 @@ export const SkinSelectorDialog = ({
       return;
     }
 
-    if (!buildingId) {
+    // For house, we don't need buildingId - it's stored in user profile
+    if (!buildingId && buildingType !== BUILDING_TYPES.HOUSE) {
       const errorMsg = "No building ID provided";
       console.error("Error selecting skin:", errorMsg);
       window.dispatchEvent(new CustomEvent('skinSelectorError', { 
@@ -88,13 +103,24 @@ export const SkinSelectorDialog = ({
     }
 
     try {
-      const { error } = await supabase
-        .from("user_buildings")
-        .update({ selected_skin: skinKey })
-        .eq("id", buildingId)
-        .eq("user_id", userId);
+      if (buildingType === BUILDING_TYPES.HOUSE) {
+        // House skin is stored in user profile, not in user_buildings
+        const { error } = await supabase
+          .from("users")
+          .update({ selected_house_skin: skinKey })
+          .eq("id", userId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Other buildings store skin in user_buildings
+        const { error } = await supabase
+          .from("user_buildings")
+          .update({ selected_skin: skinKey })
+          .eq("id", buildingId)
+          .eq("user_id", userId);
+
+        if (error) throw error;
+      }
 
       toast({
         title: "¡Éxito!",
@@ -120,16 +146,20 @@ export const SkinSelectorDialog = ({
 
   // Create inventory slots organized by level and variant
   // Now supports 10 skins per level (A-J or 1-10)
-  // Only shows: owned skins, default skins, and empty slots for default skins not owned
+  // Shows: all local images + database skins (owned/default)
   const inventorySlots = useMemo(() => {
-    let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null }> = [];
+    let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean }> = [];
     
-    // Extract all unique levels from skins in database
+    // Extract all unique levels from local images and database skins
     const levelSet = new Set<number>();
     
-    // Scan all skins to find available levels
+    // Add levels from local images
+    for (const img of localImages) {
+      levelSet.add(img.level);
+    }
+    
+    // Add levels from database skins
     for (const skin of skins) {
-      // Support both old format (A, B, C) and new format (1-10 or A-J)
       const levelMatch = skin.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
       if (levelMatch) {
         const level = parseInt(levelMatch[1], 10);
@@ -137,52 +167,41 @@ export const SkinSelectorDialog = ({
       }
     }
     
-    // Get max level from database or use default
+    // Get max level from local images or database, default to 5
     const levels = levelSet.size > 0 ? Array.from(levelSet).sort((a, b) => a - b) : [1, 2, 3, 4, 5];
     const maxLevel = levels.length > 0 ? Math.max(...levels) : 5;
     
     // Generate 10 variants per level (A-J)
     const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     
-    // For each level, create slots for all 10 variants
+    // For each level, create slots for all variants that exist locally or in database
     for (let level = 1; level <= maxLevel; level++) {
       for (const variant of variants) {
         const skinKey = `${buildingType}_${level}${variant}`;
-        const skin = skins.find(s => s.skin_key === skinKey) || null;
         
-        // Only include slot if:
-        // 1. Skin exists and is owned by user
-        // 2. Skin exists and is default (is_default = true)
-        // 3. Skin doesn't exist but we want to show empty slots for defaults
-        if (skin) {
-          const isOwned = skin.is_default || hasItem("skin", skin.skin_key);
-          const isDefault = skin.is_default;
-          
-          // Only add if owned or default
-          if (isOwned || isDefault) {
-            slots.push({ level, variant, skin });
-          }
-        } else {
-          // For empty slots, we'll add them later only for default positions
-          // We'll check if there's a default skin for this level that should be shown
-          // For now, skip empty slots that don't correspond to defaults
-        }
-      }
-    }
-    
-    // Now add empty slots for default skins that user doesn't own
-    // Find all default skins and add empty slots for those the user doesn't have
-    for (let level = 1; level <= maxLevel; level++) {
-      for (const variant of variants) {
-        const skinKey = `${buildingType}_${level}${variant}`;
-        const skin = skins.find(s => s.skin_key === skinKey);
+        // Check if image exists locally
+        const localImage = localImages.find(img => img.level === level && img.variant === variant);
         
-        // If it's a default skin but user doesn't own it, add empty slot
-        if (skin && skin.is_default && !hasItem("skin", skin.skin_key)) {
-          // Check if we already added this slot
-          const alreadyAdded = slots.some(s => s.level === level && s.variant === variant);
-          if (!alreadyAdded) {
-            slots.push({ level, variant, skin: null }); // Empty slot for default skin not owned
+        // Check if skin exists in database
+        const dbSkin = skins.find(s => s.skin_key === skinKey);
+        
+        // If we have a local image or a database skin, create a slot
+        if (localImage || dbSkin) {
+          if (dbSkin) {
+            // Database skin exists - check if owned or default
+            const isOwned = dbSkin.is_default || hasItem("skin", dbSkin.skin_key);
+            const isDefault = dbSkin.is_default;
+            
+            // Add if owned or default
+            if (isOwned || isDefault) {
+              slots.push({ level, variant, skin: dbSkin, isLocal: false });
+            } else if (localImage) {
+              // Database skin exists but not owned, but we have local image - show as local
+              slots.push({ level, variant, skin: null, isLocal: true });
+            }
+          } else if (localImage) {
+            // Only local image exists - show it (treat as available)
+            slots.push({ level, variant, skin: null, isLocal: true });
           }
         }
       }
@@ -195,7 +214,7 @@ export const SkinSelectorDialog = ({
     });
 
     return slots;
-  }, [skins, buildingType, hasItem]);
+  }, [skins, buildingType, hasItem, localImages]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -223,6 +242,12 @@ export const SkinSelectorDialog = ({
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
+            ) : inventorySlots.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <p className="text-muted-foreground text-center">
+                  No hay skins disponibles para este edificio
+                </p>
+              </div>
             ) : (
               <div className="space-y-6">
                 {/* Group by level */}
@@ -238,25 +263,19 @@ export const SkinSelectorDialog = ({
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {levelSlots.map((slot, index) => {
                           const skin = slot.skin;
-                          const isOwned = skin ? (skin.is_default || hasItem("skin", skin.skin_key)) : false;
-                          const isSelected = skin ? (currentSkin === skin.skin_key || (!currentSkin && skin.is_default)) : false;
-                          const isEmpty = !skin;
+                          const isLocal = slot.isLocal || false;
+                          const skinKey = `${buildingType}_${slot.level}${slot.variant}`;
+                          const isOwned = skin ? (skin.is_default || hasItem("skin", skin.skin_key)) : isLocal; // Local images are always "owned"
+                          const isSelected = skin ? (currentSkin === skin.skin_key || (!currentSkin && skin.is_default)) : (currentSkin === null && slot.level === 1 && slot.variant === 'A'); // Default to 1A if no skin selected
+                          const isEmpty = !skin && !isLocal;
                           
-                          // For empty slots, only show if they represent a default skin the user doesn't own
-                          if (isEmpty) {
-                            // Check if this empty slot corresponds to a default skin
-                            const defaultSkin = skins.find(s => 
-                              s.skin_key === `${buildingType}_${slot.level}${slot.variant}` && 
-                              s.is_default
-                            );
-                            // Only show empty slot if it's for a default skin
-                            if (!defaultSkin) {
-                              return null; // Don't render non-default empty slots
-                            }
-                          }
-
-                          // Get building display for owned skins
-                          const skinDisplay = skin ? getBuildingDisplay(
+                          // Get building display - use local image if available, otherwise use skin from database
+                          const skinDisplay = isLocal ? getBuildingDisplay(
+                            buildingType as BuildingType,
+                            slot.level,
+                            skinKey,
+                            null
+                          ) : skin ? getBuildingDisplay(
                             buildingType as BuildingType,
                             level,
                             skin.skin_key,
@@ -286,18 +305,18 @@ export const SkinSelectorDialog = ({
                                 ) : skinDisplay?.type === 'image' ? (
                                   <img 
                                     src={skinDisplay.src} 
-                                    alt={skin.name}
+                                    alt={skin?.name || `Nivel ${slot.level}${slot.variant}`}
                                     className="w-24 h-24 object-contain"
                                   />
                                 ) : (
-                                  <div className="text-6xl">{skinDisplay?.emoji || skin.image_url || '🏚️'}</div>
+                                  <div className="text-6xl">{skinDisplay?.emoji || skin?.image_url || '🏚️'}</div>
                                 )}
                               </div>
 
                               {/* Skin Name */}
                               <div className="text-center">
                                 <div className="font-semibold text-sm mb-1">
-                                  {skin ? skin.name : `Nivel ${level}${slot.variant}`}
+                                  {skin ? skin.name : `Nivel ${slot.level}${slot.variant}`}
                                 </div>
                                 {skin && (
                                   <div className="text-xs text-muted-foreground capitalize mb-2">
@@ -306,9 +325,16 @@ export const SkinSelectorDialog = ({
                                 )}
 
                                 {/* Action Button */}
-                                {skin && (
+                                {(skin || isLocal) && (
                                   <Button
-                                    onClick={() => handleSelectSkin(skin.skin_key)}
+                                    onClick={() => {
+                                      if (skin) {
+                                        handleSelectSkin(skin.skin_key);
+                                      } else if (isLocal) {
+                                        // For local images, set selected_skin to null to use default
+                                        handleSelectSkin(skinKey);
+                                      }
+                                    }}
                                     disabled={isSelected || !buildingId}
                                     className="w-full"
                                     size="sm"
