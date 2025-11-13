@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "migrate:store": "tsx src/scripts/applyStoreProductsMigration.ts",
     "update-store-prices": "tsx src/scripts/updateStorePrices.ts",
-    "version": "node scripts/get-version.js"
+    "version": "node scripts/get-version.js",
+    "deploy:auth-wallet": "supabase functions deploy auth-wallet",
+    "deploy:functions": "supabase functions deploy auth-wallet && supabase functions deploy process-store-purchase && supabase functions deploy run-migration"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -39,6 +39,7 @@ import { useAudio } from "@/contexts/AudioContext";
 import { useLayoutEditor } from "@/hooks/useLayoutEditor";
 import { useEggSystem } from "@/hooks/useEggSystem";
 import { useVehicleSystem } from "@/hooks/useVehicleSystem";
+import { useTonConnectUI } from "@tonconnect/ui-react";
 
 const Home = () => {
   const { t } = useLanguage();
@@ -155,28 +156,44 @@ const Home = () => {
     );
   }, [warehouseBuilding?.selected_skin, warehouseBuilding?.level, warehouseLevel, warehouseSkinInfo]);
 
-  // Dynamic slots: always even number, min based on buildings + 1-2 empty slots
-  const occupiedSlots = buildings.length;
-  const MIN_EMPTY_SLOTS = 1;
-  const MAX_EMPTY_SLOTS = 2;
-  // Calculate total: occupied slots + 1-2 empty slots (prefer 2 if even, 1 if odd)
-  // Always ensure total is even
-  let emptySlots = MIN_EMPTY_SLOTS;
-  let totalSlots = occupiedSlots + emptySlots;
+  // Check wallet connection status
+  const [tonConnectUI] = useTonConnectUI();
+  const isWalletConnected = tonConnectUI.connected;
+
+  // Filter buildings to only count coops (slots are only for coops)
+  const coops = buildings.filter(b => b.building_type === 'corral');
+  const occupiedSlots = coops.length;
   
-  // If total is odd, try to add one more empty slot (up to MAX_EMPTY_SLOTS)
-  if (totalSlots % 2 !== 0 && emptySlots < MAX_EMPTY_SLOTS) {
-    emptySlots = MAX_EMPTY_SLOTS;
+  // Calculate total slots based on wallet connection status
+  let totalSlots: number;
+  
+  if (isWalletConnected) {
+    // Wallet connected: show occupied slots + 1-2 empty slots (prefer even number)
+    // For new users: they get 1 coop by default, so they'll see 1 occupied + empty slots
+    const MIN_EMPTY_SLOTS = 1;
+    const MAX_EMPTY_SLOTS = 2;
+    let emptySlots = MIN_EMPTY_SLOTS;
     totalSlots = occupiedSlots + emptySlots;
+    
+    // If total is odd, try to add one more empty slot (up to MAX_EMPTY_SLOTS)
+    if (totalSlots % 2 !== 0 && emptySlots < MAX_EMPTY_SLOTS) {
+      emptySlots = MAX_EMPTY_SLOTS;
+      totalSlots = occupiedSlots + emptySlots;
+    }
+    
+    // If still odd, add one more to make it even (but this should rarely happen)
+    if (totalSlots % 2 !== 0) {
+      totalSlots++;
+    }
+    
+    // Minimum 2 slots (1 per side) if wallet connected
+    if (totalSlots < 2) {
+      totalSlots = 2;
+    }
+  } else {
+    // Wallet not connected: NO slots should be shown (completely empty)
+    totalSlots = 0;
   }
-  
-  // If still odd, add one more to make it even (but this should rarely happen)
-  if (totalSlots % 2 !== 0) {
-    totalSlots++;
-  }
-  
-  // Minimum 2 slots (1 per side)
-  if (totalSlots < 2) totalSlots = 2;
   
   const TOTAL_SLOTS = totalSlots;
 
@@ -680,13 +697,14 @@ const Home = () => {
     }
   };
 
+  // Get coop at position (slots are only for coops)
   const getBuildingAtPosition = (position: number) => {
-    return buildings.find((b) => b.position_index === position);
+    return coops.find((b) => b.position_index === position);
   };
 
-  // Generate automatic belts: one belt per corral pointing to center, plus central vertical line
+  // Generate automatic belts: one belt per coop pointing to center, plus central vertical line
   // IMPORTANT: This generates belts for ALL slots, even empty ones
-  // Belts are created automatically when a new farm is purchased
+  // Belts are created automatically when a new coop is purchased
   const generateCorralBelts = () => {
     const autoBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
