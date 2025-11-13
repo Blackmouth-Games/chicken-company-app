@@ -494,16 +494,16 @@ const DebugPanel = () => {
                     <div className="border-t pt-2">
                       <p><strong>Posición relativa:</strong></p>
                       <ul className="text-xs mt-1 space-y-1">
-                        <li>relativeX: {paintModeClickInfo.relativeX.toFixed(2)}</li>
-                        <li>relativeY: {paintModeClickInfo.relativeY.toFixed(2)}</li>
+                        <li>relativeX: {paintModeClickInfo.relativeX != null ? paintModeClickInfo.relativeX.toFixed(2) : 'N/A'}</li>
+                        <li>relativeY: {paintModeClickInfo.relativeY != null ? paintModeClickInfo.relativeY.toFixed(2) : 'N/A'}</li>
                       </ul>
                     </div>
                     <div className="border-t pt-2">
                       <p><strong>Dimensiones de celda:</strong></p>
                       <ul className="text-xs mt-1 space-y-1">
-                        <li>cellWidth: {paintModeClickInfo.cellWidth.toFixed(2)}</li>
-                        <li>cellHeight: {paintModeClickInfo.cellHeight.toFixed(2)}</li>
-                        <li>gapPx: {paintModeClickInfo.gapPx}</li>
+                        <li>cellWidth: {paintModeClickInfo.cellWidth != null ? paintModeClickInfo.cellWidth.toFixed(2) : 'N/A'}</li>
+                        <li>cellHeight: {paintModeClickInfo.cellHeight != null ? paintModeClickInfo.cellHeight.toFixed(2) : 'N/A'}</li>
+                        <li>gapPx: {paintModeClickInfo.gapPx ?? 'N/A'}</li>
                       </ul>
                     </div>
                     <div className="border-t pt-2">
@@ -644,12 +644,12 @@ const DebugPanel = () => {
                   <h3 className="font-semibold text-sm">🥚 Egg System</h3>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div className="grid grid-cols-2 gap-2">
-                      <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs} / {eggDebugInfo.maxEggs}</p>
-                      <p><strong>Base Interval:</strong> {eggDebugInfo.baseSpawnInterval / 1000}s</p>
-                      <p><strong>Total Corrals:</strong> {eggDebugInfo.totalCorrals || eggDebugInfo.corrals}</p>
+                      <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs ?? 0} / {eggDebugInfo.maxEggs ?? 0}</p>
+                      <p><strong>Base Interval:</strong> {eggDebugInfo.baseSpawnInterval ? (eggDebugInfo.baseSpawnInterval / 1000).toFixed(1) : 'N/A'}s</p>
+                      <p><strong>Total Corrals:</strong> {eggDebugInfo.totalCorrals || eggDebugInfo.corrals || 0}</p>
                       <p><strong>With Belts:</strong> {eggDebugInfo.corralsWithBelts || 0}</p>
                       <p><strong>Without Belts:</strong> {eggDebugInfo.corralsWithoutBelts || 0}</p>
-                      <p><strong>Ready to Spawn:</strong> <span className={eggDebugInfo.readyToSpawn > 0 ? 'text-green-600 font-bold' : ''}>{eggDebugInfo.readyToSpawn || 0}</span></p>
+                      <p><strong>Ready to Spawn:</strong> <span className={(eggDebugInfo.readyToSpawn ?? 0) > 0 ? 'text-green-600 font-bold' : ''}>{eggDebugInfo.readyToSpawn || 0}</span></p>
                       <p><strong>Page Visible:</strong> {eggDebugInfo.pageVisible ? '✅ Yes' : '❌ No'}</p>
                     </div>
                     
@@ -673,13 +673,13 @@ const DebugPanel = () => {
                                       {spawn.status === 'ready' && <span className="ml-2 text-green-600 font-bold">LISTO</span>}
                                     </p>
                                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                      <p>Corral ID: {spawn.corralId.slice(0, 12)}...</p>
-                                      <p>Nivel: {spawn.level} | Intervalo: {(spawn.spawnInterval / 1000).toFixed(1)}s</p>
+                                      <p>Corral ID: {spawn.corralId ? (typeof spawn.corralId === 'string' ? spawn.corralId.slice(0, 12) : String(spawn.corralId).slice(0, 12)) : 'N/A'}...</p>
+                                      <p>Nivel: {spawn.level ?? 'N/A'} | Intervalo: {spawn.spawnInterval ? (spawn.spawnInterval / 1000).toFixed(1) : 'N/A'}s</p>
                                       {spawn.hasBelt ? (
                                         <>
                                           <p className="text-green-600">✅ Tiene cinta asignada</p>
                                           {spawn.assignedBeltId && (
-                                            <p>Cinta: {spawn.assignedBeltId.slice(0, 20)}...</p>
+                                            <p>Cinta: {typeof spawn.assignedBeltId === 'string' ? spawn.assignedBeltId.slice(0, 20) : String(spawn.assignedBeltId).slice(0, 20)}...</p>
                                           )}
                                           {spawn.assignedBeltPosition && (
                                             <p>Posición cinta: {spawn.assignedBeltPosition}</p>
@@ -716,9 +716,9 @@ const DebugPanel = () => {
                   <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div className="grid grid-cols-2 gap-2">
-                      <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles} / {vehicleDebugInfo.maxVehicles}</p>
-                      <p><strong>Spawn Interval:</strong> {(vehicleDebugInfo.spawnInterval / 1000).toFixed(1)}s</p>
-                      <p><strong>Vehicle Speed:</strong> {vehicleDebugInfo.vehicleSpeed?.toFixed(4) || 'N/A'}</p>
+                      <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles ?? 0} / {vehicleDebugInfo.maxVehicles ?? 0}</p>
+                      <p><strong>Spawn Interval:</strong> {vehicleDebugInfo.spawnInterval ? (vehicleDebugInfo.spawnInterval / 1000).toFixed(1) : 'N/A'}s</p>
+                      <p><strong>Vehicle Speed:</strong> {vehicleDebugInfo.vehicleSpeed ? vehicleDebugInfo.vehicleSpeed.toFixed(4) : 'N/A'}</p>
                       <p><strong>Total Roads:</strong> {vehicleDebugInfo.roadsCount || 0}</p>
                       <p><strong>Transport Roads:</strong> {vehicleDebugInfo.transportRoadsCount || 0}</p>
                       <p><strong>Can Spawn:</strong> {vehicleDebugInfo.canSpawn ? '✅ Yes' : '❌ No'}</p>
@@ -744,10 +744,10 @@ const DebugPanel = () => {
                                 </span>
                               </p>
                               <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                <p>Road ID: {vehicleDebugInfo.spawnPoint.roadId?.slice(0, 20)}...</p>
-                                <p>Posición: {vehicleDebugInfo.spawnPoint.position}</p>
-                                <p>Dirección: {vehicleDebugInfo.spawnPoint.direction}</p>
-                                {vehicleDebugInfo.spawnPoint.timeUntilSpawn > 0 && (
+                                <p>Road ID: {vehicleDebugInfo.spawnPoint.roadId ? (typeof vehicleDebugInfo.spawnPoint.roadId === 'string' ? vehicleDebugInfo.spawnPoint.roadId.slice(0, 20) : String(vehicleDebugInfo.spawnPoint.roadId).slice(0, 20)) : 'N/A'}...</p>
+                                <p>Posición: {vehicleDebugInfo.spawnPoint.position || 'N/A'}</p>
+                                <p>Dirección: {vehicleDebugInfo.spawnPoint.direction || 'N/A'}</p>
+                                {vehicleDebugInfo.spawnPoint.timeUntilSpawn && vehicleDebugInfo.spawnPoint.timeUntilSpawn > 0 && (
                                   <p>Tiempo hasta spawn: <strong>{(vehicleDebugInfo.spawnPoint.timeUntilSpawn / 1000).toFixed(1)}s</strong></p>
                                 )}
                                 {vehicleDebugInfo.spawnPoint.lastSpawn && (
