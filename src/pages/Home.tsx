@@ -1612,12 +1612,19 @@ const Home = () => {
               const currentRoad = allRoads.find(r => r.id === vehicle.currentRoadId);
               if (!currentRoad) return null;
               
+              // Adjust gridRow to move vehicle one row up
+              const roadRow = parseGridNotation(currentRoad.gridRow);
+              const adjustedGridRow = createGridNotation(
+                Math.max(1, roadRow.start - 1), // Subtract 1, but don't go below 1
+                Math.max(1, roadRow.end - 1)
+              );
+              
               return (
                 <Vehicle
                   key={vehicle.id}
                   id={vehicle.id}
                   gridColumn={currentRoad.gridColumn}
-                  gridRow={currentRoad.gridRow}
+                  gridRow={adjustedGridRow}
                   progress={vehicle.progress}
                   direction={currentRoad.direction}
                   isLoaded={vehicle.isLoaded}
