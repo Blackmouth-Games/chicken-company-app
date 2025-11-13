@@ -73,13 +73,15 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-full h-full max-w-full">
-          <DialogHeader>
+        <DialogContent className="w-full max-h-[85vh] max-w-full flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
               Corral
             </DialogTitle>
           </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto min-h-0">
 
           {/* Building Card */}
           <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-lg p-4 border-2 border-green-400 relative">
@@ -218,6 +220,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
             <Button variant="outline" className="px-6">
               WithDraw
             </Button>
+          </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -81,10 +81,10 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent hideCloseButton className="w-full h-full md:w-[92vw] md:h-auto md:max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-blue-50 to-slate-50 border-2 border-blue-300">
-          <div className="flex flex-col">
+        <DialogContent hideCloseButton className="w-full max-h-[85vh] md:w-[92vw] md:max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-blue-50 to-slate-50 border-2 border-blue-300 flex flex-col">
+          <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100/50">
+            <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100/50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 {buildingDisplay && (
                   <img 
@@ -101,7 +101,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto relative">
+            <div className="flex-1 overflow-y-auto relative min-h-0">
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Warehouse Card with Edit Button */}
                 <div className="relative border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-6">
@@ -123,7 +123,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                       <img 
                         src={buildingDisplay.src} 
                         alt="Warehouse" 
-                        className="w-52 h-52 object-contain"
+                        className="w-32 h-32 md:w-40 md:h-40 object-contain"
                         onError={(e) => {
                           console.error('[WarehouseDialog] Image failed to load:', buildingDisplay.src);
                           console.error('[WarehouseDialog] This should not happen - image should always be available');

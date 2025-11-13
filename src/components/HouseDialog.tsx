@@ -29,10 +29,10 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent hideCloseButton className="w-full h-full md:w-[92vw] md:h-auto md:max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-amber-50 to-orange-50 border-2 border-amber-300">
-          <div className="flex flex-col">
+        <DialogContent hideCloseButton className="w-full max-h-[85vh] md:w-[92vw] md:max-w-2xl p-0 sm:rounded-lg bg-gradient-to-b from-amber-50 to-orange-50 border-2 border-amber-300 flex flex-col">
+          <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-amber-200 bg-amber-100/50">
+            <div className="flex items-center justify-between p-6 border-b border-amber-200 bg-amber-100/50 flex-shrink-0">
               <h2 className="text-2xl font-bold text-amber-900">🏠 Masía del Granjero</h2>
               <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-amber-200/50">
                 ✕
@@ -40,7 +40,7 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto min-h-0">
               <div className="max-w-2xl mx-auto p-6 space-y-6">
                 {/* Coming Soon Message */}
                 <div className="text-center">
