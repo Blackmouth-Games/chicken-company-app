@@ -1120,7 +1120,37 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     };
 
     const handleLayoutUpdate = (event: CustomEvent<LayoutConfig>) => {
-      setLayoutConfig(event.detail);
+      const newConfig = event.detail;
+      // Ensure roads array exists and is properly structured
+      // Process roads similar to how they're processed in initial state
+      const processedRoads = Array.isArray(newConfig.roads) 
+        ? newConfig.roads.map((road: any) => {
+            // Ensure roads always have 2x2 span
+            const colSpan = parseGridNotation(road.gridColumn);
+            const rowSpan = parseGridNotation(road.gridRow);
+            const colStart = colSpan.start;
+            const rowStart = rowSpan.start;
+            
+            return {
+              id: road.id,
+              gridColumn: createGridNotation(colStart, colStart + 2),
+              gridRow: createGridNotation(rowStart, rowStart + 2),
+              direction: road.direction || 'east',
+              type: road.type || 'straight',
+              isPointA: road.isPointA ?? false,
+              isPointB: road.isPointB ?? false,
+              isTransport: road.isTransport ?? false,
+            };
+          })
+        : DEFAULT_LAYOUT.roads;
+      
+      const configWithRoads: LayoutConfig = {
+        ...newConfig,
+        roads: processedRoads,
+      };
+      setLayoutConfig(configWithRoads);
+      // Also save to localStorage to ensure persistence
+      saveLayoutToStorage(configWithRoads);
     };
 
     window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
