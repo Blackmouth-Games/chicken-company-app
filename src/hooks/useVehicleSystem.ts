@@ -26,7 +26,7 @@ interface Road {
   isTransport?: boolean;
 }
 
-const BASE_VEHICLE_SPEED = 0.05; // Base progress increment per frame (increased for visibility)
+const BASE_VEHICLE_SPEED = 0.0125; // Base progress increment per frame (75% slower: 0.05 * 0.25 = 0.0125)
 const BASE_VEHICLE_SPAWN_INTERVAL = 30000; // Base spawn interval: 30 seconds per route (much higher)
 const VEHICLE_WAIT_TIME = 2000; // Wait 2 seconds at destination before returning
 const MAX_VEHICLES = 1; // Only one vehicle at a time

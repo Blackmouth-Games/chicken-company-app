@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import truckEmpty from "@/assets/vehicles/truck_empty.png";
+import truckFilled from "@/assets/vehicles/truck_filled.png";
 
 interface VehicleProps {
   id: string;
@@ -86,9 +88,9 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     }
   };
 
-  // Get vehicle emoji based on load state
-  const getVehicleEmoji = () => {
-    return isLoaded ? '🚛' : '🚚'; // 🚛 = loaded truck, 🚚 = empty truck
+  // Get vehicle image based on load state
+  const getVehicleImage = () => {
+    return isLoaded ? truckFilled : truckEmpty;
   };
 
   return isVisible ? (
@@ -100,7 +102,11 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         ...getPosition(),
       }}
     >
-      <div className="text-6xl">{getVehicleEmoji()}</div>
+      <img
+        src={getVehicleImage()}
+        alt={isLoaded ? "Truck loaded" : "Truck empty"}
+        className="w-16 h-16 md:w-20 md:h-20 object-contain"
+      />
     </div>
   ) : null;
 };
