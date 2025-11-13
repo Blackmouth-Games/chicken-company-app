@@ -43,14 +43,34 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
 
   // Get building display (image or emoji)
   // Use the same pattern as CorralDialog for consistency
+  // Always return an image - use warehouse skin if available, otherwise default to level 1
   const buildingDisplay = useMemo(() => {
-    if (!warehouse) return null;
-    return getBuildingDisplay(
-      'warehouse',
-      warehouse.level,
-      warehouse.selected_skin || null,
-      skinInfo || undefined
-    );
+    if (!warehouse) {
+      // If no warehouse, use default level 1 image
+      return getBuildingDisplay(
+        'warehouse',
+        1,
+        null,
+        undefined
+      );
+    }
+    try {
+      return getBuildingDisplay(
+        'warehouse',
+        warehouse.level,
+        warehouse.selected_skin || null,
+        skinInfo || undefined
+      );
+    } catch (error) {
+      console.error('[WarehouseDialog] Error getting building display:', error);
+      // Fallback to level 1 if there's an error
+      return getBuildingDisplay(
+        'warehouse',
+        1,
+        null,
+        undefined
+      );
+    }
   }, [warehouse?.selected_skin, warehouse?.level, skinInfo]);
 
   const handleUpgradeComplete = () => {
@@ -65,7 +85,16 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           <div className="flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-blue-200 bg-blue-100/50">
-              <h2 className="text-2xl font-bold text-blue-900">🏚️ Almacén</h2>
+              <div className="flex items-center gap-3">
+                {buildingDisplay && (
+                  <img 
+                    src={buildingDisplay.src} 
+                    alt="Warehouse" 
+                    className="w-8 h-8 object-contain"
+                  />
+                )}
+                <h2 className="text-2xl font-bold text-blue-900">Almacén</h2>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-blue-200/50">
                 ✕
               </Button>
@@ -90,7 +119,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                   </button>
                   
                   <div className="flex flex-col items-center gap-3">
-                    {buildingDisplay && buildingDisplay.type === 'image' ? (
+                    {buildingDisplay && (
                       <img 
                         src={buildingDisplay.src} 
                         alt="Warehouse" 
@@ -100,8 +129,6 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                           console.error('[WarehouseDialog] This should not happen - image should always be available');
                         }}
                       />
-                    ) : (
-                      <div className="text-9xl">🏚️</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-blue-900 text-lg">Almacén</h3>
