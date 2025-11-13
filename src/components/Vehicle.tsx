@@ -17,29 +17,13 @@ interface VehicleProps {
 export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded, reverseDirection = false, goingToB = true, onReachDestination }: VehicleProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
-  // Get rotation based on direction and reverse movement
-  const getRotation = () => {
-    let baseRotation = 0;
-    switch (direction) {
-      case 'east': baseRotation = 0; break;
-      case 'west': baseRotation = 180; break;
-      case 'south': baseRotation = 90; break;
-      case 'north': baseRotation = -90; break;
-      default: baseRotation = 0;
-    }
-    // If moving in reverse, flip the vehicle 180 degrees
-    return reverseDirection ? baseRotation + 180 : baseRotation;
-  };
-
   // Calculate position within the cell based on progress and road direction
+  // No rotation or flip - image orientation is as default
   const getPosition = () => {
     // Progress determines position within the cell (0 = start, 1 = end)
     // Position changes based on road direction
-    const rotation = getRotation();
-    const transforms = [
-      'translate(-50%, -50%)',
-      `rotate(${rotation}deg)`,
-    ].filter(Boolean).join(' ');
+    // Only apply translate for centering, no rotation
+    const transforms = 'translate(-50%, -50%)';
     
     switch (direction) {
       case 'east':
@@ -92,16 +76,23 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         gridColumn,
         gridRow,
         ...getPosition(),
+        width: 0,
+        height: 0,
       }}
     >
       <img
         src={getVehicleImage()}
         alt={isLoaded ? "Truck loaded" : "Truck empty"}
-        className="object-contain"
         style={{
           width: '64px',
           height: '64px',
-          transform: 'scaleX(1) scaleY(1)', // Mirror both vehicle images horizontally and vertically
+          minWidth: '64px',
+          minHeight: '64px',
+          maxWidth: '64px',
+          maxHeight: '64px',
+          display: 'block',
+          flexShrink: 0,
+          objectFit: 'contain',
         }}
       />
     </div>
