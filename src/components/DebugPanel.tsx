@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle, Snowflake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,9 @@ import { useUserBuildings } from "@/hooks/useUserBuildings";
 import { useUserItems } from "@/hooks/useUserItems";
 import { checkWinterSkin } from "@/scripts/checkWinterSkin";
 import { getVersion, getVersionString } from "@/lib/version";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const DebugPanel = () => {
   const { t } = useLanguage();
@@ -980,6 +983,12 @@ const DebugPanel = () => {
             </TabsContent>
 
             <TabsContent value="systems" className="space-y-4">
+              {/* Bézier Curve Visualizer */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">📐 Visualizador de Curva Bézier (Huevos en Cintas)</h3>
+                <BezierCurveVisualizer />
+              </div>
+
               {/* Egg System Debug */}
               {eggDebugInfo && (
                 <div className="space-y-2">
@@ -1150,6 +1159,347 @@ const DebugPanel = () => {
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+// Bézier Curve Visualizer Component
+const BezierCurveVisualizer = () => {
+  const [entryDirection, setEntryDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
+  const [exitDirection, setExitDirection] = useState<'north' | 'south' | 'east' | 'west'>('north');
+  const [controlX, setControlX] = useState<number>(0.5);
+  const [controlY, setControlY] = useState<number>(0.5);
+  const [progress, setProgress] = useState<number>(0);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
+  const [animationSpeed, setAnimationSpeed] = useState<number>(1);
+
+  // Calculate start and end points based on entry/exit directions
+  const { startX, startY, endX, endY } = useMemo(() => {
+    let sx = 0.5, sy = 0.5;
+    let ex = 0.5, ey = 0.5;
+
+    // Set start position based on entry direction
+    switch (entryDirection) {
+      case 'east': sx = 0; sy = 0.5; break;
+      case 'west': sx = 1; sy = 0.5; break;
+      case 'south': sx = 0.5; sy = 0; break;
+      case 'north': sx = 0.5; sy = 1; break;
+    }
+
+    // Set end position based on exit direction
+    switch (exitDirection) {
+      case 'east': ex = 1; ey = 0.5; break;
+      case 'west': ex = 0; ey = 0.5; break;
+      case 'south': ex = 0.5; ey = 1; break;
+      case 'north': ex = 0.5; ey = 0; break;
+    }
+
+    return { startX: sx, startY: sy, endX: ex, endY: ey };
+  }, [entryDirection, exitDirection]);
+
+  // Calculate current position on curve using quadratic Bézier
+  const currentPosition = useMemo(() => {
+    const t = progress;
+    // Quadratic bezier: (1-t)²P₀ + 2(1-t)tP₁ + t²P₂
+    const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * controlX + t * t * endX;
+    const y = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * controlY + t * t * endY;
+    return { x, y };
+  }, [progress, startX, startY, endX, endY, controlX, controlY]);
+
+  // Auto-calculate control point based on entry/exit (current logic)
+  const autoControlPoint = useMemo(() => {
+    // Current logic from Egg.tsx
+    const cx = (startX === 0.5) ? (endX === 1 ? 1 : 0) : startX;
+    const cy = (startY === 0.5) ? (endY === 1 ? 1 : 0) : startY;
+    return { x: cx, y: cy };
+  }, [startX, startY, endX, endY]);
+
+  // Apply auto control point
+  useEffect(() => {
+    setControlX(autoControlPoint.x);
+    setControlY(autoControlPoint.y);
+  }, [autoControlPoint]);
+
+  // Animation loop
+  useEffect(() => {
+    if (!isAnimating) return;
+
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        const next = prev + 0.01 * animationSpeed;
+        if (next >= 1) {
+          setIsAnimating(false);
+          return 0;
+        }
+        return next;
+      });
+    }, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, [isAnimating, animationSpeed]);
+
+  const canvasSize = 400;
+  const scale = canvasSize;
+
+  // Convert normalized coordinates to canvas coordinates
+  const toCanvas = (x: number, y: number) => ({
+    x: x * scale,
+    y: y * scale,
+  });
+
+  const startCanvas = toCanvas(startX, startY);
+  const endCanvas = toCanvas(endX, endY);
+  const controlCanvas = toCanvas(controlX, controlY);
+  const currentCanvas = toCanvas(currentPosition.x, currentPosition.y);
+
+  // Generate curve path for SVG
+  const curvePath = `M ${startCanvas.x} ${startCanvas.y} Q ${controlCanvas.x} ${controlCanvas.y} ${endCanvas.x} ${endCanvas.y}`;
+
+  return (
+    <div className="bg-muted p-4 rounded-md space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Controls */}
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>Dirección de Entrada</Label>
+            <Select value={entryDirection} onValueChange={(v: any) => setEntryDirection(v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="east">Este (→)</SelectItem>
+                <SelectItem value="west">Oeste (←)</SelectItem>
+                <SelectItem value="south">Sur (↓)</SelectItem>
+                <SelectItem value="north">Norte (↑)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Dirección de Salida</Label>
+            <Select value={exitDirection} onValueChange={(v: any) => setExitDirection(v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="east">Este (→)</SelectItem>
+                <SelectItem value="west">Oeste (←)</SelectItem>
+                <SelectItem value="south">Sur (↓)</SelectItem>
+                <SelectItem value="north">Norte (↑)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Punto de Control X: {controlX.toFixed(2)}</Label>
+            <Input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={controlX}
+              onChange={(e) => setControlX(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Punto de Control Y: {controlY.toFixed(2)}</Label>
+            <Input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={controlY}
+              onChange={(e) => setControlY(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Progreso: {(progress * 100).toFixed(0)}%</Label>
+            <Input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={progress}
+              onChange={(e) => setProgress(parseFloat(e.target.value))}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                setIsAnimating(!isAnimating);
+                if (!isAnimating) setProgress(0);
+              }}
+              size="sm"
+              variant={isAnimating ? "destructive" : "default"}
+            >
+              {isAnimating ? "⏸️ Pausar" : "▶️ Animar"}
+            </Button>
+            <Button
+              onClick={() => {
+                setProgress(0);
+                setIsAnimating(false);
+              }}
+              size="sm"
+              variant="outline"
+            >
+              🔄 Reset
+            </Button>
+            <Button
+              onClick={() => {
+                setControlX(autoControlPoint.x);
+                setControlY(autoControlPoint.y);
+              }}
+              size="sm"
+              variant="outline"
+            >
+              🎯 Auto
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Velocidad de Animación: {animationSpeed.toFixed(1)}x</Label>
+            <Input
+              type="range"
+              min="0.1"
+              max="3"
+              step="0.1"
+              value={animationSpeed}
+              onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+            />
+          </div>
+        </div>
+
+        {/* Canvas */}
+        <div className="space-y-2">
+          <Label>Visualización de la Curva</Label>
+          <div className="border-2 border-border rounded-lg bg-white p-4">
+            <svg width={canvasSize} height={canvasSize} className="border border-gray-300 rounded">
+              {/* Grid */}
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e5e7eb" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+
+              {/* Curve */}
+              <path
+                d={curvePath}
+                fill="none"
+                stroke="#3b82f6"
+                strokeWidth="3"
+                strokeDasharray="5,5"
+              />
+
+              {/* Control point line (from start) */}
+              <line
+                x1={startCanvas.x}
+                y1={startCanvas.y}
+                x2={controlCanvas.x}
+                y2={controlCanvas.y}
+                stroke="#94a3b8"
+                strokeWidth="1"
+                strokeDasharray="2,2"
+              />
+
+              {/* Control point line (to end) */}
+              <line
+                x1={controlCanvas.x}
+                y1={controlCanvas.y}
+                x2={endCanvas.x}
+                y2={endCanvas.y}
+                stroke="#94a3b8"
+                strokeWidth="1"
+                strokeDasharray="2,2"
+              />
+
+              {/* Start point */}
+              <circle
+                cx={startCanvas.x}
+                cy={startCanvas.y}
+                r="8"
+                fill="#10b981"
+                stroke="#059669"
+                strokeWidth="2"
+              />
+              <text
+                x={startCanvas.x}
+                y={startCanvas.y - 15}
+                textAnchor="middle"
+                className="text-xs font-bold fill-green-700"
+              >
+                IN
+              </text>
+
+              {/* End point */}
+              <circle
+                cx={endCanvas.x}
+                cy={endCanvas.y}
+                r="8"
+                fill="#ef4444"
+                stroke="#dc2626"
+                strokeWidth="2"
+              />
+              <text
+                x={endCanvas.x}
+                y={endCanvas.y - 15}
+                textAnchor="middle"
+                className="text-xs font-bold fill-red-700"
+              >
+                OUT
+              </text>
+
+              {/* Control point */}
+              <circle
+                cx={controlCanvas.x}
+                cy={controlCanvas.y}
+                r="6"
+                fill="#f59e0b"
+                stroke="#d97706"
+                strokeWidth="2"
+              />
+              <text
+                x={controlCanvas.x}
+                y={controlCanvas.y - 12}
+                textAnchor="middle"
+                className="text-xs font-bold fill-amber-700"
+              >
+                CP
+              </text>
+
+              {/* Current position (egg) */}
+              <circle
+                cx={currentCanvas.x}
+                cy={currentCanvas.y}
+                r="10"
+                fill="#8b5cf6"
+                stroke="#7c3aed"
+                strokeWidth="2"
+              />
+              <text
+                x={currentCanvas.x}
+                y={currentCanvas.y + 5}
+                textAnchor="middle"
+                className="text-lg"
+              >
+                🥚
+              </text>
+            </svg>
+          </div>
+
+          {/* Info */}
+          <div className="text-xs space-y-1 bg-background p-2 rounded">
+            <p><strong>Punto Inicio:</strong> ({startX.toFixed(2)}, {startY.toFixed(2)})</p>
+            <p><strong>Punto Control:</strong> ({controlX.toFixed(2)}, {controlY.toFixed(2)})</p>
+            <p><strong>Punto Fin:</strong> ({endX.toFixed(2)}, {endY.toFixed(2)})</p>
+            <p><strong>Posición Actual:</strong> ({currentPosition.x.toFixed(2)}, {currentPosition.y.toFixed(2)})</p>
+            <p><strong>Progreso:</strong> {(progress * 100).toFixed(1)}%</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
