@@ -23,6 +23,8 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<1 | 5 | 10>(1);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string } | null>(null);
   const { buildings, refetch } = useUserBuildings(userId);
   const { prices } = useBuildingPrices();
   const { getSkinByKey } = useBuildingSkins('corral');
@@ -69,6 +71,11 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
     console.log(`Staking chickens with multiplier: x${selectedMultiplier}`);
   };
 
+  const handleInfoClick = (title: string, message: string) => {
+    setInfoModalContent({ title, message });
+    setInfoModalOpen(true);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,7 +88,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto min-h-0">
-
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6 pb-6">
           {/* Building Card */}
           <div className="bg-gradient-to-br from-green-100 to-green-50 rounded-lg p-4 border-2 border-green-400 relative">
             <button
@@ -91,14 +98,14 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
               <Edit className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-3">
-              {buildingDisplay?.type === 'image' ? (
+              {buildingDisplay && buildingDisplay.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt="Corral" 
                   className="w-16 h-16 object-contain"
                 />
               ) : (
-                <div className="text-6xl">{buildingDisplay?.emoji || '🏠'}</div>
+                <div className="text-6xl">🏠</div>
               )}
               <div className="flex-1">
                 <h3 className="font-bold text-lg">Corral</h3>
@@ -155,59 +162,151 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Valor:</span>
-              <span className="text-sm ml-auto">0.000 $TON</span>
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Valor",
+                    "Valor total de las gallinas actualmente en el corral. Este valor se calcula basándose en el número de gallinas y su valor individual."
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Valor:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                0.000 $TON
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Gallinas:</span>
-              <span className="text-sm ml-auto text-orange-600 font-bold">
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Gallinas",
+                    `Número actual de gallinas en el corral: ${corral.current_chickens} de ${corral.capacity} capacidad máxima. Puedes aumentar la capacidad mejorando el nivel del corral.`
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Gallinas:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-orange-600 font-bold bg-gray-100 px-3 py-1 rounded">
                 {corral.current_chickens} / {corral.capacity}
               </span>
             </div>
             <Progress value={(corral.current_chickens / corral.capacity) * 100} className="h-2" />
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Eficiencia:</span>
-              <span className="text-sm ml-auto">{efficiency}%</span>
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Eficiencia",
+                    `La eficiencia del corral es ${efficiency}%, calculada como el porcentaje de capacidad utilizada. Una eficiencia alta indica que el corral está siendo utilizado al máximo de su capacidad.`
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Eficiencia:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                {efficiency}%
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Total Obtenido:</span>
-              <span className="text-sm ml-auto">0.000 $TON</span>
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Total Obtenido",
+                    "Total de ganancias obtenidas desde que comenzaste a usar este corral. Este valor representa todas las ganancias acumuladas a lo largo del tiempo."
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Total Obtenido:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                0.000 $TON
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Earn esperado:</span>
-              <span className="text-sm ml-auto">{earnRate} $TON / Day</span>
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Earn esperado",
+                    `Ganancia esperada por día basada en el número actual de gallinas (${corral.current_chickens}). Esta es una estimación de las ganancias diarias que puedes esperar con la configuración actual del corral.`
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Earn esperado:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                {earnRate} $TON / Day
+              </span>
             </div>
           </div>
 
           {/* Upgrade Section */}
-          <div className="bg-muted/50 rounded-lg p-4 border border-border space-y-2">
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Nivel:</span>
-              <span className="text-sm ml-auto">{corral.level} → {nextLevel}</span>
+          <div className="bg-muted/50 rounded-lg p-4 border border-border space-y-3">
+            <div className="text-sm font-medium text-green-900">Mejorar edificio</div>
+            
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Nivel",
+                    "El nivel del corral determina su capacidad máxima. Al subir de nivel, el corral puede albergar más gallinas, lo que aumenta tus ganancias potenciales."
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Nivel:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                {corral.level} → {nextLevel}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Max. Capacity:</span>
-              <span className="text-sm ml-auto">{corral.capacity} → {nextLevelCapacity}</span>
+            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  className="text-green-600 hover:text-green-800 transition-colors"
+                  onClick={() => handleInfoClick(
+                    "Max. Capacity",
+                    `La capacidad máxima aumentará de ${corral.capacity} a ${nextLevelCapacity} gallinas al subir de nivel. Esto te permitirá tener más gallinas y generar más ganancias.`
+                  )}
+                >
+                  <Info className="h-4 w-4" />
+                </button>
+                <span className="text-xs md:text-sm text-green-900 font-medium">Max. Capacity:</span>
+              </div>
+              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                {corral.capacity} → {nextLevelCapacity}
+              </span>
             </div>
 
             <Button 
               onClick={() => setShowUpgrade(true)}
-              className="w-full bg-green-500 hover:bg-green-600"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base"
+              size="lg"
             >
-              Subir de nivel
+              <span className="font-bold">⬆️ Subir de nivel</span>
             </Button>
           </div>
 
@@ -220,6 +319,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
               WithDraw
             </Button>
           </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -258,6 +358,28 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
           setShowSkinSelector(false);
         }}
       />
+
+      {/* Information Modal */}
+      <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-green-600" />
+              {infoModalContent?.title || "Información"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              {infoModalContent?.message || ""}
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setInfoModalOpen(false)}>
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
