@@ -116,8 +116,10 @@ const Home = () => {
   const { getSkinByKey: getMarketSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
   const { getSkinByKey: getWarehouseSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
 
-  // Get market building
-  const marketBuilding = buildings.find(b => b.building_type === 'market');
+  // Get market building - use useMemo to ensure it updates when buildings change
+  const marketBuilding = useMemo(() => {
+    return buildings.find(b => b.building_type === 'market');
+  }, [buildings]);
   const marketLevel = marketBuilding?.level || 1;
   
   // Get market skin info
@@ -136,8 +138,10 @@ const Home = () => {
     );
   }, [marketBuilding?.selected_skin, marketBuilding?.level, marketLevel, marketSkinInfo]);
 
-  // Get warehouse building
-  const warehouseBuilding = buildings.find(b => b.building_type === 'warehouse');
+  // Get warehouse building - use useMemo to ensure it updates when buildings change
+  const warehouseBuilding = useMemo(() => {
+    return buildings.find(b => b.building_type === 'warehouse');
+  }, [buildings]);
   const warehouseLevel = warehouseBuilding?.level || 1;
   
   // Get warehouse skin info
@@ -161,7 +165,10 @@ const Home = () => {
   const isWalletConnected = tonConnectUI.connected;
 
   // Filter buildings to only count coops (slots are only for coops)
-  const coops = buildings.filter(b => b.building_type === 'corral');
+  // Use useMemo to ensure it updates when buildings change
+  const coops = useMemo(() => {
+    return buildings.filter(b => b.building_type === 'corral');
+  }, [buildings]);
   const occupiedSlots = coops.length;
   
   // Calculate total slots based on wallet connection status
@@ -392,20 +399,20 @@ const Home = () => {
     loadUserProfile();
   }, [telegramUser]);
 
-  // Listen for skin selection events to refresh buildings
+  // Listen for skin selection and building upgrade events to refresh buildings
   useEffect(() => {
     let isHandling = false; // Prevent multiple simultaneous calls
     
-    const handleSkinSelected = async () => {
+    const handleRefreshBuildings = async () => {
       // Prevent multiple simultaneous calls
       if (isHandling) {
-        console.log("[Home] Skin selection event already being handled, skipping...");
+        console.log("[Home] Building refresh event already being handled, skipping...");
         return;
       }
       
       isHandling = true;
       try {
-        // Reload buildings to get updated selected_skin
+        // Reload buildings to get updated data (level, selected_skin, etc.)
         if (userId) {
           await loadBuildings(userId);
         } else {
@@ -415,16 +422,21 @@ const Home = () => {
           }
         }
       } catch (error) {
-        console.error("[Home] Error handling skin selection:", error);
+        console.error("[Home] Error handling building refresh:", error);
         // Don't show toast here - loadBuildings already shows it
       } finally {
         isHandling = false;
       }
     };
 
-    window.addEventListener('skinSelected', handleSkinSelected);
+    // Listen for skin selection events
+    window.addEventListener('skinSelected', handleRefreshBuildings);
+    // Listen for building upgrade events
+    window.addEventListener('buildingUpgraded', handleRefreshBuildings);
+    
     return () => {
-      window.removeEventListener('skinSelected', handleSkinSelected);
+      window.removeEventListener('skinSelected', handleRefreshBuildings);
+      window.removeEventListener('buildingUpgraded', handleRefreshBuildings);
     };
   }, [userId, telegramUser]);
 

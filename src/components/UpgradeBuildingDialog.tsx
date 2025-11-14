@@ -283,6 +283,16 @@ export const UpgradeBuildingDialog = ({
         description: `${info.label} mejorado a nivel ${nextLevel}`,
       });
 
+      // Emit event to notify all components that a building was upgraded
+      window.dispatchEvent(new CustomEvent('buildingUpgraded', { 
+        detail: { 
+          buildingId: actualBuildingId, 
+          buildingType, 
+          newLevel: nextLevel,
+          userId 
+        } 
+      }));
+
       onUpgradeComplete();
       onOpenChange(false);
     } catch (error: any) {
