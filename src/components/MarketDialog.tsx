@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useState, useEffect, useMemo } from "react";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
@@ -6,7 +6,7 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Palette, Edit } from "lucide-react";
+import { Palette, Edit, Info } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 
@@ -21,6 +21,8 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string } | null>(null);
   const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.MARKET);
 
   const market = getBuildingByType(BUILDING_TYPES.MARKET);
@@ -94,13 +96,43 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
     setShowUpgrade(false);
   };
 
+  const handleInfoClick = (title: string, message: string) => {
+    setInfoModalContent({ title, message });
+    setInfoModalOpen(true);
+  };
+
+  // Calculate market speed based on level (similar to vehicle speed calculation)
+  const getMarketSpeed = (level: number): number => {
+    // Level 1 = base speed, level 5 = 2x speed
+    const speedMultiplier = 1 + (level - 1) * 0.25; // 1.0, 1.25, 1.5, 1.75, 2.0
+    return speedMultiplier;
+  };
+
+  const currentSpeed = getMarketSpeed(currentLevel);
+  const nextSpeed = getMarketSpeed(currentLevel + 1);
+  
+  // TODO: Get actual earned amount from database
+  const totalEarned = 0;
+  const totalEarnedThisPeriod = 0;
+  
+  // TODO: Calculate next period countdown (for now, placeholder)
+  const [nextPeriodCountdown, setNextPeriodCountdown] = useState("1d 15h 5s");
+  
+  useEffect(() => {
+    // TODO: Implement actual countdown timer
+    // For now, just a placeholder
+  }, []);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent hideCloseButton className="w-[95vw] max-w-2xl max-h-[90vh] p-0 sm:rounded-lg bg-gradient-to-b from-green-50 to-emerald-50 border-2 border-green-300 flex flex-col overflow-hidden">
           {/* Header - Fixed */}
           <div className="flex items-center justify-between p-4 border-b border-green-200 bg-green-100/50 flex-shrink-0">
-            <h2 className="text-xl md:text-2xl font-bold text-green-900">Market</h2>
+            <div className="flex items-center gap-3">
+              <Info className="h-5 w-5 text-green-900" />
+              <h2 className="text-xl md:text-2xl font-bold text-green-900">Market</h2>
+            </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-green-200/50 flex-shrink-0">
               ✕
             </Button>
@@ -151,17 +183,46 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                 </div>
               </div>
 
-              {/* Current Level */}
-              <div className="text-center">
-                <div className="text-xs md:text-sm text-green-700">Nivel actual</div>
-                <div className="text-2xl md:text-3xl font-bold text-green-900">Nivel {currentLevel}</div>
-              </div>
+              {/* Current Metrics Section */}
+              <div className="space-y-3 border-2 border-green-300 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-4 md:p-6">
+                {/* Velocidad in */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Velocidad in",
+                        "Velocidad de procesamiento del mercado. Indica qué tan rápido el mercado puede procesar y vender los huevos. Esta velocidad aumenta con el nivel del edificio."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs md:text-sm text-green-900 font-medium">Velocidad in:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                    {currentSpeed.toFixed(3)} $TON
+                  </span>
+                </div>
 
-              {/* Stats */}
-              <div className="space-y-2 md:space-y-3">
-                <div className="flex justify-between items-center p-3 bg-green-100 rounded-lg border border-green-200">
-                  <span className="text-xs md:text-sm text-green-900">Capacidad de venta</span>
-                  <span className="font-semibold text-sm md:text-base text-green-900">{marketData.capacity.toLocaleString()}</span>
+                {/* Total earned */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Total earned",
+                        "Total de ganancias acumuladas desde que comenzaste a usar el mercado. Este valor representa todas las ventas realizadas a lo largo del tiempo."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs md:text-sm text-green-900 font-medium">Total earned:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                    {totalEarned.toFixed(3)} $TON
+                  </span>
                 </div>
               </div>
 
@@ -169,19 +230,49 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
               {canUpgrade && (
                 <div className="border-t border-green-200 pt-4 space-y-3">
                   <div className="text-sm font-medium text-green-900">Mejorar edificio</div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-green-700">Nivel {currentLevel}</span>
-                    <span className="text-green-600">→</span>
-                    <span className="text-xs md:text-sm font-semibold text-green-900">Nivel {currentLevel + 1}</span>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-lg space-y-2 border border-green-200">
-                    <div className="flex justify-between text-xs md:text-sm">
-                      <span className="text-green-800">Nueva capacidad:</span>
-                      <span className="font-semibold text-green-900">{nextLevelPrice?.capacity.toLocaleString()}</span>
+                  
+                  {/* Nivel */}
+                  <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        className="text-green-600 hover:text-green-800 transition-colors"
+                        onClick={() => handleInfoClick(
+                          "Nivel",
+                          "El nivel del mercado determina su velocidad de procesamiento y eficiencia. Al subir de nivel, el mercado procesa y vende huevos más rápido, aumentando tus ganancias."
+                        )}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                      <span className="text-xs md:text-sm text-green-900 font-medium">Nivel:</span>
                     </div>
+                    <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                      {currentLevel} → {currentLevel + 1}
+                    </span>
                   </div>
+
+                  {/* Velocidad in (upgrade) */}
+                  <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        className="text-green-600 hover:text-green-800 transition-colors"
+                        onClick={() => handleInfoClick(
+                          "Velocidad in",
+                          `La velocidad de procesamiento aumentará de ${currentSpeed.toFixed(3)} $TON a ${nextSpeed.toFixed(3)} $TON al subir de nivel. Esto te permitirá vender huevos más rápido y generar más ganancias.`
+                        )}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                      <span className="text-xs md:text-sm text-green-900 font-medium">Velocidad in:</span>
+                    </div>
+                    <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                      {currentSpeed.toFixed(3)} → {nextSpeed.toFixed(3)}
+                    </span>
+                  </div>
+                  
                   <Button 
-                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base"
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base" 
                     size="lg"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -219,6 +310,59 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
                   🏆 Nivel máximo alcanzado
                 </div>
               )}
+
+              {/* Claim Earnings Section */}
+              <div className="border-2 border-green-300 rounded-xl bg-gradient-to-br from-green-100 to-green-50 p-4 md:p-6">
+                <h4 className="text-sm font-semibold text-green-900 mb-3">Claim Earnings</h4>
+                
+                {/* Total earned this period */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200 mb-3">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Total earned this period",
+                        "Ganancias acumuladas durante el período actual. Puedes reclamar estas ganancias una vez que el período termine. Las ganancias se acumulan automáticamente mientras el mercado procesa huevos."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs md:text-sm text-green-900 font-medium">Total earned this period:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                    {totalEarnedThisPeriod.toFixed(3)} $TON
+                  </span>
+                </div>
+
+                {/* Next period */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200 mb-3">
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      className="text-green-600 hover:text-green-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Next period",
+                        "Tiempo restante hasta el próximo período de reclamación. Cuando termine este tiempo, podrás reclamar las ganancias acumuladas durante el período actual."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <span className="text-xs md:text-sm text-green-900 font-medium">next period:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                    {nextPeriodCountdown}
+                  </span>
+                </div>
+
+                <Button 
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base" 
+                  size="lg"
+                  disabled={totalEarnedThisPeriod <= 0}
+                >
+                  <span className="font-bold">Claim</span>
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
@@ -256,6 +400,28 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
           setShowSkinSelector(false);
         }}
       />
+
+      {/* Information Modal */}
+      <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-green-600" />
+              {infoModalContent?.title || "Información"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              {infoModalContent?.message || ""}
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setInfoModalOpen(false)}>
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
