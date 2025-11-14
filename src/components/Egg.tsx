@@ -6,7 +6,7 @@ interface EggProps {
   gridRow: string;
   progress: number; // 0 to 1, progress along the current belt
   direction: 'north' | 'south' | 'east' | 'west'; // Direction of the belt
-  beltType?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel';
+  beltType?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel';
   entryDirection?: 'north' | 'south' | 'east' | 'west'; // Direction from which egg entered (for turn belts)
   onReachDestiny?: () => void;
 }
@@ -16,9 +16,23 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
 
   // Calculate position within the cell based on progress and belt direction
   const getPosition = () => {
-    // For turn belts, use curved movement
-    if (beltType === 'turn' && entryDirection) {
-      return getCurvedPosition(progress, entryDirection);
+    // For all turn/curve belts, use curved movement
+    const isCurveBelt = beltType && (
+      beltType === 'turn' || 
+      beltType === 'turn-rt' || 
+      beltType === 'turn-lt' ||
+      beltType === 'turn-ne' ||
+      beltType === 'turn-nw' ||
+      beltType === 'turn-se' ||
+      beltType === 'turn-sw' ||
+      beltType === 'curve-ne' ||
+      beltType === 'curve-nw' ||
+      beltType === 'curve-se' ||
+      beltType === 'curve-sw'
+    );
+    
+    if (isCurveBelt && entryDirection) {
+      return getCurvedPosition(progress, entryDirection, beltType);
     }
     
     // Progress determines position within the cell (0 = start, 1 = end)
@@ -109,12 +123,57 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
   };
 
   // Calculate curved position for turn belts (90 degree turn)
-  const getCurvedPosition = (prog: number, entryDir: 'north' | 'south' | 'east' | 'west') => {
-    // Calculate exit direction (90 degrees clockwise from entry)
+  const getCurvedPosition = (prog: number, entryDir: 'north' | 'south' | 'east' | 'west', beltType?: string) => {
     const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
     const entryIndex = directions.indexOf(entryDir);
-    const exitIndex = (entryIndex + 1) % 4;
-    const exitDir = directions[exitIndex];
+    let exitDir: 'north' | 'south' | 'east' | 'west';
+    
+    // Calculate exit direction based on belt type
+    if (beltType === 'turn-lt') {
+      // Counterclockwise: go back one direction
+      const prevIndex = (entryIndex - 1 + 4) % 4;
+      exitDir = directions[prevIndex];
+    } else if (beltType === 'curve-ne' || beltType === 'turn-ne') {
+      // North -> East curve
+      // If entering from north, exit east; if entering from east, exit north (bidirectional)
+      if (entryDir === 'north') exitDir = 'east';
+      else if (entryDir === 'east') exitDir = 'north';
+      else {
+        // Default: assume north entry -> east exit
+        exitDir = 'east';
+      }
+    } else if (beltType === 'curve-nw' || beltType === 'turn-nw') {
+      // North -> West curve
+      // If entering from north, exit west; if entering from west, exit north (bidirectional)
+      if (entryDir === 'north') exitDir = 'west';
+      else if (entryDir === 'west') exitDir = 'north';
+      else {
+        // Default: assume north entry -> west exit
+        exitDir = 'west';
+      }
+    } else if (beltType === 'curve-se' || beltType === 'turn-se') {
+      // South -> East curve
+      // If entering from south, exit east; if entering from east, exit south (bidirectional)
+      if (entryDir === 'south') exitDir = 'east';
+      else if (entryDir === 'east') exitDir = 'south';
+      else {
+        // Default: assume south entry -> east exit
+        exitDir = 'east';
+      }
+    } else if (beltType === 'curve-sw' || beltType === 'turn-sw') {
+      // South -> West curve
+      // If entering from south, exit west; if entering from west, exit south (bidirectional)
+      if (entryDir === 'south') exitDir = 'west';
+      else if (entryDir === 'west') exitDir = 'south';
+      else {
+        // Default: assume south entry -> west exit
+        exitDir = 'west';
+      }
+    } else {
+      // Default: clockwise (turn, turn-rt, and legacy)
+      const exitIndex = (entryIndex + 1) % 4;
+      exitDir = directions[exitIndex];
+    }
     
     // Use quadratic curve for smooth 90-degree turn
     // Start at entry side, end at exit side
