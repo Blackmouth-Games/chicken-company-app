@@ -42,11 +42,6 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
             {/* Content */}
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="max-w-2xl mx-auto p-6 space-y-6">
-                {/* Coming Soon Message */}
-                <div className="text-center">
-                  <h3 className="text-3xl font-bold text-amber-900 mb-4">Coming Soon</h3>
-                </div>
-
                 {/* House Card with Edit Button */}
                 <div className="relative border-2 border-amber-300 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 p-6">
                   <button
@@ -69,6 +64,13 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
                     <div className="text-center">
                       <h3 className="font-bold text-amber-900 text-lg">Casa del Granjero</h3>
                     </div>
+                  </div>
+                </div>
+
+                {/* Coming Soon Message - as a block */}
+                <div className="border-2 border-amber-300 rounded-xl bg-gradient-to-br from-amber-100 to-amber-50 p-6">
+                  <div className="text-center">
+                    <h3 className="text-3xl font-bold text-amber-900">Coming Soon</h3>
                   </div>
                 </div>
               </div>

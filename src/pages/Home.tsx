@@ -61,7 +61,6 @@ const Home = () => {
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
-  const [warehouseCapacity, setWarehouseCapacity] = useState({ current: 0, max: 100 });
 
   // Use layout editor hook
   const {
@@ -482,14 +481,23 @@ const Home = () => {
     };
   }, [playMusic, isMuted]);
 
-  // Load warehouse capacity (simulated for now)
-  useEffect(() => {
-    // TODO: Load from database
-    setWarehouseCapacity({ current: 67, max: 100 }); // Example: 67%
-  }, []);
+  // Calculate warehouse capacity from actual warehouse building
+  const warehouseCapacity = useMemo(() => {
+    if (!warehouseBuilding) {
+      return { current: 0, max: 100 }; // Default if no warehouse
+    }
+    // TODO: Get actual stored amount from database (eggs/items)
+    // For now, use a placeholder - this should come from warehouse inventory
+    const stored = 0; // This should be fetched from database
+    return {
+      current: stored,
+      max: warehouseBuilding.capacity || 100
+    };
+  }, [warehouseBuilding]);
 
   // Calculate which box image to show based on capacity percentage
   const getBoxImage = () => {
+    if (!warehouseBuilding || warehouseCapacity.max === 0) return null;
     const percentage = (warehouseCapacity.current / warehouseCapacity.max) * 100;
     if (percentage >= 80) return box3Image;
     if (percentage >= 45) return box2Image;

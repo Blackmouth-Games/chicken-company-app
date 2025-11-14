@@ -6,9 +6,10 @@ import { useBuildingPrices } from "@/hooks/useBuildingPrices";
 import { UpgradeBuildingDialog } from "./UpgradeBuildingDialog";
 import { SkinSelectorDialog } from "./SkinSelectorDialog";
 import { BUILDING_TYPES } from "@/lib/constants";
-import { Palette, Edit } from "lucide-react";
+import { Palette, Edit, Info } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface WarehouseDialogProps {
   open: boolean;
@@ -101,13 +102,7 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           {/* Header - Fixed */}
           <div className="flex items-center justify-between p-4 border-b border-blue-200 bg-blue-100/50 flex-shrink-0">
             <div className="flex items-center gap-3">
-              {buildingDisplay && (
-                <img 
-                  src={buildingDisplay.src} 
-                  alt="Warehouse" 
-                  className="w-8 h-8 object-contain"
-                />
-              )}
+              <Info className="h-5 w-5 text-blue-900" />
               <h2 className="text-xl md:text-2xl font-bold text-blue-900">Almacén</h2>
             </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="hover:bg-blue-200/50 flex-shrink-0">
@@ -152,17 +147,74 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                 </div>
               </div>
 
-              {/* Current Level */}
-              <div className="text-center">
-                <div className="text-xs md:text-sm text-blue-700">Nivel actual</div>
-                <div className="text-2xl md:text-3xl font-bold text-blue-900">Nivel {currentLevel}</div>
-              </div>
+              {/* Storage Data Section */}
+              <div className="space-y-3 border-2 border-blue-300 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 p-4 md:p-6">
+                {/* Almacenado (Stored) */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-blue-600 hover:text-blue-800">
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Cantidad total de huevos almacenados actualmente en el almacén</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-xs md:text-sm text-blue-900 font-medium">Almacenado:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
+                    0.000 $TON
+                  </span>
+                </div>
 
-              {/* Stats */}
-              <div className="space-y-2 md:space-y-3">
-                <div className="flex justify-between items-center p-3 bg-blue-100 rounded-lg border border-blue-200">
-                  <span className="text-xs md:text-sm text-blue-900">Capacidad de almacenamiento</span>
-                  <span className="font-semibold text-sm md:text-base text-blue-900">{warehouseData.capacity.toLocaleString()}</span>
+                {/* Max Capacity */}
+                <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-blue-600 hover:text-blue-800">
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Capacidad máxima de almacenamiento del almacén. Puedes aumentar esta capacidad mejorando el nivel del edificio.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-xs md:text-sm text-blue-900 font-medium">Max. Capacity:</span>
+                  </div>
+                  <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
+                    {warehouseData.capacity.toLocaleString()} $TON
+                  </span>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="mt-4 pt-4 border-t border-blue-200">
+                  <div className="flex items-start gap-2 mb-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="text-blue-600 hover:text-blue-800 mt-0.5">
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Los huevos tienen un tiempo de caducidad de 24 horas después de entrar al almacén. Asegúrate de venderlos o procesarlos antes de que caduquen.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-900 mb-1">Disclaimer:</h4>
+                      <p className="text-xs md:text-sm text-blue-700">
+                        Cuidado, los huevos caducan a las 24h después de haber entrado a la almacén. Asegúrate de venderlos o procesarlos antes de que caduquen.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -7,7 +7,7 @@ import { useBuildingSkins } from "@/hooks/useBuildingSkins";
 import { useUserItems } from "@/hooks/useUserItems";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Check, X } from "lucide-react";
+import { Loader2, Lock, Check } from "lucide-react";
 import { getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
 import { BUILDING_TYPES, type BuildingType as ConstantsBuildingType } from "@/lib/constants";
 import { getParsedImagesForType } from "@/lib/buildingImagesDynamic";
@@ -582,11 +582,6 @@ export const SkinSelectorDialog = ({
             )}
           </div>
         </div>
-        {/* Close button */}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none z-10">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
       </DialogPrimitive.Content>
       </DialogPortal>
     </Dialog>
