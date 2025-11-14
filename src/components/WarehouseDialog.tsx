@@ -210,16 +210,45 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
               {canUpgrade && (
                 <div className="border-t border-blue-200 pt-4 space-y-3">
                   <div className="text-sm font-medium text-blue-900">Mejorar edificio</div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs md:text-sm text-blue-700">Nivel {currentLevel}</span>
-                    <span className="text-blue-600">→</span>
-                    <span className="text-xs md:text-sm font-semibold text-blue-900">Nivel {currentLevel + 1}</span>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-lg space-y-2 border border-blue-200">
-                    <div className="flex justify-between text-xs md:text-sm">
-                      <span className="text-blue-800">Nueva capacidad:</span>
-                      <span className="font-semibold text-blue-900">{nextLevelPrice?.capacity.toLocaleString()}</span>
+                  
+                  {/* Nivel */}
+                  <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        onClick={() => handleInfoClick(
+                          "Nivel",
+                          "El nivel del edificio determina su capacidad y eficiencia. Al subir de nivel, el almacén aumenta significativamente su capacidad de almacenamiento y puede desbloquear nuevas funcionalidades."
+                        )}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                      <span className="text-xs md:text-sm text-blue-900 font-medium">Nivel:</span>
                     </div>
+                    <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
+                      {currentLevel} → {currentLevel + 1}
+                    </span>
+                  </div>
+
+                  {/* Nueva capacidad */}
+                  <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        type="button" 
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                        onClick={() => handleInfoClick(
+                          "Nueva capacidad",
+                          `La capacidad de almacenamiento aumentará de ${warehouseData.capacity.toLocaleString()} $TON a ${nextLevelPrice?.capacity.toLocaleString()} $TON al subir de nivel. Esto te permitirá almacenar más huevos antes de necesitar venderlos.`
+                        )}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                      <span className="text-xs md:text-sm text-blue-900 font-medium">Nueva capacidad:</span>
+                    </div>
+                    <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
+                      {warehouseData.capacity.toLocaleString()} → {nextLevelPrice?.capacity.toLocaleString()}
+                    </span>
                   </div>
                   <Button 
                     className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base" 
