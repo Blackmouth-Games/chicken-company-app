@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { useState, useEffect, useMemo } from "react";
 import { useUserBuildings } from "@/hooks/useUserBuildings";
@@ -9,7 +9,6 @@ import { BUILDING_TYPES } from "@/lib/constants";
 import { Palette, Edit, Info } from "lucide-react";
 import { getBuildingDisplay } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface WarehouseDialogProps {
   open: boolean;
@@ -22,6 +21,8 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
   const { getPrice, loading: pricesLoading } = useBuildingPrices();
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string } | null>(null);
   const { getSkinByKey } = useBuildingSkins(BUILDING_TYPES.WAREHOUSE);
 
   const warehouse = getBuildingByType(BUILDING_TYPES.WAREHOUSE);
@@ -95,6 +96,11 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
     setShowUpgrade(false);
   };
 
+  const handleInfoClick = (title: string, message: string) => {
+    setInfoModalContent({ title, message });
+    setInfoModalOpen(true);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,18 +158,16 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                 {/* Almacenado (Stored) */}
                 <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" className="text-blue-600 hover:text-blue-800">
-                            <Info className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Cantidad total de huevos almacenados actualmente en el almacén</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <button 
+                      type="button" 
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Almacenado",
+                        "Cantidad total de huevos almacenados actualmente en el almacén. Este valor representa el total de huevos que has producido y que están guardados en el almacén."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
                     <span className="text-xs md:text-sm text-blue-900 font-medium">Almacenado:</span>
                   </div>
                   <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
@@ -174,18 +178,16 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
                 {/* Max Capacity */}
                 <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" className="text-blue-600 hover:text-blue-800">
-                            <Info className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Capacidad máxima de almacenamiento del almacén. Puedes aumentar esta capacidad mejorando el nivel del edificio.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <button 
+                      type="button" 
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      onClick={() => handleInfoClick(
+                        "Max. Capacity",
+                        "Capacidad máxima de almacenamiento del almacén. Puedes aumentar esta capacidad mejorando el nivel del edificio. Cada nivel aumenta significativamente la capacidad de almacenamiento."
+                      )}
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
                     <span className="text-xs md:text-sm text-blue-900 font-medium">Max. Capacity:</span>
                   </div>
                   <span className="font-semibold text-sm md:text-base text-blue-900 bg-gray-100 px-3 py-1 rounded">
@@ -195,25 +197,11 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
 
                 {/* Disclaimer */}
                 <div className="mt-4 pt-4 border-t border-blue-200">
-                  <div className="flex items-start gap-2 mb-2">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" className="text-blue-600 hover:text-blue-800 mt-0.5">
-                            <Info className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Los huevos tienen un tiempo de caducidad de 24 horas después de entrar al almacén. Asegúrate de venderlos o procesarlos antes de que caduquen.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <div>
-                      <h4 className="text-sm font-semibold text-blue-900 mb-1">Disclaimer:</h4>
-                      <p className="text-xs md:text-sm text-blue-700">
-                        Cuidado, los huevos caducan a las 24h después de haber entrado a la almacén. Asegúrate de venderlos o procesarlos antes de que caduquen.
-                      </p>
-                    </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900 mb-1">Disclaimer:</h4>
+                    <p className="text-xs md:text-sm text-blue-700">
+                      Cuidado, los huevos caducan a las 24h después de haber entrado a la almacén. Asegúrate de venderlos o procesarlos antes de que caduquen.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -309,6 +297,28 @@ export const WarehouseDialog = ({ open, onOpenChange, userId }: WarehouseDialogP
           setShowSkinSelector(false);
         }}
       />
+
+      {/* Information Modal */}
+      <Dialog open={infoModalOpen} onOpenChange={setInfoModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-600" />
+              {infoModalContent?.title || "Información"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              {infoModalContent?.message || ""}
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={() => setInfoModalOpen(false)}>
+              OK
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
