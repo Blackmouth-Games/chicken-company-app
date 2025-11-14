@@ -241,10 +241,11 @@ export const SkinSelectorDialog = ({
     }
     const levelsToShow = levelSet.size > 0 ? Array.from(levelSet).sort((a, b) => a - b) : [1, 2, 3, 4, 5];
     
-    // Generate 10 variants per level (A-J)
-    const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    // Generate 8 variants per level (A-H) - 4 columns x 2 rows = 8 slots per level
+    const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
     
-    // For each level to show, create slots for all variants that exist locally or in database
+    // For each level to show, create slots for ALL 8 variants (A-H)
+    // This ensures we always show empty slots for future skins
     for (const level of levelsToShow) {
       for (const variant of variants) {
         // For corral, use "coop_" format (as that's what's in the database and assets)
@@ -259,58 +260,49 @@ export const SkinSelectorDialog = ({
         // Check if skin exists in database
         const dbSkin = skins.find(s => s.skin_key === skinKey);
         
-        // If we have a local image or a database skin, create a slot
-        if (localImage || dbSkin) {
-          if (dbSkin) {
-            // Database skin exists - check if owned
-            const isOwned = hasItem("skin", dbSkin.skin_key);
-            const isDefault = dbSkin.is_default === true; // Explicitly check for true
-            const isVariantA = variant === 'A';
-            
-            // Check if user has any skins at all
-            const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
-            
-            // Debug log for default skins
-            if (isDefault) {
-              console.log(`[SkinSelector] Found default skin: ${skinKey}`, {
-                level,
-                variant,
-                buildingLevel,
-                isDefault: dbSkin.is_default,
-                canUse: isOwned || isDefault || (!userHasAnySkins && isVariantA)
-              });
-            }
-            
-            // Always show skins if:
-            // 1. User owns it (in user_items), OR
-            // 2. It's default (always show default skins), OR
-            // 3. User has no skins at all AND it's variant A (show default A skins), OR
-            // 4. It's for the building's current level (to show as locked if not owned)
-            const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
-            const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
-            
-            // ALWAYS show default skins, regardless of other conditions
-            // Also show if user can use it, or if it's for the current level
-            if (isDefault || canUse || isCurrentLevel) {
-              slots.push({ level, variant, skin: dbSkin, isLocal: false });
-            } else {
-              // Debug: why wasn't this skin added?
-              console.log(`[SkinSelector] Skin NOT added: ${skinKey}`, {
-                isOwned,
-                isDefault,
-                isVariantA,
-                userHasAnySkins,
-                canUse,
-                isCurrentLevel,
-                buildingLevel,
-                level
-              });
-            }
-          } else if (localImage) {
-            // Only local image exists - show it but it's not available (user doesn't own it)
-            // Don't add it as available, only show if there's a database entry
-            // For now, we won't show local-only images as they're not in the database
+        // Always create a slot (even if empty) to show future availability
+        if (dbSkin) {
+          // Database skin exists - check if owned
+          const isOwned = hasItem("skin", dbSkin.skin_key);
+          const isDefault = dbSkin.is_default === true; // Explicitly check for true
+          const isVariantA = variant === 'A';
+          
+          // Check if user has any skins at all
+          const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
+          
+          // Debug log for default skins
+          if (isDefault) {
+            console.log(`[SkinSelector] Found default skin: ${skinKey}`, {
+              level,
+              variant,
+              buildingLevel,
+              isDefault: dbSkin.is_default,
+              canUse: isOwned || isDefault || (!userHasAnySkins && isVariantA)
+            });
           }
+          
+          // Always show skins if:
+          // 1. User owns it (in user_items), OR
+          // 2. It's default (always show default skins), OR
+          // 3. User has no skins at all AND it's variant A (show default A skins), OR
+          // 4. It's for the building's current level (to show as locked if not owned)
+          const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
+          const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
+          
+          // ALWAYS show default skins, regardless of other conditions
+          // Also show if user can use it, or if it's for the current level
+          if (isDefault || canUse || isCurrentLevel) {
+            slots.push({ level, variant, skin: dbSkin, isLocal: false });
+          } else {
+            // Still add as empty slot to show it exists but is not available
+            slots.push({ level, variant, skin: null, isLocal: false });
+          }
+        } else if (localImage) {
+          // Only local image exists - add as empty slot (not available)
+          slots.push({ level, variant, skin: null, isLocal: false });
+        } else {
+          // No skin exists - add empty slot to show future availability
+          slots.push({ level, variant, skin: null, isLocal: false });
         }
       }
     }
@@ -409,26 +401,32 @@ export const SkinSelectorDialog = ({
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Group by level */}
+                {/* Group by level - Always show 8 slots (4 columns x 2 rows) per level */}
                 {[1, 2, 3, 4, 5].map(level => {
-                  const levelSlots = inventorySlots.filter(slot => slot.level === level);
-                  if (levelSlots.length === 0) return null;
-
+                  const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                  
                   return (
                     <div key={level} className="space-y-2">
                       <h3 className="text-lg font-semibold text-muted-foreground">
                         Nivel {level}
                       </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {levelSlots.map((slot, index) => {
-                          const skin = slot.skin;
-                          const isLocal = slot.isLocal || false;
-                          const skinKey = `${buildingType}_${slot.level}${slot.variant}`;
+                      <div className="grid grid-cols-4 gap-2">
+                        {variants.map((variant, index) => {
+                          // Find the slot for this level and variant
+                          const slot = inventorySlots.find(s => s.level === level && s.variant === variant);
+                          // If no slot exists, create an empty one
+                          const emptySlot: typeof inventorySlots[0] = { level, variant, skin: null, isLocal: false };
+                          const currentSlot = slot || emptySlot;
+                          const skin = currentSlot.skin;
+                          const isLocal = currentSlot.isLocal || false;
+                          const skinKey = buildingType === 'corral' 
+                            ? `coop_${currentSlot.level}${currentSlot.variant}` 
+                            : `${buildingType}_${currentSlot.level}${currentSlot.variant}`;
                           
                           // Check if user actually owns this skin
                           const userOwnsSkin = skin ? hasItem("skin", skin.skin_key) : false;
                           const isDefault = skin ? skin.is_default : false;
-                          const isVariantA = slot.variant === 'A';
+                          const isVariantA = currentSlot.variant === 'A';
                           
                           // Check if user has any skins at all
                           const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
@@ -445,16 +443,16 @@ export const SkinSelectorDialog = ({
                           // 3. If no currentSkin and no default found, and this is the first variant (A) of the building's level
                           const isSelected = skin ? (
                             currentSkin === skin.skin_key || 
-                            (!currentSkin && skin.is_default && slot.level === buildingLevel) ||
-                            (!currentSkin && !defaultSkinForLevel && slot.level === buildingLevel && slot.variant === 'A')
+                            (!currentSkin && skin.is_default && currentSlot.level === buildingLevel) ||
+                            (!currentSkin && !defaultSkinForLevel && currentSlot.level === buildingLevel && currentSlot.variant === 'A')
                           ) : (
-                            currentSkin === null && slot.level === buildingLevel && slot.variant === 'A'
+                            currentSkin === null && currentSlot.level === buildingLevel && currentSlot.variant === 'A'
                           );
                           
                           // Show select button ONLY if:
                           // - It's for the building's current level AND user can use it
                           // No skins from other levels can be selected, even if they're default
-                          const isCurrentLevel = buildingLevel ? slot.level === buildingLevel : true;
+                          const isCurrentLevel = buildingLevel ? currentSlot.level === buildingLevel : true;
                           const canSelect = isCurrentLevel && canUse;
                           
                           const isEmpty = !skin && !isLocal;
@@ -462,20 +460,20 @@ export const SkinSelectorDialog = ({
                           // Get building display - use local image if available, otherwise use skin from database
                           const skinDisplay = isLocal ? getBuildingDisplay(
                             buildingType as BuildingType,
-                            slot.level,
+                            currentSlot.level,
                             skinKey,
                             null
                           ) : skin ? getBuildingDisplay(
                             buildingType as BuildingType,
-                            level,
+                            currentSlot.level,
                             skin.skin_key,
                             skin
                           ) : null;
 
                           return (
                             <div
-                              key={`${level}-${slot.variant}-${index}`}
-                              className={`relative p-3 rounded-lg border-2 transition-all ${
+                              key={`${level}-${currentSlot.variant}-${index}`}
+                              className={`relative p-1.5 rounded-lg border-2 transition-all aspect-square ${
                                 isEmpty
                                   ? "border-muted/30 bg-muted/10 opacity-50"
                                   : isSelected
@@ -484,91 +482,47 @@ export const SkinSelectorDialog = ({
                                   ? "border-border hover:border-primary/50 cursor-pointer"
                                   : "border-muted/50 bg-muted/5 opacity-60"
                               }`}
+                              onClick={() => {
+                                if (canSelect && skin && buildingId) {
+                                  handleSelectSkin(skin.skin_key);
+                                }
+                              }}
                             >
                               {/* Skin Image or Empty Slot */}
-                              <div className="flex items-center justify-center mb-2 min-h-[100px]">
+                              <div className="flex items-center justify-center h-full">
                                 {isEmpty ? (
                                   <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                    <Lock className="w-8 h-8 mb-2 opacity-50" />
-                                    <span className="text-xs">Nivel {level}{slot.variant}</span>
+                                    <Lock className="w-4 h-4 opacity-50" />
                                   </div>
                                 ) : skinDisplay?.type === 'image' ? (
                                   <img 
                                     src={skinDisplay.src} 
                                     alt={skin?.name || `Nivel ${slot.level}${slot.variant}`}
-                                    className="w-24 h-24 object-contain"
+                                    className="w-full h-full object-contain p-1"
                                   />
                                 ) : (
-                                  <div className="text-6xl">{skin?.image_url || '🏚️'}</div>
-                                )}
-                              </div>
-
-                              {/* Skin Name */}
-                              <div className="text-center">
-                                <div className="font-semibold text-sm mb-1">
-                                  {skin ? skin.name : `Nivel ${slot.level}${slot.variant}`}
-                                </div>
-                                {skin && (
-                                  <div className="text-xs text-muted-foreground capitalize mb-2">
-                                    {skin.rarity}
-                                  </div>
-                                )}
-
-                                {/* Action Button - Only show for current level AND if user can use it */}
-                                {canSelect && skin && (
-                                  <Button
-                                    onClick={() => {
-                                      handleSelectSkin(skin.skin_key);
-                                    }}
-                                    disabled={isSelected || !buildingId}
-                                    className="w-full"
-                                    size="sm"
-                                    variant={isSelected ? "default" : "outline"}
-                                    title={!buildingId ? "Este edificio no tiene ID en la base de datos" : undefined}
-                                  >
-                                    {isSelected ? (
-                                      <>
-                                        <Check className="w-4 h-4 mr-1" />
-                                        En uso
-                                      </>
-                                    ) : !buildingId ? (
-                                      <>
-                                        <Lock className="w-4 h-4 mr-1" />
-                                        No disponible
-                                      </>
-                                    ) : (
-                                      "Seleccionar"
-                                    )}
-                                  </Button>
-                                )}
-                                
-                                {/* Locked message if can't use */}
-                                {isCurrentLevel && skin && !canUse && (
-                                  <div className="text-center text-xs text-muted-foreground py-2">
-                                    <Lock className="w-4 h-4 mx-auto mb-1 opacity-50" />
-                                    No disponible
-                                  </div>
-                                )}
-                                
-                                {/* Info text for other levels */}
-                                {!isCurrentLevel && skin && (
-                                  <div className="text-center text-xs text-muted-foreground py-2">
-                                    Nivel {slot.level}
-                                  </div>
+                                  <div className="text-2xl">{skin?.image_url || '🏚️'}</div>
                                 )}
                               </div>
 
                               {/* Selected Badge */}
                               {isSelected && (
-                                <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                                  ✓
+                                <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+                                  <Check className="w-3 h-3" />
                                 </div>
                               )}
 
                               {/* Lock Badge for unowned/unavailable skins */}
-                              {skin && !canUse && (
-                                <div className="absolute top-2 right-2 bg-muted text-muted-foreground text-xs px-2 py-1 rounded-full">
+                              {skin && !canUse && !isSelected && (
+                                <div className="absolute top-1 right-1 bg-muted text-muted-foreground rounded-full p-0.5">
                                   <Lock className="w-3 h-3" />
+                                </div>
+                              )}
+
+                              {/* Locked icon for empty slots */}
+                              {isEmpty && (
+                                <div className="absolute top-1 right-1">
+                                  <Lock className="w-3 h-3 text-muted-foreground opacity-50" />
                                 </div>
                               )}
                             </div>
