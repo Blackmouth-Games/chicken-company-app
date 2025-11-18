@@ -167,22 +167,26 @@ export const ConveyorBelt = ({
     if (belt.type === 'curve-sw') {
       // BL base: South -> West (entrada desde abajo, salida hacia la izquierda)
       // Rotate the BL image to match the desired direction
+      // direction represents the exit direction of the curve
+      // Rotación en sentido antihorario: west -> south -> east -> north -> west
       switch (belt.direction) {
         case 'west': return 'rotate(0deg)'; // South -> West (base orientation)
-        case 'south': return 'rotate(90deg)'; // West -> South (reversed, entrada desde izquierda)
-        case 'east': return 'rotate(180deg)'; // North -> East (entrada desde arriba, salida hacia derecha)
-        case 'north': return 'rotate(270deg)'; // East -> North (entrada desde derecha, salida hacia arriba)
+        case 'south': return 'rotate(90deg)'; // West -> South (rotación 90° horario de imagen: entrada desde izquierda, salida hacia abajo)
+        case 'east': return 'rotate(180deg)'; // North -> East (rotación 180°: entrada desde arriba, salida hacia derecha)
+        case 'north': return 'rotate(270deg)'; // East -> North (rotación 270° horario de imagen: entrada desde derecha, salida hacia arriba)
         default: return 'rotate(0deg)';
       }
     }
     if (belt.type === 'curve-se') {
       // BR base: South -> East (entrada desde abajo, salida hacia la derecha)
       // Rotate the BR image to match the desired direction
+      // direction represents the exit direction of the curve
+      // Rotación en sentido antihorario: east -> north -> west -> south -> east
       switch (belt.direction) {
         case 'east': return 'rotate(0deg)'; // South -> East (base orientation)
-        case 'south': return 'rotate(90deg)'; // East -> South (reversed, entrada desde derecha)
-        case 'west': return 'rotate(180deg)'; // North -> West (entrada desde arriba, salida hacia izquierda)
-        case 'north': return 'rotate(270deg)'; // West -> North (entrada desde izquierda, salida hacia arriba)
+        case 'north': return 'rotate(90deg)'; // East -> North (rotación 90° horario de imagen: entrada desde derecha, salida hacia arriba)
+        case 'west': return 'rotate(180deg)'; // North -> West (rotación 180°: entrada desde arriba, salida hacia izquierda)
+        case 'south': return 'rotate(270deg)'; // West -> South (rotación 270° horario de imagen: entrada desde izquierda, salida hacia abajo)
         default: return 'rotate(0deg)';
       }
     }

@@ -200,7 +200,13 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     
     // Control point for smooth curve
     const getControlPoint = () => {
-      // Specific tuning for belts que entran por abajo y salen a la izquierda (belt BL)
+      // For BR and BL curve belts, control point is always at center (0.5, 0.5)
+      // This ensures the control point doesn't rotate, only start/end points rotate
+      if (beltType === 'curve-se' || beltType === 'curve-sw') {
+        return { x: 0.5, y: 0.5 };
+      }
+      
+      // Specific tuning for other belts que entran por abajo y salen a la izquierda (belt BL)
       if (
         (entryDir === 'south' && exitDir === 'west') ||
         (entryDir === 'west' && exitDir === 'south') ||

@@ -1088,12 +1088,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     if (selectedObject.type === 'belt') {
       const belt = layoutConfig.belts.find(b => b.id === selectedObject.id);
       if (belt) {
-        // Cycle through directions: east -> south -> west -> north -> east
+        // Cycle through directions in counterclockwise: east -> north -> west -> south -> east
         const directionCycle: Record<string, 'north' | 'south' | 'east' | 'west'> = {
-          'east': 'south',
-          'south': 'west',
-          'west': 'north',
-          'north': 'east',
+          'east': 'north',
+          'north': 'west',
+          'west': 'south',
+          'south': 'east',
         };
         
         updateBelt(belt.id, { direction: directionCycle[belt.direction] });
