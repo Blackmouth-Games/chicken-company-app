@@ -4,8 +4,8 @@
  * This makes adding new skins much easier - just add the image file!
  */
 
-// Auto-import all building images
-const buildingImageModules = import.meta.glob('/src/assets/buildings/*.{png,jpg,jpeg,webp,svg}', { 
+// Auto-import all building images (including nested folders like buildings/coop/)
+const buildingImageModules = import.meta.glob('/src/assets/buildings/**/*.{png,jpg,jpeg,webp,svg}', { 
   eager: true, 
   as: 'url' 
 }) as Record<string, string>;
@@ -17,6 +17,7 @@ interface ParsedImage {
   variant: string;
   url: string;
   fileName: string;
+  relativePath: string;
 }
 
 /**
@@ -26,9 +27,10 @@ interface ParsedImage {
  * - "warehouse_5A.png" -> { buildingType: "warehouse", level: 5, variant: "A" }
  * - "house_1C.png" -> { buildingType: "house", level: 1, variant: "C" }
  */
-function parseImageFileName(fileName: string): ParsedImage | null {
+function parseImageFileName(filePath: string): ParsedImage | null {
+  const relativePath = filePath.replace('/src/assets/buildings/', '');
   // Remove path but keep extension info
-  const baseName = fileName
+  const baseName = relativePath
     .replace(/^.*\//, '') // Remove path
     .replace(/\s+/g, ''); // Remove spaces (e.g., "market_5A .png" -> "market_5A.png")
   
@@ -71,37 +73,11 @@ function parseImageFileName(fileName: string): ParsedImage | null {
     normalizedVariant = String.fromCharCode(64 + variantNum); // 1->A, 2->B, ..., 10->J
   }
 
-  // Find the correct URL from buildingImageModules
-  // The key in buildingImageModules is the full file path like '/src/assets/buildings/warehouse_1A.png'
-  let imageUrl: string | undefined;
-  
-  // Try exact match first (with and without spaces)
-  const exactKey = `/src/assets/buildings/${baseName}`;
-  const exactKeyWithSpace = `/src/assets/buildings/${baseName.replace(/(\d+)([A-J])\./, '$1$2 .')}`; // Add space before extension
-  
-  if (buildingImageModules[exactKey]) {
-    imageUrl = buildingImageModules[exactKey];
-  } else if (buildingImageModules[exactKeyWithSpace]) {
-    imageUrl = buildingImageModules[exactKeyWithSpace];
-  } else {
-    // Fallback: search by filename (with or without spaces)
-    const nameWithoutExt = baseName.replace(/\.[^.]+$/, '');
-    for (const [key, url] of Object.entries(buildingImageModules)) {
-      // Match by filename (with or without path, with or without spaces)
-      const keyWithoutPath = key.replace(/^.*[\/\\]/, '').replace(/\.[^.]+$/, '');
-      const keyWithoutSpaces = keyWithoutPath.replace(/\s+/g, '');
-      if (key.includes(baseName) || 
-          key.endsWith(`/${baseName}`) || 
-          key.endsWith(`\\${baseName}`) ||
-          keyWithoutSpaces === nameWithoutExt) {
-        imageUrl = url;
-        break;
-      }
-    }
-  }
+  // The key in buildingImageModules is the full file path like '/src/assets/buildings/coop/coop_1A.png'
+  const imageUrl = buildingImageModules[filePath];
   
   if (!imageUrl) {
-    console.warn(`[parseImageFileName] Could not find image URL for: ${baseName}, available keys:`, Object.keys(buildingImageModules).slice(0, 5));
+    console.warn(`[parseImageFileName] Could not find image URL for: ${filePath}, available keys:`, Object.keys(buildingImageModules).slice(0, 5));
   }
   
   return {
@@ -110,6 +86,7 @@ function parseImageFileName(fileName: string): ParsedImage | null {
     variant: normalizedVariant,
     url: imageUrl || '',
     fileName: nameWithoutExt, // Return without extension
+    relativePath,
   };
 }
 

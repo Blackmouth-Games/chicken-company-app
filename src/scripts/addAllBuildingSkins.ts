@@ -53,7 +53,7 @@ function detectSkinsFromImages(): SkinData[] {
     const images = getParsedImagesForType(buildingType);
     
     for (const image of images) {
-      const { level, variant, fileName } = image;
+      const { level, variant, fileName, relativePath } = image;
       
       // Generate skin_key: normalize coop -> corral
       const skinKey = buildingType === 'corral' && fileName.startsWith('coop_')
@@ -63,14 +63,11 @@ function detectSkinsFromImages(): SkinData[] {
       // Every level's variant "A" should be the default skin for that level
       const isDefault = variant === 'A';
       
-      // Get file extension from original path
-      const fileExtension = image.fileName.match(/\.(png|jpg|jpeg|webp|svg)$/i)?.[0] || '.png';
-      
       skins.push({
         building_type: buildingType,
         skin_key: skinKey,
         name: generateSkinName(buildingType, level, variant),
-        image_url: `/src/assets/buildings/${fileName}${fileExtension}`, // Will be replaced by emoji in DB
+        image_url: `/src/assets/buildings/${relativePath}`, // Will be replaced by emoji in DB
         is_default: isDefault,
         rarity: getRarityForLevel(level),
       });
