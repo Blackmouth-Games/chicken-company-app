@@ -1208,11 +1208,19 @@ const BezierCurveVisualizer = () => {
 
   // Auto-calculate control point based on entry/exit (current logic)
   const autoControlPoint = useMemo(() => {
-    // Current logic from Egg.tsx
+    // Coincidir con la lógica de Egg.tsx
+    const isSouthWestTurn =
+      (entryDirection === 'south' && exitDirection === 'west') ||
+      (entryDirection === 'west' && exitDirection === 'south');
+
+    if (isSouthWestTurn) {
+      return { x: 0.5, y: 0.5 };
+    }
+
     const cx = (startX === 0.5) ? (endX === 1 ? 1 : 0) : startX;
     const cy = (startY === 0.5) ? (endY === 1 ? 1 : 0) : startY;
     return { x: cx, y: cy };
-  }, [startX, startY, endX, endY]);
+  }, [startX, startY, endX, endY, entryDirection, exitDirection]);
 
   // Apply auto control point
   useEffect(() => {

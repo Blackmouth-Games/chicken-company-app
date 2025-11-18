@@ -184,10 +184,10 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     
     // Set start position based on entry direction
     switch (entryDir) {
-      case 'east': startX = 0; startY = 0.5; break;
-      case 'west': startX = 1; startY = 0.5; break;
-      case 'south': startX = 0.5; startY = 0; break;
-      case 'north': startX = 0.5; startY = 1; break;
+      case 'east': startX = 1; startY = 0.5; break;
+      case 'west': startX = 0; startY = 0.5; break;
+      case 'south': startX = 0.5; startY = 1; break;
+      case 'north': startX = 0.5; startY = 0; break;
     }
     
     // Set end position based on exit direction
@@ -198,9 +198,24 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
       case 'north': endX = 0.5; endY = 0; break;
     }
     
-    // Control point for smooth curve (corner of the cell)
-    const controlX = (startX === 0.5) ? (endX === 1 ? 1 : 0) : startX;
-    const controlY = (startY === 0.5) ? (endY === 1 ? 1 : 0) : startY;
+    // Control point for smooth curve
+    const getControlPoint = () => {
+      // Specific tuning for belts que entran por abajo y salen a la izquierda (belt BL)
+      if (
+        (entryDir === 'south' && exitDir === 'west') ||
+        (entryDir === 'west' && exitDir === 'south')
+      ) {
+        return { x: 0.5, y: 0.5 };
+      }
+
+      // Default behaviour (corner control point)
+      return {
+        x: (startX === 0.5) ? (endX === 1 ? 1 : 0) : startX,
+        y: (startY === 0.5) ? (endY === 1 ? 1 : 0) : startY,
+      };
+    };
+
+    const { x: controlX, y: controlY } = getControlPoint();
     
     // Quadratic bezier curve: (1-t)²P₀ + 2(1-t)tP₁ + t²P₂
     const x = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * controlX + t * t * endX;

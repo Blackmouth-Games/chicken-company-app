@@ -491,9 +491,7 @@ export const SkinSelectorDialog = ({
                               {/* Skin Image or Empty Slot */}
                               <div className="flex items-center justify-center h-full">
                                 {isEmpty ? (
-                                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                    <Lock className="w-4 h-4 opacity-50" />
-                                  </div>
+                                  <div className="w-full h-full rounded-md bg-muted/20" />
                                 ) : skinDisplay?.type === 'image' ? (
                                   <img 
                                     src={skinDisplay.src} 
@@ -519,12 +517,6 @@ export const SkinSelectorDialog = ({
                                 </div>
                               )}
 
-                              {/* Locked icon for empty slots */}
-                              {isEmpty && (
-                                <div className="absolute top-1 right-1">
-                                  <Lock className="w-3 h-3 text-muted-foreground opacity-50" />
-                                </div>
-                              )}
                             </div>
                           );
                         })}
