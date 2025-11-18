@@ -1213,7 +1213,11 @@ const BezierCurveVisualizer = () => {
       (entryDirection === 'south' && exitDirection === 'west') ||
       (entryDirection === 'west' && exitDirection === 'south');
 
-    if (isSouthWestTurn) {
+    const isSouthEastTurn =
+      (entryDirection === 'south' && exitDirection === 'east') ||
+      (entryDirection === 'east' && exitDirection === 'south');
+
+    if (isSouthWestTurn || isSouthEastTurn) {
       return { x: 0.5, y: 0.5 };
     }
 

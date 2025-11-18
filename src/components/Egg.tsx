@@ -203,7 +203,9 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
       // Specific tuning for belts que entran por abajo y salen a la izquierda (belt BL)
       if (
         (entryDir === 'south' && exitDir === 'west') ||
-        (entryDir === 'west' && exitDir === 'south')
+        (entryDir === 'west' && exitDir === 'south') ||
+        (entryDir === 'south' && exitDir === 'east') ||
+        (entryDir === 'east' && exitDir === 'south')
       ) {
         return { x: 0.5, y: 0.5 };
       }
