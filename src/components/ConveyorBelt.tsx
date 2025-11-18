@@ -142,14 +142,28 @@ export const ConveyorBelt = ({
     }
   };
 
-  // Get curve belt image based on type
+  // Get curve belt image based on type and direction
   const getCurveBeltImage = () => {
-    if (belt.type === 'curve-sw') {
-      return beltBL; // Bottom-Left
-    }
+    // For curve-se (BR), if direction is west or north, use BL image instead
     if (belt.type === 'curve-se') {
-      return beltBR; // Bottom-Right
+      // BR base: South -> East
+      // If direction is west (North -> West) or north (West -> North), use BL
+      if (belt.direction === 'west' || belt.direction === 'north') {
+        return beltBL;
+      }
+      return beltBR; // Bottom-Right for east and south directions
     }
+    
+    // For curve-sw (BL), if direction is east or north, use BR image instead
+    if (belt.type === 'curve-sw') {
+      // BL base: South -> West
+      // If direction is east (North -> East) or north (East -> North), use BR
+      if (belt.direction === 'east' || belt.direction === 'north') {
+        return beltBR;
+      }
+      return beltBL; // Bottom-Left for west and south directions
+    }
+    
     if (belt.type === 'curve-nw') {
       return beltBR; // Top-Left (BR rotated 180°)
     }
@@ -165,23 +179,43 @@ export const ConveyorBelt = ({
     // BR: South -> East (base orientation)
     if (belt.type === 'curve-sw') {
       // BL base: South -> West
-      // When direction changes, we need to rotate to match the new entry/exit
-      // For now, keep base orientation and let direction handle rotation
+      // If using BR image (direction east or north), adjust rotation
+      if (belt.direction === 'east' || belt.direction === 'north') {
+        // Using BR image, need to rotate to match desired direction
+        if (belt.direction === 'east') {
+          // Want North -> East, BR base is South -> East, so rotate 180deg
+          return 'rotate(180deg)';
+        }
+        if (belt.direction === 'north') {
+          // Want East -> North, BR base is South -> East, so rotate 270deg
+          return 'rotate(270deg)';
+        }
+      }
+      // Using BL image
       switch (belt.direction) {
         case 'west': return 'rotate(0deg)'; // South -> West
         case 'south': return 'rotate(90deg)'; // West -> South (reversed)
-        case 'east': return 'rotate(180deg)'; // North -> East
-        case 'north': return 'rotate(270deg)'; // East -> North
         default: return 'rotate(0deg)';
       }
     }
     if (belt.type === 'curve-se') {
-      // BR base: South -> East
+      // BR base: South -> East (entrada desde abajo, salida hacia la derecha)
+      // If using BL image (direction west or north), adjust rotation
+      if (belt.direction === 'west' || belt.direction === 'north') {
+        // Using BL image, need to rotate to match desired direction
+        if (belt.direction === 'west') {
+          // Want North -> West, BL base is South -> West, so rotate 180deg
+          return 'rotate(180deg)';
+        }
+        if (belt.direction === 'north') {
+          // Want West -> North, BL base is South -> West, so rotate 270deg
+          return 'rotate(270deg)';
+        }
+      }
+      // Using BR image
       switch (belt.direction) {
-        case 'east': return 'rotate(0deg)'; // South -> East
-        case 'south': return 'rotate(90deg)'; // East -> South (reversed)
-        case 'west': return 'rotate(180deg)'; // North -> West
-        case 'north': return 'rotate(270deg)'; // West -> North
+        case 'east': return 'rotate(0deg)'; // South -> East (base orientation)
+        case 'south': return 'rotate(90deg)'; // East -> South (reversed, entrada desde derecha)
         default: return 'rotate(0deg)';
       }
     }
@@ -464,6 +498,31 @@ export const ConveyorBelt = ({
             {tempPosition && isDragging && (
               <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none z-10">
                 → Col {tempPosition.col}, Row {tempPosition.row}
+              </div>
+            )}
+            {/* Show BR/BL label for curve belts in edit mode */}
+            {isCurve && (belt.type === 'curve-sw' || belt.type === 'curve-se') && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                  {(() => {
+                    // Determine which image is actually being used
+                    if (belt.type === 'curve-se') {
+                      // BR type: use BL image if direction is west or north
+                      if (belt.direction === 'west' || belt.direction === 'north') {
+                        return 'BL';
+                      }
+                      return 'BR';
+                    }
+                    if (belt.type === 'curve-sw') {
+                      // BL type: use BR image if direction is east or north
+                      if (belt.direction === 'east' || belt.direction === 'north') {
+                        return 'BR';
+                      }
+                      return 'BL';
+                    }
+                    return belt.type === 'curve-sw' ? 'BL' : 'BR';
+                  })()}
+                </span>
               </div>
             )}
           </>
