@@ -408,7 +408,7 @@ const LayoutEditor = () => {
               {/* Type Selector */}
               <div className="flex flex-col gap-0.5">
                 <label className="text-[10px] font-medium text-muted-foreground">Tipo:</label>
-                <div className="grid grid-cols-3 gap-0.5">
+                <div className="grid grid-cols-2 gap-0.5">
                   <Button
                     onClick={() => handlePaintTypeChange('straight')}
                     size="sm"
@@ -419,112 +419,31 @@ const LayoutEditor = () => {
                     ─
                   </Button>
                   <Button
-                    onClick={() => handlePaintTypeChange('curve-ne')}
-                    size="sm"
-                    variant={paintType === 'curve-ne' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Curva NE"
-                  >
-                    └
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('curve-nw')}
-                    size="sm"
-                    variant={paintType === 'curve-nw' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Curva NW"
-                  >
-                    ┘
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('curve-se')}
-                    size="sm"
-                    variant={paintType === 'curve-se' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Curva SE"
-                  >
-                    ┌
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('curve-sw')}
-                    size="sm"
-                    variant={paintType === 'curve-sw' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Curva SW"
-                  >
-                    ┐
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-rt')}
-                    size="sm"
-                    variant={paintType === 'turn-rt' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro RT"
-                  >
-                    RT
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-lt')}
-                    size="sm"
-                    variant={paintType === 'turn-lt' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro LT"
-                  >
-                    LT
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-ne')}
-                    size="sm"
-                    variant={paintType === 'turn-ne' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro NE"
-                  >
-                    NE
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-nw')}
-                    size="sm"
-                    variant={paintType === 'turn-nw' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro NW"
-                  >
-                    NW
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-se')}
-                    size="sm"
-                    variant={paintType === 'turn-se' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro SE"
-                  >
-                    SE
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn-sw')}
-                    size="sm"
-                    variant={paintType === 'turn-sw' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro SW"
-                  >
-                    SW
-                  </Button>
-                  <Button
-                    onClick={() => handlePaintTypeChange('turn')}
-                    size="sm"
-                    variant={paintType === 'turn' ? "default" : "outline"}
-                    className="h-6 text-xs"
-                    title="Giro (legacy)"
-                  >
-                    ↻
-                  </Button>
-                  <Button
                     onClick={() => handlePaintTypeChange('funnel')}
                     size="sm"
                     variant={paintType === 'funnel' ? "default" : "outline"}
                     className="h-6 text-xs"
                     title="Embudo"
                   >
-                    ⬇
+                    ╬
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-sw')}
+                    size="sm"
+                    variant={paintType === 'curve-sw' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Curva SW (BL)"
+                  >
+                    BL
+                  </Button>
+                  <Button
+                    onClick={() => handlePaintTypeChange('curve-se')}
+                    size="sm"
+                    variant={paintType === 'curve-se' ? "default" : "outline"}
+                    className="h-6 text-xs"
+                    title="Curva SE (BR)"
+                  >
+                    BR
                   </Button>
                 </div>
               </div>

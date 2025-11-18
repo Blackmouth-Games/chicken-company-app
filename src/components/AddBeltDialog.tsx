@@ -35,18 +35,9 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
 
   const types = [
     { value: 'straight' as const, label: t('layoutEditor.type_straight') || 'Recta' },
-    { value: 'curve-ne' as const, label: t('layoutEditor.type_curve_ne') || 'Curva NE' },
-    { value: 'curve-nw' as const, label: t('layoutEditor.type_curve_nw') || 'Curva NW' },
-    { value: 'curve-se' as const, label: t('layoutEditor.type_curve_se') || 'Curva SE' },
-    { value: 'curve-sw' as const, label: t('layoutEditor.type_curve_sw') || 'Curva SW' },
-    { value: 'turn-rt' as const, label: 'Giro RT' },
-    { value: 'turn-lt' as const, label: 'Giro LT' },
-    { value: 'turn-ne' as const, label: 'Giro NE' },
-    { value: 'turn-nw' as const, label: 'Giro NW' },
-    { value: 'turn-se' as const, label: 'Giro SE' },
-    { value: 'turn-sw' as const, label: 'Giro SW' },
-    { value: 'turn' as const, label: 'Giro (legacy)' },
     { value: 'funnel' as const, label: 'Embudo' },
+    { value: 'curve-sw' as const, label: 'BL' },
+    { value: 'curve-se' as const, label: 'BR' },
   ];
 
   return (
@@ -87,13 +78,13 @@ export const AddBeltDialog = ({ open, onOpenChange, gridPosition, onAddBelt, sho
           {/* Type Selection */}
           <div className="space-y-1">
             <label className="text-xs font-medium">{t('layoutEditor.selectType')}</label>
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-2 gap-1">
               {types.map(({ value, label }) => (
                 <Button
                   key={value}
                   onClick={() => setSelectedType(value)}
                   variant={selectedType === value ? "default" : "outline"}
-                  className="h-7 text-[10px]"
+                  className="h-7 text-xs"
                 >
                   {label}
                 </Button>

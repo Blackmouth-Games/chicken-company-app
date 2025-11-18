@@ -3,6 +3,8 @@ import { Button } from "./ui/button";
 import beltImage from "@/assets/Belt_A.jpg";
 import beltRT from "@/assets/belts/Belt_RT.png";
 import beltLT from "@/assets/belts/Belt_LT.png";
+import beltBL from "@/assets/belts/Belt_BL.png";
+import beltBR from "@/assets/belts/Belt_BR.png";
 import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
 
 interface ConveyorBeltProps {
@@ -140,6 +142,72 @@ export const ConveyorBelt = ({
       case 'west': return 'rotate(270deg)';
       default: return 'rotate(0deg)';
     }
+  };
+
+  // Get curve belt image based on type
+  const getCurveBeltImage = () => {
+    if (belt.type === 'curve-sw') {
+      return beltBL; // Bottom-Left
+    }
+    if (belt.type === 'curve-se') {
+      return beltBR; // Bottom-Right
+    }
+    if (belt.type === 'curve-nw') {
+      return beltBR; // Top-Left (BR rotated 180°)
+    }
+    if (belt.type === 'curve-ne') {
+      return beltBL; // Top-Right (BL rotated 180°)
+    }
+    return beltImage; // Fallback
+  };
+
+  // Get transform for curve belt image based on type and direction
+  const getCurveBeltTransform = () => {
+    // BL: South -> West (base orientation)
+    // BR: South -> East (base orientation)
+    if (belt.type === 'curve-sw') {
+      // BL base: South -> West
+      // When direction changes, we need to rotate to match the new entry/exit
+      // For now, keep base orientation and let direction handle rotation
+      switch (belt.direction) {
+        case 'west': return 'rotate(0deg)'; // South -> West
+        case 'south': return 'rotate(90deg)'; // West -> South (reversed)
+        case 'east': return 'rotate(180deg)'; // North -> East
+        case 'north': return 'rotate(270deg)'; // East -> North
+        default: return 'rotate(0deg)';
+      }
+    }
+    if (belt.type === 'curve-se') {
+      // BR base: South -> East
+      switch (belt.direction) {
+        case 'east': return 'rotate(0deg)'; // South -> East
+        case 'south': return 'rotate(90deg)'; // East -> South (reversed)
+        case 'west': return 'rotate(180deg)'; // North -> West
+        case 'north': return 'rotate(270deg)'; // West -> North
+        default: return 'rotate(0deg)';
+      }
+    }
+    if (belt.type === 'curve-nw') {
+      // Top-Left: North -> West (BR rotated 180°)
+      switch (belt.direction) {
+        case 'west': return 'rotate(180deg)'; // North -> West
+        case 'north': return 'rotate(270deg)'; // West -> North (reversed)
+        case 'east': return 'rotate(0deg)'; // South -> East
+        case 'south': return 'rotate(90deg)'; // East -> South
+        default: return 'rotate(180deg)';
+      }
+    }
+    if (belt.type === 'curve-ne') {
+      // Top-Right: North -> East (BL rotated 180°)
+      switch (belt.direction) {
+        case 'east': return 'rotate(180deg)'; // North -> East
+        case 'north': return 'rotate(270deg)'; // East -> North (reversed)
+        case 'west': return 'rotate(0deg)'; // South -> West
+        case 'south': return 'rotate(90deg)'; // West -> South
+        default: return 'rotate(180deg)';
+      }
+    }
+    return 'rotate(0deg)';
   };
 
   // Get curve path for curved belts
@@ -348,7 +416,7 @@ export const ConveyorBelt = ({
         }}
       >
         {/* Belt image */}
-        {!isTurn && !isFunnel && (
+        {!isTurn && !isFunnel && !isCurve && (
           <img 
             src={beltImage} 
             alt="Conveyor belt" 
@@ -357,6 +425,18 @@ export const ConveyorBelt = ({
               transform: getArrowTransform(),
               width: '100%',
               height: '100%',
+            }}
+          />
+        )}
+        
+        {/* Curve belt visual - shows curved belt image */}
+        {isCurve && (
+          <img 
+            src={getCurveBeltImage()} 
+            alt="Curve belt" 
+            className="w-full h-full object-cover"
+            style={{
+              transform: getCurveBeltTransform(),
             }}
           />
         )}
