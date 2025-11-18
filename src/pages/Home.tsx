@@ -5,8 +5,8 @@ import box1Image from "@/assets/box_1.png";
 import box2Image from "@/assets/box_2.png";
 import box3Image from "@/assets/box_3.png";
 import beltImage from "@/assets/Belt_A.jpg";
-import beltRT from "@/assets/belts/Belt_RT.png";
-import beltLT from "@/assets/belts/Belt_LT.png";
+import beltBL from "@/assets/belts/Belt_BL.png";
+import beltBR from "@/assets/belts/Belt_BR.png";
 import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
 import { getTelegramUser } from "@/lib/telegram";
 import { getBuildingImage, getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
@@ -268,14 +268,9 @@ const Home = () => {
 
   // Helper functions for belt preview
   const getBeltPreviewImage = (type: string, direction: 'north' | 'south' | 'east' | 'west') => {
-    if (type === 'turn-rt' || type === 'turn-lt' || type.startsWith('turn-')) {
-      // Handle specific turn types
-      if (type === 'turn-rt' || type === 'turn-ne' || type === 'turn-sw') {
-        return beltRT;
-      }
-      if (type === 'turn-lt' || type === 'turn-nw' || type === 'turn-se') {
-        return beltLT;
-      }
+    if (type.startsWith('turn-')) {
+      const clockwiseTypes = ['turn-rt', 'turn-ne', 'turn-se', 'turn-sw'];
+      return clockwiseTypes.includes(type) ? beltBR : beltBL;
     }
     if (type === 'turn') {
       // For turn belts, calculate entry direction from exit (clockwise 90°)
@@ -284,20 +279,14 @@ const Home = () => {
       const entryIndex = (exitIndex - 1 + 4) % 4; // -1 for clockwise
       const entryDir = directions[entryIndex];
       
-      // RT: East -> North, LT: West -> North
-      // For North exit: RT if entry is East, LT if entry is West
-      if (direction === 'north') {
-        return entryDir === 'east' ? beltRT : beltLT;
-      }
-      // For other exits, conceptually match to North pattern
-      if (direction === 'east') {
-        return entryDir === 'north' ? beltRT : beltLT;
-      } else if (direction === 'south') {
-        return entryDir === 'west' ? beltLT : beltRT;
-      } else if (direction === 'west') {
-        return entryDir === 'south' ? beltRT : beltLT;
-      }
-      return beltLT;
+      // Decide clockwise or counterclockwise
+      const isClockwise =
+        (direction === 'north' && entryDir === 'east') ||
+        (direction === 'east' && entryDir === 'south') ||
+        (direction === 'south' && entryDir === 'west') ||
+        (direction === 'west' && entryDir === 'north');
+      
+      return isClockwise ? beltBR : beltBL;
     } else if (type === 'funnel') {
       return beltFunnel;
     } else {

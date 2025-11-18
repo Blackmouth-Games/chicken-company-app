@@ -1,8 +1,6 @@
 import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
 import beltImage from "@/assets/Belt_A.jpg";
-import beltRT from "@/assets/belts/Belt_RT.png";
-import beltLT from "@/assets/belts/Belt_LT.png";
 import beltBL from "@/assets/belts/Belt_BL.png";
 import beltBR from "@/assets/belts/Belt_BR.png";
 import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
@@ -227,38 +225,18 @@ export const ConveyorBelt = ({
   const isVertical = belt.direction === 'north' || belt.direction === 'south';
 
   // Get turn belt image based on type
-  // RT: Right to Top (East -> North)
-  // LT: Left to Top (West -> North)
-  // Specific turn types: turn-ne (North->East), turn-nw (North->West), turn-se (South->East), turn-sw (South->West)
   const getTurnBeltImage = () => {
-    // Handle specific turn types
-    if (belt.type === 'turn-rt') {
-      return beltRT;
+    const clockwiseTypes = ['turn-rt', 'turn-ne', 'turn-se', 'turn-sw'];
+    const counterClockwiseTypes = ['turn-lt', 'turn-nw'];
+    
+    if (clockwiseTypes.includes(belt.type)) {
+      return beltBR;
     }
-    if (belt.type === 'turn-lt') {
-      return beltLT;
+    if (counterClockwiseTypes.includes(belt.type)) {
+      return beltBL;
     }
     
-    // Handle directional turn types
-    if (belt.type === 'turn-ne') {
-      // North to East: use RT rotated
-      return beltRT;
-    }
-    if (belt.type === 'turn-nw') {
-      // North to West: use LT rotated
-      return beltLT;
-    }
-    if (belt.type === 'turn-se') {
-      // South to East: use LT rotated
-      return beltLT;
-    }
-    if (belt.type === 'turn-sw') {
-      // South to West: use RT rotated
-      return beltRT;
-    }
-    
-    // Legacy 'turn' type: calculate based on direction and entry
-    // Calculate expected entry direction from exit direction (clockwise 90°)
+    // Legacy 'turn' type: determine rotation based on entry/exit
     const getEntryFromExit = (exit: 'north' | 'south' | 'east' | 'west'): 'north' | 'south' | 'east' | 'west' => {
       const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
       const exitIndex = directions.indexOf(exit);
@@ -269,21 +247,13 @@ export const ConveyorBelt = ({
     const expectedEntry = getEntryFromExit(belt.direction);
     const entryDir = belt.entryDirection || expectedEntry;
     
-    // RT: East -> North, LT: West -> North
-    if (belt.direction === 'north') {
-      return entryDir === 'east' ? beltRT : beltLT;
-    }
-    if (belt.direction === 'east') {
-      return entryDir === 'north' ? beltRT : beltLT;
-    }
-    if (belt.direction === 'south') {
-      return entryDir === 'west' ? beltLT : beltRT;
-    }
-    if (belt.direction === 'west') {
-      return entryDir === 'south' ? beltRT : beltLT;
-    }
+    const isClockwise =
+      (belt.direction === 'north' && entryDir === 'east') ||
+      (belt.direction === 'east' && entryDir === 'south') ||
+      (belt.direction === 'south' && entryDir === 'west') ||
+      (belt.direction === 'west' && entryDir === 'north');
     
-    return beltLT;
+    return isClockwise ? beltBR : beltBL;
   };
 
   // Get gradient for belt animation based on direction - designed for seamless 100% loop
