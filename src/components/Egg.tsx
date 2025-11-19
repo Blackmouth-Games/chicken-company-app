@@ -152,13 +152,19 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
         exitDir = 'west';
       }
     } else if (beltType === 'curve-se' || beltType === 'turn-se') {
-      // South -> East curve
-      // If entering from south, exit east; if entering from east, exit south (bidirectional)
-      if (entryDir === 'south') exitDir = 'east';
-      else if (entryDir === 'east') exitDir = 'south';
-      else {
-        // Default: assume south entry -> east exit
+      // BR curve: can be rotated, so we need to handle all entry/exit combinations
+      // Base orientation: South -> East
+      // When rotated, it can be: East -> North, North -> West, West -> South, South -> East
+      // The curve always turns 90° counterclockwise from entry to exit
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const entryIndex = directions.indexOf(entryDir);
+      if (entryIndex === -1) {
+        // Fallback: assume south entry -> east exit
         exitDir = 'east';
+      } else {
+        // For BR, exit is 90° counterclockwise from entry
+        const exitIndex = (entryIndex - 1 + 4) % 4;
+        exitDir = directions[exitIndex];
       }
     } else if (beltType === 'curve-sw' || beltType === 'turn-sw') {
       // South -> West curve

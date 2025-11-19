@@ -473,10 +473,16 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
               else if (entryDir === 'west') exitDirection = 'north';
               else exitDirection = 'west'; // Default
             } else if (currentBelt.type === 'curve-se') {
-              // South -> East curve
-              if (entryDir === 'south') exitDirection = 'east';
-              else if (entryDir === 'east') exitDirection = 'south';
-              else exitDirection = 'east'; // Default
+              // BR curve: can be rotated, handles all entry/exit combinations
+              // Exit is 90° counterclockwise from entry
+              const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+              const entryIndex = directions.indexOf(entryDir);
+              if (entryIndex === -1) {
+                exitDirection = 'east'; // Default
+              } else {
+                const exitIndex = (entryIndex - 1 + 4) % 4;
+                exitDirection = directions[exitIndex];
+              }
             } else if (currentBelt.type === 'curve-sw') {
               // South -> West curve
               if (entryDir === 'south') exitDirection = 'west';
