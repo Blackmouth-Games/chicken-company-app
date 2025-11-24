@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import truckEmpty from "@/assets/vehicles/truck_empty.png";
-import truckFilled from "@/assets/vehicles/truck_filled.png";
+import truckEmpty from "@/assets/vehicles/truck_empty_1A.png";
+import truckFilled from "@/assets/vehicles/truck_filled_1A.png";
 
 interface VehicleProps {
   id: string;

@@ -1,9 +1,9 @@
 import { X, RotateCw } from "lucide-react";
 import { Button } from "./ui/button";
-import beltImage from "@/assets/Belt_A.jpg";
-import beltBL from "@/assets/belts/Belt_BL.png";
-import beltBR from "@/assets/belts/Belt_BR.png";
-import beltFunnel from "@/assets/belts/Belt_funnel.jpg";
+import beltImage from "@/assets/belts and roads/Belt_A.jpg";
+import beltBL from "@/assets/belts and roads/Belt_BL.png";
+import beltBR from "@/assets/belts and roads/Belt_BR.png";
+import beltFunnel from "@/assets/belts and roads/Belt_funnel.jpg";
 
 interface ConveyorBeltProps {
   belt: {

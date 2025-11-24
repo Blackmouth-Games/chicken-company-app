@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Info, X } from "lucide-react";
-import buildingCorral from "@/assets/building-corral.png";
+import buildingCorral from "@/assets/buildings/coop/coop_1A.png";
 
 interface BuyBuildingDialogProps {
   open: boolean;
