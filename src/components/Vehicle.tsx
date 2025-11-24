@@ -22,50 +22,118 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Calculate position within the cell based on progress and road direction
-  // No rotation or flip - image orientation is as default
   // Apply -1 cell offset in Y axis (upward)
   const getPosition = () => {
     // Progress determines position within the cell (0 = start, 1 = end)
-    // Position changes based on road direction
+    // Position changes based on road direction and reverseDirection
     // Apply translate for centering and -1 cell offset in Y axis
     const yOffset = -cellSize; // -1 cell in Y axis (upward)
     
+    // Calculate position based on road direction and whether we're reversing
     switch (direction) {
       case 'east':
-        // Move from left (0%) to right (100%)
-        return {
-          left: `${progress * 100}%`,
-          top: `calc(50% + ${yOffset}px)`,
-          transform: 'translate(-50%, -50%)',
-        };
+        // Road points east: normally move left to right (0% to 100%)
+        // If reverseDirection, move right to left (100% to 0%)
+        if (reverseDirection) {
+          // Moving from right to left: progress goes from 1 to 0
+          return {
+            left: `${(1 - progress) * 100}%`,
+            top: `calc(50% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        } else {
+          // Moving from left to right: progress goes from 0 to 1
+          return {
+            left: `${progress * 100}%`,
+            top: `calc(50% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        }
       case 'west':
-        // Move from right (100%) to left (0%)
-        return {
-          left: `${(1 - progress) * 100}%`,
-          top: `calc(50% + ${yOffset}px)`,
-          transform: 'translate(-50%, -50%)',
-        };
+        // Road points west: normally move right to left (1 to 0)
+        // If reverseDirection, move left to right (0 to 1)
+        if (reverseDirection) {
+          // Moving from left to right: progress goes from 0 to 1
+          return {
+            left: `${progress * 100}%`,
+            top: `calc(50% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        } else {
+          // Moving from right to left: progress goes from 1 to 0
+          return {
+            left: `${(1 - progress) * 100}%`,
+            top: `calc(50% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        }
       case 'south':
-        // Move from top (0%) to bottom (100%)
-        return {
-          left: '50%',
-          top: `calc(${progress * 100}% + ${yOffset}px)`,
-          transform: 'translate(-50%, -50%)',
-        };
+        // Road points south: normally move top to bottom (0% to 100%)
+        // If reverseDirection, move bottom to top (100% to 0%)
+        if (reverseDirection) {
+          // Moving from bottom to top: progress goes from 1 to 0
+          return {
+            left: '50%',
+            top: `calc(${(1 - progress) * 100}% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        } else {
+          // Moving from top to bottom: progress goes from 0 to 1
+          return {
+            left: '50%',
+            top: `calc(${progress * 100}% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        }
       case 'north':
-        // Move from bottom (100%) to top (0%)
-        return {
-          left: '50%',
-          top: `calc(${(1 - progress) * 100}% + ${yOffset}px)`,
-          transform: 'translate(-50%, -50%)',
-        };
+        // Road points north: normally move bottom to top (1 to 0)
+        // If reverseDirection, move top to bottom (0 to 1)
+        if (reverseDirection) {
+          // Moving from top to bottom: progress goes from 0 to 1
+          return {
+            left: '50%',
+            top: `calc(${progress * 100}% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        } else {
+          // Moving from bottom to top: progress goes from 1 to 0
+          return {
+            left: '50%',
+            top: `calc(${(1 - progress) * 100}% + ${yOffset}px)`,
+            transform: 'translate(-50%, -50%)',
+          };
+        }
       default:
-        // Default to east
+        // Default to east (left to right)
         return {
           left: `${progress * 100}%`,
           top: `calc(50% + ${yOffset}px)`,
           transform: 'translate(-50%, -50%)',
         };
+    }
+  };
+
+  // Get image rotation based on actual movement direction
+  const getImageRotation = () => {
+    // Determine actual movement direction based on road direction and reverseDirection
+    let actualDirection = direction;
+    if (reverseDirection) {
+      // Invert the direction when reversing
+      switch (direction) {
+        case 'east': actualDirection = 'west'; break;
+        case 'west': actualDirection = 'east'; break;
+        case 'south': actualDirection = 'north'; break;
+        case 'north': actualDirection = 'south'; break;
+      }
+    }
+    
+    // Rotate image to face the direction of movement
+    switch (actualDirection) {
+      case 'east': return 'rotate(0deg)'; // Right
+      case 'west': return 'rotate(180deg)'; // Left
+      case 'south': return 'rotate(90deg)'; // Down
+      case 'north': return 'rotate(270deg)'; // Up
+      default: return 'rotate(0deg)';
     }
   };
 
@@ -143,6 +211,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
           display: 'block',
           flexShrink: 0,
           objectFit: 'contain',
+          transform: getImageRotation(),
         }}
       />
     </div>
