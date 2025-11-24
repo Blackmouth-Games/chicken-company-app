@@ -1,12 +1,22 @@
-import { Component, ReactNode, useState } from "react";
+import { Component, ReactNode } from "react";
 import { Button } from "./ui/button";
 import { Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
 interface Props { children: ReactNode; }
-interface State { hasError: boolean; error?: any; errorInfo?: any; }
+interface State { 
+  hasError: boolean; 
+  error?: any; 
+  errorInfo?: any;
+  showDetails?: boolean;
+  copyStatus?: 'idle' | 'success' | 'error';
+}
 
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { 
+    hasError: false,
+    showDetails: false,
+    copyStatus: 'idle'
+  };
 
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
@@ -86,60 +96,34 @@ Component Stack: ${this.state.errorInfo?.componentStack || "No disponible"}
     window.location.reload();
   };
 
+  handleToggleDetails = () => {
+    this.setState({ showDetails: !this.state.showDetails });
+  };
+
+  handleCopy = async () => {
+    this.setState({ copyStatus: 'idle' });
+    try {
+      this.handleCopyError();
+      // Dar un pequeño delay para que el clipboard tenga tiempo de copiar
+      await new Promise(resolve => setTimeout(resolve, 100));
+      this.setState({ copyStatus: 'success' });
+      setTimeout(() => this.setState({ copyStatus: 'idle' }), 2000);
+    } catch (error) {
+      console.error("Error al copiar:", error);
+      this.setState({ copyStatus: 'error' });
+      setTimeout(() => this.setState({ copyStatus: 'idle' }), 2000);
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       const errorMessage = this.state.error?.message || "Error desconocido";
       const errorStack = this.state.error?.stack || "";
       const componentStack = this.state.errorInfo?.componentStack || "";
+      const showDetails = this.state.showDetails || false;
+      const copyStatus = this.state.copyStatus || 'idle';
       
       return (
-        <ErrorDisplay 
-          errorMessage={errorMessage}
-          errorStack={errorStack}
-          componentStack={componentStack}
-          onCopy={this.handleCopyError}
-          onReload={this.handleReload}
-        />
-      );
-    }
-    return this.props.children;
-  }
-}
-
-// Componente separado para usar hooks
-const ErrorDisplay = ({ 
-  errorMessage, 
-  errorStack, 
-  componentStack,
-  onCopy,
-  onReload 
-}: { 
-  errorMessage: string;
-  errorStack: string;
-  componentStack: string;
-  onCopy: () => void;
-  onReload: () => void;
-}) => {
-  const [showDetails, setShowDetails] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  
-  const handleCopy = async () => {
-    setCopyStatus('idle');
-    try {
-      // onCopy es síncrono pero puede lanzar errores
-      onCopy();
-      // Dar un pequeño delay para que el clipboard tenga tiempo de copiar
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setCopyStatus('success');
-      setTimeout(() => setCopyStatus('idle'), 2000);
-    } catch (error) {
-      console.error("Error al copiar:", error);
-      setCopyStatus('error');
-      setTimeout(() => setCopyStatus('idle'), 2000);
-    }
-  };
-  
-  return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
       <div className="max-w-2xl w-full bg-card border border-destructive/20 rounded-lg shadow-lg p-6">
         <div className="flex items-start gap-4 mb-4">
@@ -161,7 +145,7 @@ const ErrorDisplay = ({
         {/* Botones de acción */}
         <div className="flex gap-2 mb-4">
           <Button 
-            onClick={onReload}
+            onClick={this.handleReload}
             variant="default"
             className="flex-1"
           >
@@ -169,7 +153,7 @@ const ErrorDisplay = ({
             Recargar página
           </Button>
           <Button 
-            onClick={handleCopy}
+            onClick={this.handleCopy}
             variant="outline"
             className="flex-1"
             disabled={copyStatus !== 'idle'}
@@ -182,7 +166,7 @@ const ErrorDisplay = ({
         {/* Detalles expandibles */}
         <div className="border-t pt-4">
           <button
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={this.handleToggleDetails}
             className="w-full flex items-center justify-between text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
             <span>Detalles técnicos</span>
@@ -221,5 +205,8 @@ const ErrorDisplay = ({
         </p>
       </div>
     </div>
-  );
-};
+      );
+    }
+    return this.props.children;
+  }
+}
