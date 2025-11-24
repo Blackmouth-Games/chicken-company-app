@@ -115,20 +115,35 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
 
   // Get image rotation based on actual movement direction
   const getImageRotation = () => {
-    // Determine actual movement direction based on road direction and reverseDirection
-    let actualDirection = direction;
+    // Calculate the actual movement direction based on road direction and reverseDirection
+    // The image should point in the direction the vehicle is actually moving
+    
+    // Determine movement direction:
+    // - If reverseDirection is false: move in the direction of the road
+    // - If reverseDirection is true: move opposite to the direction of the road
+    let movementDirection: 'north' | 'south' | 'east' | 'west';
+    
     if (reverseDirection) {
-      // Invert the direction when reversing
+      // Moving opposite to road direction
       switch (direction) {
-        case 'east': actualDirection = 'west'; break;
-        case 'west': actualDirection = 'east'; break;
-        case 'south': actualDirection = 'north'; break;
-        case 'north': actualDirection = 'south'; break;
+        case 'east': movementDirection = 'west'; break;
+        case 'west': movementDirection = 'east'; break;
+        case 'south': movementDirection = 'north'; break;
+        case 'north': movementDirection = 'south'; break;
+        default: movementDirection = 'east';
       }
+    } else {
+      // Moving in the direction of the road
+      movementDirection = direction;
     }
     
     // Rotate image to face the direction of movement
-    switch (actualDirection) {
+    // Base image faces east (right), so:
+    // - east (right): 0deg
+    // - west (left): 180deg
+    // - south (down): 90deg
+    // - north (up): 270deg
+    switch (movementDirection) {
       case 'east': return 'rotate(0deg)'; // Right
       case 'west': return 'rotate(180deg)'; // Left
       case 'south': return 'rotate(90deg)'; // Down
@@ -212,6 +227,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
           flexShrink: 0,
           objectFit: 'contain',
           transform: getImageRotation(),
+          transformOrigin: 'center center',
         }}
       />
     </div>

@@ -189,10 +189,11 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     
     // When leaving Point A towards B, must exit from right to left (west)
     // For Point A: exit from right (progress = 1) and move left (reverseDirection = true)
+    // This means the vehicle moves opposite to the road's direction (if road is east, vehicle goes west)
     let initialProgress = 1; // Start from right side
     let reverseDirection = true; // Move from right to left (west)
     
-    // Check if there's a next road to determine the correct exit side
+    // Check if there's a next road to determine the correct exit side and direction
     if (path.length > 1) {
       const nextRoadId = path[1];
       const nextRoad = roads.find(r => r.id === nextRoadId);
@@ -210,25 +211,46 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
         const colDiff = nextCenterCol - currentCenterCol;
         const rowDiff = nextCenterRow - currentCenterRow;
         
-        // Point A: exit from right to left (west)
-        // If next road is to the left, exit from right (progress = 1) and move left (reverse = true)
-        // If next road is to the right, we still exit from right but this shouldn't happen normally
+        // Point A: exit from right to left (west) when going to B
+        // Determine exit side and direction based on road orientation and next road position
         if (Math.abs(colDiff) > Math.abs(rowDiff)) {
           // Horizontal movement
           if (pointA.direction === 'east') {
-            // Road points east: exit from right (progress = 1) if going left, or left (0) if going right
-            initialProgress = colDiff < 0 ? 1 : 0; // Exit from right if going left
-            reverseDirection = colDiff < 0; // Reverse if going left (from right to left)
+            // Road points east: if next road is to the left, exit from right and go left (reverse)
+            if (colDiff < 0) {
+              initialProgress = 1; // Exit from right
+              reverseDirection = true; // Move left (west, opposite of east)
+            } else {
+              // Next road is to the right - shouldn't happen normally, but handle it
+              initialProgress = 0; // Exit from left
+              reverseDirection = false; // Move right (east, same as road)
+            }
           } else if (pointA.direction === 'west') {
-            // Road points west: exit from right side (progress = 1) to go left
-            initialProgress = 1;
-            reverseDirection = true; // Always reverse to go from right to left
+            // Road points west: if next road is to the left, exit from right and go left
+            // But since road points west, going left means going in road direction
+            if (colDiff < 0) {
+              initialProgress = 1; // Exit from right
+              reverseDirection = false; // Move left (west, same as road direction)
+            } else {
+              initialProgress = 0; // Exit from left
+              reverseDirection = true; // Move right (east, opposite of west)
+            }
           }
         } else {
-          // Vertical movement - for Point A, we want horizontal exit (right to left)
-          // But if the path is vertical, we'll handle it based on the road direction
-          if (pointA.direction === 'east' || pointA.direction === 'west') {
-            // If road is horizontal, exit from right
+          // Vertical movement
+          if (pointA.direction === 'north' || pointA.direction === 'south') {
+            // Road is vertical, but we want to exit horizontally (right to left)
+            // This is a special case - we'll use the road's direction to determine
+            if (colDiff < 0) {
+              // Next road is to the left
+              initialProgress = 1; // Exit from right
+              reverseDirection = true; // Move left
+            } else {
+              initialProgress = 0; // Exit from left
+              reverseDirection = false; // Move right
+            }
+          } else {
+            // Road is horizontal, exit from right
             initialProgress = 1;
             reverseDirection = true;
           }
@@ -287,6 +309,7 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
             
             // For return journey from Point B, we need to exit from left to right (east)
             // Point B: exit from left (progress = 0) and move right (reverseDirection = false)
+            // This means the vehicle moves in the same direction as the road (if road is east, vehicle goes east)
             let initialProgress = 0; // Start from left side
             let reverseDirection = false; // Move from left to right (east)
             
@@ -307,23 +330,44 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
                 const colDiff = nextCenterCol - currentCenterCol;
                 const rowDiff = nextCenterRow - currentCenterRow;
                 
-                // Point B: exit from left to right (east) - opposite of Point A
+                // Point B: exit from left to right (east) when going to A
                 if (Math.abs(colDiff) > Math.abs(rowDiff)) {
-                  // Horizontal movement (east/west)
+                  // Horizontal movement
                   if (pointB.direction === 'east') {
-                    // Road points east: exit from left (progress = 0) if going right, or right (1) if going left
-                    initialProgress = colDiff > 0 ? 0 : 1; // Exit from left if going right
-                    reverseDirection = colDiff <= 0; // Reverse if going left
+                    // Road points east: if next road is to the right, exit from left and go right (forward)
+                    if (colDiff > 0) {
+                      initialProgress = 0; // Exit from left
+                      reverseDirection = false; // Move right (east, same as road direction)
+                    } else {
+                      // Next road is to the left - shouldn't happen normally
+                      initialProgress = 1; // Exit from right
+                      reverseDirection = true; // Move left (west, opposite of east)
+                    }
                   } else if (pointB.direction === 'west') {
-                    // Road points west: exit from left side (progress = 0) to go right
-                    initialProgress = 0;
-                    reverseDirection = false; // Move from left to right
+                    // Road points west: if next road is to the right, exit from left and go right
+                    // But since road points west, going right means going opposite to road direction
+                    if (colDiff > 0) {
+                      initialProgress = 0; // Exit from left
+                      reverseDirection = true; // Move right (east, opposite of west)
+                    } else {
+                      initialProgress = 1; // Exit from right
+                      reverseDirection = false; // Move left (west, same as road direction)
+                    }
                   }
                 } else {
-                  // Vertical movement - for Point B, we want horizontal exit (left to right)
-                  // But if the path is vertical, we'll handle it based on the road direction
-                  if (pointB.direction === 'east' || pointB.direction === 'west') {
-                    // If road is horizontal, exit from left
+                  // Vertical movement
+                  if (pointB.direction === 'north' || pointB.direction === 'south') {
+                    // Road is vertical, but we want to exit horizontally (left to right)
+                    if (colDiff > 0) {
+                      // Next road is to the right
+                      initialProgress = 0; // Exit from left
+                      reverseDirection = false; // Move right
+                    } else {
+                      initialProgress = 1; // Exit from right
+                      reverseDirection = true; // Move left
+                    }
+                  } else {
+                    // Road is horizontal, exit from left
                     initialProgress = 0;
                     reverseDirection = false;
                   }
@@ -426,12 +470,14 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
           // Special handling for Point A and Point B
           if (nextRoad.isPointA && !vehicle.goingToB) {
             // When arriving at Point A from B, enter from left to right (east)
+            // Point A receives from left, so enter at progress 0 and move right (east)
             initialProgress = 0; // Enter from left
-            reverseDirection = false; // Move from left to right
+            reverseDirection = false; // Move from left to right (east)
           } else if (nextRoad.isPointB && vehicle.goingToB) {
-            // When arriving at Point B from A, enter from right to left (west) - opposite
+            // When arriving at Point B from A, enter from right to left (west)
+            // Point B receives from right, so enter at progress 1 and move left (west)
             initialProgress = 1; // Enter from right
-            reverseDirection = true; // Move from right to left
+            reverseDirection = true; // Move from right to left (west)
           } else if (Math.abs(colDiff) > Math.abs(rowDiff)) {
             // Horizontal movement (east/west)
             if (nextRoad.direction === 'east') {
