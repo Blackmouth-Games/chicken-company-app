@@ -22,12 +22,12 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
   const [isRemoving, setIsRemoving] = useState(false);
 
   // Calculate position within the cell based on progress and road direction
-  // Apply -1 cell offset in Y axis (upward)
+  // Vehicle should be centered on the road (no offset needed)
   const getPosition = () => {
     // Progress determines position within the cell (0 = start, 1 = end)
     // Position changes based on road direction and reverseDirection
-    // Apply translate for centering and -1 cell offset in Y axis
-    const yOffset = -cellSize; // -1 cell in Y axis (upward)
+    // Apply translate for centering - vehicle should be centered on the road
+    const yOffset = 0; // No offset - vehicle should be centered on the road
     
     // Calculate position based on road direction and whether we're reversing
     switch (direction) {
