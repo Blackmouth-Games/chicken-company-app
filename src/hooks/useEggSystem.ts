@@ -242,8 +242,34 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       
       // For curve belts, entry direction must match what the curve expects
       if (b.type?.startsWith('curve-')) {
-        // We'll accept it if the position matches - the curve will handle the direction internally
-        return true;
+        // Check if the entry direction is valid for this curve belt
+        // A curve belt can accept from its entry direction (calculated from its exit direction)
+        // For BL (curve-sw): entry is 90° counterclockwise from exit (clockwise rotation)
+        // For BR (curve-se): entry is 90° clockwise from exit (counterclockwise rotation)
+        const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+        const exitDirIndex = directions.indexOf(exitDirection);
+        const entryDirIndex = (exitDirIndex + 2) % 4; // Entry is opposite of exit
+        const entryDir = directions[entryDirIndex];
+        
+        // Calculate what entry direction this curve belt expects based on its exit direction
+        const beltExitIndex = directions.indexOf(b.direction);
+        let expectedEntryDir: 'north' | 'south' | 'east' | 'west';
+        
+        if (b.type === 'curve-sw') {
+          // BL: entry is 90° clockwise from exit (one step forward)
+          const expectedEntryIndex = (beltExitIndex + 1) % 4;
+          expectedEntryDir = directions[expectedEntryIndex];
+        } else if (b.type === 'curve-se') {
+          // BR: entry is 90° counterclockwise from exit (one step backward)
+          const expectedEntryIndex = (beltExitIndex - 1 + 4) % 4;
+          expectedEntryDir = directions[expectedEntryIndex];
+        } else {
+          // For other curve types, accept if position matches
+          return true;
+        }
+        
+        // Check if the entry direction matches what the curve expects
+        return entryDir === expectedEntryDir;
       }
       
       // Default: accept if position matches
@@ -302,7 +328,16 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       
       path.push(nextBelt.id);
       visited.add(nextBelt.id);
-      entryDirection = exitDirection; // Next belt's entry direction is this belt's exit direction
+      // Next belt's entry direction is opposite of this belt's exit direction
+      const getOppositeDirection = (dir: Direction): Direction => {
+        switch (dir) {
+          case 'north': return 'south';
+          case 'south': return 'north';
+          case 'east': return 'west';
+          case 'west': return 'east';
+        }
+      };
+      entryDirection = getOppositeDirection(exitDirection);
       currentBelt = nextBelt;
     }
     
@@ -392,6 +427,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           const nextBelt = belts.find(b => b.id === nextBeltId);
           if (!nextBelt) {
             // Next belt doesn't exist, remove egg
+            console.warn(`[useEggSystem] Egg ${egg.id} next belt ${nextBeltId} not found. Current belt: ${currentBelt.id} (${currentBelt.type}), path:`, egg.path);
             eggCreationTimeRef.current.delete(egg.id);
             return null;
           }
