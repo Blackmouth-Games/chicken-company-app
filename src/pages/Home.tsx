@@ -1855,39 +1855,44 @@ const Home = () => {
                     isLeftColumn={true}
                     isEditMode={isEditMode}
                     editControls={isEditMode && index === 0 ? (
-                      <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 z-[9999] relative">
-                        <div className="text-xs font-bold text-yellow-700 mb-1">Corrales Izquierdos</div>
-                        <div className="flex gap-2 text-xs">
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Columns:</span>
+                      <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'auto'
+                      }}>
+                        <div className="text-sm font-bold text-yellow-700 mb-2">Corrales Izquierdos</div>
+                        <div className="flex flex-col gap-2 text-xs">
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Columns:</span>
                             <input
                               type="text"
                               value={layoutConfig.leftCorrals.gridColumn}
                               onChange={(e) => updateCorralColumn('left', { gridColumn: e.target.value })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1 / 7"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </label>
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Start Row:</span>
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Start Row:</span>
                             <input
                               type="number"
                               value={layoutConfig.leftCorrals.startRow}
                               onChange={(e) => updateCorralColumn('left', { startRow: parseInt(e.target.value) || 4 })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="4"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </label>
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Row span (alto slot):</span>
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Row span (alto slot):</span>
                             <input
                               type="number"
                               min={1}
                               value={layoutConfig.leftCorrals.rowSpan ?? 1}
                               onChange={(e) => updateCorralColumn('left', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1"
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -1929,39 +1934,44 @@ const Home = () => {
                     isLeftColumn={false}
                     isEditMode={isEditMode}
                     editControls={isEditMode && index === 0 ? (
-                      <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 z-[9999] relative">
-                        <div className="text-xs font-bold text-orange-700 mb-1">Corrales Derechos</div>
-                        <div className="flex gap-2 text-xs">
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Columns:</span>
+                      <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
+                        top: '50%', 
+                        left: '50%', 
+                        transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'auto'
+                      }}>
+                        <div className="text-sm font-bold text-orange-700 mb-2">Corrales Derechos</div>
+                        <div className="flex flex-col gap-2 text-xs">
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Columns:</span>
                             <input
                               type="text"
                               value={layoutConfig.rightCorrals.gridColumn}
                               onChange={(e) => updateCorralColumn('right', { gridColumn: e.target.value })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="20 / 26"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </label>
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Start Row:</span>
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Start Row:</span>
                             <input
                               type="number"
                               value={layoutConfig.rightCorrals.startRow}
                               onChange={(e) => updateCorralColumn('right', { startRow: parseInt(e.target.value) || 4 })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="4"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </label>
-                          <label className="flex-1">
-                            <span className="block text-muted-foreground">Row span (alto slot):</span>
+                          <label className="flex flex-col gap-1">
+                            <span className="block text-muted-foreground font-medium">Row span (alto slot):</span>
                             <input
                               type="number"
                               min={1}
                               value={layoutConfig.rightCorrals.rowSpan ?? 1}
                               onChange={(e) => updateCorralColumn('right', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
-                              className="w-full px-2 py-1 border rounded bg-background"
+                              className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1"
                               onClick={(e) => e.stopPropagation()}
                             />
