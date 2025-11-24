@@ -1,6 +1,14 @@
-import { Component, ReactNode } from "react";
+import React, { Component, ReactNode } from "react";
 import { Button } from "./ui/button";
 import { Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+
+// Diagnostic: Verify React is imported correctly
+if (typeof React === 'undefined') {
+  console.error("[ErrorBoundary] CRITICAL: React is undefined!");
+}
+if (typeof Component === 'undefined') {
+  console.error("[ErrorBoundary] CRITICAL: Component is undefined!");
+}
 
 interface Props { children: ReactNode; }
 interface State { 
@@ -24,9 +32,28 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: any, errorInfo: any) {
     console.error("[ErrorBoundary] Error caught:", error);
+    console.error("[ErrorBoundary] Error message:", error?.message);
+    console.error("[ErrorBoundary] Error name:", error?.name);
     console.error("[ErrorBoundary] Error info:", errorInfo);
     console.error("[ErrorBoundary] Error stack:", error?.stack);
     console.error("[ErrorBoundary] Component stack:", errorInfo?.componentStack);
+    
+    // Diagnostic info
+    console.error("[ErrorBoundary] React version check:", {
+      React: typeof React !== 'undefined' ? 'available' : 'missing',
+      Component: typeof Component !== 'undefined' ? 'available' : 'missing',
+      ReactVersion: React?.version || 'unknown',
+    });
+    
+    // Check if useState is being used anywhere
+    const errorString = error?.toString() || '';
+    const stackString = error?.stack || '';
+    if (errorString.includes('useState') || stackString.includes('useState')) {
+      console.error("[ErrorBoundary] DIAGNOSTIC: Error mentions useState!");
+      console.error("[ErrorBoundary] Full error string:", errorString);
+      console.error("[ErrorBoundary] Full stack:", stackString);
+    }
+    
     this.setState({ errorInfo });
   }
 
@@ -140,6 +167,13 @@ Component Stack: ${this.state.errorInfo?.componentStack || "No disponible"}
         <div className="mb-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
           <p className="text-sm font-semibold text-destructive mb-2">Mensaje de error:</p>
           <p className="text-sm text-foreground break-words font-mono">{errorMessage}</p>
+          {errorMessage.includes('useState') && (
+            <div className="mt-2 p-2 bg-yellow-500/20 rounded text-xs">
+              <p className="font-semibold text-yellow-700">⚠️ Diagnóstico:</p>
+              <p className="text-yellow-600">Este error menciona useState, pero ErrorBoundary no lo usa.</p>
+              <p className="text-yellow-600">El error probablemente viene de otro componente.</p>
+            </div>
+          )}
         </div>
 
         {/* Botones de acción */}
