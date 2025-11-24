@@ -26,6 +26,14 @@ interface BuildingSlotProps {
 
 export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, isLeftColumn = true, isEditMode = false, editControls }: BuildingSlotProps) => {
   const { getSkinByKey } = useBuildingSkins(building?.building_type);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
@@ -85,17 +93,20 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
           </div>
 
-          <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4 overflow-visible">
-            {/* Building image or emoji - top right, 2x size, no padding, aligned right */}
-            <div className="flex justify-end">
+          <div className="flex flex-col h-full overflow-visible">
+            {/* Building image or emoji - top left, 2x size, no padding, no margins */}
+            <div className="flex justify-start m-0 p-0">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
-                  className="h-48 w-auto md:h-56 max-w-full object-contain"
+                  className="w-auto max-w-full object-contain m-0 p-0"
+                  style={{ 
+                    height: isMobile ? '384px' : '448px' // Responsive: h-48*2 (384px) mobile, h-56*2 (448px) desktop
+                  }}
                 />
               ) : (
-                <div className="text-7xl md:text-8xl leading-none">
+                <div className="text-7xl md:text-8xl leading-none m-0 p-0">
                   {buildingDisplay?.emoji || '🏚️'}
                 </div>
               )}
