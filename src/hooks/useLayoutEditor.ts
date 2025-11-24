@@ -958,7 +958,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     col: number, 
     row: number, 
     direction: 'north' | 'south' | 'east' | 'west',
-    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'funnel'
+    type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'
   ) => {
     const newBelt: BeltConfig = {
       id: `belt-${Date.now()}`,
