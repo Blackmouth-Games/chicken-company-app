@@ -1,7 +1,6 @@
-import { Component, ReactNode } from "react";
+import React, { Component, ReactNode, useState } from "react";
 import { Button } from "./ui/button";
 import { Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; error?: any; errorInfo?: any; }
@@ -22,24 +21,65 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleCopyError = () => {
-    const errorText = `
+    try {
+      const errorText = `
 Error: ${this.state.error?.message || "Error desconocido"}
 Stack: ${this.state.error?.stack || "No disponible"}
 Component Stack: ${this.state.errorInfo?.componentStack || "No disponible"}
-    `.trim();
-    
-    navigator.clipboard.writeText(errorText).then(() => {
-      alert("Error copiado al portapapeles");
-    }).catch(() => {
-      // Fallback si clipboard no está disponible
+      `.trim();
+      
+      // Intentar usar la API moderna de clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(errorText).then(() => {
+          // Éxito - no mostrar alert para evitar errores adicionales
+          console.log("Error copiado al portapapeles");
+        }).catch((err) => {
+          console.error("Error al copiar con clipboard API:", err);
+          // Fallback al método antiguo
+          this.fallbackCopyTextToClipboard(errorText);
+        });
+      } else {
+        // Fallback si clipboard API no está disponible
+        this.fallbackCopyTextToClipboard(errorText);
+      }
+    } catch (error) {
+      console.error("Error en handleCopyError:", error);
+      // Intentar fallback
+      try {
+        const errorText = `
+Error: ${this.state.error?.message || "Error desconocido"}
+Stack: ${this.state.error?.stack || "No disponible"}
+Component Stack: ${this.state.errorInfo?.componentStack || "No disponible"}
+        `.trim();
+        this.fallbackCopyTextToClipboard(errorText);
+      } catch (fallbackError) {
+        console.error("Error en fallback copy:", fallbackError);
+      }
+    }
+  };
+
+  fallbackCopyTextToClipboard = (text: string) => {
+    try {
       const textArea = document.createElement("textarea");
-      textArea.value = errorText;
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
       document.body.appendChild(textArea);
+      textArea.focus();
       textArea.select();
-      document.execCommand('copy');
+      
+      const successful = document.execCommand('copy');
       document.body.removeChild(textArea);
-      alert("Error copiado al portapapeles");
-    });
+      
+      if (successful) {
+        console.log("Error copiado al portapapeles (método fallback)");
+      } else {
+        console.error("No se pudo copiar el texto");
+      }
+    } catch (err) {
+      console.error("Error en fallbackCopyTextToClipboard:", err);
+    }
   };
 
   handleReload = () => {
@@ -81,6 +121,23 @@ const ErrorDisplay = ({
   onReload: () => void;
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  
+  const handleCopy = async () => {
+    setCopyStatus('idle');
+    try {
+      // onCopy es síncrono pero puede lanzar errores
+      onCopy();
+      // Dar un pequeño delay para que el clipboard tenga tiempo de copiar
+      await new Promise(resolve => setTimeout(resolve, 100));
+      setCopyStatus('success');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (error) {
+      console.error("Error al copiar:", error);
+      setCopyStatus('error');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    }
+  };
   
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-background">
@@ -112,12 +169,13 @@ const ErrorDisplay = ({
             Recargar página
           </Button>
           <Button 
-            onClick={onCopy}
+            onClick={handleCopy}
             variant="outline"
             className="flex-1"
+            disabled={copyStatus !== 'idle'}
           >
             <Copy className="h-4 w-4 mr-2" />
-            Copiar error
+            {copyStatus === 'success' ? '¡Copiado!' : copyStatus === 'error' ? 'Error' : 'Copiar error'}
           </Button>
         </div>
 
