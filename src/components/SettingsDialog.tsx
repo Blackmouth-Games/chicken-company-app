@@ -146,7 +146,7 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
           {/* Debug Code Section */}
           <div className="space-y-2 border border-border rounded-lg p-4">
-            <label className="text-sm font-medium">Código de Debug</label>
+            <label className="text-sm font-medium">Redeem Code</label>
             {isDebugEnabled ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-green-600">
