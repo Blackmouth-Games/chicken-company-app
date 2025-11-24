@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { parseGridNotation } from "@/lib/layoutCollisions";
 
+type Direction = 'north' | 'south' | 'east' | 'west';
+
 interface Egg {
   id: string;
   currentBeltId: string;
@@ -10,14 +12,14 @@ interface Egg {
   path: string[]; // Array of belt IDs representing the path
   pathIndex: number; // Current index in the path
   corralId: string; // ID of the corral that emitted this egg
-  entryDirection?: 'north' | 'south' | 'east' | 'west'; // Direction from which egg entered current belt (for turn belts)
+  entryDirection?: Direction; // Direction from which egg entered current belt (for turn belts)
 }
 
 interface Belt {
   id: string;
   gridColumn: string;
   gridRow: string;
-  direction: 'north' | 'south' | 'east' | 'west';
+  direction: Direction;
   type?: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel';
   isOutput?: boolean;
   isDestiny?: boolean;
@@ -34,6 +36,38 @@ const EGG_MAX_AGE = 60000; // Maximum age for an egg (60 seconds) before removal
 const getEggSpawnInterval = (level: number): number => {
   // Level 1: 5s, Level 2: 4s, Level 3: 3s, Level 4: 2s, Level 5: 1.5s
   return Math.max(1500, BASE_EGG_SPAWN_INTERVAL - (level - 1) * 1000);
+};
+
+const DIRECTION_ORDER: Direction[] = ['north', 'east', 'south', 'west'];
+
+const rotateDirection = (dir: Direction, steps: number): Direction => {
+  const currentIndex = DIRECTION_ORDER.indexOf(dir);
+  if (currentIndex === -1) {
+    return dir;
+  }
+  const nextIndex = (currentIndex + steps + DIRECTION_ORDER.length) % DIRECTION_ORDER.length;
+  return DIRECTION_ORDER[nextIndex];
+};
+
+const getCurveExitDirection = (type?: Belt['type'], entryDir?: Direction): Direction | null => {
+  if (!type || !entryDir) return null;
+  
+  switch (type) {
+    case 'curve-ne':
+    case 'turn-ne':
+      return rotateDirection(entryDir, 1); // Clockwise
+    case 'curve-nw':
+    case 'turn-nw':
+      return rotateDirection(entryDir, -1); // Counterclockwise
+    case 'curve-se':
+    case 'turn-se':
+      return rotateDirection(entryDir, -1); // Counterclockwise (BR)
+    case 'curve-sw':
+    case 'turn-sw':
+      return rotateDirection(entryDir, 1); // Clockwise (BL)
+    default:
+      return null;
+  }
 };
 
 export const useEggSystem = (belts: Belt[], buildings: any[]) => {
@@ -127,30 +161,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         exitDirection = directions[nextIndex];
       }
     } else if (currentBelt.type?.startsWith('curve-') && entryDirection) {
-      // Curve belts: calculate exit direction based on curve type and entry
-      if (currentBelt.type === 'curve-ne' || currentBelt.type === 'turn-ne') {
-        // North -> East curve
-        if (entryDirection === 'north') exitDirection = 'east';
-        else if (entryDirection === 'east') exitDirection = 'north';
-        else exitDirection = 'east'; // Default
-      } else if (currentBelt.type === 'curve-nw' || currentBelt.type === 'turn-nw') {
-        // North -> West curve
-        if (entryDirection === 'north') exitDirection = 'west';
-        else if (entryDirection === 'west') exitDirection = 'north';
-        else exitDirection = 'west'; // Default
-      } else if (currentBelt.type === 'curve-se' || currentBelt.type === 'turn-se') {
-        // South -> East curve
-        if (entryDirection === 'south') exitDirection = 'east';
-        else if (entryDirection === 'east') exitDirection = 'south';
-        else exitDirection = 'east'; // Default
-      } else if (currentBelt.type === 'curve-sw' || currentBelt.type === 'turn-sw') {
-        // South -> West curve
-        if (entryDirection === 'south') exitDirection = 'west';
-        else if (entryDirection === 'west') exitDirection = 'south';
-        else exitDirection = 'west'; // Default
-      } else {
-        exitDirection = currentBelt.direction;
-      }
+      const curveExit = getCurveExitDirection(currentBelt.type, entryDirection);
+      exitDirection = curveExit ?? currentBelt.direction;
     } else {
       // Default: use belt's direction
       exitDirection = currentBelt.direction;
@@ -223,30 +235,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           exitDirection = directions[nextIndex];
         }
       } else if (currentBelt.type?.startsWith('curve-')) {
-        // Curve belts: calculate exit direction based on curve type and entry
-        if (currentBelt.type === 'curve-ne') {
-          // North -> East curve
-          if (entryDirection === 'north') exitDirection = 'east';
-          else if (entryDirection === 'east') exitDirection = 'north';
-          else exitDirection = 'east'; // Default
-        } else if (currentBelt.type === 'curve-nw') {
-          // North -> West curve
-          if (entryDirection === 'north') exitDirection = 'west';
-          else if (entryDirection === 'west') exitDirection = 'north';
-          else exitDirection = 'west'; // Default
-        } else if (currentBelt.type === 'curve-se') {
-          // South -> East curve
-          if (entryDirection === 'south') exitDirection = 'east';
-          else if (entryDirection === 'east') exitDirection = 'south';
-          else exitDirection = 'east'; // Default
-        } else if (currentBelt.type === 'curve-sw') {
-          // South -> West curve
-          if (entryDirection === 'south') exitDirection = 'west';
-          else if (entryDirection === 'west') exitDirection = 'south';
-          else exitDirection = 'west'; // Default
-        } else {
-          exitDirection = currentBelt.direction;
-        }
+        const curveExit = getCurveExitDirection(currentBelt.type, entryDirection);
+        exitDirection = curveExit ?? currentBelt.direction;
       } else {
         exitDirection = currentBelt.direction;
       }
@@ -384,28 +374,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
                 exitDirection = directions[exitIndex];
               }
             } else if (currentBelt.type?.startsWith('curve-')) {
-              // Curve belts: calculate exit direction based on curve type and entry
               const entryDir = egg.entryDirection || currentBelt.direction;
-              if (currentBelt.type === 'curve-ne') {
-                // North -> East curve
-                if (entryDir === 'north') exitDirection = 'east';
-                else if (entryDir === 'east') exitDirection = 'north';
-                else exitDirection = 'east'; // Default
-              } else if (currentBelt.type === 'curve-nw') {
-                // North -> West curve
-                if (entryDir === 'north') exitDirection = 'west';
-                else if (entryDir === 'west') exitDirection = 'north';
-                else exitDirection = 'west'; // Default
-              } else if (currentBelt.type === 'curve-se') {
-                // South -> East curve
-                if (entryDir === 'south') exitDirection = 'east';
-                else if (entryDir === 'east') exitDirection = 'south';
-                else exitDirection = 'east'; // Default
-              } else if (currentBelt.type === 'curve-sw') {
-                // South -> West curve
-                if (entryDir === 'south') exitDirection = 'west';
-                else if (entryDir === 'west') exitDirection = 'south';
-                else exitDirection = 'west'; // Default
+              const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
+              if (curveExit) {
+                exitDirection = curveExit;
               }
             }
             
@@ -460,34 +432,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
               exitDirection = directions[exitIndex];
             }
           } else if (currentBelt.type?.startsWith('curve-')) {
-            // Curve belts: calculate exit direction based on curve type and entry
             const entryDir = egg.entryDirection || currentBelt.direction;
-            if (currentBelt.type === 'curve-ne') {
-              // North -> East curve
-              if (entryDir === 'north') exitDirection = 'east';
-              else if (entryDir === 'east') exitDirection = 'north';
-              else exitDirection = 'east'; // Default
-            } else if (currentBelt.type === 'curve-nw') {
-              // North -> West curve
-              if (entryDir === 'north') exitDirection = 'west';
-              else if (entryDir === 'west') exitDirection = 'north';
-              else exitDirection = 'west'; // Default
-            } else if (currentBelt.type === 'curve-se') {
-              // BR curve: can be rotated, handles all entry/exit combinations
-              // Exit is 90° counterclockwise from entry
-              const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
-              const entryIndex = directions.indexOf(entryDir);
-              if (entryIndex === -1) {
-                exitDirection = 'east'; // Default
-              } else {
-                const exitIndex = (entryIndex - 1 + 4) % 4;
-                exitDirection = directions[exitIndex];
-              }
-            } else if (currentBelt.type === 'curve-sw') {
-              // South -> West curve
-              if (entryDir === 'south') exitDirection = 'west';
-              else if (entryDir === 'west') exitDirection = 'south';
-              else exitDirection = 'west'; // Default
+            const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
+            if (curveExit) {
+              exitDirection = curveExit;
             }
           }
           
