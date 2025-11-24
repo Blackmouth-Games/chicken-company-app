@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import bgFarm from "@/assets/bg-farm-grass.png";
+import bgFarm from "@/assets/bg/bg-farm-grass.png";
 import defaultAvatar from "@/assets/default-avatar.png";
 import box1Image from "@/assets/box_1.png";
 import box2Image from "@/assets/box_2.png";
