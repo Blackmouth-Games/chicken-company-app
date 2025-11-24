@@ -34,6 +34,7 @@ const DebugPanel = () => {
   const [paintModeClickInfo, setPaintModeClickInfo] = useState<any>(null);
   const [eggDebugInfo, setEggDebugInfo] = useState<any>(null);
   const [vehicleDebugInfo, setVehicleDebugInfo] = useState<any>(null);
+  const [vehicleLogs, setVehicleLogs] = useState<Array<{ timestamp: string; level: string; message: string; data?: any }>>([]);
   
   // Skins tab state
   const [userId, setUserId] = useState<string | null>(null);
@@ -1065,6 +1066,60 @@ const DebugPanel = () => {
               {vehicleDebugInfo ? (
                 <div className="space-y-2">
                   <h3 className="font-semibold text-sm">🚚 Vehicle System</h3>
+                  
+                  {/* Vehicle Logs */}
+                  {vehicleLogs.length > 0 && (
+                    <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="font-semibold">📋 Vehicle Logs ({vehicleLogs.length})</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setVehicleLogs([])}
+                          className="h-6 text-xs"
+                        >
+                          Limpiar
+                        </Button>
+                      </div>
+                      <div className="space-y-1 max-h-60 overflow-y-auto text-xs font-mono">
+                        {vehicleLogs.map((log, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-2 rounded border-l-2 ${
+                              log.level === 'error' ? 'border-red-500 bg-red-500/10' :
+                              log.level === 'warn' ? 'border-yellow-500 bg-yellow-500/10' :
+                              'border-blue-500 bg-blue-500/10'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              <span className="text-muted-foreground text-[10px] min-w-[60px]">{log.timestamp}</span>
+                              <span className={`font-semibold min-w-[50px] ${
+                                log.level === 'error' ? 'text-red-600' :
+                                log.level === 'warn' ? 'text-yellow-600' :
+                                'text-blue-600'
+                              }`}>
+                                [{log.level.toUpperCase()}]
+                              </span>
+                              <div className="flex-1">
+                                <p className="break-words">{log.message}</p>
+                                {log.data && (
+                                  <details className="mt-1">
+                                    <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                      Ver datos
+                                    </summary>
+                                    <pre className="mt-1 p-2 bg-background/50 rounded text-[10px] overflow-x-auto">
+                                      {JSON.stringify(log.data, null, 2)}
+                                    </pre>
+                                  </details>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div className="grid grid-cols-2 gap-2">
                       <p><strong>Current Vehicles:</strong> {vehicleDebugInfo.currentVehicles ?? 0} / {vehicleDebugInfo.maxVehicles ?? 0}</p>

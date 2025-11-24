@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { parseGridNotation } from "@/lib/layoutCollisions";
 
+// Helper function to send logs to DebugPanel
+const sendVehicleLog = (level: 'info' | 'warn' | 'error', message: string, data?: any) => {
+  window.dispatchEvent(new CustomEvent('vehicleLog', {
+    detail: { level, message, data }
+  }));
+};
+
 interface Vehicle {
   id: string;
   currentRoadId: string;
@@ -71,6 +78,14 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     const currentPos = parseGridNotation(currentRoad.gridColumn);
     const currentRow = parseGridNotation(currentRoad.gridRow);
     
+    sendVehicleLog('info', `Finding next road from ${currentRoad.id}`, {
+      currentRoadId: currentRoad.id,
+      currentPos: { start: currentPos.start, end: currentPos.end },
+      currentRow: { start: currentRow.start, end: currentRow.end },
+      goingToB,
+      totalRoads: roads.length,
+    });
+    
     // Find all adjacent roads by checking for overlap or adjacency
     // Two roads are adjacent if they share a border (for 2x2 roads)
     const adjacentRoads = roads
@@ -125,35 +140,77 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
       })
       .filter((item): item is { road: Road; direction: string } => item !== null);
     
+    sendVehicleLog('info', `Found ${adjacentRoads.length} adjacent roads`, {
+      count: adjacentRoads.length,
+      adjacentRoads: adjacentRoads.map(a => ({
+        id: a.road.id,
+        isPointA: a.road.isPointA,
+        isPointB: a.road.isPointB,
+        isTransport: a.road.isTransport,
+        direction: a.direction,
+      })),
+    });
+    
     // Filter roads based on destination and prioritize by type
     // If going to B, prioritize point B, then transport, then any road
     if (goingToB) {
       // First, try to find point B
       const pointB = adjacentRoads.find(a => a.road.isPointB);
-      if (pointB) return pointB.road;
+      if (pointB) {
+        sendVehicleLog('info', `Selected Point B road: ${pointB.road.id}`);
+        return pointB.road;
+      }
       
       // Then try transport roads
       const transport = adjacentRoads.find(a => a.road.isTransport);
-      if (transport) return transport.road;
+      if (transport) {
+        sendVehicleLog('info', `Selected transport road: ${transport.road.id}`);
+        return transport.road;
+      }
       
       // Then any other road (including point A if it's not the starting point)
-      if (adjacentRoads.length > 0) return adjacentRoads[0].road;
+      if (adjacentRoads.length > 0) {
+        sendVehicleLog('info', `Selected first available road: ${adjacentRoads[0].road.id}`);
+        return adjacentRoads[0].road;
+      }
     } else {
       // If going to A, prioritize point A, then transport, then any road
       const pointA = adjacentRoads.find(a => a.road.isPointA);
-      if (pointA) return pointA.road;
+      if (pointA) {
+        sendVehicleLog('info', `Selected Point A road: ${pointA.road.id}`);
+        return pointA.road;
+      }
       
       const transport = adjacentRoads.find(a => a.road.isTransport);
-      if (transport) return transport.road;
+      if (transport) {
+        sendVehicleLog('info', `Selected transport road: ${transport.road.id}`);
+        return transport.road;
+      }
       
-      if (adjacentRoads.length > 0) return adjacentRoads[0].road;
+      if (adjacentRoads.length > 0) {
+        sendVehicleLog('info', `Selected first available road: ${adjacentRoads[0].road.id}`);
+        return adjacentRoads[0].road;
+      }
     }
+    
+    sendVehicleLog('warn', 'No adjacent roads found!', {
+      currentRoadId: currentRoad.id,
+      currentPos: { start: currentPos.start, end: currentPos.end },
+      currentRow: { start: currentRow.start, end: currentRow.end },
+    });
     
     return null;
   }, []);
 
   // Calculate path from point A to point B (or reverse)
   const calculatePath = useCallback((startRoad: Road, targetRoad: Road, roads: Road[], goingToB: boolean): string[] => {
+    sendVehicleLog('info', `Calculating path from ${startRoad.id} to ${targetRoad.id}`, {
+      from: startRoad.id,
+      to: targetRoad.id,
+      goingToB,
+      totalRoads: roads.length,
+    });
+    
     const path: string[] = [startRoad.id];
     const visited = new Set<string>([startRoad.id]);
     let currentRoad = startRoad;
@@ -162,12 +219,28 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
     for (let i = 0; i < maxPathLength; i++) {
       // Check if we reached the target
       if (currentRoad.id === targetRoad.id) {
+        sendVehicleLog('info', `Path found! Length: ${path.length}`, {
+          pathLength: path.length,
+          path: path,
+        });
         return path;
       }
       
       const nextRoad = findNextRoad(currentRoad, roads, goingToB);
-      if (!nextRoad || visited.has(nextRoad.id)) {
-        // No path found or loop detected
+      if (!nextRoad) {
+        sendVehicleLog('warn', `No next road found at step ${i}`, {
+          currentRoadId: currentRoad.id,
+          pathSoFar: path,
+        });
+        return path;
+      }
+      
+      if (visited.has(nextRoad.id)) {
+        sendVehicleLog('warn', `Loop detected at step ${i}`, {
+          currentRoadId: currentRoad.id,
+          nextRoadId: nextRoad.id,
+          pathSoFar: path,
+        });
         return path;
       }
       
@@ -176,13 +249,60 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
       currentRoad = nextRoad;
     }
     
+    sendVehicleLog('warn', 'Max path length reached', {
+      pathLength: path.length,
+      path: path,
+    });
+    
     return path;
   }, [findNextRoad]);
 
   // Spawn vehicle from point A to point B (vacío)
   const spawnVehicle = useCallback((pointA: Road, pointB: Road): Vehicle | null => {
+    sendVehicleLog('info', 'Attempting to spawn vehicle', {
+      pointA: {
+        id: pointA.id,
+        gridColumn: pointA.gridColumn,
+        gridRow: pointA.gridRow,
+        direction: pointA.direction,
+        isPointA: pointA.isPointA,
+      },
+      pointB: {
+        id: pointB.id,
+        gridColumn: pointB.gridColumn,
+        gridRow: pointB.gridRow,
+        direction: pointB.direction,
+        isPointB: pointB.isPointB,
+      },
+      totalRoads: roads.length,
+      roads: roads.map(r => ({
+        id: r.id,
+        gridColumn: r.gridColumn,
+        gridRow: r.gridRow,
+        isPointA: r.isPointA,
+        isPointB: r.isPointB,
+        isTransport: r.isTransport,
+      })),
+    });
+    
     const path = calculatePath(pointA, pointB, roads, true);
-    if (path.length === 0 || path[path.length - 1] !== pointB.id) return null; // No valid path
+    
+    sendVehicleLog('info', 'Path calculation result', {
+      pathLength: path.length,
+      path: path,
+      lastRoadId: path[path.length - 1],
+      targetRoadId: pointB.id,
+      isValid: path.length > 0 && path[path.length - 1] === pointB.id,
+    });
+    
+    if (path.length === 0 || path[path.length - 1] !== pointB.id) {
+      sendVehicleLog('error', 'Invalid path - cannot spawn vehicle', {
+        pathLength: path.length,
+        path: path,
+        expectedLastRoad: pointB.id,
+      });
+      return null; // No valid path
+    }
     
     const roadPos = parseGridNotation(pointA.gridColumn);
     const roadRow = parseGridNotation(pointA.gridRow);
@@ -207,6 +327,13 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
       pointBId: pointB.id,
       reverseDirection,
     };
+    
+    sendVehicleLog('info', 'Vehicle spawned successfully', {
+      vehicleId: newVehicle.id,
+      initialProgress,
+      reverseDirection,
+      pathLength: path.length,
+    });
     
     return newVehicle;
   }, [roads, calculatePath]);
@@ -274,12 +401,22 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
         const progressAtEnd = vehicle.reverseDirection ? vehicle.progress <= 0 : vehicle.progress >= 1;
         if (vehicle.goingToB && currentRoad.isPointB && progressAtEnd) {
           // Reached point B, start waiting
+          sendVehicleLog('info', 'Vehicle reached Point B, starting wait', {
+            vehicleId: vehicle.id,
+            progress: vehicle.progress,
+            reverseDirection: vehicle.reverseDirection,
+          });
           vehicleWaitTimeRef.current.set(waitKey, Date.now());
           return vehicle;
         }
         
         if (!vehicle.goingToB && currentRoad.isPointA && progressAtEnd) {
           // Reached point A, remove vehicle (completed cycle)
+          sendVehicleLog('info', 'Vehicle reached Point A, removing', {
+            vehicleId: vehicle.id,
+            progress: vehicle.progress,
+            reverseDirection: vehicle.reverseDirection,
+          });
           return null;
         }
         
@@ -289,6 +426,9 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
           ? vehicle.progress - vehicleSpeed 
           : vehicle.progress + vehicleSpeed;
         
+        // Clamp progress to valid range [0, 1]
+        newProgress = Math.max(0, Math.min(1, newProgress));
+        
         // Check if we've reached the end (either 0 or 1 depending on direction)
         const reachedEnd = vehicle.reverseDirection ? newProgress <= 0 : newProgress >= 1;
         
@@ -296,18 +436,40 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
           // Clamp progress to valid range
           newProgress = vehicle.reverseDirection ? 0 : 1;
           const nextPathIndex = vehicle.pathIndex + 1;
+          
+          sendVehicleLog('info', 'Vehicle reached end of current road', {
+            vehicleId: vehicle.id,
+            currentRoadId: vehicle.currentRoadId,
+            currentRoadDirection: currentRoad.direction,
+            progress: newProgress,
+            reverseDirection: vehicle.reverseDirection,
+            pathIndex: vehicle.pathIndex,
+            pathLength: vehicle.path.length,
+            nextPathIndex,
+            goingToB: vehicle.goingToB,
+            isPointA: currentRoad.isPointA,
+            isPointB: currentRoad.isPointB,
+          });
+          
           if (nextPathIndex >= vehicle.path.length) {
             // Reached end of path
             if (vehicle.goingToB && currentRoad.isPointB) {
               // Start waiting at point B
+              sendVehicleLog('info', 'Vehicle reached end of path at Point B, starting wait');
               vehicleWaitTimeRef.current.set(waitKey, Date.now());
               return vehicle;
             }
             if (!vehicle.goingToB && currentRoad.isPointA) {
               // Reached point A, remove vehicle
+              sendVehicleLog('info', 'Vehicle reached end of path at Point A, removing');
               return null;
             }
             // No more path, keep at current position
+            sendVehicleLog('warn', 'Vehicle reached end of path but not at destination', {
+              vehicleId: vehicle.id,
+              currentRoadId: vehicle.currentRoadId,
+              goingToB: vehicle.goingToB,
+            });
             const finalProgress = vehicle.reverseDirection ? 0 : 1;
             return { ...vehicle, progress: finalProgress };
           }

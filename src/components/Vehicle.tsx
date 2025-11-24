@@ -139,15 +139,15 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     
     // Rotate image to face the direction of movement
     // Base image faces east (right), so:
-    // - east (right): 0deg
-    // - west (left): 180deg
-    // - south (down): 90deg
-    // - north (up): 270deg
+    // - east (right): 0deg (sin rotación)
+    // - west (left): 180deg (volteado horizontalmente)
+    // - south (down): 90deg (rotado 90° horario)
+    // - north (up): 270deg o -90deg (rotado 90° antihorario)
     switch (movementDirection) {
       case 'east': return 'rotate(0deg)'; // Right
       case 'west': return 'rotate(180deg)'; // Left
-      case 'south': return 'rotate(90deg)'; // Down
-      case 'north': return 'rotate(270deg)'; // Up
+      case 'south': return 'rotate(90deg)'; // Down (clockwise)
+      case 'north': return 'rotate(-90deg)'; // Up (counter-clockwise, changed from 270deg to -90deg)
       default: return 'rotate(0deg)';
     }
   };
@@ -181,14 +181,12 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
 
   // Detect when vehicle should be removed (e.g., when progress reaches end or at destination)
   useEffect(() => {
-    // Check if vehicle is at final destination or near the end of its journey
-    // Start fade out earlier to ensure animation completes before removal
-    const isNearEnd = reverseDirection 
-      ? progress <= 0.1  // Near start (0) when reversing
-      : progress >= 0.9; // Near end (1) when going forward
+    // Only remove vehicle when it's actually at the final destination (Point A when returning)
+    // Don't remove it when it reaches Point B (it should wait there)
+    // Start fade out only when truly at final destination
+    const isAtFinalDestination = isAtDestination && !goingToB; // Only fade out when returning to Point A
     
-    // Start fade out if vehicle is at destination or near the end
-    if ((isAtDestination || isNearEnd) && !isRemoving) {
+    if (isAtFinalDestination && !isRemoving) {
       setIsRemoving(true);
       // Call onReachDestination if provided
       if (onReachDestination) {
@@ -198,7 +196,7 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         return () => clearTimeout(timer);
       }
     }
-  }, [progress, reverseDirection, isAtDestination, onReachDestination, isRemoving]);
+  }, [progress, reverseDirection, isAtDestination, goingToB, onReachDestination, isRemoving]);
 
   return isVisible ? (
     <div
