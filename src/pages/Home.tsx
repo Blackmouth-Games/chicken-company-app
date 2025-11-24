@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import bgFarm from "@/assets/bg/bg-farm-grass.png";
 import bgFarmRow1 from "@/assets/bg/bg-farm-row1.png"; // Primera fila - tile horizontal
-import bgFarmRest from "@/assets/bg/bg-farm-rest.png"; // Resto - tile horizontal y vertical
+// import bgFarmRest from "@/assets/bg/bg-farm-rest.png"; // Resto - tile horizontal y vertical (descomentar cuando agregues la imagen)
 import defaultAvatar from "@/assets/default-avatar.png";
 import box1Image from "@/assets/other assets/box_1.png";
 import box2Image from "@/assets/other assets/box_2.png";
@@ -1134,10 +1134,26 @@ const Home = () => {
       }}
     >
       {/* Capa para el resto del background (después de la primera fila) */}
-      <div
+      {/* Descomentar cuando agregues bg-farm-rest.png */}
+      {/* <div
         className="absolute pointer-events-none"
         style={{
           backgroundImage: `url(${bgFarmRest})`,
+          backgroundRepeat: 'repeat',
+          backgroundPosition: '0 0',
+          backgroundSize: '200px 200px',
+          top: `${firstRowHeight}px`,
+          bottom: 0,
+          left: 0,
+          right: 0,
+        }}
+      /> */}
+      
+      {/* Fallback: usar bgFarm para el resto mientras no existe bg-farm-rest.png */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          backgroundImage: `url(${bgFarm})`,
           backgroundRepeat: 'repeat',
           backgroundPosition: '0 0',
           backgroundSize: '200px 200px',
