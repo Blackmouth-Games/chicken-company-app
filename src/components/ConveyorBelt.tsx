@@ -347,6 +347,74 @@ export const ConveyorBelt = ({
     }
   };
 
+  // Calculate input and output positions for edit mode indicators
+  const getInputOutputPositions = () => {
+    let inputDir: 'north' | 'south' | 'east' | 'west' | null = null;
+    let outputDir: 'north' | 'south' | 'east' | 'west' | null = null;
+
+    if (belt.type === 'straight') {
+      // Straight belts: input is opposite of direction, output is direction
+      const oppositeDir: Record<'north' | 'south' | 'east' | 'west', 'north' | 'south' | 'east' | 'west'> = {
+        'north': 'south',
+        'south': 'north',
+        'east': 'west',
+        'west': 'east',
+      };
+      inputDir = oppositeDir[belt.direction];
+      outputDir = belt.direction;
+    } else if (belt.type === 'funnel') {
+      // Funnel: output is direction, input can be from multiple sides (we'll show the opposite)
+      const oppositeDir: Record<'north' | 'south' | 'east' | 'west', 'north' | 'south' | 'east' | 'west'> = {
+        'north': 'south',
+        'south': 'north',
+        'east': 'west',
+        'west': 'east',
+      };
+      inputDir = oppositeDir[belt.direction];
+      outputDir = belt.direction;
+    } else if (belt.type === 'curve-se') {
+      // BR curve: exit is 90° counterclockwise from entry
+      // For display, we'll use the belt direction as the exit and calculate entry
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(belt.direction);
+      const entryIndex = (exitIndex + 1) % 4; // Entry is 90° clockwise from exit
+      inputDir = directions[entryIndex];
+      outputDir = belt.direction;
+    } else if (belt.type === 'curve-sw') {
+      // BL curve: exit is 90° clockwise from entry
+      // For display, we'll use the belt direction as the exit and calculate entry
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(belt.direction);
+      const entryIndex = (exitIndex - 1 + 4) % 4; // Entry is 90° counterclockwise from exit
+      inputDir = directions[entryIndex];
+      outputDir = belt.direction;
+    } else if (isTurn) {
+      // Turn belts: similar logic to curves
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitIndex = directions.indexOf(belt.direction);
+      // Most turn belts are clockwise, so entry is one step back
+      const entryIndex = (exitIndex - 1 + 4) % 4;
+      inputDir = directions[entryIndex];
+      outputDir = belt.direction;
+    }
+
+    // Convert direction to position (percentage from center)
+    const getPosition = (dir: 'north' | 'south' | 'east' | 'west' | null) => {
+      if (!dir) return null;
+      switch (dir) {
+        case 'north': return { left: '50%', top: '10%' };
+        case 'south': return { left: '50%', top: '90%' };
+        case 'east': return { left: '90%', top: '50%' };
+        case 'west': return { left: '10%', top: '50%' };
+      }
+    };
+
+    return {
+      input: getPosition(inputDir),
+      output: getPosition(outputDir),
+    };
+  };
+
   return (
     <div 
       className={`flex justify-center relative w-full h-full group z-5 ${getEditModeBorderColor()} ${
@@ -464,23 +532,49 @@ export const ConveyorBelt = ({
           }}
         />
         
-        {isEditMode && (
-          <>
-            {tempPosition && isDragging && (
-              <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none z-10">
-                → Col {tempPosition.col}, Row {tempPosition.row}
-              </div>
-            )}
-            {/* Show BR/BL label for curve belts in edit mode */}
-            {isCurve && (belt.type === 'curve-sw' || belt.type === 'curve-se') && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  {belt.type === 'curve-sw' ? 'BL' : 'BR'}
-                </span>
-              </div>
-            )}
-          </>
-        )}
+        {isEditMode && (() => {
+          const { input, output } = getInputOutputPositions();
+          return (
+            <>
+              {tempPosition && isDragging && (
+                <div className="absolute top-8 right-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold pointer-events-none z-10">
+                  → Col {tempPosition.col}, Row {tempPosition.row}
+                </div>
+              )}
+              {/* Show BR/BL label for curve belts in edit mode */}
+              {isCurve && (belt.type === 'curve-sw' || belt.type === 'curve-se') && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                    {belt.type === 'curve-sw' ? 'BL' : 'BR'}
+                  </span>
+                </div>
+              )}
+              {/* Input/Output indicators */}
+              {input && (
+                <div
+                  className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                  style={{
+                    left: input.left,
+                    top: input.top,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  title="Input"
+                />
+              )}
+              {output && (
+                <div
+                  className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                  style={{
+                    left: output.left,
+                    top: output.top,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  title="Output"
+                />
+              )}
+            </>
+          );
+        })()}
         
         {/* No tooltip inside the belt */}
       </div>
