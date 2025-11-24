@@ -242,10 +242,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       
       // For curve belts, entry direction must match what the curve expects
       if (b.type?.startsWith('curve-')) {
-        // Check if the entry direction is valid for this curve belt
-        // A curve belt can accept from its entry direction (calculated from its exit direction)
-        // For BL (curve-sw): entry is 90° counterclockwise from exit (clockwise rotation)
-        // For BR (curve-se): entry is 90° clockwise from exit (counterclockwise rotation)
+        // Calculate what entry direction this curve belt expects based on its exit direction
+        // Entry direction for next belt is opposite of exit direction from current belt
         const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
         const exitDirIndex = directions.indexOf(exitDirection);
         const entryDirIndex = (exitDirIndex + 2) % 4; // Entry is opposite of exit
@@ -256,12 +254,14 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         let expectedEntryDir: 'north' | 'south' | 'east' | 'west';
         
         if (b.type === 'curve-sw') {
-          // BL: entry is 90° clockwise from exit (one step forward)
-          const expectedEntryIndex = (beltExitIndex + 1) % 4;
+          // BL: entry is 90° counterclockwise from exit (one step backward)
+          // If belt exits north, entry should be from west
+          const expectedEntryIndex = (beltExitIndex - 1 + 4) % 4;
           expectedEntryDir = directions[expectedEntryIndex];
         } else if (b.type === 'curve-se') {
-          // BR: entry is 90° counterclockwise from exit (one step backward)
-          const expectedEntryIndex = (beltExitIndex - 1 + 4) % 4;
+          // BR: entry is 90° clockwise from exit (one step forward)
+          // If belt exits north, entry should be from east
+          const expectedEntryIndex = (beltExitIndex + 1) % 4;
           expectedEntryDir = directions[expectedEntryIndex];
         } else {
           // For other curve types, accept if position matches
@@ -463,10 +463,17 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
                 exitDirection = directions[exitIndex];
               }
             } else if (currentBelt.type?.startsWith('curve-')) {
-              const entryDir = egg.entryDirection || currentBelt.direction;
-              const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
-              if (curveExit) {
-                exitDirection = curveExit;
+              const entryDir = egg.entryDirection;
+              if (!entryDir) {
+                console.warn(`[useEggSystem] Egg ${egg.id} on curve belt ${currentBelt.id} (${currentBelt.type}) has no entryDirection when moving to destiny.`);
+                exitDirection = currentBelt.direction;
+              } else {
+                const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
+                if (curveExit) {
+                  exitDirection = curveExit;
+                } else {
+                  exitDirection = currentBelt.direction;
+                }
               }
             }
             
@@ -507,27 +514,40 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             // Turn belts: rotate 90 degrees based on type
             // turn-lt: counterclockwise (antihorario)
             // All others: clockwise (horario)
-            const entryDir = egg.entryDirection || currentBelt.direction;
-            const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
-            const entryIndex = directions.indexOf(entryDir);
-            
-            if (currentBelt.type === 'turn-lt') {
-              // Counterclockwise: go back one direction
-              const prevIndex = (entryIndex - 1 + 4) % 4;
-              exitDirection = directions[prevIndex];
+            const entryDir = egg.entryDirection;
+            if (!entryDir) {
+              console.warn(`[useEggSystem] Egg ${egg.id} on turn belt ${currentBelt.id} (${currentBelt.type}) has no entryDirection.`);
+              exitDirection = currentBelt.direction;
             } else {
-              // Clockwise: go forward one direction
-              const exitIndex = (entryIndex + 1) % 4;
-              exitDirection = directions[exitIndex];
+              const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+              const entryIndex = directions.indexOf(entryDir);
+              
+              if (currentBelt.type === 'turn-lt') {
+                // Counterclockwise: go back one direction
+                const prevIndex = (entryIndex - 1 + 4) % 4;
+                exitDirection = directions[prevIndex];
+              } else {
+                // Clockwise: go forward one direction
+                const exitIndex = (entryIndex + 1) % 4;
+                exitDirection = directions[exitIndex];
+              }
             }
           } else if (currentBelt.type?.startsWith('curve-')) {
-            const entryDir = egg.entryDirection || currentBelt.direction;
-            const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
-            if (curveExit) {
-              exitDirection = curveExit;
-            } else {
-              // Fallback: use belt direction if curve exit calculation fails
+            const entryDir = egg.entryDirection;
+            if (!entryDir) {
+              // If entryDirection is not set, calculate it from the previous belt's exit direction
+              // This should not happen in normal flow, but handle it as fallback
+              console.warn(`[useEggSystem] Egg ${egg.id} on curve belt ${currentBelt.id} (${currentBelt.type}) has no entryDirection. Using belt direction as fallback.`);
               exitDirection = currentBelt.direction;
+            } else {
+              const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
+              if (curveExit) {
+                exitDirection = curveExit;
+              } else {
+                // Fallback: use belt direction if curve exit calculation fails
+                console.warn(`[useEggSystem] Failed to calculate exit direction for curve belt ${currentBelt.id} (${currentBelt.type}) with entry ${entryDir}`);
+                exitDirection = currentBelt.direction;
+              }
             }
           }
           

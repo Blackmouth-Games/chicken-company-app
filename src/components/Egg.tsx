@@ -31,7 +31,13 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
       beltType === 'curve-sw'
     );
     
-    if (isCurveBelt && entryDirection) {
+    if (isCurveBelt) {
+      if (!entryDirection) {
+        // Log warning if entryDirection is missing for curve belt
+        console.warn(`[Egg] ${id} on curve belt ${beltType} has no entryDirection. Using fallback.`);
+        // Fallback: use belt direction as entry (not ideal, but better than no animation)
+        return getCurvedPosition(progress, direction, beltType);
+      }
       return getCurvedPosition(progress, entryDirection, beltType);
     }
     

@@ -750,22 +750,32 @@ const Home = () => {
     );
     const lastSlotRow = lastSlotBaseRow + slotRowSpan - 1;
     
-    // Generate central vertical line: continuous line from first slot to last slot
-    // Create one belt per row from firstSlotRow to lastSlotRow + 1
-    // BUT: Remove the last 3 belts from the vertical line
+    // Generate central vertical line: one belt every 4 rows
+    // Start from first slot row, generate belts every 4 rows
     const centerLineStartRow = firstSlotRow;
     const centerLineEndRow = lastSlotRow + 1; // Extend one row below the last slot
-    const actualEndRow = centerLineEndRow - 4; // Remove last 4 belts
     
-    // Find where the two output belts converge (where left and right output belts meet the center line)
-    // This is typically at the row where the first output belts from left and right corrals meet
-    const firstLeftBeltRow = leftStartRow + Math.floor(slotRowSpan / 2); // First left output belt row (middle of slot)
-    const firstRightBeltRow = rightStartRow + Math.floor(slotRowSpan / 2); // First right output belt row (middle of slot)
-    const convergenceRow = Math.max(firstLeftBeltRow, firstRightBeltRow); // Where they converge
+    // Collect all belt rows from left and right slots to identify intersection points
+    const leftBeltRows = new Set<number>();
+    const rightBeltRows = new Set<number>();
     
-    // Generate continuous vertical line: one belt per row (excluding last 3)
+    // Pre-calculate belt rows for left slots
+    for (let i = 0; i < slotsPerSide; i++) {
+      const baseRow = leftStartRow + i * (slotRowSpan + 1);
+      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
+      leftBeltRows.add(beltRow);
+    }
+    
+    // Pre-calculate belt rows for right slots
+    for (let i = 0; i < slotsPerSide; i++) {
+      const baseRow = rightStartRow + i * (slotRowSpan + 1);
+      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
+      rightBeltRows.add(beltRow);
+    }
+    
+    // Generate vertical line: one belt every 4 rows
     // Generate regardless of getTotalRows() limit - belts can be outside visible area
-    for (let beltRow = centerLineStartRow; beltRow <= actualEndRow; beltRow++) {
+    for (let beltRow = centerLineStartRow; beltRow <= centerLineEndRow; beltRow += 4) {
       if (beltRow >= 1 && centerCol >= 1 && centerCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
@@ -775,16 +785,12 @@ const Home = () => {
         });
         
         if (!existingBelt) {
-          // Place funnels at convergence points and periodically along the vertical line
-          // For smaller rowSpan (like 2), place funnels more frequently
-          // Calculate relative position from start of center line
-          const relativeRow = beltRow - centerLineStartRow;
-          // Adjust funnel spacing based on slot size: for rowSpan 2, place every 3 rows; for larger, every 8 rows
-          const funnelSpacing = slotRowSpan <= 2 ? 3 : 8;
-          const firstFunnelOffset = slotRowSpan <= 2 ? 2 : 3; // First funnel position
-          const isFunnelRow = relativeRow === firstFunnelOffset || (relativeRow > firstFunnelOffset && (relativeRow - firstFunnelOffset) % funnelSpacing === 0);
+          // Check if this row intersects with left or right output belts (where they meet the center line)
+          // At intersection points, place a funnel
+          const isIntersection = leftBeltRows.has(beltRow) || rightBeltRows.has(beltRow);
           
-          if (beltRow === convergenceRow || isFunnelRow) {
+          if (isIntersection) {
+            // Place funnel at intersection point
             autoBelts.push({
               id: `belt-auto-center-row-${beltRow}`,
               gridColumn: createGridNotation(centerCol, centerCol + 1),
@@ -794,6 +800,7 @@ const Home = () => {
               isTransport: true, // Center line belts are transport
             });
           } else {
+            // Regular straight belt
             autoBelts.push({
               id: `belt-auto-center-row-${beltRow}`,
               gridColumn: createGridNotation(centerCol, centerCol + 1),
