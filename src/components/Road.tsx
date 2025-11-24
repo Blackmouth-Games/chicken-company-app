@@ -220,6 +220,70 @@ export const Road = ({
             <span>{getRoadTypeIndicator()?.label}</span>
           </div>
         )}
+
+        {/* Input/Output indicators for roads */}
+        {isEditMode && (() => {
+          const getInputOutputPositions = () => {
+            // Roads are bidirectional, so we show input from opposite direction and output in road direction
+            const oppositeDir: Record<'north' | 'south' | 'east' | 'west', 'north' | 'south' | 'east' | 'west'> = {
+              'north': 'south',
+              'south': 'north',
+              'east': 'west',
+              'west': 'east',
+            };
+            const inputDir = oppositeDir[road.direction];
+            const outputDir = road.direction;
+            
+            const cellSize = 40; // Approximate cell size
+            const positions: { input?: { left: string; top: string }; output?: { left: string; top: string } } = {};
+            
+            // Input position (opposite of direction)
+            switch (inputDir) {
+              case 'north': positions.input = { left: '50%', top: '10%' }; break;
+              case 'south': positions.input = { left: '50%', top: '90%' }; break;
+              case 'east': positions.input = { left: '90%', top: '50%' }; break;
+              case 'west': positions.input = { left: '10%', top: '50%' }; break;
+            }
+            
+            // Output position (same as direction)
+            switch (outputDir) {
+              case 'north': positions.output = { left: '50%', top: '10%' }; break;
+              case 'south': positions.output = { left: '50%', top: '90%' }; break;
+              case 'east': positions.output = { left: '90%', top: '50%' }; break;
+              case 'west': positions.output = { left: '10%', top: '50%' }; break;
+            }
+            
+            return positions;
+          };
+          
+          const { input, output } = getInputOutputPositions();
+          return (
+            <>
+              {input && (
+                <div
+                  className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                  style={{
+                    left: input.left,
+                    top: input.top,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  title="Input"
+                />
+              )}
+              {output && (
+                <div
+                  className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                  style={{
+                    left: output.left,
+                    top: output.top,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                  title="Output"
+                />
+              )}
+            </>
+          );
+        })()}
       </div>
 
       {/* Action buttons - outside the road */}

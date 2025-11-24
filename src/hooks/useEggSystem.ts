@@ -160,9 +160,14 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         const nextIndex = (currentIndex + 1) % 4;
         exitDirection = directions[nextIndex];
       }
-    } else if (currentBelt.type?.startsWith('curve-') && entryDirection) {
+      } else if (currentBelt.type?.startsWith('curve-') && entryDirection) {
       const curveExit = getCurveExitDirection(currentBelt.type, entryDirection);
-      exitDirection = curveExit ?? currentBelt.direction;
+      if (curveExit) {
+        exitDirection = curveExit;
+      } else {
+        // Fallback: use belt direction if curve exit calculation fails
+        exitDirection = currentBelt.direction;
+      }
     } else {
       // Default: use belt's direction
       exitDirection = currentBelt.direction;
@@ -191,10 +196,58 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     }
     
     // Find belt at next position
+    // For funnel belts, also check if the next belt can accept from multiple directions
     const nextBelt = belts.find(b => {
       const bCol = parseGridNotation(b.gridColumn);
       const bRow = parseGridNotation(b.gridRow);
-      return bCol.start === nextCol && bRow.start === nextRow;
+      const isAtPosition = bCol.start === nextCol && bRow.start === nextRow;
+      
+      if (!isAtPosition) return false;
+      
+      // If next belt is a funnel, it can accept from any of its 3 input directions
+      if (b.type === 'funnel') {
+        const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+        const outputIndex = directions.indexOf(b.direction);
+        // Funnel accepts from: opposite direction and the two adjacent directions
+        const input1Index = (outputIndex + 2) % 4; // Opposite
+        const input2Index = (outputIndex + 1) % 4; // Adjacent clockwise
+        const input3Index = (outputIndex + 3) % 4; // Adjacent counterclockwise
+        
+        const exitDirIndex = directions.indexOf(exitDirection);
+        // Entry direction for next belt is opposite of exit direction from current belt
+        const entryDirIndex = (exitDirIndex + 2) % 4;
+        const entryDir = directions[entryDirIndex];
+        
+        // Check if entry direction matches one of the funnel's input directions
+        return entryDirIndex === input1Index || entryDirIndex === input2Index || entryDirIndex === input3Index;
+      }
+      
+      // For other belts, check if they can accept from the entry direction
+      // Entry direction is opposite of exit direction
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const exitDirIndex = directions.indexOf(exitDirection);
+      const entryDirIndex = (exitDirIndex + 2) % 4;
+      const entryDir = directions[entryDirIndex];
+      
+      // For straight belts, entry must be opposite of direction
+      if (b.type === 'straight') {
+        const oppositeDir: Record<'north' | 'south' | 'east' | 'west', 'north' | 'south' | 'east' | 'west'> = {
+          'north': 'south',
+          'south': 'north',
+          'east': 'west',
+          'west': 'east',
+        };
+        return oppositeDir[b.direction] === entryDir;
+      }
+      
+      // For curve belts, entry direction must match what the curve expects
+      if (b.type?.startsWith('curve-')) {
+        // We'll accept it if the position matches - the curve will handle the direction internally
+        return true;
+      }
+      
+      // Default: accept if position matches
+      return true;
     }) || null;
     
     return nextBelt;
@@ -436,6 +489,9 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             const curveExit = getCurveExitDirection(currentBelt.type, entryDir);
             if (curveExit) {
               exitDirection = curveExit;
+            } else {
+              // Fallback: use belt direction if curve exit calculation fails
+              exitDirection = currentBelt.direction;
             }
           }
           

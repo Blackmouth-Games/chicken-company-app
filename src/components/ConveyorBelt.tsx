@@ -364,15 +364,17 @@ export const ConveyorBelt = ({
       inputDir = oppositeDir[belt.direction];
       outputDir = belt.direction;
     } else if (belt.type === 'funnel') {
-      // Funnel: output is direction, input can be from multiple sides (we'll show the opposite)
-      const oppositeDir: Record<'north' | 'south' | 'east' | 'west', 'north' | 'south' | 'east' | 'west'> = {
-        'north': 'south',
-        'south': 'north',
-        'east': 'west',
-        'west': 'east',
-      };
-      inputDir = oppositeDir[belt.direction];
+      // Funnel: 3 inputs (north, south, west) and 1 output (east by default, but can be rotated)
+      // The output is always in the belt's direction
       outputDir = belt.direction;
+      // For display, we'll show the 3 input positions
+      // Inputs are: opposite of direction, and the two adjacent directions
+      const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+      const outputIndex = directions.indexOf(belt.direction);
+      // The 3 inputs are: the opposite direction and the two adjacent directions
+      // We'll show the main input (opposite) for the single circle, but the logic will accept all 3
+      const inputIndex = (outputIndex + 2) % 4; // Opposite direction
+      inputDir = directions[inputIndex];
     } else if (belt.type === 'curve-se') {
       // BR curve: exit is 90° counterclockwise from entry
       // For display, we'll use the belt direction as the exit and calculate entry
@@ -528,28 +530,135 @@ export const ConveyorBelt = ({
                 </div>
               )}
               {/* Input/Output indicators */}
-              {input && (
-                <div
-                  className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
-                  style={{
-                    left: input.left,
-                    top: input.top,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                  title="Input"
-                />
+              {belt.type === 'funnel' ? (
+                // Funnel: show 3 inputs and 1 output
+                <>
+                  {(() => {
+                    const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+                    const outputIndex = directions.indexOf(belt.direction);
+                    // 3 inputs: opposite direction and the two adjacent directions
+                    const input1Index = (outputIndex + 2) % 4; // Opposite
+                    const input2Index = (outputIndex + 1) % 4; // Adjacent clockwise
+                    const input3Index = (outputIndex + 3) % 4; // Adjacent counterclockwise
+                    
+                    const getPosition = (dir: 'north' | 'south' | 'east' | 'west') => {
+                      switch (dir) {
+                        case 'north': return { left: '50%', top: '10%' };
+                        case 'south': return { left: '50%', top: '90%' };
+                        case 'east': return { left: '90%', top: '50%' };
+                        case 'west': return { left: '10%', top: '50%' };
+                      }
+                    };
+                    
+                    return (
+                      <>
+                        <div
+                          className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                          style={{
+                            ...getPosition(directions[input1Index]),
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          title="Input 1"
+                        />
+                        <div
+                          className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                          style={{
+                            ...getPosition(directions[input2Index]),
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          title="Input 2"
+                        />
+                        <div
+                          className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                          style={{
+                            ...getPosition(directions[input3Index]),
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          title="Input 3"
+                        />
+                        <div
+                          className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                          style={{
+                            ...getPosition(belt.direction),
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          title="Output"
+                        />
+                      </>
+                    );
+                  })()}
+                </>
+              ) : (
+                // Regular belts: single input and output
+                <>
+                  {input && (
+                    <div
+                      className="absolute w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                      style={{
+                        left: input.left,
+                        top: input.top,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                      title="Input"
+                    />
+                  )}
+                  {output && (
+                    <div
+                      className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
+                      style={{
+                        left: output.left,
+                        top: output.top,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                      title="Output"
+                    />
+                  )}
+                </>
               )}
-              {output && (
-                <div
-                  className="absolute w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-lg pointer-events-none z-20"
-                  style={{
-                    left: output.left,
-                    top: output.top,
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                  title="Output"
-                />
-              )}
+              
+              {/* Direction line from input to output */}
+              {input && output && (() => {
+                // Convert percentage positions to SVG coordinates (0-100)
+                const x1 = parseFloat(input.left.replace('%', ''));
+                const y1 = parseFloat(input.top.replace('%', ''));
+                const x2 = parseFloat(output.left.replace('%', ''));
+                const y2 = parseFloat(output.top.replace('%', ''));
+                
+                return (
+                  <svg
+                    className="absolute inset-0 pointer-events-none z-10"
+                    style={{ width: '100%', height: '100%' }}
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                      stroke="rgba(59, 130, 246, 0.5)"
+                      strokeWidth="1"
+                      strokeDasharray="2 2"
+                      markerEnd="url(#arrowhead)"
+                    />
+                    <defs>
+                      <marker
+                        id="arrowhead"
+                        markerWidth="8"
+                        markerHeight="8"
+                        refX="7"
+                        refY="2.5"
+                        orient="auto"
+                      >
+                        <polygon
+                          points="0 0, 8 2.5, 0 5"
+                          fill="rgba(59, 130, 246, 0.5)"
+                        />
+                      </marker>
+                    </defs>
+                  </svg>
+                );
+              })()}
             </>
           );
         })()}
