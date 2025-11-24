@@ -180,9 +180,9 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
   }, [findNextRoad]);
 
   // Spawn vehicle from point A to point B (vacío)
-  const spawnVehicle = useCallback((pointA: Road, pointB: Road) => {
+  const spawnVehicle = useCallback((pointA: Road, pointB: Road): Vehicle | null => {
     const path = calculatePath(pointA, pointB, roads, true);
-    if (path.length === 0 || path[path.length - 1] !== pointB.id) return; // No valid path
+    if (path.length === 0 || path[path.length - 1] !== pointB.id) return null; // No valid path
     
     const roadPos = parseGridNotation(pointA.gridColumn);
     const roadRow = parseGridNotation(pointA.gridRow);
@@ -251,7 +251,7 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
       reverseDirection,
     };
     
-    setVehicles(prev => [...prev, newVehicle]);
+    return newVehicle;
   }, [roads, calculatePath]);
 
   // Update vehicle positions
@@ -519,40 +519,13 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
         });
         
         if (timeSinceLastSpawn >= vehicleSpawnInterval) {
-          // Spawn new vehicle
-          const path = calculatePath(pointA, pointB, roads, true);
-          console.log('[useVehicleSystem] Calculated path:', {
-            pathLength: path.length,
-            pathEndsAtB: path.length > 0 && path[path.length - 1] === pointB.id,
-            path,
-          });
-          
-          if (path.length > 0 && path[path.length - 1] === pointB.id) {
-            const roadPos = parseGridNotation(pointA.gridColumn);
-            const roadRow = parseGridNotation(pointA.gridRow);
-            
-            const newVehicle: Vehicle = {
-              id: `vehicle-${Date.now()}-${Math.random()}`,
-              currentRoadId: pointA.id,
-              currentCol: roadPos.start,
-              currentRow: roadRow.start,
-              progress: 0,
-              path,
-              pathIndex: 0,
-              isLoaded: false, // Starting empty (vacío)
-              goingToB: true, // Going from A to B
-              pointAId: pointA.id,
-              pointBId: pointB.id,
-            };
-            
-            console.log('[useVehicleSystem] Spawning vehicle:', newVehicle.id);
+          const newVehicle = spawnVehicle(pointA, pointB);
+          if (newVehicle) {
+            console.log('[useVehicleSystem] Spawning vehicle from Point A', { pointA: pointA.id, pointB: pointB.id });
             lastSpawnTimeRef.current.set(routeKey, now);
             return [...currentVehicles, newVehicle];
           } else {
-            console.warn('[useVehicleSystem] Cannot spawn vehicle: invalid path', {
-              pathLength: path.length,
-              pathEndsAtB: path.length > 0 ? path[path.length - 1] === pointB.id : false,
-            });
+            console.warn('[useVehicleSystem] Cannot spawn vehicle: invalid path');
           }
         }
         

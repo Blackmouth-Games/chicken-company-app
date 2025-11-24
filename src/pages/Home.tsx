@@ -1448,6 +1448,14 @@ const Home = () => {
                     className="resize-handle absolute bottom-0 left-1/2 w-4 h-4 bg-purple-600 rounded-full cursor-s-resize pointer-events-auto -translate-x-1/2 translate-y-1/2 hover:scale-150 transition-transform z-50"
                     onMouseDown={(e) => handleResizeStart(e, 'house', 's')}
                   />
+                  <div 
+                    className="resize-handle absolute top-1/2 left-0 w-4 h-4 bg-purple-600 rounded-full cursor-w-resize pointer-events-auto -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'w')}
+                  />
+                  <div 
+                    className="resize-handle absolute top-1/2 right-0 w-4 h-4 bg-purple-600 rounded-full cursor-e-resize pointer-events-auto translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-transform z-50"
+                    onMouseDown={(e) => handleResizeStart(e, 'house', 'e')}
+                  />
                   
                 </div>
               )}
