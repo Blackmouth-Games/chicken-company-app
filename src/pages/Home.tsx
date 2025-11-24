@@ -1855,7 +1855,7 @@ const Home = () => {
                     isLeftColumn={true}
                     isEditMode={isEditMode}
                     editControls={isEditMode && index === 0 ? (
-                      <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 z-50">
+                      <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-2 space-y-1 z-[100] relative">
                         <div className="text-xs font-bold text-yellow-700 mb-1">Corrales Izquierdos</div>
                         <div className="flex gap-2 text-xs">
                           <label className="flex-1">
@@ -1929,7 +1929,7 @@ const Home = () => {
                     isLeftColumn={false}
                     isEditMode={isEditMode}
                     editControls={isEditMode && index === 0 ? (
-                      <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 z-50">
+                      <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-2 space-y-1 z-[100] relative">
                         <div className="text-xs font-bold text-orange-700 mb-1">Corrales Derechos</div>
                         <div className="flex gap-2 text-xs">
                           <label className="flex-1">

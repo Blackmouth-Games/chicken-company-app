@@ -58,15 +58,16 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
         </div>
         <div
           onClick={onBuildingClick}
-          className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col overflow-visible"
+          className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col"
           style={{
             backgroundImage: `url(${slotBgCoop})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
+            overflow: 'visible',
           }}
         >
-          <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4 overflow-hidden">
+          <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4 overflow-visible">
             {/* Building image or emoji - top right */}
             <div className="flex justify-end mb-2">
               {buildingDisplay?.type === 'image' ? (
@@ -107,7 +108,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             
             {/* Edit controls inside the corral */}
             {isEditMode && editControls && (
-              <div className="mt-2 pt-2 border-t border-green-300 relative z-50">
+              <div className="mt-2 pt-2 border-t border-green-300 relative z-[100]">
                 {editControls}
               </div>
             )}

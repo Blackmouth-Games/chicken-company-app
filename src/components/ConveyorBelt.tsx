@@ -181,12 +181,13 @@ export const ConveyorBelt = ({
       // BR base: South -> East (entrada desde abajo, salida hacia la derecha)
       // Rotate the BR image to match the desired direction
       // direction represents the exit direction of the curve
-      // Rotación en sentido antihorario: east -> north -> west -> south -> east
+      // BR curve: entry is 90° clockwise from exit (antihorario en el sentido del movimiento)
+      // Rotación de la imagen en sentido antihorario: east -> north -> west -> south -> east
       switch (belt.direction) {
         case 'east': return 'rotate(0deg)'; // South -> East (base orientation)
-        case 'north': return 'rotate(90deg)'; // East -> North (rotación 90° horario de imagen: entrada desde derecha, salida hacia arriba)
+        case 'north': return 'rotate(270deg)'; // East -> North (rotación 270° antihorario: entrada desde derecha, salida hacia arriba)
         case 'west': return 'rotate(180deg)'; // North -> West (rotación 180°: entrada desde arriba, salida hacia izquierda)
-        case 'south': return 'rotate(270deg)'; // West -> South (rotación 270° horario de imagen: entrada desde izquierda, salida hacia abajo)
+        case 'south': return 'rotate(90deg)'; // West -> South (rotación 90° antihorario: entrada desde izquierda, salida hacia abajo)
         default: return 'rotate(0deg)';
       }
     }
