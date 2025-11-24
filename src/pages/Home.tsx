@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import bgFarm from "@/assets/bg/bg-farm-grass.png";
-import bgFarmRow1 from "@/assets/bg/bg-farm-row1.png"; // Primera fila - tile horizontal
+// import bgFarmRow1 from "@/assets/bg/bg-farm-row1.png"; // Primera fila - tile horizontal (descomentar cuando agregues la imagen)
 // import bgFarmRest from "@/assets/bg/bg-farm-rest.png"; // Resto - tile horizontal y vertical (descomentar cuando agregues la imagen)
 import defaultAvatar from "@/assets/default-avatar.png";
 import box1Image from "@/assets/other assets/box_1.png";
@@ -1139,52 +1139,14 @@ const Home = () => {
     setCorralDialogOpen(true);
   };
 
-  // Calculate the height of the first row (assuming 200px per row)
-  const firstRowHeight = 200; // Ajusta según el tamaño de tu imagen
-  
   return (
     <div 
-      className="min-h-screen w-full relative overflow-x-hidden"
+      className="min-h-screen w-full bg-repeat relative overflow-x-hidden"
       style={{ 
-        // Primera fila: tile horizontal solamente
-        backgroundImage: `url(${bgFarmRow1})`,
-        backgroundRepeat: 'repeat-x',
-        backgroundPosition: '0 0',
-        backgroundSize: 'auto 200px',
-        // Resto: tile horizontal y vertical
-        // Usamos múltiples backgrounds para superponer
+        backgroundImage: `url(${bgFarm})`,
+        backgroundSize: '200px 200px'
       }}
     >
-      {/* Capa para el resto del background (después de la primera fila) */}
-      {/* Descomentar cuando agregues bg-farm-rest.png */}
-      {/* <div
-        className="absolute pointer-events-none"
-        style={{
-          backgroundImage: `url(${bgFarmRest})`,
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          backgroundSize: '200px 200px',
-          top: `${firstRowHeight}px`,
-          bottom: 0,
-          left: 0,
-          right: 0,
-        }}
-      /> */}
-      
-      {/* Fallback: usar bgFarm para el resto mientras no existe bg-farm-rest.png */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          backgroundImage: `url(${bgFarm})`,
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          backgroundSize: '200px 200px',
-          top: `${firstRowHeight}px`,
-          bottom: 0,
-          left: 0,
-          right: 0,
-        }}
-      />
       {/* Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between p-4">
