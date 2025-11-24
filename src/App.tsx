@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { isTelegramWebApp, initTelegramWebApp } from "./lib/telegram";
 import { AudioProvider } from "./contexts/AudioContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -29,6 +29,14 @@ const manifestUrl = import.meta.env.VITE_TONCONNECT_MANIFEST_URL || "/tonconnect
 
 // Lazy TonConnect provider to avoid blocking render if SDK fails
 const TonProvider = ({ children }: { children: any }) => {
+  // Verify React hooks are available
+  if (typeof useState === 'undefined') {
+    console.error("[TonProvider] CRITICAL: useState is not defined!");
+    console.error("[TonProvider] React:", typeof React);
+    console.error("[TonProvider] Available React exports:", Object.keys(React || {}));
+    throw new Error("React hooks are not available. This is a build configuration issue.");
+  }
+  
   const [Provider, setProvider] = useState<any>(null);
   useEffect(() => {
     import("@tonconnect/ui-react")
