@@ -1,7 +1,10 @@
 import { Component, ReactNode } from "react";
+import { Button } from "./ui/button";
+import { Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 interface Props { children: ReactNode; }
-interface State { hasError: boolean; error?: any; }
+interface State { hasError: boolean; error?: any; errorInfo?: any; }
 
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
@@ -10,40 +13,155 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: any, info: any) {
+  componentDidCatch(error: any, errorInfo: any) {
     console.error("[ErrorBoundary] Error caught:", error);
-    console.error("[ErrorBoundary] Error info:", info);
+    console.error("[ErrorBoundary] Error info:", errorInfo);
     console.error("[ErrorBoundary] Error stack:", error?.stack);
-    console.error("[ErrorBoundary] Component stack:", info?.componentStack);
+    console.error("[ErrorBoundary] Component stack:", errorInfo?.componentStack);
+    this.setState({ errorInfo });
   }
+
+  handleCopyError = () => {
+    const errorText = `
+Error: ${this.state.error?.message || "Error desconocido"}
+Stack: ${this.state.error?.stack || "No disponible"}
+Component Stack: ${this.state.errorInfo?.componentStack || "No disponible"}
+    `.trim();
+    
+    navigator.clipboard.writeText(errorText).then(() => {
+      alert("Error copiado al portapapeles");
+    }).catch(() => {
+      // Fallback si clipboard no está disponible
+      const textArea = document.createElement("textarea");
+      textArea.value = errorText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert("Error copiado al portapapeles");
+    });
+  };
+
+  handleReload = () => {
+    window.location.reload();
+  };
 
   render() {
     if (this.state.hasError) {
-      // Minimal fallback inviting to use ?debug=1
       const errorMessage = this.state.error?.message || "Error desconocido";
       const errorStack = this.state.error?.stack || "";
+      const componentStack = this.state.errorInfo?.componentStack || "";
       
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 text-center bg-background">
-          <div className="max-w-md">
-            <h1 className="text-2xl font-bold mb-2 text-foreground">Ha ocurrido un error</h1>
-            <p className="text-muted-foreground mb-4">Añade ?debug=1 a la URL para ver detalles de diagnóstico.</p>
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-4 p-4 bg-destructive/10 rounded-lg text-left">
-                <p className="text-sm font-semibold text-destructive mb-2">Error (solo en desarrollo):</p>
-                <p className="text-xs text-muted-foreground break-words">{errorMessage}</p>
-                {errorStack && (
-                  <details className="mt-2">
-                    <summary className="text-xs text-muted-foreground cursor-pointer">Ver stack trace</summary>
-                    <pre className="text-xs text-muted-foreground mt-2 overflow-auto max-h-40">{errorStack}</pre>
-                  </details>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <ErrorDisplay 
+          errorMessage={errorMessage}
+          errorStack={errorStack}
+          componentStack={componentStack}
+          onCopy={this.handleCopyError}
+          onReload={this.handleReload}
+        />
       );
     }
     return this.props.children;
   }
 }
+
+// Componente separado para usar hooks
+const ErrorDisplay = ({ 
+  errorMessage, 
+  errorStack, 
+  componentStack,
+  onCopy,
+  onReload 
+}: { 
+  errorMessage: string;
+  errorStack: string;
+  componentStack: string;
+  onCopy: () => void;
+  onReload: () => void;
+}) => {
+  const [showDetails, setShowDetails] = useState(false);
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+      <div className="max-w-2xl w-full bg-card border border-destructive/20 rounded-lg shadow-lg p-6">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="text-4xl">❌</div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold mb-2 text-destructive">Ha ocurrido un error</h1>
+            <p className="text-muted-foreground mb-4">
+              Se ha producido un error inesperado en la aplicación.
+            </p>
+          </div>
+        </div>
+
+        {/* Mensaje de error principal */}
+        <div className="mb-4 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+          <p className="text-sm font-semibold text-destructive mb-2">Mensaje de error:</p>
+          <p className="text-sm text-foreground break-words font-mono">{errorMessage}</p>
+        </div>
+
+        {/* Botones de acción */}
+        <div className="flex gap-2 mb-4">
+          <Button 
+            onClick={onReload}
+            variant="default"
+            className="flex-1"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Recargar página
+          </Button>
+          <Button 
+            onClick={onCopy}
+            variant="outline"
+            className="flex-1"
+          >
+            <Copy className="h-4 w-4 mr-2" />
+            Copiar error
+          </Button>
+        </div>
+
+        {/* Detalles expandibles */}
+        <div className="border-t pt-4">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full flex items-center justify-between text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span>Detalles técnicos</span>
+            {showDetails ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+          
+          {showDetails && (
+            <div className="mt-4 space-y-4">
+              {errorStack && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Stack Trace:</p>
+                  <pre className="text-xs text-muted-foreground p-3 bg-muted rounded-md overflow-auto max-h-60 font-mono">
+                    {errorStack}
+                  </pre>
+                </div>
+              )}
+              
+              {componentStack && (
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Component Stack:</p>
+                  <pre className="text-xs text-muted-foreground p-3 bg-muted rounded-md overflow-auto max-h-60 font-mono">
+                    {componentStack}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-4 text-center">
+          Si el problema persiste, contacta con soporte técnico.
+        </p>
+      </div>
+    </div>
+  );
+};
