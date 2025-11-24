@@ -509,29 +509,6 @@ export const ConveyorBelt = ({
           />
         )}
         
-        {/* Animated moving overlay to simulate belt movement - 100% perfect loop */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: getBeltAnimationGradient(),
-            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '60px 100%' : '100% 60px',
-            animation: `beltMove${belt.direction} 1.2s linear infinite`,
-            opacity: 0.5,
-            mixBlendMode: 'screen',
-          }}
-        />
-        
-        {/* Additional moving pattern for more realistic effect - 100% perfect loop */}
-        <div 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: getBeltPatternGradient(),
-            backgroundSize: belt.direction === 'east' || belt.direction === 'west' ? '20px 100%' : '100% 20px',
-            animation: `beltPatternMove${belt.direction} 0.8s linear infinite`,
-            opacity: 0.25,
-            mixBlendMode: 'multiply',
-          }}
-        />
         
         {isEditMode && (() => {
           const { input, output } = getInputOutputPositions();
@@ -673,81 +650,6 @@ export const ConveyorBelt = ({
         </div>
       )}
       
-      <style>{`
-        /* Main gradient animation - 100% perfect loop (60px pattern) */
-        @keyframes beltMoveeast {
-          0% {
-            backgroundPosition: 0px 0%;
-          }
-          100% {
-            backgroundPosition: 60px 0%;
-          }
-        }
-        
-        @keyframes beltMovewest {
-          0% {
-            backgroundPosition: 0px 0%;
-          }
-          100% {
-            backgroundPosition: -60px 0%;
-          }
-        }
-        
-        @keyframes beltMovesouth {
-          0% {
-            backgroundPosition: 0% 0px;
-          }
-          100% {
-            backgroundPosition: 0% 60px;
-          }
-        }
-        
-        @keyframes beltMovenorth {
-          0% {
-            backgroundPosition: 0% 0px;
-          }
-          100% {
-            backgroundPosition: 0% -60px;
-          }
-        }
-        
-        /* Pattern animation - 100% perfect loop (20px pattern) */
-        @keyframes beltPatternMoveeast {
-          0% {
-            backgroundPosition: 0px 0%;
-          }
-          100% {
-            backgroundPosition: 20px 0%;
-          }
-        }
-        
-        @keyframes beltPatternMovewest {
-          0% {
-            backgroundPosition: 0px 0%;
-          }
-          100% {
-            backgroundPosition: -20px 0%;
-          }
-        }
-        
-        @keyframes beltPatternMovesouth {
-          0% {
-            backgroundPosition: 0% 0px;
-          }
-          100% {
-            backgroundPosition: 0% 20px;
-          }
-        }
-        
-        @keyframes beltPatternMovenorth {
-          0% {
-            backgroundPosition: 0% 0px;
-          }
-          100% {
-            backgroundPosition: 0% -20px;
-          }
-        }
-      `}</style>
     </div>
   );
 };

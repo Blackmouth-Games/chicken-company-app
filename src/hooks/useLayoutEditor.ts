@@ -270,7 +270,8 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
       }
 
       // Check collisions
-      const collision = wouldCollide(newArea, layoutConfig, building);
+      // Allow buildings to overlap with roads (excludeRoads = true)
+      const collision = wouldCollide(newArea, layoutConfig, building, true);
       if (collision.collides) {
         toast({
           title: t('layoutEditor.collisionDetected'),

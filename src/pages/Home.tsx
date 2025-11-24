@@ -1830,7 +1830,7 @@ const Home = () => {
             {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
-              const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
+              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCorrals.rowSpan ?? 1) * 1.3));
               // Add 1 cell of vertical space between each slot
               const baseRow = (layoutConfig.leftCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
               
@@ -1904,7 +1904,7 @@ const Home = () => {
             {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
-              const slotRowSpan = Math.max(1, layoutConfig.rightCorrals.rowSpan ?? 1);
+              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCorrals.rowSpan ?? 1) * 1.3));
               // Add 1 cell of vertical space between each slot
               const baseRow = (layoutConfig.rightCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
               

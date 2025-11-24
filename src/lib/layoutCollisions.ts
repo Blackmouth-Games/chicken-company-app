@@ -86,7 +86,8 @@ export const isWithinBounds = (
  */
 export const getAllBuildingAreas = (
   layoutConfig: any,
-  excludeBuilding?: string
+  excludeBuilding?: string,
+  excludeRoads: boolean = false
 ): { name: string; area: GridArea }[] => {
   const areas: { name: string; area: GridArea }[] = [];
   
@@ -134,8 +135,8 @@ export const getAllBuildingAreas = (
     });
   }
   
-  // Add roads
-  if (layoutConfig.roads) {
+  // Add roads (only if excludeRoads is false)
+  if (!excludeRoads && layoutConfig.roads) {
     layoutConfig.roads.forEach((road: any) => {
       if (excludeBuilding !== road.id) {
         areas.push({
@@ -155,9 +156,10 @@ export const getAllBuildingAreas = (
 export const wouldCollide = (
   newArea: GridArea,
   layoutConfig: any,
-  excludeBuilding?: string
+  excludeBuilding?: string,
+  excludeRoads: boolean = false
 ): { collides: boolean; collidingWith?: string } => {
-  const existingAreas = getAllBuildingAreas(layoutConfig, excludeBuilding);
+  const existingAreas = getAllBuildingAreas(layoutConfig, excludeBuilding, excludeRoads);
   
   for (const { name, area } of existingAreas) {
     if (checkCollision(newArea, area)) {
