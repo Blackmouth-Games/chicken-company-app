@@ -772,17 +772,19 @@ const Home = () => {
     const intersectionRows = new Set<number>();
     
     // Pre-calculate belt rows for left slots (where horizontal belts connect)
+    // These should be in the central row of each slot
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
-      intersectionRows.add(beltRow);
+      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
+      intersectionRows.add(slotCenterRow);
     }
     
     // Pre-calculate belt rows for right slots (where horizontal belts connect)
+    // These should be in the central row of each slot
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = rightStartRow + i * (slotRowSpan + 1);
-      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
-      intersectionRows.add(beltRow);
+      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
+      intersectionRows.add(slotCenterRow);
     }
     
     // Generate vertical line: continuous line from first slot to last slot
@@ -828,23 +830,23 @@ const Home = () => {
     
     // Generate ONE belt per corral pointing to center
     // Left corrals: belts point east (towards center)
-    // Position belt in the middle of the slot vertically (approximately at row = baseRow + slotRowSpan/2)
+    // Position belt in the middle of the slot vertically (row = baseRow + slotRowSpan/2)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      // Belt should be positioned in the middle of the slot vertically
+      // Calculate the central row of the slot
       // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
       // For rowSpan 7: place at baseRow + 3 (approximately middle)
-      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
+      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
       // Belt column: right edge of left corral (pointing east towards center)
       const beltCol = leftColumns.end;
       
       // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
-      if (beltRow >= 1 && beltCol >= 1 && beltCol <= 30) {
+      if (slotCenterRow >= 1 && beltCol >= 1 && beltCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
           const beltRowNotation = parseGridNotation(b.gridRow);
           const beltColNotation = parseGridNotation(b.gridColumn);
-          return beltRowNotation.start === beltRow && beltColNotation.start === beltCol;
+          return beltRowNotation.start === slotCenterRow && beltColNotation.start === beltCol;
         });
         
         if (!existingBelt) {
@@ -852,7 +854,7 @@ const Home = () => {
           autoBelts.push({
             id: `belt-auto-left-${i}`,
             gridColumn: createGridNotation(beltCol, beltCol + 1),
-            gridRow: createGridNotation(beltRow, beltRow + 1),
+            gridRow: createGridNotation(slotCenterRow, slotCenterRow + 1),
             direction: 'east' as const,
             type: 'straight' as const,
             isOutput: true, // Auto-generated belts from slots are output
@@ -860,6 +862,7 @@ const Home = () => {
           });
           
           // Generate horizontal connection belts from slot output to center line
+          // All horizontal belts should be in the central row of the slot
           // Create belts from beltCol+1 to centerCol-1 (connecting horizontally)
           for (let connectCol = beltCol + 1; connectCol < centerCol; connectCol++) {
             if (connectCol >= 1 && connectCol <= 30) {
@@ -867,14 +870,14 @@ const Home = () => {
               const existingConnBelt = autoBelts.find(b => {
                 const beltRowNotation = parseGridNotation(b.gridRow);
                 const beltColNotation = parseGridNotation(b.gridColumn);
-                return beltRowNotation.start === beltRow && beltColNotation.start === connectCol;
+                return beltRowNotation.start === slotCenterRow && beltColNotation.start === connectCol;
               });
               
               if (!existingConnBelt) {
                 autoBelts.push({
                   id: `belt-auto-left-conn-${i}-col-${connectCol}`,
                   gridColumn: createGridNotation(connectCol, connectCol + 1),
-                  gridRow: createGridNotation(beltRow, beltRow + 1),
+                  gridRow: createGridNotation(slotCenterRow, slotCenterRow + 1),
                   direction: 'east' as const,
                   type: 'straight' as const,
                   isTransport: true, // Connection belts are transport
@@ -891,21 +894,21 @@ const Home = () => {
     // Belts should be in the column just to the left of right corral start (rightColumns.start - 1)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = rightStartRow + i * (slotRowSpan + 1);
-      // Belt should be positioned in the middle of the slot vertically
+      // Calculate the central row of the slot
       // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
       // For rowSpan 7: place at baseRow + 3 (approximately middle)
-      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
+      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
       // Belt column: one column to the left of right corral start (rightColumns.start - 1)
       // This is the column just to the left of where they currently are
       const beltCol = rightColumns.start - 1;
       
       // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
-      if (beltRow >= 1 && beltCol >= 1 && beltCol <= 30) {
+      if (slotCenterRow >= 1 && beltCol >= 1 && beltCol <= 30) {
         // Check if there's already a belt at this position
         const existingBelt = autoBelts.find(b => {
           const beltRowNotation = parseGridNotation(b.gridRow);
           const beltColNotation = parseGridNotation(b.gridColumn);
-          return beltRowNotation.start === beltRow && beltColNotation.start === beltCol;
+          return beltRowNotation.start === slotCenterRow && beltColNotation.start === beltCol;
         });
         
         if (!existingBelt) {
@@ -913,7 +916,7 @@ const Home = () => {
           autoBelts.push({
             id: `belt-auto-right-${i}`,
             gridColumn: createGridNotation(beltCol, beltCol + 1),
-            gridRow: createGridNotation(beltRow, beltRow + 1),
+            gridRow: createGridNotation(slotCenterRow, slotCenterRow + 1),
             direction: 'west' as const,
             type: 'straight' as const,
             isOutput: true, // Auto-generated belts from slots are output
@@ -921,6 +924,7 @@ const Home = () => {
           });
           
           // Generate horizontal connection belts from slot output to center line
+          // All horizontal belts should be in the central row of the slot
           // Create belts from beltCol-1 down to centerCol+1 (connecting horizontally, going west)
           for (let connectCol = beltCol - 1; connectCol > centerCol; connectCol--) {
             if (connectCol >= 1 && connectCol <= 30) {
@@ -928,14 +932,14 @@ const Home = () => {
               const existingConnBelt = autoBelts.find(b => {
                 const beltRowNotation = parseGridNotation(b.gridRow);
                 const beltColNotation = parseGridNotation(b.gridColumn);
-                return beltRowNotation.start === beltRow && beltColNotation.start === connectCol;
+                return beltRowNotation.start === slotCenterRow && beltColNotation.start === connectCol;
               });
               
               if (!existingConnBelt) {
                 autoBelts.push({
                   id: `belt-auto-right-conn-${i}-col-${connectCol}`,
                   gridColumn: createGridNotation(connectCol, connectCol + 1),
-                  gridRow: createGridNotation(beltRow, beltRow + 1),
+                  gridRow: createGridNotation(slotCenterRow, slotCenterRow + 1),
                   direction: 'west' as const,
                   type: 'straight' as const,
                   isTransport: true, // Connection belts are transport
