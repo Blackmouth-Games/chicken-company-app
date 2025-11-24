@@ -34,7 +34,26 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     if (isCurveBelt) {
       if (!entryDirection) {
         // Log warning if entryDirection is missing for curve belt
-        console.warn(`[Egg] ${id} on curve belt ${beltType} has no entryDirection. Using fallback.`);
+        console.warn(`[Egg] ${id} on curve belt ${beltType} (direction: ${direction}) has no entryDirection. Calculating from belt direction.`);
+        // For BL: if belt direction is exit, calculate entry
+        // For BL (curve-sw): entry is 90° counterclockwise from exit
+        if (beltType === 'curve-sw') {
+          const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+          const exitIndex = directions.indexOf(direction);
+          const entryIndex = (exitIndex - 1 + 4) % 4;
+          const calculatedEntry = directions[entryIndex];
+          console.log(`[Egg] Calculated entry direction for BL: ${calculatedEntry} (from exit: ${direction})`);
+          return getCurvedPosition(progress, calculatedEntry, beltType);
+        }
+        // For BR (curve-se): entry is 90° clockwise from exit
+        if (beltType === 'curve-se') {
+          const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+          const exitIndex = directions.indexOf(direction);
+          const entryIndex = (exitIndex + 1) % 4;
+          const calculatedEntry = directions[entryIndex];
+          console.log(`[Egg] Calculated entry direction for BR: ${calculatedEntry} (from exit: ${direction})`);
+          return getCurvedPosition(progress, calculatedEntry, beltType);
+        }
         // Fallback: use belt direction as entry (not ideal, but better than no animation)
         return getCurvedPosition(progress, direction, beltType);
       }
@@ -200,20 +219,22 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
     let startX = 0.5, startY = 0.5;
     let endX = 0.5, endY = 0.5;
     
-    // Set start position based on entry direction
+    // Set start position based on entry direction (must match IN point visual)
+    // IN point positions: north=10%, south=90%, east=90%, west=10%
     switch (entryDir) {
-      case 'east': startX = 1; startY = 0.5; break;
-      case 'west': startX = 0; startY = 0.5; break;
-      case 'south': startX = 0.5; startY = 1; break;
-      case 'north': startX = 0.5; startY = 0; break;
+      case 'east': startX = 0.9; startY = 0.5; break;  // Right side (matches IN point at 90%)
+      case 'west': startX = 0.1; startY = 0.5; break;  // Left side (matches IN point at 10%)
+      case 'south': startX = 0.5; startY = 0.9; break; // Bottom (matches IN point at 90%)
+      case 'north': startX = 0.5; startY = 0.1; break; // Top (matches IN point at 10%)
     }
     
-    // Set end position based on exit direction
+    // Set end position based on exit direction (must match OUT point visual)
+    // OUT point positions: north=10%, south=90%, east=90%, west=10%
     switch (exitDir) {
-      case 'east': endX = 1; endY = 0.5; break;
-      case 'west': endX = 0; endY = 0.5; break;
-      case 'south': endX = 0.5; endY = 1; break;
-      case 'north': endX = 0.5; endY = 0; break;
+      case 'east': endX = 0.9; endY = 0.5; break;  // Right side (matches OUT point at 90%)
+      case 'west': endX = 0.1; endY = 0.5; break;  // Left side (matches OUT point at 10%)
+      case 'south': endX = 0.5; endY = 0.9; break; // Bottom (matches OUT point at 90%)
+      case 'north': endX = 0.5; endY = 0.1; break; // Top (matches OUT point at 10%)
     }
     
     // Control point for smooth curve

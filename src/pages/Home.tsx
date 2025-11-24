@@ -266,6 +266,8 @@ const Home = () => {
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
   };
   const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
+  const [showLeftCorralSettings, setShowLeftCorralSettings] = useState(false);
+  const [showRightCorralSettings, setShowRightCorralSettings] = useState(false);
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
 
   // Helper functions for belt preview
@@ -361,14 +363,24 @@ const Home = () => {
     const handleHideRoadsChange = (event: CustomEvent<boolean>) => {
       setHideRoads(event.detail);
     };
+    const handleLeftCorralSettingsChange = (event: CustomEvent<boolean>) => {
+      setShowLeftCorralSettings(event.detail);
+    };
+    const handleRightCorralSettingsChange = (event: CustomEvent<boolean>) => {
+      setShowRightCorralSettings(event.detail);
+    };
 
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
     window.addEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
     window.addEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
+    window.addEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
+    window.addEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
       window.removeEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
       window.removeEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
+      window.removeEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
+      window.removeEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
     };
   }, []);
 
@@ -1866,7 +1878,7 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={true}
                     isEditMode={isEditMode}
-                    editControls={isEditMode && index === 0 ? (
+                    editControls={isEditMode && showLeftCorralSettings && index === 0 ? (
                       <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
                         top: '50%', 
                         left: '50%', 
@@ -1945,7 +1957,7 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={false}
                     isEditMode={isEditMode}
-                    editControls={isEditMode && index === 0 ? (
+                    editControls={isEditMode && showRightCorralSettings && index === 0 ? (
                       <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
                         top: '50%', 
                         left: '50%', 

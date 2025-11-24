@@ -14,6 +14,8 @@ const LayoutEditor = () => {
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
   const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'>('straight');
   const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
+  const [showLeftCorralSettings, setShowLeftCorralSettings] = useState(false);
+  const [showRightCorralSettings, setShowRightCorralSettings] = useState(false);
   
   // Listen to edit mode changes from header
   useEffect(() => {
@@ -80,6 +82,18 @@ const LayoutEditor = () => {
     const newState = !hideRoads;
     setHideRoads(newState);
     window.dispatchEvent(new CustomEvent('hideRoadsChange', { detail: newState }));
+  };
+
+  const toggleLeftCorralSettings = () => {
+    const newState = !showLeftCorralSettings;
+    setShowLeftCorralSettings(newState);
+    window.dispatchEvent(new CustomEvent('leftCorralSettingsChange', { detail: newState }));
+  };
+
+  const toggleRightCorralSettings = () => {
+    const newState = !showRightCorralSettings;
+    setShowRightCorralSettings(newState);
+    window.dispatchEvent(new CustomEvent('rightCorralSettingsChange', { detail: newState }));
   };
 
   const togglePaintMode = () => {
@@ -333,6 +347,29 @@ const LayoutEditor = () => {
           >
             {hideRoads ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             <span className="text-[10px]">{hideRoads ? "Mostrar carreteras" : "Ocultar carreteras"}</span>
+          </Button>
+
+          {/* Corral Settings Toggles */}
+          <Button
+            onClick={toggleLeftCorralSettings}
+            size="sm"
+            variant={showLeftCorralSettings ? "default" : "outline"}
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
+            title={showLeftCorralSettings ? "Ocultar ajustes corrales izq." : "Mostrar ajustes corrales izq."}
+          >
+            {showLeftCorralSettings ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            <span className="text-[10px]">{showLeftCorralSettings ? "Ocultar corrales IZQ" : "Corrales IZQ"}</span>
+          </Button>
+
+          <Button
+            onClick={toggleRightCorralSettings}
+            size="sm"
+            variant={showRightCorralSettings ? "default" : "outline"}
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
+            title={showRightCorralSettings ? "Ocultar ajustes corrales der." : "Mostrar ajustes corrales der."}
+          >
+            {showRightCorralSettings ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            <span className="text-[10px]">{showRightCorralSettings ? "Ocultar corrales DER" : "Corrales DER"}</span>
           </Button>
 
           {/* Add Belt */}

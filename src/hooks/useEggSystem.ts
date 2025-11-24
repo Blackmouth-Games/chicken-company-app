@@ -563,6 +563,34 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           
           const nextEntryDirection = getOppositeDirection(exitDirection);
           
+          // Debug: Log when entering a curve belt and verify IN/OUT points match
+          if (nextBelt.type?.startsWith('curve-')) {
+            const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+            const beltExitIndex = directions.indexOf(nextBelt.direction);
+            let expectedEntry: 'north' | 'south' | 'east' | 'west';
+            
+            if (nextBelt.type === 'curve-sw') {
+              // BL: entry is 90° counterclockwise from exit
+              const expectedEntryIndex = (beltExitIndex - 1 + 4) % 4;
+              expectedEntry = directions[expectedEntryIndex];
+            } else if (nextBelt.type === 'curve-se') {
+              // BR: entry is 90° clockwise from exit
+              const expectedEntryIndex = (beltExitIndex + 1) % 4;
+              expectedEntry = directions[expectedEntryIndex];
+            } else {
+              expectedEntry = nextEntryDirection;
+            }
+            
+            const matches = nextEntryDirection === expectedEntry;
+            console.log(`[useEggSystem] Egg ${egg.id} entering curve belt ${nextBelt.id} (${nextBelt.type})`);
+            console.log(`  - Entry direction: ${nextEntryDirection}, Expected: ${expectedEntry}, Matches: ${matches}`);
+            console.log(`  - Belt exit direction: ${nextBelt.direction}`);
+            
+            if (!matches) {
+              console.warn(`[useEggSystem] WARNING: Entry direction mismatch! Egg will enter from ${nextEntryDirection} but belt expects ${expectedEntry}`);
+            }
+          }
+          
           return {
             ...egg,
             currentBeltId: nextBeltId,
@@ -580,6 +608,31 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           // Remove egg when it reaches the end of destiny belt
           eggCreationTimeRef.current.delete(egg.id);
           return null;
+        }
+        
+        // Ensure entryDirection is maintained when egg is on a curve belt
+        // If egg is on a curve belt and doesn't have entryDirection, calculate it
+        if (currentBelt.type?.startsWith('curve-') && !egg.entryDirection) {
+          // Calculate entry direction from the previous belt's exit direction
+          // This should not happen in normal flow, but handle it as fallback
+          console.warn(`[useEggSystem] Egg ${egg.id} on curve belt ${currentBelt.id} (${currentBelt.type}) lost entryDirection. Attempting to recover.`);
+          
+          // Try to calculate from belt direction
+          if (currentBelt.type === 'curve-sw') {
+            // BL: entry is 90° counterclockwise from exit
+            const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+            const exitIndex = directions.indexOf(currentBelt.direction);
+            const entryIndex = (exitIndex - 1 + 4) % 4;
+            const calculatedEntry = directions[entryIndex];
+            return { ...egg, progress: newProgress, entryDirection: calculatedEntry };
+          } else if (currentBelt.type === 'curve-se') {
+            // BR: entry is 90° clockwise from exit
+            const directions: ('north' | 'south' | 'east' | 'west')[] = ['north', 'east', 'south', 'west'];
+            const exitIndex = directions.indexOf(currentBelt.direction);
+            const entryIndex = (exitIndex + 1) % 4;
+            const calculatedEntry = directions[entryIndex];
+            return { ...egg, progress: newProgress, entryDirection: calculatedEntry };
+          }
         }
         
         return { ...egg, progress: newProgress };
