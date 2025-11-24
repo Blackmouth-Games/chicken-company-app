@@ -101,8 +101,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     // Find all available output belts (not assigned to other corrals or without slotPosition)
     const allOutputBelts = belts.filter(b => 
       b.isOutput && 
-      !b.isDestiny &&
-      !b.isTransport
+      !b.isDestiny
     );
     
     // Get belts already assigned to other corrals
