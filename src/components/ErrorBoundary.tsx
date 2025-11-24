@@ -1,4 +1,4 @@
-import React, { Component, ReactNode, useState } from "react";
+import { Component, ReactNode, useState } from "react";
 import { Button } from "./ui/button";
 import { Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
