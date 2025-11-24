@@ -1154,7 +1154,7 @@ const Home = () => {
     >
       {/* Capa para el resto del background (después de la primera fila) */}
       <div
-        className="absolute pointer-events-none"
+        className="absolute pointer-events-none z-0"
         style={{
           backgroundImage: `url(${bgFarm})`,
           backgroundRepeat: 'repeat',
