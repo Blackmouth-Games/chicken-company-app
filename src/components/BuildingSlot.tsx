@@ -52,10 +52,6 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
 
     return (
       <div className="relative z-10 h-full">
-        {/* Level badge - Positioned outside to avoid clipping */}
-        <div className="absolute top-0 left-0 bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold z-50 border-2 border-white">
-          {building.level}
-        </div>
         <div
           onClick={onBuildingClick}
           className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col"
@@ -67,14 +63,36 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             overflow: 'visible',
           }}
         >
+          {/* Top section: Level badge + Progress bar */}
+          <div className="absolute top-0 left-0 right-0 flex items-start">
+            {/* Level badge */}
+            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold z-50 border-2 border-white">
+              {building.level}
+            </div>
+            {/* Progress bar - right next to level badge, no padding */}
+            <div className="flex-1 flex flex-col">
+              <div className="w-full h-3 md:h-3.5 bg-green-200/50 overflow-hidden border border-green-400">
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+                  style={{ width: `${fillPercentage}%` }}
+                />
+              </div>
+              {/* Text below progress bar */}
+              <div className="flex justify-between items-center text-sm md:text-base px-1">
+                <span className="font-semibold text-green-700">🐔 {building.current_chickens}</span>
+                <span className="text-green-600">Max: {building.capacity}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4 overflow-visible">
-            {/* Building image or emoji - top right */}
-            <div className="flex justify-end mb-2">
+            {/* Building image or emoji - top right, 2x size, no padding, aligned right */}
+            <div className="flex justify-end">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
-                  className="h-24 w-auto md:h-28 max-w-full object-contain"
+                  className="h-48 w-auto md:h-56 max-w-full object-contain"
                 />
               ) : (
                 <div className="text-7xl md:text-8xl leading-none">
@@ -90,20 +108,6 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                   🐔
                 </div>
               ))}
-            </div>
-
-            {/* Progress bar at bottom - more compact */}
-            <div className="space-y-1">
-              <div className="flex justify-between items-center text-sm md:text-base">
-                <span className="font-semibold text-green-700">🐔 {building.current_chickens}</span>
-                <span className="text-green-600">Max: {building.capacity}</span>
-              </div>
-              <div className="w-full h-3 md:h-3.5 bg-green-200/50 rounded-full overflow-hidden border border-green-400">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
-                  style={{ width: `${fillPercentage}%` }}
-                />
-              </div>
             </div>
             
             {/* Edit controls inside the corral */}
