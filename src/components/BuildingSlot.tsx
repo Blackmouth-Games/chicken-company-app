@@ -53,12 +53,12 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     return (
       <div className="relative z-10 h-full">
         {/* Level badge - Positioned outside to avoid clipping */}
-        <div className="absolute top-0 left-0 bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold shadow-lg z-50 border-2 border-white">
+        <div className="absolute top-0 left-0 bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold z-50 border-2 border-white">
           {building.level}
         </div>
         <div
           onClick={onBuildingClick}
-          className="rounded-xl cursor-pointer transition-all duration-300 shadow-md hover:scale-105 relative h-full flex flex-col overflow-hidden"
+          className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col overflow-visible"
           style={{
             backgroundImage: `url(${slotBgCoop})`,
             backgroundSize: 'cover',
@@ -66,7 +66,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             backgroundRepeat: 'no-repeat',
           }}
         >
-          <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4">
+          <div className="flex flex-col h-full p-4 md:p-5 pt-7 md:pt-8 pb-4 overflow-hidden">
             {/* Building image or emoji - top right */}
             <div className="flex justify-end mb-2">
               {buildingDisplay?.type === 'image' ? (
@@ -107,7 +107,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             
             {/* Edit controls inside the corral */}
             {isEditMode && editControls && (
-              <div className="mt-2 pt-2 border-t border-green-300">
+              <div className="mt-2 pt-2 border-t border-green-300 relative z-50">
                 {editControls}
               </div>
             )}
@@ -121,7 +121,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     <div className="relative z-10 h-full">
       <div 
         onClick={() => onBuyClick(position)}
-        className="rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all duration-300 shadow-sm hover:scale-105 h-full overflow-hidden"
+        className="rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 h-full overflow-visible"
         style={{
           backgroundImage: `url(${slotBgEmpty})`,
           backgroundSize: 'cover',
@@ -129,7 +129,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors shadow-md">
+        <div className="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 rounded-full bg-white/90 border-2 border-amber-500 hover:border-amber-600 transition-colors">
           <Plus className="h-6 w-6 md:h-7 md:w-7 text-amber-600" />
         </div>
       </div>
