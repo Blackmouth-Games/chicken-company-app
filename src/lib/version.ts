@@ -18,23 +18,9 @@ const defaultVersion: VersionInfo = {
   buildDate: new Date().toISOString(),
 };
 
-// Try to load version info, with fallback for development
-let versionInfo: VersionInfo = defaultVersion;
-
-// Load version info with error handling
-// Using try-catch with dynamic import to handle missing file
-(async () => {
-  try {
-    const versionModule = await import('../version.json');
-    versionInfo = (versionModule.default || versionModule) as VersionInfo;
-  } catch (e) {
-    // If version.json doesn't exist (development), use defaults
-    versionInfo = defaultVersion;
-  }
-})();
-
+// Export default version for development
 export const getVersion = (): VersionInfo => {
-  return versionInfo;
+  return defaultVersion;
 };
 
 export const getVersionString = (): string => {
