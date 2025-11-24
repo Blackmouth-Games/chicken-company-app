@@ -16,6 +16,7 @@ const LayoutEditor = () => {
   const [paintObjectType, setPaintObjectType] = useState<'belt' | 'road'>('belt');
   const [showLeftCorralSettings, setShowLeftCorralSettings] = useState(false);
   const [showRightCorralSettings, setShowRightCorralSettings] = useState(false);
+  const [showSlotCorrelation, setShowSlotCorrelation] = useState(false);
   
   // Listen to edit mode changes from header
   useEffect(() => {
@@ -82,6 +83,12 @@ const LayoutEditor = () => {
     const newState = !hideRoads;
     setHideRoads(newState);
     window.dispatchEvent(new CustomEvent('hideRoadsChange', { detail: newState }));
+  };
+
+  const toggleShowSlotCorrelation = () => {
+    const newState = !showSlotCorrelation;
+    setShowSlotCorrelation(newState);
+    window.dispatchEvent(new CustomEvent('showSlotCorrelationChange', { detail: newState }));
   };
 
   const toggleLeftCorralSettings = () => {
@@ -347,6 +354,21 @@ const LayoutEditor = () => {
           >
             {hideRoads ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             <span className="text-[10px]">{hideRoads ? "Mostrar carreteras" : "Ocultar carreteras"}</span>
+          </Button>
+
+          {/* Divider */}
+          <div className="h-px bg-border my-0.5" />
+
+          {/* Show Slot Correlation */}
+          <Button
+            onClick={toggleShowSlotCorrelation}
+            size="sm"
+            variant={showSlotCorrelation ? "default" : "outline"}
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
+            title={showSlotCorrelation ? "Ocultar correlación slots" : "Mostrar correlación slots"}
+          >
+            <Layout className="h-3 w-3" />
+            <span className="text-[10px]">{showSlotCorrelation ? "Ocultar slots" : "Ver slots"}</span>
           </Button>
 
           {/* Corral Settings Toggles */}

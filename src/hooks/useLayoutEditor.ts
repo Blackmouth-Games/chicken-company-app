@@ -59,21 +59,20 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   warehouse: { gridColumn: '1 / 6', gridRow: '7 / 13' },
   market: { gridColumn: '10 / 15', gridRow: '7 / 13' },
   boxes: { gridColumn: '6 / 8', gridRow: '10 / 13' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 16, rowSpan: 2 },
-  rightCorrals: { gridColumn: '10 / 16', gap: '20px', startRow: 16, rowSpan: 2 },
+  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 15, rowSpan: 2 },
+  rightCorrals: { gridColumn: '10 / 16', gap: '20px', startRow: 15, rowSpan: 2 },
   belts: [
-    { id: 'belt-1762856883705', gridColumn: '7 / 8', gridRow: '14 / 15', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1762856884083', gridColumn: '6 / 7', gridRow: '14 / 15', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1762856884637', gridColumn: '5 / 6', gridRow: '14 / 15', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1762856885181', gridColumn: '4 / 5', gridRow: '14 / 15', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: false },
-    { id: 'belt-1762856885543', gridColumn: '3 / 4', gridRow: '14 / 15', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1763034991753', gridColumn: '13 / 14', gridRow: '37 / 38', direction: 'east', type: 'funnel', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1763464303937', gridColumn: '8 / 9', gridRow: '15 / 16', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1763484378516', gridColumn: '8 / 9', gridRow: '14 / 15', direction: 'west', type: 'curve-sw', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1763484446655', gridColumn: '2 / 3', gridRow: '13 / 14', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1762856883705', gridColumn: '7 / 8', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1762856884083', gridColumn: '6 / 7', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1762856884637', gridColumn: '5 / 6', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1762856885181', gridColumn: '4 / 5', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: false },
+    { id: 'belt-1762856885543', gridColumn: '3 / 4', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1763034991753', gridColumn: '13 / 14', gridRow: '34 / 35', direction: 'east', type: 'funnel', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1763464303937', gridColumn: '8 / 9', gridRow: '14 / 15', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1763484378516', gridColumn: '8 / 9', gridRow: '13 / 14', direction: 'west', type: 'curve-sw', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1763484449213', gridColumn: '2 / 3', gridRow: '12 / 13', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1763484450032', gridColumn: '2 / 3', gridRow: '11 / 12', direction: 'north', type: 'straight', isOutput: false, isDestiny: true, isTransport: false },
-    { id: 'belt-1763975173913', gridColumn: '2 / 3', gridRow: '14 / 15', direction: 'north', type: 'curve-se', isOutput: false, isDestiny: false, isTransport: true },
+    { id: 'belt-1763975173913', gridColumn: '2 / 3', gridRow: '13 / 14', direction: 'north', type: 'curve-se', isOutput: false, isDestiny: false, isTransport: true },
   ],
   roads: [
     { id: 'road-1763032378046', gridColumn: '9 / 11', gridRow: '9 / 11', direction: 'east', type: 'straight', isPointA: false, isPointB: false, isTransport: false },
@@ -156,12 +155,20 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
                 const colStart = colSpan.start;
                 const rowStart = rowSpan.start;
                 
+                // Convert 'turn' type to 'straight' as RoadConfig doesn't support 'turn'
+                let roadType: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' = 'straight';
+                if (road.type === 'turn') {
+                  roadType = 'straight';
+                } else if (road.type && ['straight', 'curve-ne', 'curve-nw', 'curve-se', 'curve-sw'].includes(road.type)) {
+                  roadType = road.type;
+                }
+                
                 return {
                   id: road.id,
                   gridColumn: createGridNotation(colStart, colStart + 2),
                   gridRow: createGridNotation(rowStart, rowStart + 2),
                   direction: road.direction || 'east',
-                  type: road.type || 'straight',
+                  type: roadType,
                   isPointA: road.isPointA || false,
                   isPointB: road.isPointB || false,
                   isTransport: road.isTransport || false,

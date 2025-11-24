@@ -240,6 +240,7 @@ const Home = () => {
   const [hideBuildings, setHideBuildings] = useState(false);
   const [hideBelts, setHideBelts] = useState(false);
   const [hideRoads, setHideRoads] = useState(false);
+  const [showSlotCorrelation, setShowSlotCorrelation] = useState(false);
   
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
@@ -369,18 +370,23 @@ const Home = () => {
     const handleRightCorralSettingsChange = (event: CustomEvent<boolean>) => {
       setShowRightCorralSettings(event.detail);
     };
+    const handleShowSlotCorrelationChange = (event: CustomEvent<boolean>) => {
+      setShowSlotCorrelation(event.detail);
+    };
 
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
     window.addEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
     window.addEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
     window.addEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
     window.addEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
+    window.addEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
       window.removeEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
       window.removeEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
       window.removeEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
       window.removeEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
+      window.removeEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
     };
   }, []);
 
@@ -1858,6 +1864,7 @@ const Home = () => {
                   }}
                   onToggleDestiny={() => toggleBeltDestiny(belt.id)}
                   onToggleTransport={() => toggleBeltTransport(belt.id)}
+                  showSlotCorrelation={showSlotCorrelation}
                 />
               );
             })}

@@ -17,6 +17,7 @@ interface ConveyorBeltProps {
     isDestiny?: boolean;
     isTransport?: boolean;
     corralId?: string;
+    slotPosition?: number; // Position of the slot this belt is associated with
   };
   idx: number;
   isEditMode: boolean;
@@ -34,6 +35,7 @@ interface ConveyorBeltProps {
   onToggleOutput?: () => void;
   onToggleDestiny?: () => void;
   onToggleTransport?: () => void;
+  showSlotCorrelation?: boolean;
 }
 
 export const ConveyorBelt = ({
@@ -54,6 +56,7 @@ export const ConveyorBelt = ({
   onToggleOutput,
   onToggleDestiny,
   onToggleTransport,
+  showSlotCorrelation = false,
 }: ConveyorBeltProps) => {
   // Get arrow direction based on belt direction
   const getArrowTransform = () => {
@@ -527,6 +530,15 @@ export const ConveyorBelt = ({
                   <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                     {belt.type === 'curve-sw' ? 'BL' : 'BR'}
                   </span>
+                </div>
+              )}
+              
+              {/* Show slot number correlation in edit mode */}
+              {showSlotCorrelation && belt.slotPosition !== undefined && belt.slotPosition !== null && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                  <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg border-2 border-white">
+                    Slot {belt.slotPosition}
+                  </div>
                 </div>
               )}
               {/* Input/Output indicators */}
