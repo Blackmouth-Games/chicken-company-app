@@ -236,8 +236,10 @@ const Home = () => {
     };
   }, [gridRef, layoutConfig.grid.gap, layoutConfig.grid.totalRows]);
   
-  // State for hiding buildings and corrals
+  // State for hiding buildings, belts and roads
   const [hideBuildings, setHideBuildings] = useState(false);
+  const [hideBelts, setHideBelts] = useState(false);
+  const [hideRoads, setHideRoads] = useState(false);
   
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
@@ -353,10 +355,20 @@ const Home = () => {
     const handleHideBuildingsChange = (event: CustomEvent<boolean>) => {
       setHideBuildings(event.detail);
     };
+    const handleHideBeltsChange = (event: CustomEvent<boolean>) => {
+      setHideBelts(event.detail);
+    };
+    const handleHideRoadsChange = (event: CustomEvent<boolean>) => {
+      setHideRoads(event.detail);
+    };
 
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
+    window.addEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
+    window.addEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
+      window.removeEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
+      window.removeEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
     };
   }, []);
 
@@ -1703,7 +1715,7 @@ const Home = () => {
             )}
 
             {/* ROADS - Render first so they appear behind buildings and belts (z-0) */}
-            {layoutConfig.roads?.map((road, idx) => {
+            {!hideRoads && layoutConfig.roads?.map((road, idx) => {
               const isRoadDragging = draggedRoad === road.id;
               
               return (
@@ -1731,7 +1743,7 @@ const Home = () => {
             })}
 
             {/* CONVEYOR BELTS - Auto-generated corral belts + manual belts - Render first so they appear behind buildings */}
-            {allBelts.map((belt, idx) => {
+            {!hideBelts && allBelts.map((belt, idx) => {
               const isBeltDragging = draggedBelt === belt.id;
               // Auto-generated belts (belt-auto-*) are not editable
               const isAutoBelt = belt.id.startsWith('belt-auto-');

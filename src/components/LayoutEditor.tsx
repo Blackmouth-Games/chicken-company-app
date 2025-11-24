@@ -8,6 +8,8 @@ const LayoutEditor = () => {
   const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
   const [hideBuildings, setHideBuildings] = useState(false);
+  const [hideBelts, setHideBelts] = useState(false);
+  const [hideRoads, setHideRoads] = useState(false);
   const [paintMode, setPaintMode] = useState(false);
   const [paintDirection, setPaintDirection] = useState<'north' | 'south' | 'east' | 'west'>('east');
   const [paintType, setPaintType] = useState<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'>('straight');
@@ -66,6 +68,18 @@ const LayoutEditor = () => {
     const newState = !hideBuildings;
     setHideBuildings(newState);
     window.dispatchEvent(new CustomEvent('hideBuildingsChange', { detail: newState }));
+  };
+
+  const toggleHideBelts = () => {
+    const newState = !hideBelts;
+    setHideBelts(newState);
+    window.dispatchEvent(new CustomEvent('hideBeltsChange', { detail: newState }));
+  };
+
+  const toggleHideRoads = () => {
+    const newState = !hideRoads;
+    setHideRoads(newState);
+    window.dispatchEvent(new CustomEvent('hideRoadsChange', { detail: newState }));
   };
 
   const togglePaintMode = () => {
@@ -297,6 +311,28 @@ const LayoutEditor = () => {
           >
             {hideBuildings ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             <span className="text-[10px]">{hideBuildings ? "Mostrar" : "Ocultar"}</span>
+          </Button>
+
+          <Button
+            onClick={toggleHideBelts}
+            size="sm"
+            variant={hideBelts ? "default" : "outline"}
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
+            title={hideBelts ? "Mostrar cintas" : "Ocultar cintas"}
+          >
+            {hideBelts ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            <span className="text-[10px]">{hideBelts ? "Mostrar cintas" : "Ocultar cintas"}</span>
+          </Button>
+
+          <Button
+            onClick={toggleHideRoads}
+            size="sm"
+            variant={hideRoads ? "default" : "outline"}
+            className="gap-1 h-6 text-xs w-full justify-start px-2"
+            title={hideRoads ? "Mostrar carreteras" : "Ocultar carreteras"}
+          >
+            {hideRoads ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+            <span className="text-[10px]">{hideRoads ? "Mostrar carreteras" : "Ocultar carreteras"}</span>
           </Button>
 
           {/* Add Belt */}
