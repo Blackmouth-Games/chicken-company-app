@@ -759,8 +759,8 @@ const Home = () => {
     
     // Find where the two output belts converge (where left and right output belts meet the center line)
     // This is typically at the row where the first output belts from left and right corrals meet
-    const firstLeftBeltRow = leftStartRow + 3; // First left output belt row
-    const firstRightBeltRow = rightStartRow + 3; // First right output belt row
+    const firstLeftBeltRow = leftStartRow + Math.floor(slotRowSpan / 2); // First left output belt row (middle of slot)
+    const firstRightBeltRow = rightStartRow + Math.floor(slotRowSpan / 2); // First right output belt row (middle of slot)
     const convergenceRow = Math.max(firstLeftBeltRow, firstRightBeltRow); // Where they converge
     
     // Generate continuous vertical line: one belt per row (excluding last 3)
@@ -775,12 +775,14 @@ const Home = () => {
         });
         
         if (!existingBelt) {
-          // First funnel at position 4, then every 8 rows after that
-          // Funnel receives from West (left corrals), North (above), South (below) and exits North (up)
+          // Place funnels at convergence points and periodically along the vertical line
+          // For smaller rowSpan (like 2), place funnels more frequently
           // Calculate relative position from start of center line
           const relativeRow = beltRow - centerLineStartRow;
-          // First funnel at position 4 (relativeRow === 3, since it's 0-indexed), then every 8 after that
-          const isFunnelRow = relativeRow === 3 || (relativeRow > 3 && (relativeRow - 3) % 8 === 0);
+          // Adjust funnel spacing based on slot size: for rowSpan 2, place every 3 rows; for larger, every 8 rows
+          const funnelSpacing = slotRowSpan <= 2 ? 3 : 8;
+          const firstFunnelOffset = slotRowSpan <= 2 ? 2 : 3; // First funnel position
+          const isFunnelRow = relativeRow === firstFunnelOffset || (relativeRow > firstFunnelOffset && (relativeRow - firstFunnelOffset) % funnelSpacing === 0);
           
           if (beltRow === convergenceRow || isFunnelRow) {
             autoBelts.push({
@@ -807,11 +809,13 @@ const Home = () => {
     
     // Generate ONE belt per corral pointing to center
     // Left corrals: belts point east (towards center)
-    // Only one belt per corral, positioned 3 rows from the top of each corral
+    // Position belt in the middle of the slot vertically (approximately at row = baseRow + slotRowSpan/2)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      // Belt should be 3 rows from the top of the corral: row = baseRow + 3
-      const beltRow = baseRow + 3;
+      // Belt should be positioned in the middle of the slot vertically
+      // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
+      // For rowSpan 7: place at baseRow + 3 (approximately middle)
+      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
       // Belt column: right edge of left corral (pointing east towards center)
       const beltCol = leftColumns.end;
       
@@ -840,13 +844,14 @@ const Home = () => {
     }
     
     // Right corrals: belts point west (towards center)
-    // Only one belt per corral, positioned 3 rows from the top of each corral
+    // Position belt in the middle of the slot vertically
     // Belts should be in the column just to the left of right corral start (rightColumns.start - 1)
-    // This places them one column to the left of where they currently are
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = rightStartRow + i * (slotRowSpan + 1);
-      // Belt should be 3 rows from the top of the corral: row = baseRow + 3
-      const beltRow = baseRow + 3;
+      // Belt should be positioned in the middle of the slot vertically
+      // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
+      // For rowSpan 7: place at baseRow + 3 (approximately middle)
+      const beltRow = baseRow + Math.floor(slotRowSpan / 2);
       // Belt column: one column to the left of right corral start (rightColumns.start - 1)
       // This is the column just to the left of where they currently are
       const beltCol = rightColumns.start - 1;
