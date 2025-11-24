@@ -1420,8 +1420,10 @@ const Home = () => {
                   
                   // Roads can be placed behind buildings, so we don't check for building collisions
                   if (!overlappingRoad && !hasBeltInArea) {
-                    // Use paint options for direction and type
-                    addRoadAtPosition(col, row, paintOptions.direction, paintOptions.type);
+                    // Use paint options for direction and type, but only valid road types
+                    const validRoadTypes: Array<'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw'> = ['straight', 'curve-ne', 'curve-nw', 'curve-se', 'curve-sw'];
+                    const roadType = validRoadTypes.includes(paintOptions.type as any) ? paintOptions.type as 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' : 'straight';
+                    addRoadAtPosition(col, row, paintOptions.direction, roadType);
                   } else if (overlappingRoad) {
                     // Remove road if clicking on an existing road
                     removeRoad(overlappingRoad.id);
