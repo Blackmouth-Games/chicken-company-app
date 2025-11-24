@@ -138,16 +138,16 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     }
     
     // Rotate image to face the direction of movement
-    // Base image faces east (right), so:
-    // - east (right): 0deg (sin rotación)
-    // - west (left): 180deg (volteado horizontalmente)
+    // Base image faces east (right), so we only rotate for vertical directions
+    // - east (right): 0deg (sin rotación - imagen base)
+    // - west (left): 0deg (sin rotación - imagen base, no flip)
     // - south (down): 90deg (rotado 90° horario)
-    // - north (up): 270deg o -90deg (rotado 90° antihorario)
+    // - north (up): -90deg (rotado 90° antihorario)
     switch (movementDirection) {
-      case 'east': return 'rotate(0deg)'; // Right
-      case 'west': return 'rotate(180deg)'; // Left
+      case 'east': return 'rotate(0deg)'; // Right - imagen base
+      case 'west': return 'rotate(0deg)'; // Left - imagen base (sin flip)
       case 'south': return 'rotate(90deg)'; // Down (clockwise)
-      case 'north': return 'rotate(-90deg)'; // Up (counter-clockwise, changed from 270deg to -90deg)
+      case 'north': return 'rotate(-90deg)'; // Up (counter-clockwise)
       default: return 'rotate(0deg)';
     }
   };
