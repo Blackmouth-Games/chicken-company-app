@@ -4,9 +4,38 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+const DEBUG_CODE_STORAGE_KEY = "debugCodeEnabled";
+
 const LayoutEditor = () => {
   const { t } = useLanguage();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDebugEnabled, setIsDebugEnabled] = useState(false);
+  
+  // Check if debug is enabled
+  useEffect(() => {
+    const checkDebugEnabled = () => {
+      const enabled = localStorage.getItem(DEBUG_CODE_STORAGE_KEY) === "true";
+      setIsDebugEnabled(enabled);
+    };
+    
+    checkDebugEnabled();
+    
+    // Listen for debug code changes
+    const handleDebugCodeChange = (e: CustomEvent<boolean>) => {
+      setIsDebugEnabled(e.detail);
+    };
+    
+    window.addEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    };
+  }, []);
+  
+  // Don't render if debug is not enabled
+  if (!isDebugEnabled) {
+    return null;
+  }
   const [hideBuildings, setHideBuildings] = useState(false);
   const [hideBelts, setHideBelts] = useState(false);
   const [hideRoads, setHideRoads] = useState(false);

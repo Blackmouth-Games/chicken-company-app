@@ -243,6 +243,28 @@ const Home = () => {
   const [hideBelts, setHideBelts] = useState(false);
   const [hideRoads, setHideRoads] = useState(false);
   const [showSlotCorrelation, setShowSlotCorrelation] = useState(false);
+  const [isDebugEnabled, setIsDebugEnabled] = useState(false);
+  
+  // Check if debug is enabled
+  useEffect(() => {
+    const checkDebugEnabled = () => {
+      const enabled = localStorage.getItem("debugCodeEnabled") === "true";
+      setIsDebugEnabled(enabled);
+    };
+    
+    checkDebugEnabled();
+    
+    // Listen for debug code changes
+    const handleDebugCodeChange = (e: CustomEvent<boolean>) => {
+      setIsDebugEnabled(e.detail);
+    };
+    
+    window.addEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    };
+  }, []);
   
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
@@ -1173,15 +1195,17 @@ const Home = () => {
             <img src={defaultAvatar} alt="Profile" className="w-full h-full object-cover" />
           </button>
           <div className="flex gap-2">
-            <Button
-              variant={headerEditMode ? "default" : "outline"}
-              size="sm"
-              onClick={toggleEditModeFromHeader}
-              className="bg-background/95 backdrop-blur-sm border-border hover:bg-accent shadow-lg gap-2"
-            >
-              <Layout className="h-4 w-4" />
-              {headerEditMode ? t('layoutEditor.deactivateEdit') : t('layoutEditor.activateEdit')}
-            </Button>
+            {isDebugEnabled && (
+              <Button
+                variant={headerEditMode ? "default" : "outline"}
+                size="sm"
+                onClick={toggleEditModeFromHeader}
+                className="bg-background/95 backdrop-blur-sm border-border hover:bg-accent shadow-lg gap-2"
+              >
+                <Layout className="h-4 w-4" />
+                {headerEditMode ? t('layoutEditor.deactivateEdit') : t('layoutEditor.activateEdit')}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"

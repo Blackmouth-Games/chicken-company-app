@@ -1,24 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useAudio } from "@/contexts/AudioContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { X } from "lucide-react";
+import { X, Check, XCircle } from "lucide-react";
 import { getVersionString } from "@/lib/version";
+import { useToast } from "@/hooks/use-toast";
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
+const DEBUG_CODE = "Joaquin";
+const DEBUG_CODE_STORAGE_KEY = "debugCodeEnabled";
+
 export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [tonConnectUI] = useTonConnectUI();
   const { soundVolume, musicVolume, isMuted, setSoundVolume, setMusicVolume, setIsMuted } = useAudio();
   const { language, setLanguage, t } = useLanguage();
+  const { toast } = useToast();
+  const [debugCode, setDebugCode] = useState("");
+  const [isDebugEnabled, setIsDebugEnabled] = useState(false);
+  
+  // Check if debug is enabled on mount
+  useEffect(() => {
+    const enabled = localStorage.getItem(DEBUG_CODE_STORAGE_KEY) === "true";
+    setIsDebugEnabled(enabled);
+  }, []);
+  
+  const handleDebugCodeSubmit = () => {
+    if (debugCode === DEBUG_CODE) {
+      localStorage.setItem(DEBUG_CODE_STORAGE_KEY, "true");
+      setIsDebugEnabled(true);
+      setDebugCode("");
+      toast({
+        title: "Código correcto",
+        description: "Debug Panel y Editor Panel habilitados",
+      });
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('debugCodeEnabled', { detail: true }));
+    } else {
+      toast({
+        title: "Código incorrecto",
+        description: "El código ingresado no es válido",
+        variant: "destructive",
+      });
+      setDebugCode("");
+    }
+  };
+  
+  const handleDisableDebug = () => {
+    localStorage.removeItem(DEBUG_CODE_STORAGE_KEY);
+    setIsDebugEnabled(false);
+    toast({
+      title: "Debug deshabilitado",
+      description: "Debug Panel y Editor Panel deshabilitados",
+    });
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('debugCodeEnabled', { detail: false }));
+  };
 
   const handleDisconnect = async () => {
     await tonConnectUI.disconnect();
@@ -96,6 +143,54 @@ export const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
           <Button variant="outline" className="w-full">
             TOS & EULA
           </Button>
+
+          {/* Debug Code Section */}
+          <div className="space-y-2 border border-border rounded-lg p-4">
+            <label className="text-sm font-medium">Código de Debug</label>
+            {isDebugEnabled ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-green-600">
+                  <Check className="h-4 w-4" />
+                  <span className="text-sm">Debug habilitado</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDisableDebug}
+                  className="w-full"
+                >
+                  Deshabilitar Debug
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={debugCode}
+                    onChange={(e) => setDebugCode(e.target.value)}
+                    placeholder="Ingresa el código"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleDebugCodeSubmit();
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={handleDebugCodeSubmit}
+                    size="sm"
+                    variant="default"
+                  >
+                    Enviar
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ingresa el código para habilitar Debug Panel y Editor Panel
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Version Info */}
           <div className="space-y-2 border border-border rounded-lg p-4">

@@ -16,14 +16,43 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const DEBUG_CODE_STORAGE_KEY = "debugCodeEnabled";
+
 const DebugPanel = () => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDebugEnabled, setIsDebugEnabled] = useState(false);
   const telegramUser = getTelegramUser();
   const wallet = useTonWallet();
   const address = useTonAddress();
   const isFromTelegram = isTelegramWebApp();
+  
+  // Check if debug is enabled
+  useEffect(() => {
+    const checkDebugEnabled = () => {
+      const enabled = localStorage.getItem(DEBUG_CODE_STORAGE_KEY) === "true";
+      setIsDebugEnabled(enabled);
+    };
+    
+    checkDebugEnabled();
+    
+    // Listen for debug code changes
+    const handleDebugCodeChange = (e: CustomEvent<boolean>) => {
+      setIsDebugEnabled(e.detail);
+    };
+    
+    window.addEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('debugCodeEnabled', handleDebugCodeChange as EventListener);
+    };
+  }, []);
+  
+  // Don't render if debug is not enabled
+  if (!isDebugEnabled) {
+    return null;
+  }
 
   // Layout tab state
   const [isEditMode, setIsEditMode] = useState(false);
