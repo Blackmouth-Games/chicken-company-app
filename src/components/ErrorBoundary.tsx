@@ -11,8 +11,38 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error("[ErrorBoundary]", error, errorInfo);
-    this.setState({ errorInfo });
+    // Capture error details before they might be lost
+    const errorDetails: any = {
+      message: error?.message,
+      name: error?.name,
+      stack: error?.stack,
+      toString: error?.toString?.(),
+    };
+    
+    // Try to get all properties from the error object
+    if (error && typeof error === 'object') {
+      try {
+        const allProps = Object.getOwnPropertyNames(error);
+        allProps.forEach(prop => {
+          try {
+            errorDetails[prop] = error[prop];
+          } catch {
+            // Skip properties that can't be accessed
+          }
+        });
+      } catch {
+        // If we can't enumerate properties, at least try to capture what we can
+      }
+    }
+    
+    console.error("[ErrorBoundary]", error, errorInfo, errorDetails);
+    this.setState({ 
+      errorInfo: {
+        ...errorInfo,
+        errorDetails, // Store captured error details
+      },
+      error: errorDetails, // Store the detailed error instead of the original
+    });
   }
 
   handleReload = () => {
@@ -35,35 +65,54 @@ export class ErrorBoundary extends Component<Props, State> {
       let errorName = '';
       let errorStack = '';
       
-      if (error) {
+      // First check if we have errorDetails from componentDidCatch
+      const errorToCheck = errorInfo?.errorDetails || error;
+      
+      if (errorToCheck) {
         // Check if error has a message property
-        if (error.message) {
-          errorMessage = error.message;
+        if (errorToCheck.message) {
+          errorMessage = errorToCheck.message;
         }
         // Check if error has a name property (e.g., ReferenceError, TypeError)
-        if (error.name) {
-          errorName = error.name;
+        if (errorToCheck.name) {
+          errorName = errorToCheck.name;
         }
         // Check if error has a stack trace
-        if (error.stack) {
-          errorStack = error.stack;
+        if (errorToCheck.stack) {
+          errorStack = errorToCheck.stack;
         }
         // If error is a string, use it directly
-        if (typeof error === 'string') {
-          errorMessage = error;
+        if (typeof errorToCheck === 'string') {
+          errorMessage = errorToCheck;
+        }
+        // Check toString if available
+        if (errorToCheck.toString && typeof errorToCheck.toString === 'function') {
+          const toStringResult = errorToCheck.toString();
+          if (toStringResult && toStringResult !== '[object Object]') {
+            errorMessage = errorMessage === 'Error desconocido' ? toStringResult : errorMessage;
+          }
         }
         // If error is an object but has no message, try to stringify it
-        if (typeof error === 'object' && !error.message && !error.stack) {
+        if (typeof errorToCheck === 'object' && !errorToCheck.message && !errorToCheck.stack) {
           try {
-            const errorStr = JSON.stringify(error, null, 2);
-            if (errorStr !== '{}') {
+            // Use Object.getOwnPropertyNames to get all properties
+            const errorStr = JSON.stringify(errorToCheck, Object.getOwnPropertyNames(errorToCheck), 2);
+            if (errorStr !== '{}' && errorStr !== 'null') {
               errorMessage = `Error object: ${errorStr}`;
+            } else if (errorInfo?.componentStack) {
+              // If error is empty but we have componentStack, use that as context
+              errorMessage = 'Error durante el renderizado (ver Component Stack para más detalles)';
             }
           } catch {
             // If stringify fails, try toString
-            errorMessage = error.toString?.() || 'Error desconocido (objeto sin propiedades)';
+            errorMessage = errorToCheck.toString?.() || 'Error desconocido (objeto sin propiedades)';
           }
         }
+      }
+      
+      // If we still don't have a good error message but have componentStack, provide context
+      if (errorMessage === 'Error desconocido' && errorInfo?.componentStack) {
+        errorMessage = 'Error durante el renderizado de un componente';
       }
       
       // Combine name and message if both exist
@@ -106,11 +155,14 @@ export class ErrorBoundary extends Component<Props, State> {
                   {errorInfo?.componentStack && (
                     <details className="mt-3" open>
                       <summary className="cursor-pointer text-sm text-red-700 font-semibold mb-2">
-                        Component Stack
+                        Component Stack (útil para identificar dónde ocurrió el error)
                       </summary>
                       <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64 bg-red-100 p-2 rounded">
                         {errorInfo.componentStack}
                       </pre>
+                      <p className="text-xs text-red-600 mt-2 italic">
+                        💡 El componente "nb" es un nombre minificado. Busca en el código componentes que rendericen divs anidados.
+                      </p>
                     </details>
                   )}
                   
