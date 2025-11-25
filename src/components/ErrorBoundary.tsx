@@ -7,10 +7,27 @@ export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
   static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
+    // Only set error state if error is actually meaningful
+    // Ignore empty objects or null errors
+    if (error && (error.message || error.name || error.stack || typeof error === 'string')) {
+      return { hasError: true, error };
+    }
+    // If error is empty object, still capture it but log for debugging
+    if (error && typeof error === 'object' && Object.keys(error).length === 0) {
+      console.warn("[ErrorBoundary] Captured empty error object, this might be a false positive");
+      // Don't show error UI for empty errors, just log it
+      return { hasError: false };
+    }
+    return { hasError: false };
   }
 
   componentDidCatch(error: any, errorInfo: any) {
+    // Only process if we actually have an error
+    if (!error || (typeof error === 'object' && Object.keys(error).length === 0 && !error.message && !error.stack)) {
+      console.warn("[ErrorBoundary] Ignoring empty error object");
+      return;
+    }
+
     // Capture error details before they might be lost
     const errorDetails: any = {
       message: error?.message,
