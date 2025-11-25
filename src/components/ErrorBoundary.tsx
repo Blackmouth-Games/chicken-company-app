@@ -28,7 +28,49 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const error = this.state.error;
-      const errorMessage = error?.message || error?.toString() || 'Error desconocido';
+      const errorInfo = this.state.errorInfo;
+      
+      // Try to extract error message from various possible formats
+      let errorMessage = 'Error desconocido';
+      let errorName = '';
+      let errorStack = '';
+      
+      if (error) {
+        // Check if error has a message property
+        if (error.message) {
+          errorMessage = error.message;
+        }
+        // Check if error has a name property (e.g., ReferenceError, TypeError)
+        if (error.name) {
+          errorName = error.name;
+        }
+        // Check if error has a stack trace
+        if (error.stack) {
+          errorStack = error.stack;
+        }
+        // If error is a string, use it directly
+        if (typeof error === 'string') {
+          errorMessage = error;
+        }
+        // If error is an object but has no message, try to stringify it
+        if (typeof error === 'object' && !error.message && !error.stack) {
+          try {
+            const errorStr = JSON.stringify(error, null, 2);
+            if (errorStr !== '{}') {
+              errorMessage = `Error object: ${errorStr}`;
+            }
+          } catch {
+            // If stringify fails, try toString
+            errorMessage = error.toString?.() || 'Error desconocido (objeto sin propiedades)';
+          }
+        }
+      }
+      
+      // Combine name and message if both exist
+      const fullErrorMessage = errorName && errorMessage !== errorName 
+        ? `${errorName}: ${errorMessage}` 
+        : errorMessage;
+      
       const params = new URLSearchParams(window.location.search);
       const debugMode = params.get('debug') === '1';
 
@@ -40,30 +82,56 @@ export class ErrorBoundary extends Component<Props, State> {
               <h1 className="text-3xl font-bold mb-2 text-gray-900">Ha ocurrido un error</h1>
             </div>
 
-            {debugMode && error ? (
+            {debugMode ? (
               <div className="mt-6 text-left">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <h2 className="font-semibold text-red-900 mb-2">Detalles del error:</h2>
-                  <pre className="text-sm text-red-800 whitespace-pre-wrap break-words font-mono">
-                    {errorMessage}
-                  </pre>
-                  {error?.stack && (
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm text-red-700 font-semibold">
-                        Ver stack trace
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 space-y-3">
+                  <div>
+                    <h2 className="font-semibold text-red-900 mb-2">Detalles del error:</h2>
+                    <pre className="text-sm text-red-800 whitespace-pre-wrap break-words font-mono bg-red-100 p-2 rounded">
+                      {fullErrorMessage}
+                    </pre>
+                  </div>
+                  
+                  {errorStack && (
+                    <details className="mt-3" open>
+                      <summary className="cursor-pointer text-sm text-red-700 font-semibold mb-2">
+                        Stack Trace
                       </summary>
-                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64">
-                        {error.stack}
+                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64 bg-red-100 p-2 rounded">
+                        {errorStack}
                       </pre>
                     </details>
                   )}
-                  {this.state.errorInfo?.componentStack && (
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm text-red-700 font-semibold">
-                        Ver información del componente
+                  
+                  {errorInfo?.componentStack && (
+                    <details className="mt-3" open>
+                      <summary className="cursor-pointer text-sm text-red-700 font-semibold mb-2">
+                        Component Stack
                       </summary>
-                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64">
-                        {this.state.errorInfo.componentStack}
+                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64 bg-red-100 p-2 rounded">
+                        {errorInfo.componentStack}
+                      </pre>
+                    </details>
+                  )}
+                  
+                  {error && Object.keys(error).length > 0 && (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-sm text-red-700 font-semibold mb-2">
+                        Objeto de error completo
+                      </summary>
+                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64 bg-red-100 p-2 rounded">
+                        {JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}
+                      </pre>
+                    </details>
+                  )}
+                  
+                  {errorInfo && Object.keys(errorInfo).length > 0 && (
+                    <details className="mt-3">
+                      <summary className="cursor-pointer text-sm text-red-700 font-semibold mb-2">
+                        Información completa del error
+                      </summary>
+                      <pre className="text-xs text-red-600 mt-2 whitespace-pre-wrap break-words font-mono overflow-auto max-h-64 bg-red-100 p-2 rounded">
+                        {JSON.stringify(errorInfo, Object.getOwnPropertyNames(errorInfo), 2)}
                       </pre>
                     </details>
                   )}
@@ -72,9 +140,9 @@ export class ErrorBoundary extends Component<Props, State> {
             ) : (
               <div className="mb-6">
                 <p className="text-gray-600 mb-2">
-                  {errorMessage.length > 100 
-                    ? `${errorMessage.substring(0, 100)}...` 
-                    : errorMessage}
+                  {fullErrorMessage.length > 150 
+                    ? `${fullErrorMessage.substring(0, 150)}...` 
+                    : fullErrorMessage}
                 </p>
                 <p className="text-sm text-gray-500">
                   Añade <code className="bg-gray-100 px-2 py-1 rounded">?debug=1</code> a la URL para ver detalles completos de diagnóstico.
