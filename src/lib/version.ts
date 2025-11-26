@@ -25,7 +25,7 @@ let versionInfo: VersionInfo = defaultVersion;
 // Using try-catch with dynamic import to handle missing file
 (async () => {
   try {
-    const versionModule = await import('../version.json');
+    const versionModule = await import('../version.json' as string);
     versionInfo = (versionModule.default || versionModule) as VersionInfo;
   } catch (e) {
     // If version.json doesn't exist (development), use defaults

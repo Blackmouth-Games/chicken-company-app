@@ -54,7 +54,7 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
 export const BUILDING_IMAGES = mergeImages();
 
 export type BuildingType = keyof typeof BUILDING_IMAGES;
-export type BuildingSkin = 'A' | 'B' | 'C';
+export type BuildingSkin = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J';
 
 // Legacy skin keys for backwards compatibility
 const LEGACY_SKIN_MAP: Record<string, BuildingSkin> = {

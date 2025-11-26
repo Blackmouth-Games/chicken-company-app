@@ -160,13 +160,14 @@ const Friends = () => {
 
         await supabase.from("user_buildings").insert(newCoops);
 
-        // Record metric: referral reward earned
+        // Record metric: feature usage (referral reward earned)
         if (userId) {
           await supabase.rpc("record_metric_event", {
             p_user_id: userId,
-            p_event_type: "referral_reward_earned",
+            p_event_type: "feature_usage",
             p_event_value: coopsNeeded,
             p_metadata: {
+              feature: "referral_reward_earned",
               coops_granted: coopsNeeded,
               qualified_friends: qualifiedCount,
               total_referrals: qualifiedCount,
@@ -201,13 +202,14 @@ const Friends = () => {
       return;
     }
 
-    // Record metric: referral link shared
+    // Record metric: button click (referral link shared)
     if (userId) {
       await supabase.rpc("record_metric_event", {
         p_user_id: userId,
-        p_event_type: "referral_link_shared",
+        p_event_type: "button_click",
         p_event_value: null,
         p_metadata: {
+          button: "share_referral_link",
           referral_code: referralCode,
           total_referrals: totalReferrals,
           qualified_referrals: qualifiedReferrals,

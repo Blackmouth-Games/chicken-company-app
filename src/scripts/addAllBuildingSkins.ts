@@ -128,7 +128,7 @@ export const addAllBuildingSkins = async () => {
       // Use upsert to avoid conflicts if skin already exists
       const { error } = await supabase
         .from('building_skins')
-        .upsert(skinWithEmoji, { onConflict: 'skin_key' });
+        .upsert(skinWithEmoji as any, { onConflict: 'skin_key' });
 
       if (error) {
         console.error(`❌ Error insertando ${skin.skin_key}:`, error.message);

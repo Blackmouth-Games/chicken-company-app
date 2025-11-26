@@ -219,15 +219,6 @@ export const SkinSelectorDialog = ({
 
   const loading = skinsLoading || itemsLoading;
 
-  const levelsList = useMemo(() => {
-    const levelSet = new Set<number>();
-    inventorySlots.forEach(slot => levelSet.add(slot.level));
-    if (levelSet.size === 0) {
-      return buildingLevel ? [buildingLevel] : [1];
-    }
-    return Array.from(levelSet).sort((a, b) => a - b);
-  }, [inventorySlots, buildingLevel]);
-
   // Create inventory slots organized by level and variant
   // Now supports 10 skins per level (A-J or 1-10)
   // Shows: all local images + database skins (owned/default)
@@ -257,9 +248,9 @@ export const SkinSelectorDialog = ({
     // This ensures we always show empty slots for future skins
     for (const level of levelsToShow) {
       for (const variant of variants) {
-        // For corral, use "coop_" format (as that's what's in the database and assets)
+        // For coop, use "coop_" format (as that's what's in the database and assets)
         // For other buildings, use the buildingType directly
-        const skinKey = buildingType === 'corral' 
+        const skinKey = buildingType === 'coop' 
           ? `coop_${level}${variant}` 
           : `${buildingType}_${level}${variant}`;
         
@@ -362,6 +353,15 @@ export const SkinSelectorDialog = ({
     return slots;
   }, [skins, buildingType, buildingLevel, hasItem, localImages, userItems, itemsLoading]);
 
+  const levelsList = useMemo(() => {
+    const levelSet = new Set<number>();
+    inventorySlots.forEach(slot => levelSet.add(slot.level));
+    if (levelSet.size === 0) {
+      return buildingLevel ? [buildingLevel] : [1];
+    }
+    return Array.from(levelSet).sort((a, b) => a - b);
+  }, [inventorySlots, buildingLevel]);
+
   // Find the default skin for the building's level
   const defaultSkinForLevel = useMemo(() => {
     if (!buildingLevel) return null;
@@ -436,7 +436,7 @@ export const SkinSelectorDialog = ({
                           const currentSlot = slot || emptySlot;
                           const skin = currentSlot.skin;
                           const isLocal = currentSlot.isLocal || false;
-                          const skinKey = buildingType === 'corral' 
+                          const skinKey = buildingType === 'coop' 
                             ? `coop_${currentSlot.level}${currentSlot.variant}` 
                             : `${buildingType}_${currentSlot.level}${currentSlot.variant}`;
                           

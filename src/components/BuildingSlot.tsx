@@ -45,9 +45,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   // Depend on building.selected_skin and building.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!building) return null;
-    // BUILDING_IMAGES uses 'coop' as the key
     const buildingType = building.building_type;
-    if (!normalizedType) return null;
     return getBuildingDisplay(
       buildingType as BuildingType,
       building.level,
@@ -110,7 +108,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                 />
               ) : (
                 <div className="text-7xl md:text-8xl leading-none m-0 p-0">
-                  {buildingDisplay?.emoji || '🏚️'}
+                  🏚️
                 </div>
               )}
             </div>

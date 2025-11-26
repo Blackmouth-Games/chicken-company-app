@@ -60,7 +60,7 @@ export type Database = {
       }
       building_prices: {
         Row: {
-          building_type: string
+          building_type: Database["public"]["Enums"]["building_type"]
           capacity: number
           created_at: string
           id: string
@@ -69,7 +69,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          building_type: string
+          building_type: Database["public"]["Enums"]["building_type"]
           capacity: number
           created_at?: string
           id?: string
@@ -78,7 +78,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          building_type?: string
+          building_type?: Database["public"]["Enums"]["building_type"]
           capacity?: number
           created_at?: string
           id?: string
@@ -147,7 +147,7 @@ export type Database = {
       }
       building_skins: {
         Row: {
-          building_type: string
+          building_type: Database["public"]["Enums"]["building_type"]
           created_at: string
           id: string
           image_url: string
@@ -158,7 +158,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          building_type: string
+          building_type: Database["public"]["Enums"]["building_type"]
           created_at?: string
           id?: string
           image_url: string
@@ -169,7 +169,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          building_type?: string
+          building_type?: Database["public"]["Enums"]["building_type"]
           created_at?: string
           id?: string
           image_url?: string
@@ -449,7 +449,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          building_type?: Database["public"]["Enums"]["building_type"]
+          building_type: Database["public"]["Enums"]["building_type"]
           capacity?: number
           created_at?: string
           current_chickens?: number
@@ -725,7 +725,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      building_type: "coop" | "market" | "warehouse"
+      building_type: "coop" | "market" | "warehouse" | "house"
       metric_type:
         | "new_guest_users"
         | "new_registered_users"
@@ -865,7 +865,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      building_type: ["coop", "market", "warehouse"],
+      building_type: ["coop", "market", "warehouse", "house"],
       metric_type: [
         "new_guest_users",
         "new_registered_users",

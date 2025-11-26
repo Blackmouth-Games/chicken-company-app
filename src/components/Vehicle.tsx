@@ -78,12 +78,12 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     if (direction === 'east' || direction === 'west') {
       movementDirection = goingToB ? 'west' : 'east';
     } else if (reverseDirection) {
-      switch (direction) {
-        case 'east': movementDirection = 'west'; break;
-        case 'west': movementDirection = 'east'; break;
-        case 'south': movementDirection = 'north'; break;
-        case 'north': movementDirection = 'south'; break;
-        default: movementDirection = 'east';
+      if (direction === 'south') {
+        movementDirection = 'north';
+      } else if (direction === 'north') {
+        movementDirection = 'south';
+      } else {
+        movementDirection = direction;
       }
     } else {
       movementDirection = direction;

@@ -574,7 +574,7 @@ const Home = () => {
       const { data: prices } = await supabase
         .from("building_prices")
         .select("*")
-        .in("building_type", buildingTypesToCheck)
+        .in("building_type", buildingTypesToCheck as any)
         .eq("level", 1);
 
       const warehousePrice = prices?.find(p => p.building_type === 'warehouse');
@@ -1011,10 +1011,10 @@ const Home = () => {
   const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
-  const { eggs, getEggDebugInfo } = useEggSystem(allBelts, buildings);
+  const { eggs, getDebugInfo: getEggDebugInfo } = useEggSystem(allBelts, buildings);
   
   // Vehicle system - must be after roads are defined
-  const { vehicles, getVehicleDebugInfo } = useVehicleSystem(allRoads, marketLevel);
+  const { vehicles, getDebugInfo: getVehicleDebugInfo } = useVehicleSystem(allRoads, marketLevel);
   
   // Debug: Send egg and vehicle information to DebugPanel
   useEffect(() => {
@@ -1333,7 +1333,7 @@ const Home = () => {
                   // Don't add belt if there's already a road or belt here
                   if (!existingRoad && !existingBelt && !hasBuilding) {
                     // Use paint options for direction and type
-                    addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type);
+                    addBeltAtPosition(col, row, paintOptions.direction, paintOptions.type as any);
                   } else if (existingBelt && existingBelt.id.startsWith('belt-') && !existingBelt.id.startsWith('belt-auto-')) {
                     // Remove belt if clicking on an existing manual belt
                     removeBelt(existingBelt.id);
@@ -1366,7 +1366,7 @@ const Home = () => {
                   // Roads can be placed behind buildings, so we don't check for building collisions
                   if (!overlappingRoad && !hasBeltInArea) {
                     // Use paint options for direction and type
-                    addRoadAtPosition(col, row, paintOptions.direction, paintOptions.type);
+                    addRoadAtPosition(col, row, paintOptions.direction, paintOptions.type as any);
                   } else if (overlappingRoad) {
                     // Remove road if clicking on an existing road
                     removeRoad(overlappingRoad.id);
