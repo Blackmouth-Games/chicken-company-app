@@ -356,7 +356,7 @@ const DebugPanel = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <Tabs defaultValue="general" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="layout">
                 <Layout className="h-4 w-4 mr-2" />
@@ -365,6 +365,9 @@ const DebugPanel = () => {
               <TabsTrigger value="skins">
                 <Palette className="h-4 w-4 mr-2" />
                 Skins
+              </TabsTrigger>
+              <TabsTrigger value="ui">
+                🎨 UI Colors
               </TabsTrigger>
               <TabsTrigger value="systems">
                 ⚙️ Systems
@@ -1211,9 +1214,226 @@ const DebugPanel = () => {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="ui" className="space-y-4">
+              <UIColorsEditor />
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+};
+
+// UI Colors Editor Component
+const UIColorsEditor = () => {
+  const [colors, setColors] = useState<Record<string, string>>({});
+  const [copied, setCopied] = useState(false);
+
+  // Get all CSS variables from :root
+  useEffect(() => {
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+    const colorVars: Record<string, string> = {};
+    
+    // List of all color variables
+    const colorVariables = [
+      '--background', '--foreground',
+      '--card', '--card-foreground',
+      '--popover', '--popover-foreground',
+      '--primary', '--primary-foreground',
+      '--secondary', '--secondary-foreground',
+      '--muted', '--muted-foreground',
+      '--accent', '--accent-foreground',
+      '--destructive', '--destructive-foreground',
+      '--border', '--input', '--ring',
+    ];
+
+    colorVariables.forEach(varName => {
+      const value = computedStyle.getPropertyValue(varName).trim();
+      if (value) {
+        colorVars[varName] = value;
+      }
+    });
+
+    setColors(colorVars);
+  }, []);
+
+  // Convert HSL string to hex for color input
+  const hslToHex = (hsl: string): string => {
+    const match = hsl.match(/(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%/);
+    if (!match) return '#000000';
+    
+    const h = parseFloat(match[1]) / 360;
+    const s = parseFloat(match[2]) / 100;
+    const l = parseFloat(match[3]) / 100;
+
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+    const m = l - c / 2;
+
+    let r = 0, g = 0, b = 0;
+
+    if (0 <= h && h < 1/6) {
+      r = c; g = x; b = 0;
+    } else if (1/6 <= h && h < 2/6) {
+      r = x; g = c; b = 0;
+    } else if (2/6 <= h && h < 3/6) {
+      r = 0; g = c; b = x;
+    } else if (3/6 <= h && h < 4/6) {
+      r = 0; g = x; b = c;
+    } else if (4/6 <= h && h < 5/6) {
+      r = x; g = 0; b = c;
+    } else if (5/6 <= h && h < 1) {
+      r = c; g = 0; b = x;
+    }
+
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+
+    return `#${[r, g, b].map(x => {
+      const hex = x.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('')}`;
+  };
+
+  // Convert hex to HSL string
+  const hexToHsl = (hex: string): string => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0, s = 0;
+    const l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+        case g: h = ((b - r) / d + 2) / 6; break;
+        case b: h = ((r - g) / d + 4) / 6; break;
+      }
+    }
+
+    h = Math.round(h * 360);
+    s = Math.round(s * 100);
+    const lRounded = Math.round(l * 100);
+
+    return `${h} ${s}% ${lRounded}%`;
+  };
+
+  const updateColor = (varName: string, hexValue: string) => {
+    const hslValue = hexToHsl(hexValue);
+    const root = document.documentElement;
+    root.style.setProperty(varName, hslValue);
+    
+    setColors(prev => ({
+      ...prev,
+      [varName]: hslValue
+    }));
+  };
+
+  const copyColors = () => {
+    const colorConfig: Record<string, string> = {};
+    Object.keys(colors).forEach(key => {
+      colorConfig[key] = colors[key];
+    });
+    
+    const configString = JSON.stringify(colorConfig, null, 2);
+    navigator.clipboard.writeText(configString).then(() => {
+      setCopied(true);
+      toast({
+        title: "Colores copiados",
+        description: "Los colores han sido copiados al portapapeles",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const resetColors = () => {
+    const root = document.documentElement;
+    Object.keys(colors).forEach(varName => {
+      root.style.removeProperty(varName);
+    });
+    window.location.reload();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-sm">🎨 Editor de Colores UI</h3>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyColors}
+            className="flex items-center gap-2"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            Copiar Colores
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetColors}
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Resetear
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Object.keys(colors).map(varName => (
+            <div key={varName} className="space-y-2">
+              <Label htmlFor={varName} className="text-xs font-medium">
+                {varName.replace('--', '').replace(/-/g, ' ')}
+              </Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id={varName}
+                  value={hslToHex(colors[varName])}
+                  onChange={(e) => updateColor(varName, e.target.value)}
+                  className="w-12 h-8 rounded border cursor-pointer"
+                />
+                <Input
+                  type="text"
+                  value={colors[varName]}
+                  onChange={(e) => {
+                    const root = document.documentElement;
+                    root.style.setProperty(varName, e.target.value);
+                    setColors(prev => ({
+                      ...prev,
+                      [varName]: e.target.value
+                    }));
+                  }}
+                  className="flex-1 text-xs font-mono"
+                  placeholder="HSL value"
+                />
+                <div
+                  className="w-8 h-8 rounded border"
+                  style={{ backgroundColor: `hsl(${colors[varName]})` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-muted p-3 rounded-md">
+        <p className="text-xs text-muted-foreground mb-2">
+          <strong>Instrucciones:</strong> Modifica los colores usando el selector de color o editando el valor HSL directamente. 
+          Usa "Copiar Colores" para copiar la configuración y luego pégala aquí para que la aplique como valores por defecto.
+        </p>
+      </div>
     </div>
   );
 };
