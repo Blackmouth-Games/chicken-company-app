@@ -57,8 +57,8 @@ export interface LayoutConfig {
 const DEFAULT_LAYOUT: LayoutConfig = {
   house: { gridColumn: '4 / 13', gridRow: '1 / 7' },
   warehouse: { gridColumn: '1 / 6', gridRow: '7 / 13' },
-  market: { gridColumn: '10 / 15', gridRow: '7 / 13' },
-  boxes: { gridColumn: '6 / 8', gridRow: '10 / 13' },
+  market: { gridColumn: '10 / 16', gridRow: '7 / 13' },
+  boxes: { gridColumn: '7 / 9', gridRow: '10 / 13' },
   leftCoops: { gridColumn: '1 / 7', gap: '20px', startRow: 15, rowSpan: 2 },
   rightCoops: { gridColumn: '10 / 16', gap: '20px', startRow: 15, rowSpan: 2 },
   belts: [
@@ -67,7 +67,6 @@ const DEFAULT_LAYOUT: LayoutConfig = {
     { id: 'belt-1762856884637', gridColumn: '5 / 6', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1762856885181', gridColumn: '4 / 5', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: false },
     { id: 'belt-1762856885543', gridColumn: '3 / 4', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
-    { id: 'belt-1763034991753', gridColumn: '13 / 14', gridRow: '34 / 35', direction: 'east', type: 'funnel', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1763464303937', gridColumn: '8 / 9', gridRow: '14 / 15', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1763484378516', gridColumn: '8 / 9', gridRow: '13 / 14', direction: 'west', type: 'curve-sw', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1763484449213', gridColumn: '2 / 3', gridRow: '12 / 13', direction: 'north', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
