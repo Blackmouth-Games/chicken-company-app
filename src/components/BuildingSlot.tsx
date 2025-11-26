@@ -70,7 +70,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            overflow: 'visible',
+            overflow: 'hidden',
           }}
         >
           {/* Top section: Level badge + Progress bar */}
@@ -104,7 +104,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                   alt={`${building.building_type} nivel ${building.level}`}
                   className="w-auto max-w-full object-contain m-0 p-0"
                   style={{ 
-                    height: isMobile ? '384px' : '448px' // Responsive: h-48*2 (384px) mobile, h-56*2 (448px) desktop
+                    height: isMobile ? '300px' : '360px'
                   }}
                 />
               ) : (

@@ -63,6 +63,8 @@ const Home = () => {
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const scrollRafRef = useRef<number | null>(null);
 
   // Use layout editor hook
   const {
@@ -1117,6 +1119,27 @@ const Home = () => {
     setCorralDialogOpen(true);
   };
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollRafRef.current) return;
+      scrollRafRef.current = window.requestAnimationFrame(() => {
+        setScrollY(window.scrollY);
+        scrollRafRef.current = null;
+      });
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollRafRef.current) {
+        cancelAnimationFrame(scrollRafRef.current);
+      }
+    };
+  }, []);
+
+  const topBgOffset = scrollY * 0.3;
+  const grassOffset = scrollY * 0.6;
+
   // Calculate the height of the first row (assuming 200px per row)
   const firstRowHeight = 200; // Ajusta según el tamaño de tu imagen
   
@@ -1126,8 +1149,8 @@ const Home = () => {
       style={{ 
         // Primera fila: tile horizontal solamente
         backgroundImage: `url(${bgFarmRow1})`,
-        backgroundRepeat: 'repeat-x',
-        backgroundPosition: '0 0',
+        backgroundRepeat: 'repeat',
+        backgroundPosition: `0px ${topBgOffset}px`,
         backgroundSize: 'auto 200px',
         // Resto: tile horizontal y vertical
         // Usamos múltiples backgrounds para superponer
@@ -1155,12 +1178,12 @@ const Home = () => {
         style={{
           backgroundImage: `url(${bgFarm})`,
           backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
+          backgroundPosition: `0px ${grassOffset}px`,
           backgroundSize: '200px 200px',
-          top: `${firstRowHeight}px`,
+          top: 0,
           bottom: 0,
-          left: 0,
-          right: 0,
+          left: '-15vw',
+          right: '-15vw',
         }}
       />
       {/* Floating Header */}
