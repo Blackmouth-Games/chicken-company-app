@@ -104,7 +104,7 @@ export const CoopDialog = ({ open, onOpenChange, userId, buildingId }: CoopDialo
                 <img 
                   src={buildingDisplay.src} 
                   alt="Coop" 
-                  className="w-16 h-16 object-contain"
+                  className="w-32 h-32 object-contain"
                 />
               ) : (
                 <div className="text-6xl">🏠</div>

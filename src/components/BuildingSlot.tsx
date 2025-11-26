@@ -102,16 +102,20 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
 
           <div className="flex flex-col h-full overflow-visible">
-            {/* Building image or emoji - centered both horizontally and vertically */}
-            <div className="flex justify-center items-center m-0 p-0 w-full h-[150px] md:h-[180px]">
+            {/* Building image or emoji - centered horizontally, can overflow top */}
+            <div className="flex justify-center items-center m-0 p-0 w-full h-[150px] md:h-[180px] overflow-visible relative">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
-                  className="max-w-full max-h-full w-auto h-auto object-contain m-0 p-0"
+                  className="max-w-full w-auto h-auto object-contain m-0 p-0"
                   style={{ 
                     objectPosition: 'center',
-                    display: 'block'
+                    display: 'block',
+                    maxHeight: '300%', // Allow image to be 3x the container height to overflow
+                    position: 'relative',
+                    top: '50%', // Center vertically
+                    transform: 'translateY(-50%)', // Center vertically
                   }}
                 />
               ) : (
