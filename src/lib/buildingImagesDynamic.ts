@@ -99,6 +99,7 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
   // Ensure 'coop' exists from the start (for type safety)
   images['coop'] = {};
   
+  try {
     for (const [filePath, url] of Object.entries(buildingImageModules)) {
       const parsed = parseImageFileName(filePath);
       if (!parsed) {
