@@ -98,14 +98,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
           </div>
 
           <div className="flex flex-col h-full overflow-visible">
-            {/* Building image or emoji - aligned to bottom to remove top spacing */}
-            <div className="flex justify-end items-end m-0 p-0 w-full h-[150px] md:h-[180px]">
+            {/* Building image or emoji - centered vertically in the slot */}
+            <div className="flex justify-end items-center m-0 p-0 w-full h-[150px] md:h-[180px]">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
-                  className="w-auto h-full object-contain object-bottom m-0 p-0"
-                  style={{ objectPosition: 'bottom' }}
+                  className="w-auto h-full object-contain m-0 p-0"
                 />
               ) : (
                 <div className="text-7xl md:text-8xl leading-none m-0 p-0">
