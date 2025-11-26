@@ -1563,9 +1563,6 @@ const Home = () => {
                 } ${isDragging && draggedBuilding === 'warehouse' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-2.5 -left-2.5 bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
-                    {warehouseLevel}
-                  </div>
                   {warehouseDisplay && warehouseDisplay.type === 'image' ? (
                     <img 
                       src={warehouseDisplay.src} 
@@ -1658,9 +1655,6 @@ const Home = () => {
                 } ${isDragging && draggedBuilding === 'market' ? 'opacity-50 scale-105' : ''}`}
               >
                 <div className="flex flex-col items-center">
-                  <div className="absolute -top-2.5 -left-2.5 bg-green-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 flex items-center justify-center text-[10px] md:text-xs font-bold shadow-md z-50">
-                    {marketLevel}
-                  </div>
                   {marketDisplay && (
                     <img 
                       src={marketDisplay.src} 
