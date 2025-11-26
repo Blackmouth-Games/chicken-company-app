@@ -101,8 +101,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     // Find all available output belts (not assigned to other coops or without slotPosition)
     const allOutputBelts = belts.filter(b => 
       b.isOutput && 
-      !b.isDestiny &&
-      !b.isTransport
+      !b.isDestiny
     );
     
     // Get belts already assigned to other coops
@@ -661,36 +660,36 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
 
   // Spawn eggs from coops periodically with async delays
   useEffect(() => {
-    // Don't spawn if no corrals
-    if (corrals.length === 0) return;
+    // Don't spawn if no coops
+    if (coops.length === 0) return;
     
-    // Clean up belt mappings for corrals that no longer exist
-    const existingCorralIds = new Set(corrals.map(c => c.id));
-    corralBeltMappingRef.current.forEach((_, corralId) => {
-      if (!existingCorralIds.has(corralId)) {
-        corralBeltMappingRef.current.delete(corralId);
+    // Clean up belt mappings for coops that no longer exist
+    const existingCoopIds = new Set(coops.map(c => c.id));
+    coopBeltMappingRef.current.forEach((_, coopId) => {
+      if (!existingCoopIds.has(coopId)) {
+        coopBeltMappingRef.current.delete(coopId);
       }
     });
     
     // Clean up belt mappings for belts that no longer exist
     const existingBeltIds = new Set(belts.map(b => b.id));
-    corralBeltMappingRef.current.forEach((beltId, corralId) => {
+    coopBeltMappingRef.current.forEach((beltId, coopId) => {
       if (!existingBeltIds.has(beltId)) {
-        corralBeltMappingRef.current.delete(corralId);
+        coopBeltMappingRef.current.delete(coopId);
       }
     });
     
-    // Initialize random initial delays for each corral to stagger spawns
-    const corralInitialDelays = new Map<string, number>();
-    corrals.forEach((corral, index) => {
-      // Each corral gets a random initial delay to make spawning async
-      corralInitialDelays.set(corral.id, index * 200 + Math.random() * 500);
+    // Initialize random initial delays for each coop to stagger spawns
+    const coopInitialDelays = new Map<string, number>();
+    coops.forEach((coop, index) => {
+      // Each coop gets a random initial delay to make spawning async
+      coopInitialDelays.set(coop.id, index * 200 + Math.random() * 500);
     });
 
-    // Reset spawn times for corrals that no longer exist
-    lastSpawnTimeRef.current.forEach((_, corralId) => {
-      if (!existingCorralIds.has(corralId)) {
-        lastSpawnTimeRef.current.delete(corralId);
+    // Reset spawn times for coops that no longer exist
+    lastSpawnTimeRef.current.forEach((_, coopId) => {
+      if (!existingCoopIds.has(coopId)) {
+        lastSpawnTimeRef.current.delete(coopId);
       }
     });
 

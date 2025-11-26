@@ -75,9 +75,9 @@ export const PurchaseBuildingDialog = ({
       await supabase.rpc("record_metric_event", {
         p_user_id: userId,
         p_event_type: "building_purchased",
-        p_event_value: CORRAL_PRICE,
+        p_event_value: COOP_PRICE,
         p_metadata: {
-          building_type: "corral",
+          building_type: "coop",
           level: 1,
           purchase_id: purchaseRecord.id,
         },

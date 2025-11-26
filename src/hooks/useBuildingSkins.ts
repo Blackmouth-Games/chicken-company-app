@@ -22,7 +22,7 @@ export const useBuildingSkins = (buildingType?: string) => {
       let query = supabase.from("building_skins").select("*");
       
       if (buildingType) {
-        query = query.eq("building_type", buildingType);
+        query = query.eq("building_type", buildingType as any);
       }
 
       const { data, error } = await query.order("rarity").order("name");

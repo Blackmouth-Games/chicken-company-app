@@ -59,7 +59,7 @@ export const HouseDialog = ({ open, onOpenChange, userId }: HouseDialogProps) =>
                         className="w-52 h-52 object-contain"
                       />
                     ) : (
-                      <div className="text-9xl">{houseDisplay?.emoji || '🏠'}</div>
+                      <div className="text-9xl">🏠</div>
                     )}
                     <div className="text-center">
                       <h3 className="font-bold text-amber-900 text-lg">Casa del Granjero</h3>
