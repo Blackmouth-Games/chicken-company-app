@@ -86,15 +86,15 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
           </div>
 
-          {/* Vertical progress bar - right side of slot */}
-          <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 flex items-end z-40 p-1">
+          {/* Vertical progress bar - right side of slot, anchored to bottom */}
+          <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 z-40 p-1 flex items-end">
             <div 
               className="w-full bg-green-200/70 overflow-hidden rounded-full shadow-inner"
-              style={{ height: '100%' }}
+              style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
             >
               <div 
                 className="w-full bg-gradient-to-t from-green-500 to-green-600 transition-all duration-500 rounded-full"
-                style={{ height: `${fillPercentage}%` }}
+                style={{ height: `${fillPercentage}%`, minHeight: '4px' }}
               />
             </div>
           </div>
