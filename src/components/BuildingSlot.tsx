@@ -53,13 +53,15 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     );
   }, [building?.selected_skin, building?.level, building?.building_type, skinInfo]);
 
+  const slotBorderClasses = "relative z-10 h-full rounded-2xl border-2 border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.2)] bg-white/5 backdrop-blur";
+
   if (building) {
     // Calculate visible chickens: floor(current_chickens / 10)
     const visibleChickens = Math.floor(building.current_chickens / 10);
     const fillPercentage = (building.current_chickens / building.capacity) * 100;
 
     return (
-      <div className="relative z-10 h-full">
+      <div className={slotBorderClasses}>
         <div
           onClick={onBuildingClick}
           className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col"
@@ -134,7 +136,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   }
 
   return (
-    <div className="relative z-10 h-full">
+    <div className={slotBorderClasses}>
       <div 
         onClick={() => onBuyClick(position)}
         className="rounded-xl p-4 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 h-full overflow-visible"
