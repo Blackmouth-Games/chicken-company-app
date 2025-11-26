@@ -61,8 +61,6 @@ const Home = () => {
   const { playMusic, isMuted } = useAudio();
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const [userInteracted, setUserInteracted] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const scrollRafRef = useRef<number | null>(null);
 
   // Use layout editor hook
   const {
@@ -1092,73 +1090,35 @@ const Home = () => {
     setCorralDialogOpen(true);
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollRafRef.current) return;
-      scrollRafRef.current = window.requestAnimationFrame(() => {
-        setScrollY(window.scrollY);
-        scrollRafRef.current = null;
-      });
-    };
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollRafRef.current) {
-        cancelAnimationFrame(scrollRafRef.current);
-      }
-    };
-  }, []);
+  const firstRowHeight = 200; // altura fija de la imagen superior
 
-  const topBgOffset = scrollY * 0.3;
-  const grassOffset = scrollY * 0.6;
-
-  // Calculate the height of the first row (assuming 200px per row)
-  const firstRowHeight = 200; // Ajusta según el tamaño de tu imagen
-  
   return (
-    <div 
-      className="min-h-screen w-full relative overflow-x-hidden"
-      style={{ 
-        // Primera fila: tile horizontal solamente
-        backgroundImage: `url(${bgFarmRow1})`,
-        backgroundRepeat: 'repeat',
-        backgroundPosition: `0px ${topBgOffset}px`,
-        backgroundSize: 'auto 200px',
-        // Resto: tile horizontal y vertical
-        // Usamos múltiples backgrounds para superponer
-      }}
-    >
-      {/* Capa para el resto del background (después de la primera fila) */}
-      {/* Descomentar cuando agregues bg-farm-rest.png */}
-      {/* <div
-        className="absolute pointer-events-none"
-        style={{
-          backgroundImage: `url(${bgFarmRest})`,
-          backgroundRepeat: 'repeat',
-          backgroundPosition: '0 0',
-          backgroundSize: '200px 200px',
-          top: `${firstRowHeight}px`,
-          bottom: 0,
-          left: 0,
-          right: 0,
-        }}
-      /> */}
-      
-      {/* Fallback: usar bgFarm para el resto mientras no existe bg-farm-rest.png */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          backgroundImage: `url(${bgFarm})`,
-          backgroundRepeat: 'repeat',
-          backgroundPosition: `0px ${grassOffset}px`,
-          backgroundSize: '200px 200px',
-          top: 0,
-          bottom: 0,
-          left: '-15vw',
-          right: '-15vw',
-        }}
-      />
+    <div className="min-h-screen w-full relative overflow-x-hidden bg-[#b5e36c]">
+      {/* Fondo top + grass en el mismo plano */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div
+          style={{
+            backgroundImage: `url(${bgFarmRow1})`,
+            backgroundRepeat: "repeat-x",
+            backgroundPosition: "top left",
+            backgroundSize: "auto 200px",
+            height: `${firstRowHeight}px`,
+          }}
+        />
+        <div
+          style={{
+            backgroundImage: `url(${bgFarm})`,
+            backgroundRepeat: "repeat",
+            backgroundPosition: "top left",
+            backgroundSize: "200px 200px",
+            position: "absolute",
+            top: `${firstRowHeight}px`,
+            bottom: 0,
+            left: "-15vw",
+            right: "-15vw",
+          }}
+        />
+      </div>
       {/* Floating Header */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center justify-between p-4">
