@@ -25,8 +25,10 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   
   // For each building type, ensure we have fallbacks for missing levels
   for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
-    const structure = getBuildingStructure(buildingType);
-    const maxLevel = structure.maxLevel;
+    // Calculate max level from existing levels instead of calling getBuildingStructure
+    // to avoid potential circular dependency issues
+    const existingLevels = Object.keys(levels).map(Number).filter(n => !isNaN(n) && n > 0);
+    const maxLevel = existingLevels.length > 0 ? Math.max(...existingLevels) : 5;
     
     // Ensure all levels up to maxLevel exist
     for (let level = 1; level <= maxLevel; level++) {
@@ -56,8 +58,11 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   return merged;
 }
 
-export const BUILDING_IMAGES = mergeImages();
+// Initialize BUILDING_IMAGES
+const _BUILDING_IMAGES = mergeImages();
+export const BUILDING_IMAGES = _BUILDING_IMAGES;
 
+// Export type after BUILDING_IMAGES is initialized
 export type BuildingType = keyof typeof BUILDING_IMAGES;
 export type BuildingSkin = 'A' | 'B' | 'C';
 
