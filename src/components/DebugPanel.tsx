@@ -1001,9 +1001,9 @@ const DebugPanel = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs ?? 0} / {eggDebugInfo.maxEggs ?? 0}</p>
                       <p><strong>Base Interval:</strong> {eggDebugInfo.baseSpawnInterval ? (eggDebugInfo.baseSpawnInterval / 1000).toFixed(1) : 'N/A'}s</p>
-                      <p><strong>Total Corrals:</strong> {eggDebugInfo.totalCorrals || eggDebugInfo.corrals || 0}</p>
-                      <p><strong>With Belts:</strong> {eggDebugInfo.corralsWithBelts || 0}</p>
-                      <p><strong>Without Belts:</strong> {eggDebugInfo.corralsWithoutBelts || 0}</p>
+                      <p><strong>Total Coops:</strong> {eggDebugInfo.totalCoops || 0}</p>
+                      <p><strong>With Belts:</strong> {eggDebugInfo.coopsWithBelts || 0}</p>
+                      <p><strong>Without Belts:</strong> {eggDebugInfo.coopsWithoutBelts || 0}</p>
                       <p><strong>Ready to Spawn:</strong> <span className={(eggDebugInfo.readyToSpawn ?? 0) > 0 ? 'text-green-600 font-bold' : ''}>{eggDebugInfo.readyToSpawn || 0}</span></p>
                       <p><strong>Page Visible:</strong> {eggDebugInfo.pageVisible ? '✅ Yes' : '❌ No'}</p>
                     </div>

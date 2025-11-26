@@ -82,44 +82,61 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const coops = (buildings || []).filter(b => b && b.building_type === 'coop');
 
   // Find output belt for a coop by slot position
-  // First tries exact match, then finds an available output belt for this coop
+  // CRITICAL: Each coop MUST have its own dedicated belt - NO SHARING between coops
   const findOutputBelt = useCallback((slotPosition: number, coopId: string): Belt | null => {
-    // First, try exact slotPosition match
+    // Priority 1: Try exact slotPosition match (best case - belt was created for this exact position)
     const exactMatch = belts.find(b => b.isOutput && b.slotPosition === slotPosition);
     if (exactMatch) {
-      coopBeltMappingRef.current.set(coopId, exactMatch.id);
-      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) matched exact belt ${exactMatch.id}`);
-      return exactMatch;
+      // Check if this belt is already assigned to a different coop
+      const currentOwner = Array.from(coopBeltMappingRef.current.entries()).find(([_, beltId]) => beltId === exactMatch.id)?.[0];
+      if (currentOwner && currentOwner !== coopId) {
+        console.warn(`[useEggSystem] Belt ${exactMatch.id} (slotPosition ${slotPosition}) is already assigned to coop ${currentOwner}, but coop ${coopId} also needs it. This is a conflict.`);
+        // Don't steal the belt - each coop needs its own
+      } else {
+        coopBeltMappingRef.current.set(coopId, exactMatch.id);
+        console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) matched exact belt ${exactMatch.id}`);
+        return exactMatch;
+      }
     }
     
-    // Check if this coop already has a belt assigned
+    // Priority 2: Check if this coop already has a belt assigned (persistent assignment)
     const assignedBeltId = coopBeltMappingRef.current.get(coopId);
     if (assignedBeltId) {
       const assignedBelt = belts.find(b => b.id === assignedBeltId && b.isOutput);
       if (assignedBelt) {
-        console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) using previously assigned belt ${assignedBelt.id}`);
-        return assignedBelt;
+        // Verify this belt is not assigned to another coop
+        const otherOwner = Array.from(coopBeltMappingRef.current.entries()).find(([id, beltId]) => beltId === assignedBeltId && id !== coopId)?.[0];
+        if (!otherOwner) {
+          console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) using previously assigned dedicated belt ${assignedBelt.id}`);
+          return assignedBelt;
+        } else {
+          // Belt was reassigned to another coop, clear our mapping
+          console.warn(`[useEggSystem] Belt ${assignedBeltId} was reassigned to coop ${otherOwner}, clearing mapping for coop ${coopId}`);
+          coopBeltMappingRef.current.delete(coopId);
+        }
       } else {
         // Belt was removed, clear the mapping
         coopBeltMappingRef.current.delete(coopId);
       }
     }
     
-    // Find all available output belts (not assigned to other coops or without slotPosition)
+    // Priority 3: Find an unassigned output belt (only if no exact match exists)
+    // IMPORTANT: Each coop must have its own dedicated belt - NO SHARING
     const allOutputBelts = belts.filter(b => 
       b.isOutput && 
       !b.isDestiny
     );
     
     if (allOutputBelts.length === 0) {
-      console.warn(`[useEggSystem] No output belts available for coop ${coopId} (position ${slotPosition})`);
+      console.error(`[useEggSystem] ❌ No output belts available for coop ${coopId} (position ${slotPosition})`);
       return null;
     }
     
     // Get belts already assigned to other coops
     const assignedBeltIds = new Set(Array.from(coopBeltMappingRef.current.values()));
     
-    // Find an unassigned output belt, prioritizing those without slotPosition
+    // Find an unassigned output belt
+    // Prefer belts without slotPosition (they're more flexible)
     const unassignedBelt = allOutputBelts.find(b => 
       !assignedBeltIds.has(b.id) && 
       (b.slotPosition === undefined || b.slotPosition === null)
@@ -127,21 +144,14 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     
     if (unassignedBelt) {
       coopBeltMappingRef.current.set(coopId, unassignedBelt.id);
-      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) assigned to belt ${unassignedBelt.id} (slotPosition: ${unassignedBelt.slotPosition ?? 'none'})`);
+      console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) assigned to dedicated belt ${unassignedBelt.id} (slotPosition: ${unassignedBelt.slotPosition ?? 'none'})`);
       return unassignedBelt;
     }
     
-    // Last resort: if all belts are assigned, allow sharing (round-robin style)
-    // Use the belt that matches the slotPosition modulo number of available belts
-    if (allOutputBelts.length > 0) {
-      const index = Math.abs(slotPosition) % allOutputBelts.length;
-      const sharedBelt = allOutputBelts[index];
-      coopBeltMappingRef.current.set(coopId, sharedBelt.id);
-      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) sharing belt ${sharedBelt.id} (round-robin, index ${index})`);
-      return sharedBelt;
-    }
-    
-    console.error(`[useEggSystem] Failed to find output belt for coop ${coopId} (position ${slotPosition}). Total output belts: ${allOutputBelts.length}`);
+    // NO SHARING: If all belts are assigned, this coop cannot spawn eggs
+    // Each coop must have its own dedicated output belt
+    console.error(`[useEggSystem] ❌ Failed to find dedicated output belt for coop ${coopId} (position ${slotPosition}). All ${allOutputBelts.length} output belts are already assigned to other coops. This coop will NOT spawn eggs.`);
+    console.error(`[useEggSystem] Assigned belts:`, Array.from(coopBeltMappingRef.current.entries()).map(([id, beltId]) => `Coop ${id.slice(0, 8)}... -> Belt ${beltId}`));
     return null;
   }, [belts]);
 
@@ -885,7 +895,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       coopsWithoutBelts: spawnPoints.filter(sp => !sp.hasBelt).length,
       readyToSpawn: spawnPoints.filter(sp => sp.status === 'ready').length,
       pageVisible: isPageVisibleRef.current,
-      // Keep old format for backwards compatibility
+      // Keep old format for backwards compatibility (deprecated - use totalCoops instead)
+      totalCorrals: coops.length,
+      corrals: coops.length,
+      corralsWithBelts: spawnPoints.filter(sp => sp.hasBelt).length,
+      corralsWithoutBelts: spawnPoints.filter(sp => !sp.hasBelt).length,
       nextSpawns: spawnPoints.map(sp => ({
         coopId: sp.coopId,
         level: sp.level,
@@ -893,7 +907,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         timeUntilSpawn: sp.timeUntilSpawn,
         lastSpawn: sp.lastSpawn,
       })),
-      coops: coops.length,
     };
 
     return debugInfo;
