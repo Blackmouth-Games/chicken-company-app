@@ -301,8 +301,36 @@ export const SkinSelectorDialog = ({
             slots.push({ level, variant, skin: null, isLocal: false });
           }
         } else if (localImage) {
-          // Only local image exists - add as empty slot (not available)
-          slots.push({ level, variant, skin: null, isLocal: false });
+          // Only local image exists - create a virtual skin entry to show it
+          // Check if user owns this skin (by item_key matching the skinKey)
+          const isOwned = hasItem("skin", skinKey);
+          const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
+          
+          // Show ALL local images that exist, regardless of ownership or level
+          // This ensures users can see all available skins
+          // Create a virtual skin object for local images
+          const virtualSkin = {
+            id: `local-${skinKey}`,
+            skin_key: skinKey,
+            building_type: buildingType,
+            name: `${buildingType} Level ${level}${variant}`,
+            is_default: false,
+            rarity: 'common',
+          };
+          
+          // Always show local images - they exist as assets
+          slots.push({ level, variant, skin: virtualSkin as any, isLocal: true });
+          
+          // Debug log for local images
+          if (isOwned) {
+            console.log(`[SkinSelector] Found local image with owned skin: ${skinKey}`, {
+              level,
+              variant,
+              buildingLevel,
+              isOwned,
+              isCurrentLevel
+            });
+          }
         } else {
           // No skin exists - add empty slot to show future availability
           slots.push({ level, variant, skin: null, isLocal: false });
@@ -503,8 +531,9 @@ export const SkinSelectorDialog = ({
                                   : "border-muted/50 bg-muted/5 opacity-60"
                               }`}
                               onClick={() => {
-                                if (canSelect && skin && buildingId) {
-                                  handleSelectSkin(skin.skin_key);
+                                if (canSelect && (skin || isLocal) && buildingId) {
+                                  const skinKeyToUse = skin ? skin.skin_key : skinKey;
+                                  handleSelectSkin(skinKeyToUse);
                                 }
                               }}
                             >
