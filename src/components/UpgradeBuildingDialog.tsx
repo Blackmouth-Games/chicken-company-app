@@ -110,6 +110,16 @@ export const UpgradeBuildingDialog = ({
   const info = buildingInfo[buildingType] || buildingInfo.corral;
 
   const handleUpgrade = async () => {
+    // Prevent upgrade if already at max level (5)
+    if (currentLevel >= 5) {
+      toast({
+        title: "Nivel máximo alcanzado",
+        description: "Este edificio ya ha alcanzado el nivel máximo (5). No se puede mejorar más.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Validate required data (buildingId can be empty for warehouse/market that don't exist yet)
     if (!userId || !buildingType) {
       console.error("[UpgradeBuildingDialog] Missing required data:", {

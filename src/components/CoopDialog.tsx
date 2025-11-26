@@ -30,10 +30,12 @@ export const CoopDialog = ({ open, onOpenChange, userId, buildingId }: CoopDialo
   const { getSkinByKey } = useBuildingSkins('coop');
 
   const coop = buildings.find(b => b.id === buildingId);
+  const currentLevel = coop?.level ?? 1;
   const nextLevel = coop ? coop.level + 1 : 2;
   const nextLevelPrice = prices.find(p => p.building_type === 'coop' && p.level === nextLevel);
   const upgradePrice = nextLevelPrice?.price_ton || 0;
   const nextLevelCapacity = nextLevelPrice?.capacity || 0;
+  const canUpgrade = currentLevel < 5 && nextLevelPrice;
 
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
@@ -260,55 +262,66 @@ export const CoopDialog = ({ open, onOpenChange, userId, buildingId }: CoopDialo
           </div>
 
           {/* Upgrade Section */}
-          <div className="bg-muted/50 rounded-lg p-4 border border-border space-y-3">
-            <div className="text-sm font-medium text-green-900">Mejorar edificio</div>
-            
-            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
-                  className="text-green-600 hover:text-green-800 transition-colors"
-                  onClick={() => handleInfoClick(
-                    "Nivel",
-                    "El nivel del coop determina su capacidad máxima. Al subir de nivel, el coop puede albergar más gallinas, lo que aumenta tus ganancias potenciales."
-                  )}
-                >
-                  <Info className="h-4 w-4" />
-                </button>
-                <span className="text-xs md:text-sm text-green-900 font-medium">Nivel:</span>
+          {canUpgrade && (
+            <div className="bg-muted/50 rounded-lg p-4 border border-border space-y-3">
+              <div className="text-sm font-medium text-green-900">Mejorar edificio</div>
+              
+              <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    className="text-green-600 hover:text-green-800 transition-colors"
+                    onClick={() => handleInfoClick(
+                      "Nivel",
+                      "El nivel del coop determina su capacidad máxima. Al subir de nivel, el coop puede albergar más gallinas, lo que aumenta tus ganancias potenciales."
+                    )}
+                  >
+                    <Info className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs md:text-sm text-green-900 font-medium">Nivel:</span>
+                </div>
+                <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                  {coop.level} → {nextLevel}
+                </span>
               </div>
-              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
-                {coop.level} → {nextLevel}
-              </span>
-            </div>
 
-            <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2">
-                <button 
-                  type="button" 
-                  className="text-green-600 hover:text-green-800 transition-colors"
-                  onClick={() => handleInfoClick(
-                    "Max. Capacity",
-                    `La capacidad máxima aumentará de ${coop.capacity} a ${nextLevelCapacity} gallinas al subir de nivel. Esto te permitirá tener más gallinas y generar más ganancias.`
-                  )}
-                >
-                  <Info className="h-4 w-4" />
-                </button>
-                <span className="text-xs md:text-sm text-green-900 font-medium">Max. Capacity:</span>
+              <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    className="text-green-600 hover:text-green-800 transition-colors"
+                    onClick={() => handleInfoClick(
+                      "Max. Capacity",
+                      `La capacidad máxima aumentará de ${coop.capacity} a ${nextLevelCapacity} gallinas al subir de nivel. Esto te permitirá tener más gallinas y generar más ganancias.`
+                    )}
+                  >
+                    <Info className="h-4 w-4" />
+                  </button>
+                  <span className="text-xs md:text-sm text-green-900 font-medium">Max. Capacity:</span>
+                </div>
+                <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
+                  {coop.capacity} → {nextLevelCapacity}
+                </span>
               </div>
-              <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
-                {coop.capacity} → {nextLevelCapacity}
-              </span>
-            </div>
 
-            <Button 
-              onClick={() => setShowUpgrade(true)}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base"
-              size="lg"
-            >
-              <span className="font-bold">⬆️ Subir de nivel</span>
-            </Button>
-          </div>
+              <Button 
+                onClick={() => setShowUpgrade(true)}
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl text-sm md:text-base"
+                size="lg"
+              >
+                <span className="font-bold">⬆️ Subir de nivel</span>
+              </Button>
+            </div>
+          )}
+          
+          {!canUpgrade && currentLevel >= 5 && (
+            <div className="bg-muted/50 rounded-lg p-4 border border-border">
+              <div className="text-sm font-medium text-green-900 mb-2">Nivel máximo alcanzado</div>
+              <p className="text-xs text-muted-foreground">
+                Este coop ha alcanzado el nivel máximo (5). No se puede mejorar más.
+              </p>
+            </div>
+          )}
 
           {/* Withdraw Section */}
           <div className="flex gap-2">
