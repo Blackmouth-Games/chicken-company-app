@@ -91,9 +91,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                   style={{ width: `${fillPercentage}%` }}
                 />
               </div>
-              <div className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] bg-black/20 px-2 py-0.5 rounded-full w-fit">
-                🐔 {building.current_chickens}
-              </div>
+            </div>
+          </div>
+
+          {/* Chicken counter - top right */}
+          <div className="absolute top-0 right-0 z-50 p-1 md:p-1.5">
+            <div className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] bg-black/20 px-2 py-0.5 rounded-full">
+              🐔 {building.current_chickens}
             </div>
           </div>
 
