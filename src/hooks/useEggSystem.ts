@@ -11,7 +11,7 @@ interface Egg {
   progress: number; // 0 to 1, progress along current belt
   path: string[]; // Array of belt IDs representing the path
   pathIndex: number; // Current index in the path
-  corralId: string; // ID of the corral that emitted this egg
+  coopId: string; // ID of the coop that emitted this egg
   entryDirection?: Direction; // Direction from which egg entered current belt (for turn belts)
 }
 
@@ -24,7 +24,7 @@ interface Belt {
   isOutput?: boolean;
   isDestiny?: boolean;
   slotPosition?: number; // Position index of the slot this output belongs to
-  corralId?: string; // Deprecated: use slotPosition instead
+  coopId?: string; // Deprecated: use slotPosition instead
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
@@ -32,7 +32,7 @@ const BASE_EGG_SPAWN_INTERVAL = 5000; // Base spawn interval (5 seconds) for lev
 const MAX_EGGS = 50; // Maximum number of eggs in the system
 const EGG_MAX_AGE = 60000; // Maximum age for an egg (60 seconds) before removal
 
-// Calculate spawn interval based on corral level (higher level = faster spawn)
+// Calculate spawn interval based on coop level (higher level = faster spawn)
 const getEggSpawnInterval = (level: number): number => {
   // Level 1: 5s, Level 2: 4s, Level 3: 3s, Level 4: 2s, Level 5: 1.5s
   return Math.max(1500, BASE_EGG_SPAWN_INTERVAL - (level - 1) * 1000);
@@ -76,37 +76,37 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
   const eggCreationTimeRef = useRef<Map<string, number>>(new Map());
   const isPageVisibleRef = useRef(true);
-  const corralBeltMappingRef = useRef<Map<string, string>>(new Map()); // Maps corralId to beltId
+  const coopBeltMappingRef = useRef<Map<string, string>>(new Map()); // Maps coopId to beltId
 
-  // Get corrals from buildings - handle undefined/null
-  const corrals = (buildings || []).filter(b => b && b.building_type === 'corral');
+  // Get coops from buildings - handle undefined/null
+  const coops = (buildings || []).filter(b => b && b.building_type === 'coop');
 
-  // Find output belt for a corral by slot position
-  // First tries exact match, then finds an available output belt for this corral
-  const findOutputBelt = useCallback((slotPosition: number, corralId: string): Belt | null => {
+  // Find output belt for a coop by slot position
+  // First tries exact match, then finds an available output belt for this coop
+  const findOutputBelt = useCallback((slotPosition: number, coopId: string): Belt | null => {
     // First, try exact slotPosition match
     const exactMatch = belts.find(b => b.isOutput && b.slotPosition === slotPosition);
     if (exactMatch) {
-      corralBeltMappingRef.current.set(corralId, exactMatch.id);
+      coopBeltMappingRef.current.set(coopId, exactMatch.id);
       return exactMatch;
     }
     
-    // Check if this corral already has a belt assigned
-    const assignedBeltId = corralBeltMappingRef.current.get(corralId);
+    // Check if this coop already has a belt assigned
+    const assignedBeltId = coopBeltMappingRef.current.get(coopId);
     if (assignedBeltId) {
       const assignedBelt = belts.find(b => b.id === assignedBeltId && b.isOutput);
       if (assignedBelt) return assignedBelt;
     }
     
-    // Find all available output belts (not assigned to other corrals or without slotPosition)
+    // Find all available output belts (not assigned to other coops or without slotPosition)
     const allOutputBelts = belts.filter(b => 
       b.isOutput && 
       !b.isDestiny &&
       !b.isTransport
     );
     
-    // Get belts already assigned to other corrals
-    const assignedBeltIds = new Set(Array.from(corralBeltMappingRef.current.values()));
+    // Get belts already assigned to other coops
+    const assignedBeltIds = new Set(Array.from(coopBeltMappingRef.current.values()));
     
     // Find an unassigned output belt, prioritizing those without slotPosition
     const unassignedBelt = allOutputBelts.find(b => 
@@ -115,7 +115,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     ) || allOutputBelts.find(b => !assignedBeltIds.has(b.id));
     
     if (unassignedBelt) {
-      corralBeltMappingRef.current.set(corralId, unassignedBelt.id);
+      coopBeltMappingRef.current.set(coopId, unassignedBelt.id);
       return unassignedBelt;
     }
     
@@ -124,7 +124,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     if (allOutputBelts.length > 0) {
       const index = slotPosition % allOutputBelts.length;
       const sharedBelt = allOutputBelts[index];
-      corralBeltMappingRef.current.set(corralId, sharedBelt.id);
+      coopBeltMappingRef.current.set(coopId, sharedBelt.id);
       return sharedBelt;
     }
     
@@ -344,11 +344,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     return path;
   }, [findNextBelt]);
 
-  // Spawn egg from a corral
-  const spawnEgg = useCallback((corralId: string, slotPosition: number) => {
-    const outputBelt = findOutputBelt(slotPosition, corralId);
+  // Spawn egg from a coop
+  const spawnEgg = useCallback((coopId: string, slotPosition: number) => {
+    const outputBelt = findOutputBelt(slotPosition, coopId);
     if (!outputBelt) {
-      console.warn(`[useEggSystem] No output belt found for corral ${corralId} at position ${slotPosition}`);
+      console.warn(`[useEggSystem] No output belt found for coop ${coopId} at position ${slotPosition}`);
       return;
     }
     
@@ -373,7 +373,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         progress: 0,
         path,
         pathIndex: 0,
-        corralId,
+        coopId,
         entryDirection: outputBelt.direction, // Initial entry direction is the belt's direction
       };
       
@@ -659,7 +659,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     };
   }, []);
 
-  // Spawn eggs from corrals periodically with async delays
+  // Spawn eggs from coops periodically with async delays
   useEffect(() => {
     // Don't spawn if no corrals
     if (corrals.length === 0) return;
@@ -697,16 +697,16 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     // Set up individual timers for each corral to make spawning truly async
     const timers: Map<string, NodeJS.Timeout> = new Map();
     
-    corrals.forEach(corral => {
-      const slotPosition = corral.position_index;
+    coops.forEach(coop => {
+      const slotPosition = coop.position_index;
       if (slotPosition === undefined || slotPosition === null) return;
       
-      const initialDelay = corralInitialDelays.get(corral.id) || 0;
+      const initialDelay = coopInitialDelays.get(coop.id) || 0;
       
       const scheduleNextSpawn = () => {
-        const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
-        // Clear any existing timer for this corral
-        const existingTimer = timers.get(corral.id);
+        const lastSpawn = lastSpawnTimeRef.current.get(coop.id);
+        // Clear any existing timer for this coop
+        const existingTimer = timers.get(coop.id);
         if (existingTimer) {
           clearTimeout(existingTimer);
         }
@@ -717,20 +717,20 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           const checkTimer = setTimeout(() => {
             scheduleNextSpawn();
           }, 1000);
-          timers.set(corral.id, checkTimer);
+          timers.set(coop.id, checkTimer);
           return;
         }
         
         const now = Date.now();
-        // Get spawn interval based on corral level
-        const spawnInterval = getEggSpawnInterval(corral.level || 1);
+        // Get spawn interval based on coop level
+        const spawnInterval = getEggSpawnInterval(coop.level || 1);
         let delay: number;
         
         if (lastSpawn === undefined) {
           // First spawn - use initial delay
           delay = Math.max(0, initialDelay);
         } else {
-          // Subsequent spawns - calculate time until next spawn based on corral level
+          // Subsequent spawns - calculate time until next spawn based on coop level
           const timeSinceLastSpawn = now - lastSpawn;
           delay = Math.max(0, spawnInterval - timeSinceLastSpawn);
         }
@@ -746,17 +746,17 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             return;
           }
           
-          spawnEgg(corral.id, slotPosition);
-          lastSpawnTimeRef.current.set(corral.id, Date.now());
+          spawnEgg(coop.id, slotPosition);
+          lastSpawnTimeRef.current.set(coop.id, Date.now());
           
           // Schedule next spawn
           scheduleNextSpawn();
         }, totalDelay);
         
-        timers.set(corral.id, timer);
+        timers.set(coop.id, timer);
       };
       
-      // Start scheduling for this corral
+      // Start scheduling for this coop
       scheduleNextSpawn();
     });
     
@@ -765,7 +765,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       timers.forEach(timer => clearTimeout(timer));
       timers.clear();
     };
-  }, [corrals, belts, spawnEgg]);
+  }, [coops, belts, spawnEgg]);
 
   // Animation loop
   useEffect(() => {
@@ -787,7 +787,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const getDebugInfo = useCallback(() => {
     const now = Date.now();
     const spawnPoints: Array<{
-      corralId: string;
+      coopId: string;
       positionIndex: number;
       level: number;
       spawnInterval: number;
@@ -800,17 +800,17 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       status: 'ready' | 'waiting' | 'no-belt';
     }> = [];
 
-    corrals.forEach(corral => {
-      const slotPosition = corral.position_index;
-      const lastSpawn = lastSpawnTimeRef.current.get(corral.id);
-      const spawnInterval = getEggSpawnInterval(corral.level || 1);
+    coops.forEach(coop => {
+      const slotPosition = coop.position_index;
+      const lastSpawn = lastSpawnTimeRef.current.get(coop.id);
+      const spawnInterval = getEggSpawnInterval(coop.level || 1);
       
       // Find assigned belt
-      const assignedBeltId = corralBeltMappingRef.current.get(corral.id);
+      const assignedBeltId = coopBeltMappingRef.current.get(coop.id);
       const assignedBelt = assignedBeltId ? belts.find(b => b.id === assignedBeltId) : null;
       
       // Try to find output belt
-      const outputBelt = findOutputBelt(slotPosition, corral.id);
+      const outputBelt = findOutputBelt(slotPosition, coop.id);
       
       let timeUntilSpawn = 0;
       if (lastSpawn === undefined) {
@@ -831,9 +831,9 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       }
 
       spawnPoints.push({
-        corralId: corral.id,
+        coopId: coop.id,
         positionIndex: slotPosition,
-        level: corral.level || 1,
+        level: coop.level || 1,
         spawnInterval,
         timeUntilSpawn,
         lastSpawn,
@@ -860,24 +860,24 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       maxEggs: MAX_EGGS,
       baseSpawnInterval: BASE_EGG_SPAWN_INTERVAL,
       spawnPoints,
-      totalCorrals: corrals.length,
-      corralsWithBelts: spawnPoints.filter(sp => sp.hasBelt).length,
-      corralsWithoutBelts: spawnPoints.filter(sp => !sp.hasBelt).length,
+      totalCoops: coops.length,
+      coopsWithBelts: spawnPoints.filter(sp => sp.hasBelt).length,
+      coopsWithoutBelts: spawnPoints.filter(sp => !sp.hasBelt).length,
       readyToSpawn: spawnPoints.filter(sp => sp.status === 'ready').length,
       pageVisible: isPageVisibleRef.current,
       // Keep old format for backwards compatibility
       nextSpawns: spawnPoints.map(sp => ({
-        corralId: sp.corralId,
+        coopId: sp.coopId,
         level: sp.level,
         spawnInterval: sp.spawnInterval,
         timeUntilSpawn: sp.timeUntilSpawn,
         lastSpawn: sp.lastSpawn,
       })),
-      corrals: corrals.length,
+      coops: coops.length,
     };
 
     return debugInfo;
-  }, [eggs, corrals, belts, findOutputBelt]);
+  }, [eggs, coops, belts, findOutputBelt]);
 
   return { eggs, getDebugInfo };
 };

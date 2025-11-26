@@ -725,7 +725,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      building_type: "corral" | "market" | "warehouse"
+      building_type: "coop" | "market" | "warehouse"
       metric_type:
         | "new_guest_users"
         | "new_registered_users"
@@ -865,7 +865,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      building_type: ["corral", "market", "warehouse"],
+      building_type: ["coop", "market", "warehouse"],
       metric_type: [
         "new_guest_users",
         "new_registered_users",

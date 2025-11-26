@@ -45,7 +45,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   // Depend on building.selected_skin and building.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!building) return null;
-    // BUILDING_IMAGES uses 'corral' as the key (coop files are mapped to corral)
+    // BUILDING_IMAGES uses 'coop' as the key
     const buildingType = building.building_type;
     if (!normalizedType) return null;
     return getBuildingDisplay(
@@ -124,7 +124,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               ))}
             </div>
             
-            {/* Edit controls inside the corral */}
+            {/* Edit controls inside the coop */}
             {isEditMode && editControls && (
               <div className="mt-2 pt-2 border-t border-green-300 relative z-[100]">
                 {editControls}

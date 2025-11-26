@@ -26,7 +26,7 @@ import { PurchaseBuildingDialog } from "@/components/PurchaseBuildingDialog";
 import { WarehouseDialog } from "@/components/WarehouseDialog";
 import { MarketDialog } from "@/components/MarketDialog";
 import { HouseDialog } from "@/components/HouseDialog";
-import { CorralDialog } from "@/components/CorralDialog";
+import { CoopDialog } from "@/components/CoopDialog";
 import { ConveyorBelt } from "@/components/ConveyorBelt";
 import { Road } from "@/components/Road";
 import { SelectionToolbar } from "@/components/SelectionToolbar";
@@ -55,7 +55,7 @@ const Home = () => {
   const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [houseOpen, setHouseOpen] = useState(false);
-  const [corralDialogOpen, setCorralDialogOpen] = useState(false);
+  const [coopDialogOpen, setCoopDialogOpen] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
   const { toast } = useToast();
   const { playMusic, isMuted } = useAudio();
@@ -89,7 +89,7 @@ const Home = () => {
     handleRoadClick,
     handleResizeStart,
     updateBuildingLayout,
-    updateCorralColumn,
+    updateCoopColumn,
     addBelt,
     removeBelt,
     updateBelt,
@@ -166,7 +166,7 @@ const Home = () => {
   // Filter buildings to only count coops (slots are only for coops)
   // Use useMemo to ensure it updates when buildings change
   const coops = useMemo(() => {
-    return buildings.filter(b => b.building_type === 'corral');
+    return buildings.filter(b => b.building_type === 'coop');
   }, [buildings]);
   const occupiedSlots = coops.length;
   
@@ -246,8 +246,8 @@ const Home = () => {
   const [paintMode, setPaintMode] = useState(false);
 
   const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
-  const [showLeftCorralSettings, setShowLeftCorralSettings] = useState(false);
-  const [showRightCorralSettings, setShowRightCorralSettings] = useState(false);
+  const [showLeftCoopSettings, setShowLeftCoopSettings] = useState(false);
+  const [showRightCoopSettings, setShowRightCoopSettings] = useState(false);
   const [hoveredCell, setHoveredCell] = useState<{ col: number; row: number } | null>(null);
 
   // Helper functions for belt preview
@@ -343,11 +343,11 @@ const Home = () => {
     const handleHideRoadsChange = (event: CustomEvent<boolean>) => {
       setHideRoads(event.detail);
     };
-    const handleLeftCorralSettingsChange = (event: CustomEvent<boolean>) => {
-      setShowLeftCorralSettings(event.detail);
+    const handleLeftCoopSettingsChange = (event: CustomEvent<boolean>) => {
+      setShowLeftCoopSettings(event.detail);
     };
-    const handleRightCorralSettingsChange = (event: CustomEvent<boolean>) => {
-      setShowRightCorralSettings(event.detail);
+    const handleRightCoopSettingsChange = (event: CustomEvent<boolean>) => {
+      setShowRightCoopSettings(event.detail);
     };
     const handleShowSlotCorrelationChange = (event: CustomEvent<boolean>) => {
       setShowSlotCorrelation(event.detail);
@@ -356,15 +356,15 @@ const Home = () => {
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
     window.addEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
     window.addEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
-    window.addEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
-    window.addEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
+    window.addEventListener('leftCoopSettingsChange', handleLeftCoopSettingsChange as EventListener);
+    window.addEventListener('rightCoopSettingsChange', handleRightCoopSettingsChange as EventListener);
     window.addEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
       window.removeEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
       window.removeEventListener('hideRoadsChange', handleHideRoadsChange as EventListener);
-      window.removeEventListener('leftCorralSettingsChange', handleLeftCorralSettingsChange as EventListener);
-      window.removeEventListener('rightCorralSettingsChange', handleRightCorralSettingsChange as EventListener);
+      window.removeEventListener('leftCoopSettingsChange', handleLeftCoopSettingsChange as EventListener);
+      window.removeEventListener('rightCoopSettingsChange', handleRightCoopSettingsChange as EventListener);
       window.removeEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
     };
   }, []);
@@ -545,7 +545,7 @@ const Home = () => {
     }
   };
 
-  // Ensure default buildings (warehouse, market, and one corral) exist
+  // Ensure default buildings (warehouse, market, and one coop) exist
   const ensureDefaultBuildings = async (profileId: string) => {
     try {
       // Get existing buildings
@@ -557,11 +557,11 @@ const Home = () => {
       const existingTypes = (existingBuildings || []).map(b => b.building_type);
       const needsWarehouse = !existingTypes.includes('warehouse');
       const needsMarket = !existingTypes.includes('market');
-      // Check if user has at least one corral (limit: 1 default corral)
-      const existingCorrals = (existingBuildings || []).filter(b => b.building_type === 'corral');
-      const needsCorral = existingCorrals.length === 0;
+      // Check if user has at least one coop (limit: 1 default coop)
+      const existingCoops = (existingBuildings || []).filter(b => b.building_type === 'coop');
+      const needsCoop = existingCoops.length === 0;
 
-      if (!needsWarehouse && !needsMarket && !needsCorral) {
+      if (!needsWarehouse && !needsMarket && !needsCoop) {
         return; // All default buildings exist, nothing to do
       }
 
@@ -569,7 +569,7 @@ const Home = () => {
       const buildingTypesToCheck: string[] = [];
       if (needsWarehouse) buildingTypesToCheck.push('warehouse');
       if (needsMarket) buildingTypesToCheck.push('market');
-      if (needsCorral) buildingTypesToCheck.push('corral');
+      if (needsCoop) buildingTypesToCheck.push('coop');
 
       const { data: prices } = await supabase
         .from("building_prices")
@@ -579,7 +579,7 @@ const Home = () => {
 
       const warehousePrice = prices?.find(p => p.building_type === 'warehouse');
       const marketPrice = prices?.find(p => p.building_type === 'market');
-      const corralPrice = prices?.find(p => p.building_type === 'corral');
+      const coopPrice = prices?.find(p => p.building_type === 'coop');
 
       const buildingsToCreate: any[] = [];
 
@@ -605,14 +605,14 @@ const Home = () => {
         });
       }
 
-      // Create one corral (coop) of level 1 if user has none (limit: 1)
-      if (needsCorral) {
+      // Create one coop of level 1 if user has none (limit: 1)
+      if (needsCoop) {
         buildingsToCreate.push({
           user_id: profileId,
-          building_type: 'corral',
+          building_type: 'coop',
           level: 1,
-          position_index: 0, // First position for the default corral
-          capacity: corralPrice?.capacity || 50, // Default capacity if price not found
+          position_index: 0, // First position for the default coop
+          capacity: coopPrice?.capacity || 50, // Default capacity if price not found
           current_chickens: 0,
         });
       }
@@ -654,17 +654,17 @@ const Home = () => {
         throw error;
       }
       
-      // Sort buildings: corrals by level (desc), then others by position
+      // Sort buildings: coops by level (desc), then others by position
       const sorted = (data || []).sort((a, b) => {
-        const isACorral = a.building_type === 'corral';
-        const isBCorral = b.building_type === 'corral';
+        const isACoop = a.building_type === 'coop';
+        const isBCoop = b.building_type === 'coop';
         
-        // Corrals first
-        if (isACorral && !isBCorral) return -1;
-        if (!isACorral && isBCorral) return 1;
+        // Coops first
+        if (isACoop && !isBCoop) return -1;
+        if (!isACoop && isBCoop) return 1;
         
-        // Both corrals: sort by level descending
-        if (isACorral && isBCorral) {
+        // Both coops: sort by level descending
+        if (isACoop && isBCoop) {
           return b.level - a.level;
         }
         
@@ -723,21 +723,21 @@ const Home = () => {
   // Generate automatic belts: one belt per coop pointing to center, plus central vertical line
   // IMPORTANT: This generates belts for ALL slots, even empty ones
   // Belts are created automatically when a new coop is purchased
-  const generateCorralBelts = () => {
+  const generateCoopBelts = () => {
     const autoBelts: any[] = [];
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
-    const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
-    const rightStartRow = layoutConfig.rightCorrals.startRow ?? 1;
-    const leftSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCorrals.rowSpan ?? 1) * 1.3));
-    const rightSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCorrals.rowSpan ?? 1) * 1.3));
-    const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
-    const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
+    const leftStartRow = layoutConfig.leftCoops.startRow ?? 1;
+    const rightStartRow = layoutConfig.rightCoops.startRow ?? 1;
+    const leftSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCoops.rowSpan ?? 1) * 1.3));
+    const rightSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCoops.rowSpan ?? 1) * 1.3));
+    const leftColumns = parseGridNotation(layoutConfig.leftCoops.gridColumn);
+    const rightColumns = parseGridNotation(layoutConfig.rightCoops.gridColumn);
     
-    // Calculate center column: there are 3 columns between leftCorrals and rightCorrals
-    // leftCorrals ends at leftColumns.end, rightCorrals starts at rightColumns.start
+    // Calculate center column: there are 3 columns between leftCoops and rightCoops
+    // leftCoops ends at leftColumns.end, rightCoops starts at rightColumns.start
     // The 3 columns are: leftColumns.end, leftColumns.end+1, leftColumns.end+2
     // Center column is the middle one: leftColumns.end + 1
-    const centerCol = leftColumns.end + 1; // Center of the 3 columns between corrals
+    const centerCol = leftColumns.end + 1; // Center of the 3 columns between coops
     
     // Calculate first and last row of slots
     const firstSlotRow = Math.min(leftStartRow, rightStartRow);
@@ -815,13 +815,13 @@ const Home = () => {
       }
     }
     
-    // Generate ONE belt per corral pointing to center
-    // Left corrals: belts point east (towards center)
+    // Generate ONE belt per coop pointing to center
+    // Left coops: belts point east (towards center)
     // Position belt at the second row of the slot (or first if there's only one row)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = leftStartRow + i * (leftSlotRowSpan + 1);
       const slotCenterRow = leftSlotRowSpan > 1 ? baseRow + 1 : baseRow;
-      // Belt column: right edge of left corral (pointing east towards center)
+      // Belt column: right edge of left coop (pointing east towards center)
       const beltCol = leftColumns.end;
       
       // Generate belt regardless of getTotalRows() limit - belts can be outside visible area
@@ -873,13 +873,13 @@ const Home = () => {
       }
     }
     
-    // Right corrals: belts point west (towards center)
+    // Right coops: belts point west (towards center)
     // Position belt at the second row of the slot (or first if there's only one row)
-    // Belts should be in the column just to the left of right corral start (rightColumns.start - 1)
+    // Belts should be in the column just to the left of right coop start (rightColumns.start - 1)
     for (let i = 0; i < slotsPerSide; i++) {
       const baseRow = rightStartRow + i * (rightSlotRowSpan + 1);
       const slotCenterRow = rightSlotRowSpan > 1 ? baseRow + 1 : baseRow;
-      // Belt column: one column to the left of right corral start (rightColumns.start - 1)
+      // Belt column: one column to the left of right coop start (rightColumns.start - 1)
       // This is the column just to the left of where they currently are
       const beltCol = rightColumns.start - 1;
       
@@ -1004,10 +1004,10 @@ const Home = () => {
     return autoBelts;
   };
 
-  // Combine manual belts with auto-generated corral belts
-  const autoCorralBelts = generateCorralBelts();
+  // Combine manual belts with auto-generated coop belts
+  const autoCoopBelts = generateCoopBelts();
   const manualBelts = layoutConfig.belts || [];
-  const allBelts = [...autoCorralBelts, ...manualBelts];
+  const allBelts = [...autoCoopBelts, ...manualBelts];
   const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
@@ -1043,12 +1043,12 @@ const Home = () => {
 
   // Debug: Send belt information to DebugPanel
   useEffect(() => {
-    const leftBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-left-'));
-    const rightBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-right-'));
-    const centerBelts = autoCorralBelts.filter(b => b.id.startsWith('belt-auto-center-'));
+    const leftBelts = autoCoopBelts.filter(b => b.id.startsWith('belt-auto-left-'));
+    const rightBelts = autoCoopBelts.filter(b => b.id.startsWith('belt-auto-right-'));
+    const centerBelts = autoCoopBelts.filter(b => b.id.startsWith('belt-auto-center-'));
     
     const beltDebugInfo = {
-      totalAutoBelts: autoCorralBelts.length,
+      totalAutoBelts: autoCoopBelts.length,
       leftBelts: {
         count: leftBelts.length,
         belts: leftBelts.map(b => ({ id: b.id, row: b.gridRow, col: b.gridColumn, direction: b.direction }))
@@ -1063,10 +1063,10 @@ const Home = () => {
         lastRow: centerBelts.length > 0 ? centerBelts[centerBelts.length - 1].gridRow : null
       },
       config: {
-        leftCorralsStartRow: layoutConfig.leftCorrals.startRow,
-        leftCorralsRowSpan: layoutConfig.leftCorrals.rowSpan,
-        rightCorralsStartRow: layoutConfig.rightCorrals.startRow,
-        rightCorralsRowSpan: layoutConfig.rightCorrals.rowSpan,
+        leftCoopsStartRow: layoutConfig.leftCoops.startRow,
+        leftCoopsRowSpan: layoutConfig.leftCoops.rowSpan,
+        rightCoopsStartRow: layoutConfig.rightCoops.startRow,
+        rightCoopsRowSpan: layoutConfig.rightCoops.rowSpan,
         slotsPerSide: Math.ceil(TOTAL_SLOTS / 2),
         totalSlots: TOTAL_SLOTS
       },
@@ -1076,7 +1076,7 @@ const Home = () => {
     
     // Send to DebugPanel via custom event
     window.dispatchEvent(new CustomEvent('beltDebugInfo', { detail: beltDebugInfo }));
-  }, [autoCorralBelts, allBelts, manualBelts, layoutConfig.leftCorrals.startRow, layoutConfig.rightCorrals.startRow, layoutConfig.leftCorrals.rowSpan, layoutConfig.rightCorrals.rowSpan, TOTAL_SLOTS]);
+  }, [autoCoopBelts, allBelts, manualBelts, layoutConfig.leftCoops.startRow, layoutConfig.rightCoops.startRow, layoutConfig.leftCoops.rowSpan, layoutConfig.rightCoops.rowSpan, TOTAL_SLOTS]);
 
   const handleUpgradeComplete = () => {
     if (userId) {
@@ -1087,7 +1087,7 @@ const Home = () => {
 
   const handleBuildingClickAction = (buildingId: string) => {
     setSelectedBuildingId(buildingId);
-    setCorralDialogOpen(true);
+    setCoopDialogOpen(true);
   };
 
   const firstRowHeight = 200; // altura fija de la imagen superior
@@ -1150,7 +1150,7 @@ const Home = () => {
       </div>
 
       <div className="relative z-10 p-4 md:p-6 pt-20 md:pt-24">
-        {/* Grid Container - Fine grid with buildings on top, corrals vertical below */}
+        {/* Grid Container - Fine grid with buildings on top, coops vertical below */}
         <div 
           ref={gridRef}
           className="w-full mx-auto relative -mx-4 md:-mx-6" 
@@ -1822,7 +1822,7 @@ const Home = () => {
               );
             })}
 
-            {/* CONVEYOR BELTS - Auto-generated corral belts + manual belts - Render first so they appear behind buildings */}
+            {/* CONVEYOR BELTS - Auto-generated coop belts + manual belts - Render first so they appear behind buildings */}
             {!hideBelts && allBelts.map((belt, idx) => {
               const isBeltDragging = draggedBelt === belt.id;
               // Auto-generated belts (belt-auto-*) are not editable
@@ -1899,20 +1899,20 @@ const Home = () => {
               );
             })}
 
-            {/* LEFT CORRALS */}
+            {/* LEFT COOPS */}
             {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2;
               const building = getBuildingAtPosition(position);
-              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCorrals.rowSpan ?? 1) * 1.3));
+              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCoops.rowSpan ?? 1) * 1.3));
               // Add 1 cell of vertical space between each slot
-              const baseRow = (layoutConfig.leftCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
+              const baseRow = (layoutConfig.leftCoops.startRow ?? 1) + index * (slotRowSpan + 1);
               
               return (
                 <div 
                   key={`left-${position}`}
                   className="relative group overflow-visible"
                   style={{ 
-                    gridColumn: layoutConfig.leftCorrals.gridColumn,
+                    gridColumn: layoutConfig.leftCoops.gridColumn,
                     gridRow: `${baseRow} / ${baseRow + slotRowSpan}`,
                   }}
                   data-slot={`left-${position}`}
@@ -1927,21 +1927,21 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={true}
                     isEditMode={isEditMode}
-                    editControls={isEditMode && showLeftCorralSettings && index === 0 ? (
+                    editControls={isEditMode && showLeftCoopSettings && index === 0 ? (
                       <div className="bg-background/95 backdrop-blur-sm border-2 border-yellow-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
                         top: '50%', 
                         left: '50%', 
                         transform: 'translate(-50%, -50%)',
                         pointerEvents: 'auto'
                       }}>
-                        <div className="text-sm font-bold text-yellow-700 mb-2">Corrales Izquierdos</div>
+                        <div className="text-sm font-bold text-yellow-700 mb-2">Coops Izquierdos</div>
                         <div className="flex flex-col gap-2 text-xs">
                           <label className="flex flex-col gap-1">
                             <span className="block text-muted-foreground font-medium">Columns:</span>
                             <input
                               type="text"
-                              value={layoutConfig.leftCorrals.gridColumn}
-                              onChange={(e) => updateCorralColumn('left', { gridColumn: e.target.value })}
+                              value={layoutConfig.leftCoops.gridColumn}
+                              onChange={(e) => updateCoopColumn('left', { gridColumn: e.target.value })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1 / 7"
                               onClick={(e) => e.stopPropagation()}
@@ -1951,8 +1951,8 @@ const Home = () => {
                             <span className="block text-muted-foreground font-medium">Start Row:</span>
                             <input
                               type="number"
-                              value={layoutConfig.leftCorrals.startRow}
-                              onChange={(e) => updateCorralColumn('left', { startRow: parseInt(e.target.value) || 4 })}
+                              value={layoutConfig.leftCoops.startRow}
+                              onChange={(e) => updateCoopColumn('left', { startRow: parseInt(e.target.value) || 4 })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="4"
                               onClick={(e) => e.stopPropagation()}
@@ -1963,8 +1963,8 @@ const Home = () => {
                             <input
                               type="number"
                               min={1}
-                              value={layoutConfig.leftCorrals.rowSpan ?? 1}
-                              onChange={(e) => updateCorralColumn('left', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
+                              value={layoutConfig.leftCoops.rowSpan ?? 1}
+                              onChange={(e) => updateCoopColumn('left', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1"
                               onClick={(e) => e.stopPropagation()}
@@ -1978,20 +1978,20 @@ const Home = () => {
               );
             })}
 
-            {/* RIGHT CORRALS */}
+            {/* RIGHT COOPS */}
             {!hideBuildings && Array.from({ length: Math.ceil(TOTAL_SLOTS / 2) }).map((_, index) => {
               const position = index * 2 + 1;
               const building = getBuildingAtPosition(position);
-              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCorrals.rowSpan ?? 1) * 1.3));
+              const slotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCoops.rowSpan ?? 1) * 1.3));
               // Add 1 cell of vertical space between each slot
-              const baseRow = (layoutConfig.rightCorrals.startRow ?? 1) + index * (slotRowSpan + 1);
+              const baseRow = (layoutConfig.rightCoops.startRow ?? 1) + index * (slotRowSpan + 1);
               
               return (
                 <div 
                   key={`right-${position}`}
                   className="relative group overflow-visible"
                   style={{ 
-                    gridColumn: layoutConfig.rightCorrals.gridColumn,
+                    gridColumn: layoutConfig.rightCoops.gridColumn,
                     gridRow: `${baseRow} / ${baseRow + slotRowSpan}`,
                   }}
                   data-slot={`right-${position}`}
@@ -2006,21 +2006,21 @@ const Home = () => {
                     onBuildingClick={building ? () => handleBuildingClickAction(building.id) : undefined}
                     isLeftColumn={false}
                     isEditMode={isEditMode}
-                    editControls={isEditMode && showRightCorralSettings && index === 0 ? (
+                    editControls={isEditMode && showRightCoopSettings && index === 0 ? (
                       <div className="bg-background/95 backdrop-blur-sm border-2 border-orange-500 rounded-lg p-3 space-y-2 z-[99999] fixed shadow-2xl min-w-[300px] max-w-[400px]" style={{ 
                         top: '50%', 
                         left: '50%', 
                         transform: 'translate(-50%, -50%)',
                         pointerEvents: 'auto'
                       }}>
-                        <div className="text-sm font-bold text-orange-700 mb-2">Corrales Derechos</div>
+                        <div className="text-sm font-bold text-orange-700 mb-2">Coops Derechos</div>
                         <div className="flex flex-col gap-2 text-xs">
                           <label className="flex flex-col gap-1">
                             <span className="block text-muted-foreground font-medium">Columns:</span>
                             <input
                               type="text"
-                              value={layoutConfig.rightCorrals.gridColumn}
-                              onChange={(e) => updateCorralColumn('right', { gridColumn: e.target.value })}
+                              value={layoutConfig.rightCoops.gridColumn}
+                              onChange={(e) => updateCoopColumn('right', { gridColumn: e.target.value })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="20 / 26"
                               onClick={(e) => e.stopPropagation()}
@@ -2030,8 +2030,8 @@ const Home = () => {
                             <span className="block text-muted-foreground font-medium">Start Row:</span>
                             <input
                               type="number"
-                              value={layoutConfig.rightCorrals.startRow}
-                              onChange={(e) => updateCorralColumn('right', { startRow: parseInt(e.target.value) || 4 })}
+                              value={layoutConfig.rightCoops.startRow}
+                              onChange={(e) => updateCoopColumn('right', { startRow: parseInt(e.target.value) || 4 })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="4"
                               onClick={(e) => e.stopPropagation()}
@@ -2042,8 +2042,8 @@ const Home = () => {
                             <input
                               type="number"
                               min={1}
-                              value={layoutConfig.rightCorrals.rowSpan ?? 1}
-                              onChange={(e) => updateCorralColumn('right', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
+                              value={layoutConfig.rightCoops.rowSpan ?? 1}
+                              onChange={(e) => updateCoopColumn('right', { rowSpan: Math.max(1, parseInt(e.target.value) || 1) })}
                               className="w-full px-2 py-1.5 border rounded bg-background text-sm"
                               placeholder="1"
                               onClick={(e) => e.stopPropagation()}
@@ -2083,9 +2083,9 @@ const Home = () => {
       <WarehouseDialog open={warehouseOpen} onOpenChange={setWarehouseOpen} userId={userId || undefined} />
       <MarketDialog open={marketOpen} onOpenChange={setMarketOpen} userId={userId || undefined} />
       <HouseDialog open={houseOpen} onOpenChange={setHouseOpen} userId={userId || undefined} />
-      <CorralDialog 
-        open={corralDialogOpen} 
-        onOpenChange={setCorralDialogOpen} 
+      <CoopDialog 
+        open={coopDialogOpen} 
+        onOpenChange={setCoopDialogOpen} 
         userId={userId || undefined}
         buildingId={selectedBuildingId}
       />

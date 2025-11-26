@@ -66,12 +66,12 @@ const Friends = () => {
           .select("id, telegram_first_name, telegram_username")
           .in("id", referredIds);
 
-        // Check if each user has chickens (corral with current_chickens > 0)
+        // Check if each user has chickens (coop with current_chickens > 0)
         const { data: buildings } = await supabase
           .from("user_buildings")
           .select("user_id, building_type, current_chickens")
           .in("user_id", referredIds)
-          .eq("building_type", "corral");
+          .eq("building_type", "coop");
 
         const referralsList: ReferralInfo[] = referralData.map(ref => {
           const userProfile = profiles?.find(p => p.id === ref.referred_id);
@@ -101,20 +101,20 @@ const Friends = () => {
         // Coop 3: 5 amigos totales (3 + 2 nuevos)
         // Coop N: (2*N - 1) amigos totales
         // Formula: coop N requires 2*N - 1 friends
-        let corralsEarned = 0;
+        let coopsEarned = 0;
         for (let coopNumber = 1; coopNumber <= 100; coopNumber++) { // Max 100 coops
           const requiredFriends = 2 * coopNumber - 1;
           if (qualified >= requiredFriends) {
-            corralsEarned = coopNumber;
+            coopsEarned = coopNumber;
           } else {
             break;
           }
         }
-        setRewardsEarned(corralsEarned);
+        setRewardsEarned(coopsEarned);
 
-        // Auto-grant corrals if eligible
-        if (corralsEarned > 0) {
-          await grantReferralCorrals(profile.id, corralsEarned, qualified);
+        // Auto-grant coops if eligible
+        if (coopsEarned > 0) {
+          await grantReferralCoops(profile.id, coopsEarned, qualified);
         }
       }
     } catch (error) {
@@ -122,20 +122,20 @@ const Friends = () => {
     }
   };
 
-  const grantReferralCorrals = async (userId: string, corralsToGrant: number, qualifiedCount: number) => {
+  const grantReferralCoops = async (userId: string, coopsToGrant: number, qualifiedCount: number) => {
     try {
-      // Check how many referral corrals user already has
-      const { data: existingCorrals } = await supabase
+      // Check how many referral coops user already has
+      const { data: existingCoops } = await supabase
         .from("user_buildings")
         .select("id")
         .eq("user_id", userId)
-        .eq("building_type", "corral")
-        .gte("position_index", 1000); // Use position_index >= 1000 to mark referral corrals
+        .eq("building_type", "coop")
+        .gte("position_index", 1000); // Use position_index >= 1000 to mark referral coops
 
-      const existingCount = existingCorrals?.length || 0;
-      const corralsNeeded = corralsToGrant - existingCount;
+      const existingCount = existingCoops?.length || 0;
+      const coopsNeeded = coopsToGrant - existingCount;
 
-      if (corralsNeeded > 0) {
+      if (coopsNeeded > 0) {
         // Get next available positions
         const { data: allBuildings } = await supabase
           .from("user_buildings")
@@ -148,26 +148,26 @@ const Friends = () => {
           ? Math.max(allBuildings[0].position_index + 1, 1000) 
           : 1000;
 
-        // Create new corrals
-        const newCorrals = Array.from({ length: corralsNeeded }, (_, i) => ({
+        // Create new coops
+        const newCoops = Array.from({ length: coopsNeeded }, (_, i) => ({
           user_id: userId,
-          building_type: "corral" as const,
+          building_type: "coop" as const,
           level: 1,
           capacity: 50,
           current_chickens: 0,
           position_index: nextPosition + i,
         }));
 
-        await supabase.from("user_buildings").insert(newCorrals);
+        await supabase.from("user_buildings").insert(newCoops);
 
         // Record metric: referral reward earned
         if (userId) {
           await supabase.rpc("record_metric_event", {
             p_user_id: userId,
             p_event_type: "referral_reward_earned",
-            p_event_value: corralsNeeded,
+            p_event_value: coopsNeeded,
             p_metadata: {
-              corrals_granted: corralsNeeded,
+              coops_granted: coopsNeeded,
               qualified_friends: qualifiedCount,
               total_referrals: qualifiedCount,
             },
@@ -177,13 +177,13 @@ const Friends = () => {
         toast({
           title: t("friends.rewardUnlocked"),
           description: t("friends.rewardUnlockedDesc", { 
-            count: corralsNeeded, 
-            plural: corralsNeeded > 1 ? 'es' : '' 
+            count: coopsNeeded, 
+            plural: coopsNeeded > 1 ? 'es' : '' 
           }),
         });
       }
     } catch (error) {
-      console.error("Error granting referral corrals:", error);
+      console.error("Error granting referral coops:", error);
     }
   };
 
@@ -286,7 +286,7 @@ const Friends = () => {
                 {t("friends.incrementalSystem")}
               </p>
               
-              {/* Progress bar to next corral */}
+              {/* Progress bar to next coop */}
               <div className="mt-3">
                 {(() => {
                   const nextCoopNumber = rewardsEarned + 1;

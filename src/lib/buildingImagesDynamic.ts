@@ -23,7 +23,7 @@ interface ParsedImage {
 /**
  * Parse a building image filename to extract type, level, and variant
  * Examples:
- * - "coop_1A.png" -> { buildingType: "coop", level: 1, variant: "A" }
+ * - "coop_1A.png" -> { buildingType: "corral", level: 1, variant: "A" }
  * - "warehouse_5A.png" -> { buildingType: "warehouse", level: 5, variant: "A" }
  * - "house_1C.png" -> { buildingType: "house", level: 1, variant: "C" }
  */
@@ -52,8 +52,8 @@ function parseImageFileName(filePath: string): ParsedImage | null {
   
   // Normalize building type names
   const buildingTypeMap: Record<string, string> = {
-    'coop': 'corral',
-    'corral': 'corral',
+    'coop': 'coop',
+    'corral': 'coop', // Legacy support: map old 'corral' to 'coop'
     'warehouse': 'warehouse',
     'market': 'market',
     'house': 'house',
@@ -97,27 +97,27 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
   const images: Record<string, Record<number, Record<string, string>>> = {};
   
   for (const [filePath, url] of Object.entries(buildingImageModules)) {
-      const parsed = parseImageFileName(filePath);
-      if (!parsed) {
-        console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
-        continue;
-      }
-      
-      const { buildingType, level, variant, url: imageUrl } = parsed;
-      
-      if (!imageUrl) {
-        console.warn(`[buildDynamicImages] No URL found for ${buildingType} level ${level} variant ${variant} (file: ${filePath})`);
-        continue;
-      }
-      
-      if (!images[buildingType]) {
-        images[buildingType] = {};
-      }
-      if (!images[buildingType][level]) {
-        images[buildingType][level] = {};
-      }
-      
-      images[buildingType][level][variant] = imageUrl;
+    const parsed = parseImageFileName(filePath);
+    if (!parsed) {
+      console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
+      continue;
+    }
+    
+    const { buildingType, level, variant, url: imageUrl } = parsed;
+    
+    if (!imageUrl) {
+      console.warn(`[buildDynamicImages] No URL found for ${buildingType} level ${level} variant ${variant} (file: ${filePath})`);
+      continue;
+    }
+    
+    if (!images[buildingType]) {
+      images[buildingType] = {};
+    }
+    if (!images[buildingType][level]) {
+      images[buildingType][level] = {};
+    }
+    
+    images[buildingType][level][variant] = imageUrl;
   }
   
   // Debug: log what was built
@@ -128,7 +128,7 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
       level1: images['warehouse'][1] ? Object.keys(images['warehouse'][1]) : 'no level 1',
       level1A: images['warehouse'][1]?.['A'] || 'no 1A',
     } : 'not found',
-    corral: images['corral'] ? Object.keys(images['corral']) : 'not found',
+    coop: images['coop'] ? Object.keys(images['coop']) : 'not found',
   });
   
   return images;

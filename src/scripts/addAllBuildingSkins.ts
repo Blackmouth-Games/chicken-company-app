@@ -32,7 +32,7 @@ function getRarityForLevel(level: number): string {
  */
 function generateSkinName(buildingType: string, level: number, variant: string): string {
   const buildingNames: Record<string, string> = {
-    corral: 'Corral',
+    coop: 'Coop',
     warehouse: 'Almacén',
     market: 'Mercado',
     house: 'Casa',
@@ -55,10 +55,8 @@ function detectSkinsFromImages(): SkinData[] {
     for (const image of images) {
       const { level, variant, fileName, relativePath } = image;
       
-      // Generate skin_key: normalize coop -> corral
-      const skinKey = buildingType === 'corral' && fileName.startsWith('coop_')
-        ? `coop_${level}${variant}`
-        : `${buildingType}_${level}${variant}`;
+      // Generate skin_key: use coop directly
+      const skinKey = `${buildingType}_${level}${variant}`;
       
       // Every level's variant "A" should be the default skin for that level
       const isDefault = variant === 'A';
@@ -82,7 +80,7 @@ function detectSkinsFromImages(): SkinData[] {
  */
 function getEmojiForBuildingType(buildingType: string): string {
   const emojis: Record<string, string> = {
-    corral: '🏚️',
+    coop: '🏚️',
     warehouse: '🏭',
     market: '🏪',
     house: '🏠',

@@ -38,9 +38,9 @@ export const PurchaseBuildingDialog = ({
   const { getPrice } = useBuildingPrices();
   const { playSound } = useAudio();
 
-  const buildingPrice = getPrice("corral", 1);
-  const CORRAL_PRICE = buildingPrice?.price_ton || 0.1;
-  const CORRAL_CAPACITY = buildingPrice?.capacity || 50;
+  const buildingPrice = getPrice("coop", 1);
+  const COOP_PRICE = buildingPrice?.price_ton || 0.1;
+  const COOP_CAPACITY = buildingPrice?.capacity || 50;
 
   const handlePurchase = async () => {
     try {
@@ -60,9 +60,9 @@ export const PurchaseBuildingDialog = ({
         .from("building_purchases")
         .insert({
           user_id: userId,
-          building_type: "corral",
+          building_type: "coop",
           level: 1,
-          price_ton: CORRAL_PRICE,
+          price_ton: COOP_PRICE,
           wallet_address: tonConnectUI.wallet?.account.address,
           status: "pending",
         })
@@ -87,7 +87,7 @@ export const PurchaseBuildingDialog = ({
       const destination = normalizeTonAddress(TON_RECEIVER_WALLET);
       console.log("[PurchaseBuildingDialog] Sending TON transaction", {
         destination,
-        amount: CORRAL_PRICE,
+        amount: COOP_PRICE,
         purchaseId: purchaseRecord.id,
       });
       const transaction = {
@@ -95,7 +95,7 @@ export const PurchaseBuildingDialog = ({
         messages: [
           {
             address: destination,
-            amount: (CORRAL_PRICE * 1e9).toString(), // Convert TON to nanoTON
+            amount: (COOP_PRICE * 1e9).toString(), // Convert TON to nanoTON
           },
         ],
       };
@@ -106,10 +106,10 @@ export const PurchaseBuildingDialog = ({
         .from("user_buildings")
         .insert({
           user_id: userId,
-          building_type: "corral",
+          building_type: "coop",
           level: 1,
           position_index: position,
-          capacity: CORRAL_CAPACITY,
+          capacity: COOP_CAPACITY,
           current_chickens: 0,
         })
         .select()
@@ -133,8 +133,8 @@ export const PurchaseBuildingDialog = ({
       playSound(purchaseSound);
 
       toast({
-        title: "¡Corral comprado!",
-        description: "Tu corral nivel 1 ha sido adquirido exitosamente",
+        title: "¡Coop comprado!",
+        description: "Tu coop nivel 1 ha sido adquirido exitosamente",
       });
 
       onPurchaseComplete();
@@ -159,7 +159,7 @@ export const PurchaseBuildingDialog = ({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-bold">
-              Adquiere Corral
+              Adquiere Coop
             </DialogTitle>
           </DialogHeader>
 
@@ -176,13 +176,13 @@ export const PurchaseBuildingDialog = ({
             <div className="flex items-center gap-2 w-full px-4">
               <Info className="h-5 w-5 text-muted-foreground" />
               <div className="text-sm">
-                <span className="font-semibold">Max. Capacity:</span> {CORRAL_CAPACITY}
+                <span className="font-semibold">Max. Capacity:</span> {COOP_CAPACITY}
               </div>
             </div>
 
             {/* Price */}
             <div className="bg-accent/50 px-6 py-2 rounded-md">
-              <span className="text-sm font-medium">{CORRAL_PRICE} TON</span>
+              <span className="text-sm font-medium">{COOP_PRICE} TON</span>
             </div>
 
             {/* Info */}
@@ -200,7 +200,7 @@ export const PurchaseBuildingDialog = ({
               className="w-full"
               size="lg"
             >
-              {isPurchasing ? "Comprando..." : "Comprar Corral"}
+              {isPurchasing ? "Comprando..." : "Comprar Coop"}
             </Button>
           </div>
         </DialogContent>

@@ -22,7 +22,7 @@ interface BeltConfig {
   isDestiny?: boolean; // Marks this belt as final destination where eggs are removed
   isTransport?: boolean; // Marks this belt as transport belt
   slotPosition?: number; // Position index of the slot this output belt belongs to (0, 1, 2, ...)
-  corralId?: string; // Deprecated: use slotPosition instead. Kept for backwards compatibility
+  coopId?: string; // Deprecated: use slotPosition instead. Kept for backwards compatibility
 }
 
 interface RoadConfig {
@@ -47,8 +47,8 @@ export interface LayoutConfig {
   market: { gridColumn: string; gridRow: string };
   house: { gridColumn: string; gridRow: string };
   boxes: { gridColumn: string; gridRow: string };
-  leftCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
-  rightCorrals: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
+  leftCoops: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
+  rightCoops: { gridColumn: string; gap: string; startRow: number; rowSpan?: number };
   belts: BeltConfig[];
   roads: RoadConfig[];
   grid: { gap: string; maxWidth: string; totalRows?: number };
@@ -59,8 +59,8 @@ const DEFAULT_LAYOUT: LayoutConfig = {
   warehouse: { gridColumn: '1 / 6', gridRow: '7 / 13' },
   market: { gridColumn: '10 / 15', gridRow: '7 / 13' },
   boxes: { gridColumn: '6 / 8', gridRow: '10 / 13' },
-  leftCorrals: { gridColumn: '1 / 7', gap: '20px', startRow: 15, rowSpan: 2 },
-  rightCorrals: { gridColumn: '10 / 16', gap: '20px', startRow: 15, rowSpan: 2 },
+  leftCoops: { gridColumn: '1 / 7', gap: '20px', startRow: 15, rowSpan: 2 },
+  rightCoops: { gridColumn: '10 / 16', gap: '20px', startRow: 15, rowSpan: 2 },
   belts: [
     { id: 'belt-1762856883705', gridColumn: '7 / 8', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
     { id: 'belt-1762856884083', gridColumn: '6 / 7', gridRow: '13 / 14', direction: 'west', type: 'straight', isOutput: false, isDestiny: false, isTransport: true },
@@ -117,17 +117,17 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
             gridColumn: parsed.boxes?.gridColumn || DEFAULT_LAYOUT.boxes.gridColumn,
             gridRow: parsed.boxes?.gridRow || DEFAULT_LAYOUT.boxes.gridRow,
           },
-          leftCorrals: {
-            gridColumn: parsed.leftCorrals?.gridColumn || DEFAULT_LAYOUT.leftCorrals.gridColumn,
-            gap: parsed.leftCorrals?.gap || DEFAULT_LAYOUT.leftCorrals.gap,
-            startRow: parsed.leftCorrals?.startRow || DEFAULT_LAYOUT.leftCorrals.startRow,
-            rowSpan: parsed.leftCorrals?.rowSpan || DEFAULT_LAYOUT.leftCorrals.rowSpan,
+          leftCoops: {
+            gridColumn: parsed.leftCoops?.gridColumn || DEFAULT_LAYOUT.leftCoops.gridColumn,
+            gap: parsed.leftCoops?.gap || DEFAULT_LAYOUT.leftCoops.gap,
+            startRow: parsed.leftCoops?.startRow || DEFAULT_LAYOUT.leftCoops.startRow,
+            rowSpan: parsed.leftCoops?.rowSpan || DEFAULT_LAYOUT.leftCoops.rowSpan,
           },
-          rightCorrals: {
-            gridColumn: parsed.rightCorrals?.gridColumn || DEFAULT_LAYOUT.rightCorrals.gridColumn,
-            gap: parsed.rightCorrals?.gap || DEFAULT_LAYOUT.rightCorrals.gap,
-            startRow: parsed.rightCorrals?.startRow || DEFAULT_LAYOUT.rightCorrals.startRow,
-            rowSpan: parsed.rightCorrals?.rowSpan || DEFAULT_LAYOUT.rightCorrals.rowSpan,
+          rightCoops: {
+            gridColumn: parsed.rightCoops?.gridColumn || DEFAULT_LAYOUT.rightCoops.gridColumn,
+            gap: parsed.rightCoops?.gap || DEFAULT_LAYOUT.rightCoops.gap,
+            startRow: parsed.rightCoops?.startRow || DEFAULT_LAYOUT.rightCoops.startRow,
+            rowSpan: parsed.rightCoops?.rowSpan || DEFAULT_LAYOUT.rightCoops.rowSpan,
           },
           belts: Array.isArray(parsed.belts) 
             ? parsed.belts.map((belt: any) => {
@@ -143,7 +143,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
                   isDestiny: belt.isDestiny ?? defaultBelt?.isDestiny ?? false,
                   isTransport: belt.isTransport ?? defaultBelt?.isTransport ?? false,
                   slotPosition: belt.slotPosition ?? defaultBelt?.slotPosition,
-                  corralId: belt.corralId ?? defaultBelt?.corralId,
+                  coopId: belt.coopId ?? defaultBelt?.coopId,
                 };
               })
             : DEFAULT_LAYOUT.belts,
@@ -864,12 +864,12 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
               isDestiny: isSettingOutput ? false : b.isDestiny, // Clear destiny if setting output
               isTransport: isSettingOutput ? false : b.isTransport, // Clear transport if setting output
               slotPosition: isSettingOutput ? slotPosition : undefined,
-              corralId: isSettingOutput ? undefined : b.corralId, // Clear old corralId when setting
+              coopId: isSettingOutput ? undefined : b.coopId, // Clear old coopId when setting
             };
           }
           // If this belt was output for the same slot, clear it (only one output per slot)
           if (b.slotPosition === slotPosition && b.id !== beltId && slotPosition !== undefined) {
-            return { ...b, isOutput: false, slotPosition: undefined, corralId: undefined };
+            return { ...b, isOutput: false, slotPosition: undefined, coopId: undefined };
           }
           return b;
         }),
@@ -896,7 +896,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
               isOutput: isSettingDestiny ? false : b.isOutput, // Clear output if setting destiny
               isTransport: isSettingDestiny ? false : b.isTransport, // Clear transport if setting destiny
               slotPosition: isSettingDestiny ? undefined : b.slotPosition, // Clear slotPosition if setting destiny
-              corralId: isSettingDestiny ? undefined : b.corralId,
+              coopId: isSettingDestiny ? undefined : b.coopId,
             };
           }
           return b;
@@ -924,7 +924,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
               isOutput: isSettingTransport ? false : b.isOutput, // Clear output if setting transport
               isDestiny: isSettingTransport ? false : b.isDestiny, // Clear destiny if setting transport
               slotPosition: isSettingTransport ? undefined : b.slotPosition, // Clear slotPosition if setting transport
-              corralId: isSettingTransport ? undefined : b.corralId,
+              coopId: isSettingTransport ? undefined : b.coopId,
             };
           }
           return b;
@@ -935,9 +935,9 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     });
   };
 
-  // Update corral column layout
-  const updateCorralColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string; startRow: number; rowSpan: number }>) => {
-    const key = column === 'left' ? 'leftCorrals' : 'rightCorrals';
+  // Update coop column layout
+  const updateCoopColumn = (column: 'left' | 'right', updates: Partial<{ gridColumn: string; gap: string; startRow: number; rowSpan: number }>) => {
+    const key = column === 'left' ? 'leftCoops' : 'rightCoops';
     setLayoutConfig(prev => {
       const newConfig = {
         ...prev,
@@ -1206,7 +1206,7 @@ export const useLayoutEditor = (beltSpanForRows: number = 20) => {
     handleRoadClick,
     handleResizeStart,
     updateBuildingLayout,
-    updateCorralColumn,
+    updateCoopColumn,
     addBelt,
     removeBelt,
     updateBelt,

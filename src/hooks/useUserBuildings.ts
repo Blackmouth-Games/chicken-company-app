@@ -66,7 +66,7 @@ export const useUserBuildings = (userId: string | undefined) => {
         .from("user_buildings")
         .insert({
           user_id: userId,
-          building_type: "corral",
+          building_type: "coop",
           level: 1,
           position_index: positionIndex,
           capacity: 50,
@@ -81,7 +81,7 @@ export const useUserBuildings = (userId: string | undefined) => {
       
       toast({
         title: "¡Éxito!",
-        description: "Corral comprado exitosamente",
+        description: "Coop comprado exitosamente",
       });
 
       return true;
@@ -89,7 +89,7 @@ export const useUserBuildings = (userId: string | undefined) => {
       console.error("Error purchasing building:", error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo comprar el corral",
+        description: error.message || "No se pudo comprar el coop",
         variant: "destructive",
       });
       return false;

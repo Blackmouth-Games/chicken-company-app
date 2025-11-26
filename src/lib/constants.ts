@@ -7,7 +7,7 @@ export const TRANSACTION_TIMEOUT = 60;
 
 // Building types
 export const BUILDING_TYPES = {
-  CORRAL: "corral",
+  COOP: "coop",
   MARKET: "market",
   WAREHOUSE: "warehouse",
   HOUSE: "house",

@@ -40,7 +40,7 @@ serve(async (req) => {
         await supabase
           .from('store_products')
           .update({
-            content_items: ['corral_1B', 'corral_2B', 'corral_3B', 'warehouse_1B', 'market_1B']
+            content_items: ['coop_1B', 'coop_2B', 'coop_3B', 'warehouse_1B', 'market_1B']
           })
           .eq('product_key', 'basic_skins_pack');
         console.log('Updated basic_skins_pack');
@@ -54,7 +54,7 @@ serve(async (req) => {
         name: 'Starter Pack',
         description: 'Paquete inicial para comenzar tu granja',
         price_ton: 15,
-        content_items: ['Subida de nivel de Maria la Pollera a nivel 2', 'Nuevo corral', 'Nuevo Granjero Juan'],
+        content_items: ['Subida de nivel de Maria la Pollera a nivel 2', 'Nuevo coop', 'Nuevo Granjero Juan'],
         store_image_url: '/images/store/starter-pack.png',
         detail_image_url: '/images/store/starter-pack-detail.png',
         is_active: true,
@@ -98,7 +98,7 @@ serve(async (req) => {
         name: 'Pack de Skins Básico',
         description: 'Colección de 5 skins únicos para tus edificios',
         price_ton: 0.5,
-        content_items: ['corral_1B', 'corral_2B', 'corral_3B', 'warehouse_1B', 'market_1B'],
+        content_items: ['coop_1B', 'coop_2B', 'coop_3B', 'warehouse_1B', 'market_1B'],
         store_image_url: '/images/store/skins-pack.png',
         detail_image_url: '/images/store/skins-pack-detail.png',
         is_active: true,

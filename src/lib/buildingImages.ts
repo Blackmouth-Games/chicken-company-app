@@ -58,9 +58,12 @@ export type BuildingSkin = 'A' | 'B' | 'C';
 
 // Legacy skin keys for backwards compatibility
 const LEGACY_SKIN_MAP: Record<string, BuildingSkin> = {
-  'corral_default': 'A',
-  'corral_premium': 'B',
-  'corral_luxury': 'B',
+  'coop_default': 'A',
+  'coop_premium': 'B',
+  'coop_luxury': 'B',
+  'corral_default': 'A', // Legacy support
+  'corral_premium': 'B', // Legacy support
+  'corral_luxury': 'B', // Legacy support
   'warehouse_default': 'A',
   'warehouse_modern': 'B',
   'market_default': 'A',
@@ -88,7 +91,7 @@ export const mapSkinKeyToLocal = (skinKey: string | null | undefined): BuildingS
  * Gets building image from local assets or returns null if should use emoji
  * @param type Building type
  * @param level Building level
- * @param skinKey Database skin_key (e.g., 'corral_default') or local skin ('A'/'B')
+ * @param skinKey Database skin_key (e.g., 'coop_default') or local skin ('A'/'B')
  * @param skinInfo Optional skin info from database with image_url (emoji)
  * @returns Image URL string or null if should use emoji
  */
@@ -149,7 +152,7 @@ export const getBuildingImage = (
     if (!images) return null;
     
     // Extract level from skin_key if format is {type}_{level}{variant}
-    // e.g., 'corral_2A' -> level 2, 'warehouse_5A' -> level 5
+    // e.g., 'coop_2A' -> level 2, 'warehouse_5A' -> level 5
     let imageLevel = level;
     if (skinKey) {
       const levelMatch = skinKey.match(/_(\d+)[ABC]/);
@@ -197,7 +200,7 @@ export const getBuildingDisplay = (
   // If no image was found, ALWAYS use the default _1A image for the level
   // This ensures we NEVER show an emoji
   const images = BUILDING_IMAGES[type];
-  if (images && typeof images === 'object') {
+  if (images) {
     const structure = getBuildingStructure(type);
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
     

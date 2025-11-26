@@ -11,10 +11,10 @@ interface ProcessPurchaseRequest {
   transaction_hash: string;
 }
 
-// Check if a string is a valid skin_key format (e.g., "corral_1B", "warehouse_2A")
+// Check if a string is a valid skin_key format (e.g., "coop_1B", "warehouse_2A")
 // Format: {building_type}_{level}{variant}
 const isValidSkinKey = (key: string): boolean => {
-  const skinKeyPattern = /^(corral|warehouse|market|house)_\d+[A-J]$/i;
+  const skinKeyPattern = /^(coop|warehouse|market|house)_\d+[A-J]$/i;
   return skinKeyPattern.test(key);
 };
 
@@ -94,7 +94,7 @@ serve(async (req) => {
       for (const itemDesc of finalProduct.content_items) {
         if (typeof itemDesc !== 'string') continue;
         
-        // Check if item is a valid skin_key (e.g., "corral_1B", "warehouse_2A")
+        // Check if item is a valid skin_key (e.g., "coop_1B", "warehouse_2A")
         if (isValidSkinKey(itemDesc)) {
           // Verify the skin exists in building_skins table
           const { data: skinExists } = await supabase
@@ -119,9 +119,9 @@ serve(async (req) => {
           let itemType = "pack_item";
           let itemKey = finalProduct.product_key;
           
-          if (itemDesc.toLowerCase().includes("corral")) {
+          if (itemDesc.toLowerCase().includes("coop")) {
             itemType = "building";
-            itemKey = "corral";
+            itemKey = "coop";
           } else if (itemDesc.toLowerCase().includes("granjero")) {
             itemType = "character";
             itemKey = "farmer";

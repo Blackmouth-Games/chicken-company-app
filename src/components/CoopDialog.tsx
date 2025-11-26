@@ -12,14 +12,14 @@ import { getBuildingDisplay } from "@/lib/buildingImages";
 import { BUILDING_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-interface CorralDialogProps {
+interface CoopDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string | undefined;
   buildingId: string | undefined;
 }
 
-export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralDialogProps) => {
+export const CoopDialog = ({ open, onOpenChange, userId, buildingId }: CoopDialogProps) => {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showSkinSelector, setShowSkinSelector] = useState(false);
   const [selectedMultiplier, setSelectedMultiplier] = useState<1 | 5 | 10>(1);
@@ -27,38 +27,38 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   const [infoModalContent, setInfoModalContent] = useState<{ title: string; message: string } | null>(null);
   const { buildings, refetch } = useUserBuildings(userId);
   const { prices } = useBuildingPrices();
-  const { getSkinByKey } = useBuildingSkins('corral');
+  const { getSkinByKey } = useBuildingSkins('coop');
 
-  const corral = buildings.find(b => b.id === buildingId);
-  const nextLevel = corral ? corral.level + 1 : 2;
-  const nextLevelPrice = prices.find(p => p.building_type === 'corral' && p.level === nextLevel);
+  const coop = buildings.find(b => b.id === buildingId);
+  const nextLevel = coop ? coop.level + 1 : 2;
+  const nextLevelPrice = prices.find(p => p.building_type === 'coop' && p.level === nextLevel);
   const upgradePrice = nextLevelPrice?.price_ton || 0;
   const nextLevelCapacity = nextLevelPrice?.capacity || 0;
 
   // Get skin info from database if selected_skin is set
   const skinInfo = useMemo(() => {
-    if (!corral?.selected_skin) return null;
-    return getSkinByKey(corral.selected_skin);
-  }, [corral?.selected_skin, getSkinByKey]);
+    if (!coop?.selected_skin) return null;
+    return getSkinByKey(coop.selected_skin);
+  }, [coop?.selected_skin, getSkinByKey]);
 
   // Get building display (image or emoji)
   const buildingDisplay = useMemo(() => {
-    if (!corral) return null;
+    if (!coop) return null;
     return getBuildingDisplay(
-      'corral',
-      corral.level,
-      corral.selected_skin || null,
+      'coop',
+      coop.level,
+      coop.selected_skin || null,
       skinInfo || undefined
     );
-  }, [corral?.selected_skin, corral?.level, skinInfo]);
+  }, [coop?.selected_skin, coop?.level, skinInfo]);
 
-  if (!corral) return null;
+  if (!coop) return null;
 
-  const efficiency = corral.current_chickens > 0 
-    ? Math.min(100, Math.round((corral.current_chickens / corral.capacity) * 100))
+  const efficiency = coop.current_chickens > 0 
+    ? Math.min(100, Math.round((coop.current_chickens / coop.capacity) * 100))
     : 0;
 
-  const earnRate = (corral.current_chickens * 0.001).toFixed(3);
+  const earnRate = (coop.current_chickens * 0.001).toFixed(3);
 
   const handleUpgradeComplete = () => {
     refetch();
@@ -83,7 +83,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
-              Corral
+              Coop
             </DialogTitle>
           </DialogHeader>
           
@@ -101,15 +101,15 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
               {buildingDisplay && buildingDisplay.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
-                  alt="Corral" 
+                  alt="Coop" 
                   className="w-16 h-16 object-contain"
                 />
               ) : (
                 <div className="text-6xl">🏠</div>
               )}
               <div className="flex-1">
-                <h3 className="font-bold text-lg">Corral</h3>
-                <p className="text-sm text-muted-foreground">Lvl {corral.level}</p>
+                <h3 className="font-bold text-lg">Coop</h3>
+                <p className="text-sm text-muted-foreground">Lvl {coop.level}</p>
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Valor",
-                    "Valor total de las gallinas actualmente en el corral. Este valor se calcula basándose en el número de gallinas y su valor individual."
+                    "Valor total de las gallinas actualmente en el coop. Este valor se calcula basándose en el número de gallinas y su valor individual."
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -188,7 +188,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Gallinas",
-                    `Número actual de gallinas en el corral: ${corral.current_chickens} de ${corral.capacity} capacidad máxima. Puedes aumentar la capacidad mejorando el nivel del corral.`
+                    `Número actual de gallinas en el coop: ${coop.current_chickens} de ${coop.capacity} capacidad máxima. Puedes aumentar la capacidad mejorando el nivel del coop.`
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -196,10 +196,10 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                 <span className="text-xs md:text-sm text-green-900 font-medium">Gallinas:</span>
               </div>
               <span className="font-semibold text-sm md:text-base text-orange-600 font-bold bg-gray-100 px-3 py-1 rounded">
-                {corral.current_chickens} / {corral.capacity}
+                {coop.current_chickens} / {coop.capacity}
               </span>
             </div>
-            <Progress value={(corral.current_chickens / corral.capacity) * 100} className="h-2" />
+            <Progress value={(coop.current_chickens / coop.capacity) * 100} className="h-2" />
 
             <div className="flex items-center justify-between p-3 bg-white/80 rounded-lg border border-green-200">
               <div className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Eficiencia",
-                    `La eficiencia del corral es ${efficiency}%, calculada como el porcentaje de capacidad utilizada. Una eficiencia alta indica que el corral está siendo utilizado al máximo de su capacidad.`
+                    `La eficiencia del coop es ${efficiency}%, calculada como el porcentaje de capacidad utilizada. Una eficiencia alta indica que el coop está siendo utilizado al máximo de su capacidad.`
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -227,7 +227,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Total Obtenido",
-                    "Total de ganancias obtenidas desde que comenzaste a usar este corral. Este valor representa todas las ganancias acumuladas a lo largo del tiempo."
+                    "Total de ganancias obtenidas desde que comenzaste a usar este coop. Este valor representa todas las ganancias acumuladas a lo largo del tiempo."
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -246,7 +246,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Earn esperado",
-                    `Ganancia esperada por día basada en el número actual de gallinas (${corral.current_chickens}). Esta es una estimación de las ganancias diarias que puedes esperar con la configuración actual del corral.`
+                    `Ganancia esperada por día basada en el número actual de gallinas (${coop.current_chickens}). Esta es una estimación de las ganancias diarias que puedes esperar con la configuración actual del coop.`
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -270,7 +270,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Nivel",
-                    "El nivel del corral determina su capacidad máxima. Al subir de nivel, el corral puede albergar más gallinas, lo que aumenta tus ganancias potenciales."
+                    "El nivel del coop determina su capacidad máxima. Al subir de nivel, el coop puede albergar más gallinas, lo que aumenta tus ganancias potenciales."
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -278,7 +278,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                 <span className="text-xs md:text-sm text-green-900 font-medium">Nivel:</span>
               </div>
               <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
-                {corral.level} → {nextLevel}
+                {coop.level} → {nextLevel}
               </span>
             </div>
 
@@ -289,7 +289,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                   className="text-green-600 hover:text-green-800 transition-colors"
                   onClick={() => handleInfoClick(
                     "Max. Capacity",
-                    `La capacidad máxima aumentará de ${corral.capacity} a ${nextLevelCapacity} gallinas al subir de nivel. Esto te permitirá tener más gallinas y generar más ganancias.`
+                    `La capacidad máxima aumentará de ${coop.capacity} a ${nextLevelCapacity} gallinas al subir de nivel. Esto te permitirá tener más gallinas y generar más ganancias.`
                   )}
                 >
                   <Info className="h-4 w-4" />
@@ -297,7 +297,7 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
                 <span className="text-xs md:text-sm text-green-900 font-medium">Max. Capacity:</span>
               </div>
               <span className="font-semibold text-sm md:text-base text-green-900 bg-gray-100 px-3 py-1 rounded">
-                {corral.capacity} → {nextLevelCapacity}
+                {coop.capacity} → {nextLevelCapacity}
               </span>
             </div>
 
@@ -324,19 +324,19 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
         </DialogContent>
       </Dialog>
 
-      {corral && (
+      {coop && (
         <UpgradeBuildingDialog
           open={showUpgrade}
           onOpenChange={(open) => {
             setShowUpgrade(open);
             if (!open) {
-              // Keep corral dialog open when upgrade dialog closes
+              // Keep coop dialog open when upgrade dialog closes
               onOpenChange(true);
             }
           }}
           buildingId={buildingId || ''}
-          buildingType="corral"
-          currentLevel={corral?.level || 1}
+          buildingType="coop"
+          currentLevel={coop?.level || 1}
           nextLevel={nextLevel}
           userId={userId || ''}
           upgradePrice={upgradePrice}
@@ -349,10 +349,10 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
         open={showSkinSelector}
         onOpenChange={setShowSkinSelector}
         buildingId={buildingId}
-        buildingType={BUILDING_TYPES.CORRAL}
-        buildingLevel={corral?.level}
+        buildingType={BUILDING_TYPES.COOP}
+        buildingLevel={coop?.level}
         userId={userId}
-        currentSkin={corral?.selected_skin || null}
+        currentSkin={coop?.selected_skin || null}
         onSkinSelected={() => {
           refetch();
           setShowSkinSelector(false);
@@ -383,3 +383,4 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
     </>
   );
 };
+

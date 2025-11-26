@@ -108,19 +108,19 @@ serve(async (req) => {
 
         profile = newProfile;
         
-        // Create default buildings (warehouse, market, and one corral) for new users
+        // Create default buildings (warehouse, market, and one coop) for new users
         console.log('Creating default buildings for new user:', profile.id);
         try {
           // Get default prices for level 1
           const { data: prices } = await supabase
             .from('building_prices')
             .select('*')
-            .in('building_type', ['warehouse', 'market', 'corral'])
+            .in('building_type', ['warehouse', 'market', 'coop'])
             .eq('level', 1);
 
           const warehousePrice = prices?.find(p => p.building_type === 'warehouse');
           const marketPrice = prices?.find(p => p.building_type === 'market');
-          const corralPrice = prices?.find(p => p.building_type === 'corral');
+          const coopPrice = prices?.find(p => p.building_type === 'coop');
 
           const buildingsToCreate: any[] = [];
 
@@ -146,14 +146,14 @@ serve(async (req) => {
             });
           }
 
-          // Create one corral (coop) of level 1 for new users
-          if (corralPrice) {
+          // Create one coop of level 1 for new users
+          if (coopPrice) {
             buildingsToCreate.push({
               user_id: profile.id,
-              building_type: 'corral',
+              building_type: 'coop',
               level: 1,
-              position_index: 0, // First position for the default corral
-              capacity: corralPrice.capacity,
+              position_index: 0, // First position for the default coop
+              capacity: coopPrice.capacity,
               current_chickens: 0,
             });
           }
