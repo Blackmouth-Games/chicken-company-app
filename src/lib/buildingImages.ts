@@ -16,12 +16,24 @@ const FALLBACK_IMAGES: Record<string, Record<number, Record<string, string>>> = 
 
 // Merge dynamic images with fallback logic
 function mergeImages(): Record<string, Record<number, Record<string, string>>> {
-  // Create a shallow copy to avoid mutating the original
+  // Create a deep copy to avoid mutating the original and initialization issues
   const merged: Record<string, Record<number, Record<string, string>>> = {};
   
-  // Copy all building types from BUILDING_IMAGES_DYNAMIC
-  for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
-    merged[buildingType] = { ...levels };
+  // Safely copy all building types from BUILDING_IMAGES_DYNAMIC
+  try {
+    for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC || {})) {
+      if (levels && typeof levels === 'object') {
+        merged[buildingType] = {};
+        for (const [levelStr, variants] of Object.entries(levels)) {
+          const level = parseInt(levelStr, 10);
+          if (!isNaN(level) && variants && typeof variants === 'object') {
+            merged[buildingType][level] = { ...variants };
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('[mergeImages] Error copying BUILDING_IMAGES_DYNAMIC:', error);
   }
   
   // Ensure 'coop' exists even if no images were found (for type safety)
@@ -64,7 +76,23 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   return merged;
 }
 
-export const BUILDING_IMAGES = mergeImages();
+// Initialize BUILDING_IMAGES with error handling to avoid initialization issues
+let _BUILDING_IMAGES: Record<string, Record<number, Record<string, string>>> | null = null;
+
+function initializeBuildingImages(): Record<string, Record<number, Record<string, string>>> {
+  if (!_BUILDING_IMAGES) {
+    try {
+      _BUILDING_IMAGES = mergeImages();
+    } catch (error) {
+      console.error('[buildingImages] Error initializing BUILDING_IMAGES:', error);
+      // Return a minimal structure to prevent crashes
+      _BUILDING_IMAGES = { coop: {} };
+    }
+  }
+  return _BUILDING_IMAGES;
+}
+
+export const BUILDING_IMAGES = initializeBuildingImages();
 
 export type BuildingType = keyof typeof BUILDING_IMAGES;
 export type BuildingSkin = 'A' | 'B' | 'C';
