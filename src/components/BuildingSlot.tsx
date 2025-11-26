@@ -45,6 +45,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   // Depend on building.selected_skin and building.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!building) return null;
+    // Normalize 'corral' to 'coop' - BUILDING_IMAGES uses 'coop' as the key
     const normalizedType = building.building_type === 'corral' ? 'coop' : building.building_type;
     if (!normalizedType) return null;
     return getBuildingDisplay(

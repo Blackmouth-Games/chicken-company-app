@@ -52,8 +52,8 @@ function parseImageFileName(filePath: string): ParsedImage | null {
   
   // Normalize building type names
   const buildingTypeMap: Record<string, string> = {
-    'coop': 'corral',
-    'corral': 'corral',
+    'coop': 'coop',
+    'corral': 'coop', // Map corral to coop for consistency
     'warehouse': 'warehouse',
     'market': 'market',
     'house': 'house',
@@ -128,7 +128,7 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
       level1: images['warehouse'][1] ? Object.keys(images['warehouse'][1]) : 'no level 1',
       level1A: images['warehouse'][1]?.['A'] || 'no 1A',
     } : 'not found',
-    corral: images['corral'] ? Object.keys(images['corral']) : 'not found',
+    coop: images['coop'] ? Object.keys(images['coop']) : 'not found',
   });
   
   return images;
