@@ -99,28 +99,33 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
   // Ensure 'coop' exists from the start (for type safety)
   images['coop'] = {};
   
-  for (const [filePath, url] of Object.entries(buildingImageModules)) {
-    const parsed = parseImageFileName(filePath);
-    if (!parsed) {
-      console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
-      continue;
+    for (const [filePath, url] of Object.entries(buildingImageModules)) {
+      const parsed = parseImageFileName(filePath);
+      if (!parsed) {
+        console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
+        continue;
+      }
+      
+      const { buildingType, level, variant, url: imageUrl } = parsed;
+      
+      if (!imageUrl) {
+        console.warn(`[buildDynamicImages] No URL found for ${buildingType} level ${level} variant ${variant} (file: ${filePath})`);
+        continue;
+      }
+      
+      if (!images[buildingType]) {
+        images[buildingType] = {};
+      }
+      if (!images[buildingType][level]) {
+        images[buildingType][level] = {};
+      }
+      
+      images[buildingType][level][variant] = imageUrl;
     }
-    
-    const { buildingType, level, variant, url: imageUrl } = parsed;
-    
-    if (!imageUrl) {
-      console.warn(`[buildDynamicImages] No URL found for ${buildingType} level ${level} variant ${variant} (file: ${filePath})`);
-      continue;
-    }
-    
-    if (!images[buildingType]) {
-      images[buildingType] = {};
-    }
-    if (!images[buildingType][level]) {
-      images[buildingType][level] = {};
-    }
-    
-    images[buildingType][level][variant] = imageUrl;
+  } catch (error) {
+    console.error('[buildDynamicImages] Error building images:', error);
+    // Return minimal structure to prevent white screen
+    return { coop: {} };
   }
   
   // Debug: log what was built
@@ -159,9 +164,24 @@ function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 
   return map;
 }
 
-// Build dynamic structures
-export const BUILDING_IMAGES_DYNAMIC = buildDynamicImages();
-export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = buildDynamicSkinKeyMap();
+// Build dynamic structures with error handling to prevent white screen
+export const BUILDING_IMAGES_DYNAMIC = (() => {
+  try {
+    return buildDynamicImages();
+  } catch (error) {
+    console.error('[buildingImagesDynamic] Critical error building images, using fallback:', error);
+    return { coop: {} };
+  }
+})();
+
+export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = (() => {
+  try {
+    return buildDynamicSkinKeyMap();
+  } catch (error) {
+    console.error('[buildingImagesDynamic] Critical error building skin map, using fallback:', error);
+    return {};
+  }
+})();
 
 /**
  * Get all parsed images for a specific building type
