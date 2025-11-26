@@ -219,6 +219,15 @@ export const SkinSelectorDialog = ({
 
   const loading = skinsLoading || itemsLoading;
 
+  const levelsList = useMemo(() => {
+    const levelSet = new Set<number>();
+    inventorySlots.forEach(slot => levelSet.add(slot.level));
+    if (levelSet.size === 0) {
+      return buildingLevel ? [buildingLevel] : [1];
+    }
+    return Array.from(levelSet).sort((a, b) => a - b);
+  }, [inventorySlots, buildingLevel]);
+
   // Create inventory slots organized by level and variant
   // Now supports 10 skins per level (A-J or 1-10)
   // Shows: all local images + database skins (owned/default)
@@ -227,7 +236,7 @@ export const SkinSelectorDialog = ({
     let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean }> = [];
     
     // Determine which levels to show
-    // Show all levels, but only allow selection for the building's current level
+    // Show all levels. Only allow selection for current level, lock higher levels.
     const levelSet = new Set<number>();
     for (const img of localImages) {
       levelSet.add(img.level);
@@ -402,15 +411,23 @@ export const SkinSelectorDialog = ({
             ) : (
               <div className="space-y-6">
                 {/* Group by level - Always show 8 slots (4 columns x 2 rows) per level */}
-                {[1, 2, 3, 4, 5].map(level => {
+                {levelsList.map(level => {
                   const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                  const isLockedLevel = !!buildingLevel && level > buildingLevel;
                   
                   return (
-                    <div key={level} className="space-y-2">
-                      <h3 className="text-lg font-semibold text-muted-foreground">
-                        Nivel {level}
-                      </h3>
-                      <div className="grid grid-cols-4 gap-2">
+                    <div key={level} className="space-y-2 relative">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-muted-foreground">
+                          Nivel {level}
+                        </h3>
+                        {isLockedLevel && (
+                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">
+                            Requiere nivel {level}
+                          </span>
+                        )}
+                      </div>
+                      <div className={cn("grid grid-cols-4 gap-2 transition-opacity relative", isLockedLevel && "opacity-50 pointer-events-none")}>
                         {variants.map((variant, index) => {
                           // Find the slot for this level and variant
                           const slot = inventorySlots.find(s => s.level === level && s.variant === variant);
@@ -475,7 +492,7 @@ export const SkinSelectorDialog = ({
                               key={`${level}-${currentSlot.variant}-${index}`}
                               className={`relative p-1.5 rounded-lg border-2 transition-all aspect-square ${
                                 isEmpty
-                                  ? "border-muted/30 bg-muted/10 opacity-50"
+                                  ? "border-muted-foreground/40 bg-muted/40 border-dashed"
                                   : isSelected
                                   ? "border-primary bg-primary/10"
                                   : canUse
@@ -491,7 +508,7 @@ export const SkinSelectorDialog = ({
                               {/* Skin Image or Empty Slot */}
                               <div className="flex items-center justify-center h-full">
                                 {isEmpty ? (
-                                  <div className="w-full h-full rounded-md bg-muted/20" />
+                                  <div className="w-full h-full rounded-md bg-muted-foreground/20 border border-dashed border-muted-foreground/40" />
                                 ) : skinDisplay?.type === 'image' ? (
                                   <img 
                                     src={skinDisplay.src} 
@@ -521,6 +538,14 @@ export const SkinSelectorDialog = ({
                           );
                         })}
                       </div>
+                      </div>
+                      {isLockedLevel && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="rounded-xl bg-background/85 border border-dashed border-orange-300 px-4 py-2 text-center text-sm font-semibold text-orange-600 shadow-sm">
+                            Mejora el edificio a nivel {level} para desbloquear estas skins
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
