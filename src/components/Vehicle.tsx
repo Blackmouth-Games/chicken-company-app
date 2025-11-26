@@ -25,8 +25,8 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
   const getPosition = () => {
     // Normalize progress so it always increases from 0 -> 1 regardless of reverseDirection
     const normalizedProgress = reverseDirection ? 1 - progress : progress;
-    // Offset the vehicle one row above the current road
-    const yOffset = -(cellSize ?? 20);
+    // Offset the vehicle two rows above the current road (one cell + gap + one cell)
+    const yOffset = -2 * (cellSize ?? 20);
     
     // Helper to keep values within [0, 1]
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
