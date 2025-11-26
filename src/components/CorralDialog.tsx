@@ -44,8 +44,9 @@ export const CorralDialog = ({ open, onOpenChange, userId, buildingId }: CorralD
   // Get building display (image or emoji)
   const buildingDisplay = useMemo(() => {
     if (!corral) return null;
+    // Normalize 'corral' to 'coop' - BUILDING_IMAGES uses 'coop' as the key
     return getBuildingDisplay(
-      'corral',
+      'coop',
       corral.level,
       corral.selected_skin || null,
       skinInfo || undefined

@@ -23,7 +23,7 @@ interface ParsedImage {
 /**
  * Parse a building image filename to extract type, level, and variant
  * Examples:
- * - "coop_1A.png" -> { buildingType: "corral", level: 1, variant: "A" }
+ * - "coop_1A.png" -> { buildingType: "coop", level: 1, variant: "A" }
  * - "warehouse_5A.png" -> { buildingType: "warehouse", level: 5, variant: "A" }
  * - "house_1C.png" -> { buildingType: "house", level: 1, variant: "C" }
  */
