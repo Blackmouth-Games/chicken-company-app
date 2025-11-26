@@ -16,7 +16,13 @@ const FALLBACK_IMAGES: Record<string, Record<number, Record<string, string>>> = 
 
 // Merge dynamic images with fallback logic
 function mergeImages(): Record<string, Record<number, Record<string, string>>> {
-  const merged = { ...BUILDING_IMAGES_DYNAMIC };
+  // Create a shallow copy to avoid mutating the original
+  const merged: Record<string, Record<number, Record<string, string>>> = {};
+  
+  // Copy all building types from BUILDING_IMAGES_DYNAMIC
+  for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
+    merged[buildingType] = { ...levels };
+  }
   
   // Ensure 'coop' exists even if no images were found (for type safety)
   if (!merged['coop']) {
@@ -24,14 +30,11 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   }
   
   // For each building type, ensure we have fallbacks for missing levels
-  for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
-    let maxLevel = 5; // Default max level
-    try {
-      const structure = getBuildingStructure(buildingType);
-      maxLevel = structure.maxLevel;
-    } catch (error) {
-      console.warn(`[mergeImages] Error getting structure for ${buildingType}, using default maxLevel:`, error);
-    }
+  // Use a simpler approach that doesn't depend on getBuildingStructure during init
+  for (const [buildingType, levels] of Object.entries(merged)) {
+    // Find the max level from existing levels
+    const existingLevels = Object.keys(levels).map(Number).filter(n => !isNaN(n));
+    const maxLevel = existingLevels.length > 0 ? Math.max(...existingLevels) : 5;
     
     // Ensure all levels up to maxLevel exist
     for (let level = 1; level <= maxLevel; level++) {
