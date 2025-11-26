@@ -1098,7 +1098,7 @@ const Home = () => {
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div
           style={{
-            backgroundImage: `url(${bgFarmRow1})`,
+            backgroundImage: bgFarmRow1 ? `url(${String(bgFarmRow1)})` : 'none',
             backgroundRepeat: "repeat-x",
             backgroundPosition: "top left",
             backgroundSize: "auto 200px",
@@ -1107,7 +1107,7 @@ const Home = () => {
         />
         <div
           style={{
-            backgroundImage: `url(${bgFarm})`,
+            backgroundImage: bgFarm ? `url(${String(bgFarm)})` : 'none',
             backgroundRepeat: "repeat",
             backgroundPosition: "top left",
             backgroundSize: "200px 200px",
@@ -1184,11 +1184,14 @@ const Home = () => {
               className="absolute inset-0 pointer-events-none"
               style={{
                 backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)',
-                backgroundSize: `${
-                  cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
-                }px ${
-                  cellSize + (parseFloat(String(layoutConfig.grid.gap).replace('px', '')) || 0)
-                }px`
+                backgroundSize: (() => {
+                  const gapStr = typeof layoutConfig?.grid?.gap === 'string' 
+                    ? layoutConfig.grid.gap 
+                    : String(layoutConfig?.grid?.gap || '1px');
+                  const gapValue = parseFloat(gapStr.replace('px', '')) || 0;
+                  const size = cellSize + gapValue;
+                  return `${size}px ${size}px`;
+                })()
               }}
             />
           )}
