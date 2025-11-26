@@ -52,8 +52,8 @@ function parseImageFileName(filePath: string): ParsedImage | null {
   
   // Normalize building type names
   const buildingTypeMap: Record<string, string> = {
-    'coop': 'coop',
-    'corral': 'coop', // Map corral to coop for consistency
+    'coop': 'corral',
+    'corral': 'corral',
     'warehouse': 'warehouse',
     'market': 'market',
     'house': 'house',
@@ -96,11 +96,7 @@ function parseImageFileName(filePath: string): ParsedImage | null {
 function buildDynamicImages(): Record<string, Record<number, Record<string, string>>> {
   const images: Record<string, Record<number, Record<string, string>>> = {};
   
-  // Ensure 'coop' exists from the start (for type safety)
-  images['coop'] = {};
-  
-  try {
-    for (const [filePath, url] of Object.entries(buildingImageModules)) {
+  for (const [filePath, url] of Object.entries(buildingImageModules)) {
       const parsed = parseImageFileName(filePath);
       if (!parsed) {
         console.warn(`[buildDynamicImages] Could not parse file path: ${filePath}`);
@@ -122,11 +118,6 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
       }
       
       images[buildingType][level][variant] = imageUrl;
-    }
-  } catch (error) {
-    console.error('[buildDynamicImages] Error building images:', error);
-    // Return minimal structure to prevent white screen
-    return { coop: {} };
   }
   
   // Debug: log what was built
@@ -137,7 +128,7 @@ function buildDynamicImages(): Record<string, Record<number, Record<string, stri
       level1: images['warehouse'][1] ? Object.keys(images['warehouse'][1]) : 'no level 1',
       level1A: images['warehouse'][1]?.['A'] || 'no 1A',
     } : 'not found',
-    coop: images['coop'] ? Object.keys(images['coop']) : 'not found',
+    corral: images['corral'] ? Object.keys(images['corral']) : 'not found',
   });
   
   return images;
