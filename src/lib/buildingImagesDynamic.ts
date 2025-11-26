@@ -159,36 +159,9 @@ function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 
   return map;
 }
 
-// Build dynamic structures with error handling
-let _BUILDING_IMAGES_DYNAMIC: Record<string, Record<number, Record<string, string>>> | null = null;
-let _SKIN_KEY_TO_LOCAL_MAP_DYNAMIC: Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J'> | null = null;
-
-function initializeDynamicImages() {
-  if (!_BUILDING_IMAGES_DYNAMIC) {
-    try {
-      _BUILDING_IMAGES_DYNAMIC = buildDynamicImages();
-    } catch (error) {
-      console.error('[buildingImagesDynamic] Error building dynamic images:', error);
-      _BUILDING_IMAGES_DYNAMIC = { coop: {} };
-    }
-  }
-  return _BUILDING_IMAGES_DYNAMIC;
-}
-
-function initializeSkinKeyMap() {
-  if (!_SKIN_KEY_TO_LOCAL_MAP_DYNAMIC) {
-    try {
-      _SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = buildDynamicSkinKeyMap();
-    } catch (error) {
-      console.error('[buildingImagesDynamic] Error building skin key map:', error);
-      _SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = {};
-    }
-  }
-  return _SKIN_KEY_TO_LOCAL_MAP_DYNAMIC;
-}
-
-export const BUILDING_IMAGES_DYNAMIC = initializeDynamicImages();
-export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = initializeSkinKeyMap();
+// Build dynamic structures
+export const BUILDING_IMAGES_DYNAMIC = buildDynamicImages();
+export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = buildDynamicSkinKeyMap();
 
 /**
  * Get all parsed images for a specific building type

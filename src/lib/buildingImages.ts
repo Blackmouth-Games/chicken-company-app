@@ -4,6 +4,9 @@
  * Just add new image files following the pattern: {type}_{level}{variant}.png
  */
 
+import type { 
+  BUILDING_IMAGES_DYNAMIC as BUILDING_IMAGES_DYNAMIC_TYPE
+} from "./buildingImagesDynamic";
 import { 
   BUILDING_IMAGES_DYNAMIC, 
   SKIN_KEY_TO_LOCAL_MAP_DYNAMIC,
@@ -20,14 +23,28 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   const merged: Record<string, Record<number, Record<string, string>>> = {};
   
   // Safely copy all building types from BUILDING_IMAGES_DYNAMIC
+  // Use a function to get the value lazily to avoid initialization order issues
   try {
-    for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC || {})) {
-      if (levels && typeof levels === 'object') {
-        merged[buildingType] = {};
-        for (const [levelStr, variants] of Object.entries(levels)) {
-          const level = parseInt(levelStr, 10);
-          if (!isNaN(level) && variants && typeof variants === 'object') {
-            merged[buildingType][level] = { ...variants };
+    // Access BUILDING_IMAGES_DYNAMIC through a function call to ensure it's initialized
+    let dynamicImages: typeof BUILDING_IMAGES_DYNAMIC;
+    try {
+      dynamicImages = BUILDING_IMAGES_DYNAMIC;
+    } catch (e) {
+      // If BUILDING_IMAGES_DYNAMIC is not yet initialized, return empty structure
+      console.warn('[mergeImages] BUILDING_IMAGES_DYNAMIC not yet initialized, using empty structure');
+      merged['coop'] = {};
+      return merged;
+    }
+    
+    if (dynamicImages && typeof dynamicImages === 'object') {
+      for (const [buildingType, levels] of Object.entries(dynamicImages)) {
+        if (levels && typeof levels === 'object' && !Array.isArray(levels)) {
+          merged[buildingType] = {};
+          for (const [levelStr, variants] of Object.entries(levels)) {
+            const level = parseInt(levelStr, 10);
+            if (!isNaN(level) && variants && typeof variants === 'object' && !Array.isArray(variants)) {
+              merged[buildingType][level] = { ...variants };
+            }
           }
         }
       }
@@ -76,23 +93,7 @@ function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   return merged;
 }
 
-// Initialize BUILDING_IMAGES with error handling to avoid initialization issues
-let _BUILDING_IMAGES: Record<string, Record<number, Record<string, string>>> | null = null;
-
-function initializeBuildingImages(): Record<string, Record<number, Record<string, string>>> {
-  if (!_BUILDING_IMAGES) {
-    try {
-      _BUILDING_IMAGES = mergeImages();
-    } catch (error) {
-      console.error('[buildingImages] Error initializing BUILDING_IMAGES:', error);
-      // Return a minimal structure to prevent crashes
-      _BUILDING_IMAGES = { coop: {} };
-    }
-  }
-  return _BUILDING_IMAGES;
-}
-
-export const BUILDING_IMAGES = initializeBuildingImages();
+export const BUILDING_IMAGES = mergeImages();
 
 export type BuildingType = keyof typeof BUILDING_IMAGES;
 export type BuildingSkin = 'A' | 'B' | 'C';
