@@ -74,27 +74,30 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             overflow: 'visible',
           }}
         >
-          {/* Top section: Level badge and Chicken counter */}
-          <div className="absolute top-0 left-0 z-50 flex flex-col gap-1">
+          {/* Top section: Level badge */}
+          <div className="absolute top-0 left-0 z-50">
             {/* Level badge */}
             <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white">
               {building.level}
             </div>
-            {/* Chicken counter badge - circular like level badge */}
-            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white">
+          </div>
+
+          {/* Chicken counter - left side, below level badge, different style */}
+          <div className="absolute top-0 left-0 z-50 mt-9 md:mt-10">
+            <div className="bg-amber-500 text-white rounded-lg px-2 py-1 md:px-2.5 md:py-1.5 flex items-center gap-1 text-xs md:text-sm font-semibold border-2 border-white shadow-md">
               🐔 {building.current_chickens}
             </div>
           </div>
 
-          {/* Vertical progress bar - right side of slot, anchored to bottom */}
-          <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 z-40 p-1 flex items-end">
+          {/* Vertical progress bar - right side of slot */}
+          <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 z-40 p-1">
             <div 
               className="w-full bg-green-200/70 overflow-hidden rounded-full shadow-inner"
-              style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+              style={{ height: '100%' }}
             >
               <div 
                 className="w-full bg-gradient-to-t from-green-500 to-green-600 transition-all duration-500 rounded-full"
-                style={{ height: `${fillPercentage}%`, minHeight: '4px' }}
+                style={{ height: `${fillPercentage}%` }}
               />
             </div>
           </div>
