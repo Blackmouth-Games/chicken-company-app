@@ -74,28 +74,29 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             overflow: 'visible',
           }}
         >
-          {/* Top section: Level badge + Progress bar */}
-          <div className="absolute top-0 left-0 right-0 flex items-start">
+          {/* Top section: Level badge */}
+          <div className="absolute top-0 left-0 z-50">
             {/* Level badge */}
-            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold z-50 border-2 border-white">
+            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white">
               {building.level}
-            </div>
-            {/* Progress bar - full width from side to side */}
-            <div className="flex-1 flex flex-col gap-0.5 px-2 pt-0.5">
-              <div 
-                className="w-full bg-green-200/70 overflow-hidden rounded-full shadow-inner"
-                style={{ height: isMobile ? '0.45rem' : '0.6rem' }}
-              >
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
-                  style={{ width: `${fillPercentage}%` }}
-                />
-              </div>
             </div>
           </div>
 
-          {/* Chicken counter - top right */}
-          <div className="absolute top-0 right-0 z-50 p-1 md:p-1.5">
+          {/* Vertical progress bar - right side of slot */}
+          <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 flex items-end z-40 p-1">
+            <div 
+              className="w-full bg-green-200/70 overflow-hidden rounded-full shadow-inner"
+              style={{ height: '100%' }}
+            >
+              <div 
+                className="w-full bg-gradient-to-t from-green-500 to-green-600 transition-all duration-500 rounded-full"
+                style={{ height: `${fillPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Chicken counter - top right, adjusted to avoid vertical bar */}
+          <div className="absolute top-0 right-0 z-50 p-1 md:p-1.5" style={{ marginRight: '12px' }}>
             <div className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] bg-black/20 px-2 py-0.5 rounded-full">
               🐔 {building.current_chickens}
             </div>
