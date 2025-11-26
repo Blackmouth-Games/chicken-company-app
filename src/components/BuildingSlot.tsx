@@ -62,7 +62,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     const fillPercentage = (building.current_chickens / building.capacity) * 100;
 
     return (
-      <div className={slotBorderClasses}>
+      <div className={slotBorderClasses} style={{ overflow: 'visible' }}>
         <div
           onClick={onBuildingClick}
           className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col"
@@ -71,7 +71,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            overflow: 'hidden',
+            overflow: 'visible',
           }}
         >
           {/* Top section: Level badge + Progress bar */}
@@ -80,10 +80,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold z-50 border-2 border-white">
               {building.level}
             </div>
-            {/* Progress bar - right next to level badge, no padding */}
+            {/* Progress bar - full width from side to side */}
             <div className="flex-1 flex flex-col gap-0.5 px-2 pt-0.5">
               <div 
-                className="w-1/2 bg-green-200/70 overflow-hidden rounded-full shadow-inner"
+                className="w-full bg-green-200/70 overflow-hidden rounded-full shadow-inner"
                 style={{ height: isMobile ? '0.45rem' : '0.6rem' }}
               >
                 <div 
@@ -115,7 +115,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                     maxHeight: '300%', // Allow image to be 3x the container height to overflow
                     position: 'relative',
                     top: '50%', // Center vertically
-                    transform: 'translateY(-50%)', // Center vertically
+                    transform: 'translateY(-50%) scale(0.8)', // Center vertically and make 20% smaller
                   }}
                 />
               ) : (
