@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { getBuildingDisplay, type BuildingType } from "@/lib/buildingImages";
 import { useBuildingSkins } from "@/hooks/useBuildingSkins";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import slotBgEmpty from "@/assets/bg/slot_bg_empty.png";
 import slotBgCoop from "@/assets/bg/slot_bg_coop.png";
 
