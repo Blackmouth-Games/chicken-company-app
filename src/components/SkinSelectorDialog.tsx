@@ -538,7 +538,6 @@ export const SkinSelectorDialog = ({
                           );
                         })}
                       </div>
-                      </div>
                       {isLockedLevel && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <div className="rounded-xl bg-background/85 border border-dashed border-orange-300 px-4 py-2 text-center text-sm font-semibold text-orange-600 shadow-sm">
