@@ -88,9 +88,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                 />
               </div>
               {/* Text below progress bar */}
-              <div className="flex justify-between items-center text-sm md:text-base px-1">
-                <span className="font-semibold text-green-700">🐔 {building.current_chickens}</span>
-                <span className="text-green-600">Max: {building.capacity}</span>
+          <div className="flex justify-start items-center text-sm md:text-base px-1">
+            <span className="font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+              🐔 {building.current_chickens}
+            </span>
               </div>
             </div>
           </div>
