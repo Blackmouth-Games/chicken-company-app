@@ -82,36 +82,30 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               {building.level}
             </div>
             {/* Progress bar - right next to level badge, no padding */}
-          <div className="flex-1 flex flex-col">
-            <div 
-              className="w-1/2 bg-green-200/70 overflow-hidden rounded-full shadow-inner"
-              style={{ height: isMobile ? '0.45rem' : '0.6rem' }}
-            >
+            <div className="flex-1 flex flex-col gap-0.5 px-2 pt-0.5">
               <div 
-                className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
-                style={{ width: `${fillPercentage}%` }}
-              />
-            </div>
-              {/* Text below progress bar */}
-          <div className="flex justify-start items-center text-sm md:text-base px-1">
-            <span className="font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
-              🐔 {building.current_chickens}
-            </span>
+                className="w-1/2 bg-green-200/70 overflow-hidden rounded-full shadow-inner"
+                style={{ height: isMobile ? '0.45rem' : '0.6rem' }}
+              >
+                <div 
+                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
+                  style={{ width: `${fillPercentage}%` }}
+                />
+              </div>
+              <div className="inline-flex items-center gap-1 text-sm md:text-base font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] bg-black/20 px-2 py-0.5 rounded-full w-fit">
+                🐔 {building.current_chickens}
               </div>
             </div>
           </div>
 
           <div className="flex flex-col h-full overflow-visible">
             {/* Building image or emoji - top left, 2x size, no padding, no margins */}
-            <div className="flex justify-start m-0 p-0">
+            <div className="flex justify-end items-center m-0 p-0 w-full h-[220px] md:h-[260px]">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
-                  className="w-auto max-w-full object-contain m-0 p-0"
-                  style={{ 
-                    height: isMobile ? '300px' : '360px'
-                  }}
+                  className="w-auto h-full object-contain m-0 p-0"
                 />
               ) : (
                 <div className="text-7xl md:text-8xl leading-none m-0 p-0">
