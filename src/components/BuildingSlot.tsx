@@ -48,12 +48,17 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     // Normalize 'corral' to 'coop' - BUILDING_IMAGES uses 'coop' as the key
     const normalizedType = building.building_type === 'corral' ? 'coop' : building.building_type;
     if (!normalizedType) return null;
-    return getBuildingDisplay(
-      normalizedType as BuildingType,
-      building.level,
-      building.selected_skin || null, // Explicitly pass null if undefined
-      skinInfo || undefined
-    );
+    try {
+      return getBuildingDisplay(
+        normalizedType as BuildingType,
+        building.level,
+        building.selected_skin || null, // Explicitly pass null if undefined
+        skinInfo || undefined
+      );
+    } catch (error) {
+      console.error(`[BuildingSlot] Error getting building display for ${normalizedType}:`, error);
+      return null;
+    }
   }, [building?.selected_skin, building?.level, building?.building_type, skinInfo]);
 
   const slotBorderClasses = "relative z-10 h-full rounded-2xl border-2 border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.2)] bg-white/5 backdrop-blur";

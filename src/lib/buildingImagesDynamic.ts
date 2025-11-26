@@ -96,6 +96,9 @@ function parseImageFileName(filePath: string): ParsedImage | null {
 function buildDynamicImages(): Record<string, Record<number, Record<string, string>>> {
   const images: Record<string, Record<number, Record<string, string>>> = {};
   
+  // Ensure 'coop' exists from the start (for type safety)
+  images['coop'] = {};
+  
   for (const [filePath, url] of Object.entries(buildingImageModules)) {
     const parsed = parseImageFileName(filePath);
     if (!parsed) {

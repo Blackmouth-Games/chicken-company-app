@@ -18,10 +18,20 @@ const FALLBACK_IMAGES: Record<string, Record<number, Record<string, string>>> = 
 function mergeImages(): Record<string, Record<number, Record<string, string>>> {
   const merged = { ...BUILDING_IMAGES_DYNAMIC };
   
+  // Ensure 'coop' exists even if no images were found (for type safety)
+  if (!merged['coop']) {
+    merged['coop'] = {};
+  }
+  
   // For each building type, ensure we have fallbacks for missing levels
   for (const [buildingType, levels] of Object.entries(BUILDING_IMAGES_DYNAMIC)) {
-    const structure = getBuildingStructure(buildingType);
-    const maxLevel = structure.maxLevel;
+    let maxLevel = 5; // Default max level
+    try {
+      const structure = getBuildingStructure(buildingType);
+      maxLevel = structure.maxLevel;
+    } catch (error) {
+      console.warn(`[mergeImages] Error getting structure for ${buildingType}, using default maxLevel:`, error);
+    }
     
     // Ensure all levels up to maxLevel exist
     for (let level = 1; level <= maxLevel; level++) {
@@ -197,7 +207,7 @@ export const getBuildingDisplay = (
   // If no image was found, ALWAYS use the default _1A image for the level
   // This ensures we NEVER show an emoji
   const images = BUILDING_IMAGES[type];
-  if (images) {
+  if (images && typeof images === 'object') {
     const structure = getBuildingStructure(type);
     const validLevel = Math.max(1, Math.min(structure.maxLevel, level));
     
