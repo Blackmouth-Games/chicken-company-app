@@ -270,28 +270,31 @@ export const SkinSelectorDialog = ({
           // Check if user has any skins at all
           const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
           
-          // Debug log for default skins
-          if (isDefault) {
-            console.log(`[SkinSelector] Found default skin: ${skinKey}`, {
+          // Debug log for default skins and owned skins
+          if (isDefault || isOwned) {
+            console.log(`[SkinSelector] Found skin: ${skinKey}`, {
               level,
               variant,
               buildingLevel,
               isDefault: dbSkin.is_default,
+              isOwned,
               canUse: isOwned || isDefault || (!userHasAnySkins && isVariantA)
             });
           }
           
           // Always show skins if:
-          // 1. User owns it (in user_items), OR
+          // 1. User owns it (in user_items) - ALWAYS show owned skins regardless of level, OR
           // 2. It's default (always show default skins), OR
           // 3. User has no skins at all AND it's variant A (show default A skins), OR
           // 4. It's for the building's current level (to show as locked if not owned)
           const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
           const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
           
-          // ALWAYS show default skins, regardless of other conditions
-          // Also show if user can use it, or if it's for the current level
-          if (isDefault || canUse || isCurrentLevel) {
+          // ALWAYS show:
+          // - Default skins (regardless of other conditions)
+          // - Owned skins (regardless of level - user owns them, they should see them)
+          // - Skins for current level (to show as locked if not owned)
+          if (isDefault || isOwned || isCurrentLevel) {
             slots.push({ level, variant, skin: dbSkin, isLocal: false });
           } else {
             // Still add as empty slot to show it exists but is not available
