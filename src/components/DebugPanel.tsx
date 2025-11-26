@@ -1028,8 +1028,9 @@ const DebugPanel = () => {
                                       {spawn.status === 'ready' && <span className="ml-2 text-green-600 font-bold">LISTO</span>}
                                     </p>
                                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                                      <p>Corral ID: {spawn.corralId ? (typeof spawn.corralId === 'string' ? spawn.corralId.slice(0, 12) : String(spawn.corralId).slice(0, 12)) : 'N/A'}...</p>
+                                      <p>Coop ID: {spawn.coopId ? (typeof spawn.coopId === 'string' ? spawn.coopId.slice(0, 12) : String(spawn.coopId).slice(0, 12)) : 'N/A'}...</p>
                                       <p>Nivel: {spawn.level ?? 'N/A'} | Intervalo: {spawn.spawnInterval ? (spawn.spawnInterval / 1000).toFixed(1) : 'N/A'}s</p>
+                                      <p>Position Index: {spawn.positionIndex !== undefined ? spawn.positionIndex : 'N/A'}</p>
                                       {spawn.hasBelt ? (
                                         <>
                                           <p className="text-green-600">✅ Tiene cinta asignada</p>
@@ -1040,11 +1041,11 @@ const DebugPanel = () => {
                                             <p>Posición cinta: {spawn.assignedBeltPosition}</p>
                                           )}
                                           {spawn.beltSlotPosition !== undefined && (
-                                            <p>Slot Position: {spawn.beltSlotPosition}</p>
+                                            <p>Belt Slot Position: {spawn.beltSlotPosition} {spawn.beltSlotPosition === spawn.positionIndex ? '✅ Match' : '⚠️ Mismatch'}</p>
                                           )}
                                         </>
                                       ) : (
-                                        <p className="text-red-600">❌ NO tiene cinta asignada</p>
+                                        <p className="text-red-600">❌ NO tiene cinta asignada - Este coop NO generará huevos</p>
                                       )}
                                       {spawn.timeUntilSpawn > 0 && (
                                         <p>Tiempo hasta spawn: <strong>{(spawn.timeUntilSpawn / 1000).toFixed(1)}s</strong></p>
@@ -1229,6 +1230,57 @@ const DebugPanel = () => {
 const UIColorsEditor = () => {
   const [colors, setColors] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('base');
+
+  // Initialize custom color variables if they don't exist
+  useEffect(() => {
+    const root = document.documentElement;
+    const customColors: Record<string, string> = {
+      // Green colors (for coops, modals, etc.)
+      '--ui-green-50': '142 76% 96%',
+      '--ui-green-100': '142 76% 91%',
+      '--ui-green-200': '142 76% 86%',
+      '--ui-green-300': '142 76% 76%',
+      '--ui-green-400': '142 76% 66%',
+      '--ui-green-500': '142 76% 56%',
+      '--ui-green-600': '142 76% 36%',
+      '--ui-green-700': '142 76% 26%',
+      '--ui-green-800': '142 76% 16%',
+      '--ui-green-900': '142 76% 10%',
+      // Amber colors (for chicken counter, etc.)
+      '--ui-amber-500': '43 96% 56%',
+      '--ui-amber-600': '43 96% 46%',
+      // Blue colors (for warehouse, etc.)
+      '--ui-blue-50': '217 91% 96%',
+      '--ui-blue-100': '217 91% 91%',
+      '--ui-blue-500': '217 91% 60%',
+      '--ui-blue-600': '217 91% 50%',
+      '--ui-blue-700': '217 91% 40%',
+      // Menu/Navigation colors
+      '--ui-menu-bg': '0 0% 98%',
+      '--ui-menu-text': '240 5.3% 26.1%',
+      '--ui-menu-hover': '240 4.8% 95.9%',
+      '--ui-menu-active': '240 5.9% 10%',
+      // Modal colors
+      '--ui-modal-bg': '0 0% 100%',
+      '--ui-modal-overlay': '0 0% 0% / 0.8',
+      '--ui-modal-border': '142 76% 66%',
+      // Slot colors
+      '--ui-slot-bg': '45 30% 97%',
+      '--ui-slot-border': '0 0% 100% / 0.6',
+      // Progress bar colors
+      '--ui-progress-bg': '142 76% 86% / 0.7',
+      '--ui-progress-fill': '142 76% 56%',
+      '--ui-progress-fill-dark': '142 76% 36%',
+    };
+
+    // Set default values if not already set
+    Object.entries(customColors).forEach(([varName, defaultValue]) => {
+      if (!root.style.getPropertyValue(varName)) {
+        root.style.setProperty(varName, defaultValue);
+      }
+    });
+  }, []);
 
   // Get all CSS variables from :root
   useEffect(() => {
@@ -1236,8 +1288,8 @@ const UIColorsEditor = () => {
     const computedStyle = getComputedStyle(root);
     const colorVars: Record<string, string> = {};
     
-    // List of all color variables
-    const colorVariables = [
+    // Base color variables
+    const baseColorVariables = [
       '--background', '--foreground',
       '--card', '--card-foreground',
       '--popover', '--popover-foreground',
@@ -1249,8 +1301,30 @@ const UIColorsEditor = () => {
       '--border', '--input', '--ring',
     ];
 
-    colorVariables.forEach(varName => {
-      const value = computedStyle.getPropertyValue(varName).trim();
+    // Custom UI color variables
+    const customColorVariables = [
+      // Green colors
+      '--ui-green-50', '--ui-green-100', '--ui-green-200', '--ui-green-300',
+      '--ui-green-400', '--ui-green-500', '--ui-green-600', '--ui-green-700',
+      '--ui-green-800', '--ui-green-900',
+      // Amber colors
+      '--ui-amber-500', '--ui-amber-600',
+      // Blue colors
+      '--ui-blue-50', '--ui-blue-100', '--ui-blue-500', '--ui-blue-600', '--ui-blue-700',
+      // Menu colors
+      '--ui-menu-bg', '--ui-menu-text', '--ui-menu-hover', '--ui-menu-active',
+      // Modal colors
+      '--ui-modal-bg', '--ui-modal-overlay', '--ui-modal-border',
+      // Slot colors
+      '--ui-slot-bg', '--ui-slot-border',
+      // Progress bar colors
+      '--ui-progress-bg', '--ui-progress-fill', '--ui-progress-fill-dark',
+    ];
+
+    const allColorVariables = [...baseColorVariables, ...customColorVariables];
+
+    allColorVariables.forEach(varName => {
+      const value = computedStyle.getPropertyValue(varName).trim() || root.style.getPropertyValue(varName).trim();
       if (value) {
         colorVars[varName] = value;
       }
@@ -1363,6 +1437,33 @@ const UIColorsEditor = () => {
     window.location.reload();
   };
 
+  // Organize colors by category
+  const colorCategories = {
+    base: ['--background', '--foreground', '--card', '--card-foreground', '--popover', '--popover-foreground', '--primary', '--primary-foreground', '--secondary', '--secondary-foreground', '--muted', '--muted-foreground', '--accent', '--accent-foreground', '--destructive', '--destructive-foreground', '--border', '--input', '--ring'],
+    green: ['--ui-green-50', '--ui-green-100', '--ui-green-200', '--ui-green-300', '--ui-green-400', '--ui-green-500', '--ui-green-600', '--ui-green-700', '--ui-green-800', '--ui-green-900'],
+    amber: ['--ui-amber-500', '--ui-amber-600'],
+    blue: ['--ui-blue-50', '--ui-blue-100', '--ui-blue-500', '--ui-blue-600', '--ui-blue-700'],
+    menu: ['--ui-menu-bg', '--ui-menu-text', '--ui-menu-hover', '--ui-menu-active'],
+    modal: ['--ui-modal-bg', '--ui-modal-overlay', '--ui-modal-border'],
+    slot: ['--ui-slot-bg', '--ui-slot-border'],
+    progress: ['--ui-progress-bg', '--ui-progress-fill', '--ui-progress-fill-dark'],
+  };
+
+  const getCategoryColors = (category: string) => {
+    return colorCategories[category as keyof typeof colorCategories]?.filter(varName => colors[varName]) || [];
+  };
+
+  const categoryLabels: Record<string, string> = {
+    base: '🎨 Colores Base',
+    green: '🟢 Colores Verde (Coops, Modales)',
+    amber: '🟡 Colores Ámbar (Contadores)',
+    blue: '🔵 Colores Azul (Warehouse)',
+    menu: '📱 Menú/Navegación',
+    modal: '💬 Modales',
+    slot: '📦 Slots',
+    progress: '📊 Barras de Progreso',
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -1389,49 +1490,75 @@ const UIColorsEditor = () => {
         </div>
       </div>
 
+      {/* Category selector */}
+      <div className="flex flex-wrap gap-2">
+        {Object.keys(colorCategories).map(category => (
+          <Button
+            key={category}
+            variant={activeCategory === category ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveCategory(category)}
+            className="text-xs"
+          >
+            {categoryLabels[category]}
+          </Button>
+        ))}
+      </div>
+
+      {/* Color editor for active category */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.keys(colors).map(varName => (
-            <div key={varName} className="space-y-2">
-              <Label htmlFor={varName} className="text-xs font-medium">
-                {varName.replace('--', '').replace(/-/g, ' ')}
-              </Label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  id={varName}
-                  value={hslToHex(colors[varName])}
-                  onChange={(e) => updateColor(varName, e.target.value)}
-                  className="w-12 h-8 rounded border cursor-pointer"
-                />
-                <Input
-                  type="text"
-                  value={colors[varName]}
-                  onChange={(e) => {
-                    const root = document.documentElement;
-                    root.style.setProperty(varName, e.target.value);
-                    setColors(prev => ({
-                      ...prev,
-                      [varName]: e.target.value
-                    }));
-                  }}
-                  className="flex-1 text-xs font-mono"
-                  placeholder="HSL value"
-                />
-                <div
-                  className="w-8 h-8 rounded border"
-                  style={{ backgroundColor: `hsl(${colors[varName]})` }}
-                />
+        {getCategoryColors(activeCategory).length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {getCategoryColors(activeCategory).map(varName => (
+              <div key={varName} className="space-y-2">
+                <Label htmlFor={varName} className="text-xs font-medium">
+                  {varName.replace('--ui-', '').replace('--', '').replace(/-/g, ' ')}
+                </Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    id={varName}
+                    value={hslToHex(colors[varName] || '0 0% 0%')}
+                    onChange={(e) => updateColor(varName, e.target.value)}
+                    className="w-12 h-8 rounded border cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={colors[varName] || ''}
+                    onChange={(e) => {
+                      const root = document.documentElement;
+                      root.style.setProperty(varName, e.target.value);
+                      setColors(prev => ({
+                        ...prev,
+                        [varName]: e.target.value
+                      }));
+                    }}
+                    className="flex-1 text-xs font-mono"
+                    placeholder="HSL value (e.g., 142 76% 36%)"
+                  />
+                  <div
+                    className="w-8 h-8 rounded border"
+                    style={{ backgroundColor: `hsl(${colors[varName] || '0 0% 0%'})` }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            No hay colores disponibles en esta categoría
+          </div>
+        )}
       </div>
 
       <div className="bg-muted p-3 rounded-md">
         <p className="text-xs text-muted-foreground mb-2">
-          <strong>Instrucciones:</strong> Modifica los colores usando el selector de color o editando el valor HSL directamente. 
-          Usa "Copiar Colores" para copiar la configuración y luego pégala aquí para que la aplique como valores por defecto.
+          <strong>Instrucciones:</strong> Selecciona una categoría arriba para editar colores específicos. 
+          Modifica los colores usando el selector de color o editando el valor HSL directamente (formato: "H S% L%"). 
+          Los cambios se aplican en tiempo real. Usa "Copiar Colores" para copiar toda la configuración.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          <strong>Nota:</strong> Algunos colores hardcodeados en componentes pueden requerir actualizar el código para usar estas variables CSS.
         </p>
       </div>
     </div>

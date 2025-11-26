@@ -88,6 +88,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const exactMatch = belts.find(b => b.isOutput && b.slotPosition === slotPosition);
     if (exactMatch) {
       coopBeltMappingRef.current.set(coopId, exactMatch.id);
+      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) matched exact belt ${exactMatch.id}`);
       return exactMatch;
     }
     
@@ -95,7 +96,13 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     const assignedBeltId = coopBeltMappingRef.current.get(coopId);
     if (assignedBeltId) {
       const assignedBelt = belts.find(b => b.id === assignedBeltId && b.isOutput);
-      if (assignedBelt) return assignedBelt;
+      if (assignedBelt) {
+        console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) using previously assigned belt ${assignedBelt.id}`);
+        return assignedBelt;
+      } else {
+        // Belt was removed, clear the mapping
+        coopBeltMappingRef.current.delete(coopId);
+      }
     }
     
     // Find all available output belts (not assigned to other coops or without slotPosition)
@@ -103,6 +110,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       b.isOutput && 
       !b.isDestiny
     );
+    
+    if (allOutputBelts.length === 0) {
+      console.warn(`[useEggSystem] No output belts available for coop ${coopId} (position ${slotPosition})`);
+      return null;
+    }
     
     // Get belts already assigned to other coops
     const assignedBeltIds = new Set(Array.from(coopBeltMappingRef.current.values()));
@@ -115,18 +127,21 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     
     if (unassignedBelt) {
       coopBeltMappingRef.current.set(coopId, unassignedBelt.id);
+      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) assigned to belt ${unassignedBelt.id} (slotPosition: ${unassignedBelt.slotPosition ?? 'none'})`);
       return unassignedBelt;
     }
     
     // Last resort: if all belts are assigned, allow sharing (round-robin style)
     // Use the belt that matches the slotPosition modulo number of available belts
     if (allOutputBelts.length > 0) {
-      const index = slotPosition % allOutputBelts.length;
+      const index = Math.abs(slotPosition) % allOutputBelts.length;
       const sharedBelt = allOutputBelts[index];
       coopBeltMappingRef.current.set(coopId, sharedBelt.id);
+      console.log(`[useEggSystem] Coop ${coopId} (position ${slotPosition}) sharing belt ${sharedBelt.id} (round-robin, index ${index})`);
       return sharedBelt;
     }
     
+    console.error(`[useEggSystem] Failed to find output belt for coop ${coopId} (position ${slotPosition}). Total output belts: ${allOutputBelts.length}`);
     return null;
   }, [belts]);
 
@@ -347,12 +362,15 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const spawnEgg = useCallback((coopId: string, slotPosition: number) => {
     const outputBelt = findOutputBelt(slotPosition, coopId);
     if (!outputBelt) {
-      console.warn(`[useEggSystem] No output belt found for coop ${coopId} at position ${slotPosition}`);
+      console.warn(`[useEggSystem] No output belt found for coop ${coopId} at position ${slotPosition}. Cannot spawn egg.`);
       return;
     }
     
     const path = calculatePath(outputBelt, belts);
-    if (path.length === 0) return;
+    if (path.length === 0) {
+      console.warn(`[useEggSystem] No path found from belt ${outputBelt.id} for coop ${coopId} at position ${slotPosition}`);
+      return;
+    }
     
     const beltPos = parseGridNotation(outputBelt.gridColumn);
     const beltRow = parseGridNotation(outputBelt.gridRow);
@@ -698,7 +716,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     
     coops.forEach(coop => {
       const slotPosition = coop.position_index;
-      if (slotPosition === undefined || slotPosition === null) return;
+      if (slotPosition === undefined || slotPosition === null) {
+        console.warn(`[useEggSystem] Coop ${coop.id} has no position_index, skipping spawn setup`);
+        return;
+      }
       
       const initialDelay = coopInitialDelays.get(coop.id) || 0;
       
