@@ -165,24 +165,9 @@ function buildDynamicSkinKeyMap(): Record<string, 'A' | 'B' | 'C' | 'D' | 'E' | 
   return map;
 }
 
-// Build dynamic structures with error handling to prevent white screen
-export const BUILDING_IMAGES_DYNAMIC = (() => {
-  try {
-    return buildDynamicImages();
-  } catch (error) {
-    console.error('[buildingImagesDynamic] Critical error building images, using fallback:', error);
-    return { coop: {} };
-  }
-})();
-
-export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = (() => {
-  try {
-    return buildDynamicSkinKeyMap();
-  } catch (error) {
-    console.error('[buildingImagesDynamic] Critical error building skin map, using fallback:', error);
-    return {};
-  }
-})();
+// Build dynamic structures
+export const BUILDING_IMAGES_DYNAMIC = buildDynamicImages();
+export const SKIN_KEY_TO_LOCAL_MAP_DYNAMIC = buildDynamicSkinKeyMap();
 
 /**
  * Get all parsed images for a specific building type
