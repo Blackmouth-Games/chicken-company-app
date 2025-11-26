@@ -45,8 +45,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
   // Depend on building.selected_skin and building.level explicitly to ensure updates
   const buildingDisplay = useMemo(() => {
     if (!building) return null;
+    const normalizedType = building.building_type === 'corral' ? 'coop' : building.building_type;
+    if (!normalizedType) return null;
     return getBuildingDisplay(
-      building.building_type as BuildingType,
+      normalizedType as BuildingType,
       building.level,
       building.selected_skin || null, // Explicitly pass null if undefined
       skinInfo || undefined
@@ -80,13 +82,16 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               {building.level}
             </div>
             {/* Progress bar - right next to level badge, no padding */}
-            <div className="flex-1 flex flex-col">
-              <div className="w-full h-3 md:h-3.5 bg-green-200/50 overflow-hidden border border-green-400">
-                <div 
-                  className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
-                  style={{ width: `${fillPercentage}%` }}
-                />
-              </div>
+          <div className="flex-1 flex flex-col">
+            <div 
+              className="w-1/2 bg-green-200/70 overflow-hidden rounded-full shadow-inner"
+              style={{ height: isMobile ? '0.45rem' : '0.6rem' }}
+            >
+              <div 
+                className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500 rounded-full"
+                style={{ width: `${fillPercentage}%` }}
+              />
+            </div>
               {/* Text below progress bar */}
           <div className="flex justify-start items-center text-sm md:text-base px-1">
             <span className="font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">

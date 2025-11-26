@@ -34,7 +34,6 @@ import LayoutEditor from "@/components/LayoutEditor";
 import { Egg } from "@/components/Egg";
 import { Vehicle } from "@/components/Vehicle";
 import { supabase } from "@/integrations/supabase/client";
-import { Layout } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useAudio } from "@/contexts/AudioContext";
@@ -55,7 +54,6 @@ const Home = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
-  const [headerEditMode, setHeaderEditMode] = useState(false);
   const [houseOpen, setHouseOpen] = useState(false);
   const [corralDialogOpen, setCorralDialogOpen] = useState(false);
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | undefined>();
@@ -249,27 +247,6 @@ const Home = () => {
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
 
-  // Listen to edit mode changes for header button
-  useEffect(() => {
-    // Initialize from useLayoutEditor's isEditMode
-    setHeaderEditMode(isEditMode);
-    
-    const handleEditModeChange = (e: any) => {
-      setHeaderEditMode(!!e.detail);
-    };
-    window.addEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
-    return () => {
-      window.removeEventListener('layoutEditModeChange', handleEditModeChange as EventListener);
-    };
-  }, [isEditMode]);
-
-  // Toggle edit mode from header
-  const toggleEditModeFromHeader = () => {
-    const newMode = !headerEditMode;
-    setHeaderEditMode(newMode);
-    localStorage.setItem('layoutEditMode', JSON.stringify(newMode));
-    window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: newMode }));
-  };
   const [paintOptions, setPaintOptions] = useState<{ direction: 'north' | 'south' | 'east' | 'west'; type: 'straight' | 'curve-ne' | 'curve-nw' | 'curve-se' | 'curve-sw' | 'turn' | 'turn-rt' | 'turn-lt' | 'turn-ne' | 'turn-nw' | 'turn-se' | 'turn-sw' | 'funnel'; objectType: 'belt' | 'road' }>({ direction: 'east', type: 'straight', objectType: 'belt' });
   const [showLeftCorralSettings, setShowLeftCorralSettings] = useState(false);
   const [showRightCorralSettings, setShowRightCorralSettings] = useState(false);
@@ -1192,15 +1169,6 @@ const Home = () => {
             <img src={defaultAvatar} alt="Profile" className="w-full h-full object-cover" />
           </button>
           <div className="flex gap-2">
-            <Button
-              variant={headerEditMode ? "default" : "outline"}
-              size="sm"
-              onClick={toggleEditModeFromHeader}
-              className="bg-background/95 backdrop-blur-sm border-border hover:bg-accent shadow-lg gap-2"
-            >
-              <Layout className="h-4 w-4" />
-              {headerEditMode ? t('layoutEditor.deactivateEdit') : t('layoutEditor.activateEdit')}
-            </Button>
             <Button
               variant="outline"
               size="icon"
