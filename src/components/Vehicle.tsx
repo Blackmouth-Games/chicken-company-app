@@ -167,12 +167,12 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
         src={getVehicleImage()}
         alt={isLoaded ? "Truck loaded" : "Truck empty"}
         style={{
-          width: '64px',
-          height: '64px',
-          minWidth: '64px',
-          minHeight: '64px',
-          maxWidth: '64px',
-          maxHeight: '64px',
+          width: '96px',
+          height: '96px',
+          minWidth: '96px',
+          minHeight: '96px',
+          maxWidth: '96px',
+          maxHeight: '96px',
           display: 'block',
           flexShrink: 0,
           objectFit: 'contain',

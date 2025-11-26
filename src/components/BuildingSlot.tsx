@@ -99,7 +99,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
 
           <div className="flex flex-col h-full overflow-visible">
             {/* Building image or emoji - top left, 2x size, no padding, no margins */}
-            <div className="flex justify-end items-center m-0 p-0 w-full h-[220px] md:h-[260px]">
+            <div className="flex justify-end items-center m-0 p-0 w-full h-[150px] md:h-[180px]">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
