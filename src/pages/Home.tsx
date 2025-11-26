@@ -753,7 +753,8 @@ const Home = () => {
     const slotsPerSide = Math.ceil(TOTAL_SLOTS / 2);
     const leftStartRow = layoutConfig.leftCorrals.startRow ?? 1;
     const rightStartRow = layoutConfig.rightCorrals.startRow ?? 1;
-    const slotRowSpan = Math.max(1, layoutConfig.leftCorrals.rowSpan ?? 1);
+    const leftSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.leftCorrals.rowSpan ?? 1) * 1.3));
+    const rightSlotRowSpan = Math.max(1, Math.ceil((layoutConfig.rightCorrals.rowSpan ?? 1) * 1.3));
     const leftColumns = parseGridNotation(layoutConfig.leftCorrals.gridColumn);
     const rightColumns = parseGridNotation(layoutConfig.rightCorrals.gridColumn);
     
@@ -766,11 +767,12 @@ const Home = () => {
     // Calculate first and last row of slots
     const firstSlotRow = Math.min(leftStartRow, rightStartRow);
     const lastSlotIndex = slotsPerSide - 1;
-    const lastSlotBaseRow = Math.max(
-      leftStartRow + lastSlotIndex * (slotRowSpan + 1),
-      rightStartRow + lastSlotIndex * (slotRowSpan + 1)
+    const lastSlotBaseRowLeft = leftStartRow + lastSlotIndex * (leftSlotRowSpan + 1);
+    const lastSlotBaseRowRight = rightStartRow + lastSlotIndex * (rightSlotRowSpan + 1);
+    const lastSlotRow = Math.max(
+      lastSlotBaseRowLeft + leftSlotRowSpan - 1,
+      lastSlotBaseRowRight + rightSlotRowSpan - 1
     );
-    const lastSlotRow = lastSlotBaseRow + slotRowSpan - 1;
     
     // Generate central vertical line: one belt every 4 rows
     // Start from first slot row, generate belts every 4 rows
@@ -784,17 +786,17 @@ const Home = () => {
     // Pre-calculate belt rows for left slots (where horizontal belts connect)
     // These should be in the central row of each slot
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
-      intersectionRows.add(slotCenterRow);
+      const baseRow = leftStartRow + i * (leftSlotRowSpan + 1);
+      const slotConnectionRow = leftSlotRowSpan > 1 ? baseRow + 1 : baseRow;
+      intersectionRows.add(slotConnectionRow);
     }
     
     // Pre-calculate belt rows for right slots (where horizontal belts connect)
     // These should be in the central row of each slot
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = rightStartRow + i * (slotRowSpan + 1);
-      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
-      intersectionRows.add(slotCenterRow);
+      const baseRow = rightStartRow + i * (rightSlotRowSpan + 1);
+      const slotConnectionRow = rightSlotRowSpan > 1 ? baseRow + 1 : baseRow;
+      intersectionRows.add(slotConnectionRow);
     }
     
     // Generate vertical line: continuous line from first slot to last slot
@@ -840,13 +842,10 @@ const Home = () => {
     
     // Generate ONE belt per corral pointing to center
     // Left corrals: belts point east (towards center)
-    // Position belt in the middle of the slot vertically (row = baseRow + slotRowSpan/2)
+    // Position belt at the second row of the slot (or first if there's only one row)
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = leftStartRow + i * (slotRowSpan + 1);
-      // Calculate the central row of the slot
-      // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
-      // For rowSpan 7: place at baseRow + 3 (approximately middle)
-      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
+      const baseRow = leftStartRow + i * (leftSlotRowSpan + 1);
+      const slotCenterRow = leftSlotRowSpan > 1 ? baseRow + 1 : baseRow;
       // Belt column: right edge of left corral (pointing east towards center)
       const beltCol = leftColumns.end;
       
@@ -900,14 +899,11 @@ const Home = () => {
     }
     
     // Right corrals: belts point west (towards center)
-    // Position belt in the middle of the slot vertically
+    // Position belt at the second row of the slot (or first if there's only one row)
     // Belts should be in the column just to the left of right corral start (rightColumns.start - 1)
     for (let i = 0; i < slotsPerSide; i++) {
-      const baseRow = rightStartRow + i * (slotRowSpan + 1);
-      // Calculate the central row of the slot
-      // For rowSpan 2: place at baseRow + 1 (middle of the 2-row slot)
-      // For rowSpan 7: place at baseRow + 3 (approximately middle)
-      const slotCenterRow = baseRow + Math.floor(slotRowSpan / 2);
+      const baseRow = rightStartRow + i * (rightSlotRowSpan + 1);
+      const slotCenterRow = rightSlotRowSpan > 1 ? baseRow + 1 : baseRow;
       // Belt column: one column to the left of right corral start (rightColumns.start - 1)
       // This is the column just to the left of where they currently are
       const beltCol = rightColumns.start - 1;
