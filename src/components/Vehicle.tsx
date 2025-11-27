@@ -26,7 +26,8 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
     // Normalize progress so it always increases from 0 -> 1 regardless of reverseDirection
     const normalizedProgress = reverseDirection ? 1 - progress : progress;
     // Offset the vehicle two rows above the current road (one cell + gap + one cell)
-    const yOffset = -2 * (cellSize ?? 20);
+    const baseYOffset = -2 * (cellSize ?? 20);
+    const adjustedYOffset = baseYOffset + (!goingToB ? (cellSize ?? 20) * 0.5 : 0);
     
     // Helper to keep values within [0, 1]
     const clamp = (value: number) => Math.max(0, Math.min(1, value));
@@ -40,26 +41,26 @@ export const Vehicle = ({ id, gridColumn, gridRow, progress, direction, isLoaded
       case 'west':
         return {
           left: `${visualHorizontalProgress * 100}%`,
-          top: `calc(50% + ${yOffset}px)`,
+          top: `calc(50% + ${adjustedYOffset}px)`,
           transform: 'translate(-50%, -50%)',
         };
       case 'south':
         return {
           left: '50%',
-          top: `calc(${normalizedProgress * 100}% + ${yOffset}px)`,
+          top: `calc(${normalizedProgress * 100}% + ${adjustedYOffset}px)`,
           transform: 'translate(-50%, -50%)',
         };
       case 'north':
         return {
           left: '50%',
-          top: `calc(${(1 - normalizedProgress) * 100}% + ${yOffset}px)`,
+          top: `calc(${(1 - normalizedProgress) * 100}% + ${adjustedYOffset}px)`,
           transform: 'translate(-50%, -50%)',
         };
       default:
         // Default to east (left to right)
         return {
           left: `${progress * 100}%`,
-          top: `calc(50% + ${yOffset}px)`,
+          top: `calc(50% + ${adjustedYOffset}px)`,
           transform: 'translate(-50%, -50%)',
         };
     }
