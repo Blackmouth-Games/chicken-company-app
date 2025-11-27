@@ -252,10 +252,10 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                   style={{ 
                     objectPosition: 'center bottom',
                     display: 'block',
-                    maxHeight: '100%',
+                    maxHeight: '150%',
                     width: 'auto',
                     height: 'auto',
-                    transform: 'scale(0.88)',
+                    transform: 'scale(1.2)',
                   }}
                 />
               ) : (
