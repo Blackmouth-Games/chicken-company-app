@@ -241,6 +241,7 @@ const Home = () => {
   const [hideBelts, setHideBelts] = useState(false);
   const [hideRoads, setHideRoads] = useState(false);
   const [showSlotCorrelation, setShowSlotCorrelation] = useState(false);
+  const [eggDebugMode, setEggDebugMode] = useState(false);
   
   // State for paint mode
   const [paintMode, setPaintMode] = useState(false);
@@ -352,6 +353,13 @@ const Home = () => {
     const handleShowSlotCorrelationChange = (event: CustomEvent<boolean>) => {
       setShowSlotCorrelation(event.detail);
     };
+    const handleEggDebugModeChange = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      const enabled = typeof detail === 'object' && detail !== null
+        ? !!(detail.enabled ?? detail.active ?? detail)
+        : !!detail;
+      setEggDebugMode(enabled);
+    };
 
     window.addEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
     window.addEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
@@ -359,6 +367,7 @@ const Home = () => {
     window.addEventListener('leftCoopSettingsChange', handleLeftCoopSettingsChange as EventListener);
     window.addEventListener('rightCoopSettingsChange', handleRightCoopSettingsChange as EventListener);
     window.addEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
+    window.addEventListener('eggDebugModeChange', handleEggDebugModeChange as EventListener);
     return () => {
       window.removeEventListener('hideBuildingsChange', handleHideBuildingsChange as EventListener);
       window.removeEventListener('hideBeltsChange', handleHideBeltsChange as EventListener);
@@ -366,6 +375,7 @@ const Home = () => {
       window.removeEventListener('leftCoopSettingsChange', handleLeftCoopSettingsChange as EventListener);
       window.removeEventListener('rightCoopSettingsChange', handleRightCoopSettingsChange as EventListener);
       window.removeEventListener('showSlotCorrelationChange', handleShowSlotCorrelationChange as EventListener);
+      window.removeEventListener('eggDebugModeChange', handleEggDebugModeChange as EventListener);
     };
   }, []);
 
@@ -1849,6 +1859,7 @@ const Home = () => {
                   onToggleDestiny={() => toggleBeltDestiny(belt.id)}
                   onToggleTransport={() => toggleBeltTransport(belt.id)}
                   showSlotCorrelation={showSlotCorrelation}
+                  eggDebugMode={eggDebugMode}
                 />
               );
             })}
