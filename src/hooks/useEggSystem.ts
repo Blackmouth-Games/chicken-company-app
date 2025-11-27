@@ -28,14 +28,14 @@ interface Belt {
 }
 
 const EGG_SPEED = 0.02; // Progress increment per frame (adjust for speed)
-const BASE_EGG_SPAWN_INTERVAL = 5000; // Base spawn interval (5 seconds) for level 1
+const BASE_EGG_SPAWN_INTERVAL = 10000; // Base spawn interval (10 seconds) for level 1 - REDUCED SPAWN RATE
 const MAX_EGGS = 50; // Maximum number of eggs in the system
 const EGG_MAX_AGE = 60000; // Maximum age for an egg (60 seconds) before removal
 
 // Calculate spawn interval based on coop level (higher level = faster spawn)
 const getEggSpawnInterval = (level: number): number => {
-  // Level 1: 5s, Level 2: 4s, Level 3: 3s, Level 4: 2s, Level 5: 1.5s
-  return Math.max(1500, BASE_EGG_SPAWN_INTERVAL - (level - 1) * 1000);
+  // Level 1: 10s, Level 2: 8s, Level 3: 6s, Level 4: 4s, Level 5: 3s
+  return Math.max(3000, BASE_EGG_SPAWN_INTERVAL - (level - 1) * 2000);
 };
 
 const DIRECTION_ORDER: Direction[] = ['north', 'east', 'south', 'west'];
