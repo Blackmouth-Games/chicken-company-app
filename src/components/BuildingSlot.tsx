@@ -62,7 +62,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     const fillPercentage = (building.current_chickens / building.capacity) * 100;
 
     return (
-      <div className={slotBorderClasses} style={{ overflow: 'visible' }}>
+      <div className={slotBorderClasses} style={{ overflow: 'hidden' }}>
         <div
           onClick={onBuildingClick}
           className="rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 relative h-full flex flex-col"
@@ -71,7 +71,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            overflow: 'visible',
+            overflow: 'hidden',
           }}
         >
           {/* Top section: Level badge */}
@@ -102,9 +102,9 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
           </div>
 
-          <div className="flex flex-col h-full overflow-visible">
-            {/* Building image or emoji - centered horizontally, can overflow top */}
-            <div className="flex justify-center items-center m-0 p-0 w-full h-[150px] md:h-[180px] overflow-visible relative">
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* Building image or emoji - centered horizontally */}
+            <div className="flex justify-center items-center m-0 p-0 w-full h-[150px] md:h-[180px] overflow-hidden relative">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
