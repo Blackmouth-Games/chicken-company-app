@@ -537,7 +537,7 @@ export const ConveyorBelt = ({
               {showSlotCorrelation && belt.slotPosition !== undefined && belt.slotPosition !== null && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                   <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded shadow-lg border-2 border-white">
-                    Slot {belt.slotPosition}
+                    Slot #{belt.slotPosition + 1}
                   </div>
                 </div>
               )}

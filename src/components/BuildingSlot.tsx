@@ -158,6 +158,22 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
     const fillPercentage = (building.current_chickens / building.capacity) * 100;
 
     const effectiveCountdownSeconds = countdownMs != null ? (countdownMs / 1000) : eggDebugDetails?.timeUntilSpawn ? eggDebugDetails.timeUntilSpawn / 1000 : null;
+    const slotIndex = building.position_index ?? position;
+    const slotNumberLabel = slotIndex !== undefined && slotIndex !== null ? slotIndex + 1 : position + 1;
+    const beltNumberLabel = typeof eggDebugDetails?.beltSlotPosition === 'number'
+      ? eggDebugDetails.beltSlotPosition + 1
+      : undefined;
+    const statusLabelMap: Record<EggDebugStatus, string> = {
+      ready: 'LISTO',
+      waiting: 'EN COLA',
+      'no-belt': 'SIN CINTA',
+    };
+    const statusColorMap: Record<EggDebugStatus, string> = {
+      ready: 'text-emerald-300',
+      waiting: 'text-amber-300',
+      'no-belt': 'text-rose-300',
+    };
+    const currentStatus = eggDebugDetails?.status ?? 'no-belt';
 
     return (
       <div className={cn(slotBorderClasses, debugRingClass)} style={{ overflow: 'hidden' }}>
@@ -179,34 +195,29 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               {building.level}
             </div>
           </div>
-          {/* Egg debug overlay */}
+          {/* Egg debug overlay (slot correlation) */}
           {eggDebugMode && building && (
-            <div className="absolute top-1 right-1 z-50 flex flex-col items-end gap-1 text-[10px] md:text-xs pointer-events-none">
-              <div className={cn(
-                "px-2 py-1 rounded-md shadow-md text-white",
-                eggDebugDetails?.hasBelt ? "bg-emerald-600/90" : "bg-rose-600/90"
-              )}>
-                {eggDebugDetails?.beltId ? (
-                  <>
-                    <div className="font-semibold">Cinta</div>
-                    <div className="font-mono text-[10px] md:text-[11px]">
-                      {eggDebugDetails.beltId.substring(0, 6)}…
-                    </div>
-                  </>
-                ) : (
-                  <div className="font-semibold">Sin cinta</div>
+            <div className="absolute inset-x-2 bottom-2 z-50 pointer-events-none">
+              <div className="bg-slate-900/90 text-white rounded-xl border border-white/10 shadow-xl px-3 py-2 flex flex-col gap-1 text-[11px] md:text-xs">
+                <div className="flex items-center justify-between gap-2 font-semibold text-xs">
+                  <span>Slot #{slotNumberLabel}</span>
+                  <span className="text-slate-200">
+                    {beltNumberLabel ? `Cinta #${beltNumberLabel}` : 'Sin cinta'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 text-[11px]">
+                  <span className={statusColorMap[currentStatus]}>
+                    Estado: {statusLabelMap[currentStatus]}
+                  </span>
+                  <span className="text-slate-200 flex items-center gap-1">
+                    ⏱ {effectiveCountdownSeconds != null ? `${effectiveCountdownSeconds.toFixed(1)}s` : '—'}
+                  </span>
+                </div>
+                {eggDebugDetails?.beltId && (
+                  <div className="text-[10px] text-slate-400 font-mono truncate">
+                    {eggDebugDetails.beltId}
+                  </div>
                 )}
-              </div>
-              <div className="bg-black/70 text-white px-2 py-1 rounded-md shadow-md flex flex-col items-end">
-                <span className="font-semibold text-[10px] md:text-[11px]">Estado: {eggDebugDetails?.status ?? 'N/A'}</span>
-                <span className="text-[11px]">
-                  ⏱ {effectiveCountdownSeconds != null ? `${effectiveCountdownSeconds.toFixed(1)}s` : '—'}
-                </span>
-              </div>
-              <div className="bg-slate-800/80 text-white px-2 py-1 rounded-md shadow-md">
-                <span className="font-semibold">
-                  Slot {position} → {eggDebugDetails?.beltSlotPosition ?? '??'}
-                </span>
               </div>
             </div>
           )}
