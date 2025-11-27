@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle, Snowflake } from "lucide-react";
+import { Bug, X, Copy, Check, Layout, Plus, RotateCcw, Palette, AlertCircle, Snowflake, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -35,6 +35,7 @@ const DebugPanel = () => {
   const [eggDebugInfo, setEggDebugInfo] = useState<any>(null);
   const [vehicleDebugInfo, setVehicleDebugInfo] = useState<any>(null);
   const [vehicleLogs, setVehicleLogs] = useState<Array<{ timestamp: string; level: string; message: string; data?: any }>>([]);
+  const [eggDebugMode, setEggDebugMode] = useState(false);
   
   // Skins tab state
   const [userId, setUserId] = useState<string | null>(null);
@@ -259,6 +260,18 @@ const DebugPanel = () => {
     const next = !isEditMode;
     setIsEditMode(next);
     window.dispatchEvent(new CustomEvent('layoutEditModeChange', { detail: next }));
+  };
+
+  const toggleEggDebugMode = () => {
+    const next = !eggDebugMode;
+    setEggDebugMode(next);
+    window.dispatchEvent(new CustomEvent('eggDebugModeChange', { detail: { enabled: next } }));
+    toast({
+      title: next ? "Modo Debug Egg activo" : "Modo Debug Egg desactivado",
+      description: next
+        ? "Los coops mostrarán vínculo con cintas y cuenta regresiva."
+        : "Se ocultaron las superposiciones de debug.",
+    });
   };
 
   const addBelt = () => {
@@ -996,7 +1009,18 @@ const DebugPanel = () => {
               {/* Egg System Debug */}
               {eggDebugInfo && (
                 <div className="space-y-2">
-                  <h3 className="font-semibold text-sm">🥚 Egg System</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm">🥚 Egg System</h3>
+                    <Button
+                      size="sm"
+                      variant={eggDebugMode ? "default" : "outline"}
+                      className="gap-1"
+                      onClick={toggleEggDebugMode}
+                    >
+                      <Link2 className="h-4 w-4" />
+                      {eggDebugMode ? "Ocultar vínculos" : "Ver vínculos"}
+                    </Button>
+                  </div>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div className="grid grid-cols-2 gap-2">
                       <p><strong>Total Eggs:</strong> {eggDebugInfo.totalEggs ?? 0} / {eggDebugInfo.maxEggs ?? 0}</p>
