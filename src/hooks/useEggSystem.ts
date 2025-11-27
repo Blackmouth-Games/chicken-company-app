@@ -932,6 +932,215 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     return debugInfo;
   }, [eggs, coops, belts, findOutputBelt, calculatePath]);
 
-  return { eggs, getDebugInfo };
+  // Verification function to check system behavior
+  const verifySystem = useCallback(() => {
+    const now = Date.now();
+    const issues: Array<{
+      type: 'error' | 'warning' | 'info';
+      coopId?: string;
+      positionIndex?: number;
+      message: string;
+      details?: any;
+    }> = [];
+
+    // Check 1: Verify all coops have belts
+    coops.forEach(coop => {
+      const slotPosition = coop.position_index;
+      if (slotPosition === undefined || slotPosition === null) {
+        issues.push({
+          type: 'error',
+          coopId: coop.id,
+          message: `Coop sin position_index`,
+          details: { coopId: coop.id, level: coop.level }
+        });
+        return;
+      }
+
+      const outputBelt = findOutputBelt(slotPosition, coop.id);
+      if (!outputBelt) {
+        issues.push({
+          type: 'error',
+          coopId: coop.id,
+          positionIndex: slotPosition,
+          message: `Coop en posición ${slotPosition} NO tiene cinta de salida asignada`,
+          details: { 
+            slotPosition, 
+            level: coop.level,
+            totalOutputBelts: belts.filter(b => b.isOutput).length,
+            availableBelts: belts.filter(b => b.isOutput && !b.isDestiny).length
+          }
+        });
+        return;
+      }
+
+      // Check 2: Verify belt has valid path
+      const path = calculatePath(outputBelt, belts);
+      if (path.length === 0) {
+        issues.push({
+          type: 'error',
+          coopId: coop.id,
+          positionIndex: slotPosition,
+          message: `Coop en posición ${slotPosition} tiene cinta pero NO tiene ruta válida`,
+          details: {
+            slotPosition,
+            beltId: outputBelt.id,
+            beltPosition: `${outputBelt.gridColumn} / ${outputBelt.gridRow}`,
+            beltDirection: outputBelt.direction
+          }
+        });
+        return;
+      }
+
+      // Check 3: Verify spawn timing
+      const lastSpawn = lastSpawnTimeRef.current.get(coop.id);
+      const spawnInterval = getEggSpawnInterval(coop.level || 1);
+      
+      if (lastSpawn !== undefined) {
+        const timeSinceLastSpawn = now - lastSpawn;
+        const expectedNextSpawn = lastSpawn + spawnInterval;
+        const timeUntilNextSpawn = expectedNextSpawn - now;
+        
+        // If it's been way too long since last spawn, there might be an issue
+        if (timeSinceLastSpawn > spawnInterval * 3) {
+          issues.push({
+            type: 'warning',
+            coopId: coop.id,
+            positionIndex: slotPosition,
+            message: `Coop en posición ${slotPosition} no ha generado huevos en ${(timeSinceLastSpawn / 1000).toFixed(1)}s (esperado cada ${(spawnInterval / 1000).toFixed(1)}s)`,
+            details: {
+              slotPosition,
+              level: coop.level,
+              lastSpawn: new Date(lastSpawn).toLocaleTimeString(),
+              timeSinceLastSpawn: (timeSinceLastSpawn / 1000).toFixed(1) + 's',
+              expectedInterval: (spawnInterval / 1000).toFixed(1) + 's',
+              hasBelt: !!outputBelt,
+              hasPath: path.length > 0,
+              currentEggs: eggs.length,
+              maxEggs: MAX_EGGS
+            }
+          });
+        }
+      } else {
+        // First spawn - check if it should have spawned by now
+        const initialDelay = 2000; // Max expected initial delay
+        if (now > initialDelay) {
+          issues.push({
+            type: 'info',
+            coopId: coop.id,
+            positionIndex: slotPosition,
+            message: `Coop en posición ${slotPosition} aún no ha generado su primer huevo`,
+            details: {
+              slotPosition,
+              level: coop.level,
+              hasBelt: !!outputBelt,
+              hasPath: path.length > 0,
+              currentEggs: eggs.length,
+              maxEggs: MAX_EGGS
+            }
+          });
+        }
+      }
+
+      // Check 4: Verify belt assignment consistency
+      const assignedBeltId = coopBeltMappingRef.current.get(coop.id);
+      if (assignedBeltId && assignedBeltId !== outputBelt.id) {
+        issues.push({
+          type: 'warning',
+          coopId: coop.id,
+          positionIndex: slotPosition,
+          message: `Coop en posición ${slotPosition} tiene asignación de cinta inconsistente`,
+          details: {
+            slotPosition,
+            assignedBeltId,
+            currentBeltId: outputBelt.id,
+            assignedBeltExists: belts.some(b => b.id === assignedBeltId)
+          }
+        });
+      }
+    });
+
+    // Check 5: System-wide issues
+    if (eggs.length >= MAX_EGGS) {
+      issues.push({
+        type: 'error',
+        message: `Sistema al límite: ${eggs.length}/${MAX_EGGS} huevos. Los coops no pueden generar más hasta que se eliminen huevos.`,
+        details: {
+          currentEggs: eggs.length,
+          maxEggs: MAX_EGGS,
+          readyCoops: coops.filter(coop => {
+            const slotPosition = coop.position_index;
+            if (slotPosition === undefined || slotPosition === null) return false;
+            const outputBelt = findOutputBelt(slotPosition, coop.id);
+            if (!outputBelt) return false;
+            const path = calculatePath(outputBelt, belts);
+            if (path.length === 0) return false;
+            const lastSpawn = lastSpawnTimeRef.current.get(coop.id);
+            if (lastSpawn === undefined) return true;
+            const spawnInterval = getEggSpawnInterval(coop.level || 1);
+            return (Date.now() - lastSpawn) >= spawnInterval;
+          }).length
+        }
+      });
+    }
+
+    // Check 6: Belt distribution
+    const outputBelts = belts.filter(b => b.isOutput && !b.isDestiny);
+    const assignedBelts = new Set(Array.from(coopBeltMappingRef.current.values()));
+    const unassignedBelts = outputBelts.filter(b => !assignedBelts.has(b.id));
+    
+    if (unassignedBelts.length > 0 && coops.length > outputBelts.length) {
+      issues.push({
+        type: 'warning',
+        message: `Hay ${unassignedBelts.length} cintas de salida sin asignar pero ${coops.length} coops (solo ${outputBelts.length} cintas disponibles)`,
+        details: {
+          totalCoops: coops.length,
+          totalOutputBelts: outputBelts.length,
+          assignedBelts: assignedBelts.size,
+          unassignedBelts: unassignedBelts.length,
+          unassignedBeltIds: unassignedBelts.map(b => b.id)
+        }
+      });
+    }
+
+    // Check 7: Page visibility
+    if (!isPageVisibleRef.current) {
+      issues.push({
+        type: 'warning',
+        message: 'La página no está visible. El sistema de huevos está pausado.',
+        details: { pageVisible: false }
+      });
+    }
+
+    return {
+      timestamp: new Date().toISOString(),
+      totalIssues: issues.length,
+      errors: issues.filter(i => i.type === 'error').length,
+      warnings: issues.filter(i => i.type === 'warning').length,
+      infos: issues.filter(i => i.type === 'info').length,
+      issues,
+      summary: {
+        totalCoops: coops.length,
+        coopsWithBelts: coops.filter(coop => {
+          const slotPosition = coop.position_index;
+          if (slotPosition === undefined || slotPosition === null) return false;
+          return !!findOutputBelt(slotPosition, coop.id);
+        }).length,
+        coopsWithValidPaths: coops.filter(coop => {
+          const slotPosition = coop.position_index;
+          if (slotPosition === undefined || slotPosition === null) return false;
+          const outputBelt = findOutputBelt(slotPosition, coop.id);
+          if (!outputBelt) return false;
+          return calculatePath(outputBelt, belts).length > 0;
+        }).length,
+        currentEggs: eggs.length,
+        maxEggs: MAX_EGGS,
+        pageVisible: isPageVisibleRef.current,
+        totalOutputBelts: belts.filter(b => b.isOutput && !b.isDestiny).length,
+        assignedBelts: coopBeltMappingRef.current.size
+      }
+    };
+  }, [coops, belts, eggs, findOutputBelt, calculatePath, isPageVisibleRef]);
+
+  return { eggs, getDebugInfo, verifySystem };
 };
 

@@ -1021,7 +1021,7 @@ const Home = () => {
   const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
-  const { eggs, getDebugInfo: getEggDebugInfo } = useEggSystem(allBelts, buildings);
+  const { eggs, getDebugInfo: getEggDebugInfo, verifySystem: verifyEggSystem } = useEggSystem(allBelts, buildings);
   
   // Vehicle system - must be after roads are defined
   const { vehicles, getDebugInfo: getVehicleDebugInfo } = useVehicleSystem(allRoads, marketLevel);
@@ -1038,6 +1038,11 @@ const Home = () => {
       window.dispatchEvent(new CustomEvent('vehicleDebugInfo', { detail: debugInfo }));
     }
     
+    // Expose verify function
+    if (verifyEggSystem) {
+      (window as any).verifyEggSystem = verifyEggSystem;
+    }
+    
     const interval = setInterval(() => {
       if (getEggDebugInfo) {
         window.dispatchEvent(new CustomEvent('eggDebugInfo', { detail: getEggDebugInfo() }));
@@ -1048,8 +1053,11 @@ const Home = () => {
       }
     }, 1000); // Update every second
     
-    return () => clearInterval(interval);
-  }, [getEggDebugInfo, getVehicleDebugInfo]);
+    return () => {
+      clearInterval(interval);
+      delete (window as any).verifyEggSystem;
+    };
+  }, [getEggDebugInfo, getVehicleDebugInfo, verifyEggSystem]);
 
   // Debug: Send belt information to DebugPanel
   useEffect(() => {

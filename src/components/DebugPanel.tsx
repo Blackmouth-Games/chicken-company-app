@@ -36,6 +36,7 @@ const DebugPanel = () => {
   const [vehicleDebugInfo, setVehicleDebugInfo] = useState<any>(null);
   const [vehicleLogs, setVehicleLogs] = useState<Array<{ timestamp: string; level: string; message: string; data?: any }>>([]);
   const [eggDebugMode, setEggDebugMode] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<any>(null);
   
   // Skins tab state
   const [userId, setUserId] = useState<string | null>(null);
@@ -1011,15 +1012,43 @@ const DebugPanel = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-sm">🥚 Egg System</h3>
-                    <Button
-                      size="sm"
-                      variant={eggDebugMode ? "default" : "outline"}
-                      className="gap-1"
-                      onClick={toggleEggDebugMode}
-                    >
-                      <Link2 className="h-4 w-4" />
-                      {eggDebugMode ? "Ocultar vínculos" : "Ver vínculos"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => {
+                          const verify = (window as any).verifyEggSystem;
+                          if (verify) {
+                            const result = verify();
+                            setVerificationResult(result);
+                            console.log('[DebugPanel] Verification result:', result);
+                            toast({
+                              title: "Verificación completada",
+                              description: `Encontrados ${result.totalIssues} problemas: ${result.errors} errores, ${result.warnings} advertencias`,
+                              variant: result.errors > 0 ? "destructive" : result.warnings > 0 ? "default" : "default",
+                            });
+                          } else {
+                            toast({
+                              title: "Error",
+                              description: "Función de verificación no disponible",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        🔍 Verificar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={eggDebugMode ? "default" : "outline"}
+                        className="gap-1"
+                        onClick={toggleEggDebugMode}
+                      >
+                        <Link2 className="h-4 w-4" />
+                        {eggDebugMode ? "Ocultar vínculos" : "Ver vínculos"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
                     <div className="grid grid-cols-2 gap-2">
@@ -1083,6 +1112,93 @@ const DebugPanel = () => {
                               </div>
                             );
                           })}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Verification Results */}
+                    {verificationResult && (
+                      <div className="border-t pt-3 mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold">🔍 Resultados de Verificación</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              navigator.clipboard.writeText(JSON.stringify(verificationResult, null, 2));
+                              toast({
+                                title: "Resultados copiados",
+                                description: "Resultados de verificación copiados al portapapeles",
+                              });
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copiar
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className={`p-2 rounded ${verificationResult.errors > 0 ? 'bg-red-500/20 border border-red-500' : 'bg-green-500/20 border border-green-500'}`}>
+                              <p className="font-semibold">Errores: {verificationResult.errors}</p>
+                            </div>
+                            <div className={`p-2 rounded ${verificationResult.warnings > 0 ? 'bg-yellow-500/20 border border-yellow-500' : 'bg-green-500/20 border border-green-500'}`}>
+                              <p className="font-semibold">Advertencias: {verificationResult.warnings}</p>
+                            </div>
+                            <div className="p-2 rounded bg-blue-500/20 border border-blue-500">
+                              <p className="font-semibold">Info: {verificationResult.infos}</p>
+                            </div>
+                          </div>
+                          <div className="bg-muted p-2 rounded text-xs">
+                            <p><strong>Resumen:</strong></p>
+                            <ul className="list-disc list-inside space-y-1 mt-1">
+                              <li>Total coops: {verificationResult.summary.totalCoops}</li>
+                              <li>Coops con cintas: {verificationResult.summary.coopsWithBelts}</li>
+                              <li>Coops con rutas válidas: {verificationResult.summary.coopsWithValidPaths}</li>
+                              <li>Huevos actuales: {verificationResult.summary.currentEggs} / {verificationResult.summary.maxEggs}</li>
+                              <li>Cintas de salida: {verificationResult.summary.totalOutputBelts}</li>
+                              <li>Cintas asignadas: {verificationResult.summary.assignedBelts}</li>
+                              <li>Página visible: {verificationResult.summary.pageVisible ? '✅' : '❌'}</li>
+                            </ul>
+                          </div>
+                          {verificationResult.issues.length > 0 && (
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                              <p className="font-semibold text-xs">Problemas encontrados:</p>
+                              {verificationResult.issues.map((issue: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className={`border-l-4 p-2 rounded text-xs ${
+                                    issue.type === 'error' ? 'border-red-500 bg-red-500/10' :
+                                    issue.type === 'warning' ? 'border-yellow-500 bg-yellow-500/10' :
+                                    'border-blue-500 bg-blue-500/10'
+                                  }`}
+                                >
+                                  <p className="font-semibold">
+                                    {issue.type === 'error' ? '❌' : issue.type === 'warning' ? '⚠️' : 'ℹ️'} {issue.message}
+                                  </p>
+                                  {issue.positionIndex !== undefined && (
+                                    <p className="text-muted-foreground mt-1">Posición: {issue.positionIndex}</p>
+                                  )}
+                                  {issue.details && (
+                                    <details className="mt-1">
+                                      <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                        Ver detalles
+                                      </summary>
+                                      <pre className="mt-1 p-2 bg-background/50 rounded text-[10px] overflow-x-auto">
+                                        {JSON.stringify(issue.details, null, 2)}
+                                      </pre>
+                                    </details>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {verificationResult.issues.length === 0 && (
+                            <div className="p-3 bg-green-500/20 border border-green-500 rounded text-center">
+                              <p className="text-green-700 font-semibold">✅ Sistema funcionando correctamente</p>
+                              <p className="text-xs text-green-600 mt-1">No se encontraron problemas</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
