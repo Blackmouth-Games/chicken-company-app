@@ -321,10 +321,22 @@ export const Egg = ({ id, gridColumn, gridRow, progress, direction, beltType, en
               backgroundColor: getRTBackgroundColor(progress),
             }}
           />
-          <div className="text-lg relative z-10">🥚</div>
+          <div className="relative z-10" style={{ width: '24px', height: '32px' }}>
+            <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="12" cy="20" rx="10" ry="10" fill="white" />
+              <ellipse cx="12" cy="16" rx="9" ry="12" fill="white" />
+              <ellipse cx="12" cy="12" rx="7" ry="10" fill="white" />
+            </svg>
+          </div>
         </div>
       ) : (
-        <div className="text-lg">🥚</div>
+        <div style={{ width: '24px', height: '32px' }}>
+          <svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="12" cy="20" rx="10" ry="10" fill="white" />
+            <ellipse cx="12" cy="16" rx="9" ry="12" fill="white" />
+            <ellipse cx="12" cy="12" rx="7" ry="10" fill="white" />
+          </svg>
+        </div>
       )}
     </div>
   ) : null;
