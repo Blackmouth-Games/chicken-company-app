@@ -7,7 +7,7 @@ import { useMemo, useState, useEffect } from "react";
 import slotBgEmpty from "@/assets/bg/slot_bg_empty.png";
 import slotBgCoop from "@/assets/bg/slot_bg_coop.png";
 
-type EggDebugStatus = 'ready' | 'waiting' | 'no-belt';
+type EggDebugStatus = 'ready' | 'waiting' | 'no-belt' | 'no-path' | 'no-space';
 
 interface EggDebugDetails {
   beltId?: string | null;
@@ -167,11 +167,15 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
       ready: 'LISTO',
       waiting: 'EN COLA',
       'no-belt': 'SIN CINTA',
+      'no-path': 'SIN RUTA',
+      'no-space': 'SIN ESPACIO',
     };
     const statusColorMap: Record<EggDebugStatus, string> = {
       ready: 'text-emerald-300',
       waiting: 'text-amber-300',
       'no-belt': 'text-rose-300',
+      'no-path': 'text-orange-300',
+      'no-space': 'text-purple-300',
     };
     const currentStatus = eggDebugDetails?.status ?? 'no-belt';
 

@@ -827,7 +827,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       assignedBeltPosition?: string;
       hasBelt: boolean;
       beltSlotPosition?: number;
-      status: 'ready' | 'waiting' | 'no-belt';
+      status: 'ready' | 'waiting' | 'no-belt' | 'no-path' | 'no-space';
+      hasValidPath?: boolean;
+      hasSpace?: boolean;
+      currentEggs?: number;
+      maxEggs?: number;
     }> = [];
 
     coops.forEach(coop => {
@@ -851,9 +855,21 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       }
 
       const hasBelt = !!(outputBelt || assignedBelt);
-      let status: 'ready' | 'waiting' | 'no-belt' = 'no-belt';
+      
+      // Check if there's a valid path from the output belt
+      const beltToCheck = outputBelt || assignedBelt;
+      const hasValidPath = beltToCheck ? calculatePath(beltToCheck, belts).length > 0 : false;
+      
+      // Check if there's space for more eggs
+      const hasSpace = eggs.length < MAX_EGGS;
+      
+      let status: 'ready' | 'waiting' | 'no-belt' | 'no-path' | 'no-space' = 'no-belt';
       if (!hasBelt) {
         status = 'no-belt';
+      } else if (!hasValidPath) {
+        status = 'no-path';
+      } else if (!hasSpace) {
+        status = 'no-space';
       } else if (timeUntilSpawn <= 0) {
         status = 'ready';
       } else {
@@ -873,6 +889,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         hasBelt,
         beltSlotPosition: assignedBelt?.slotPosition ?? outputBelt?.slotPosition,
         status,
+        hasValidPath,
+        hasSpace,
+        currentEggs: eggs.length,
+        maxEggs: MAX_EGGS,
       });
     });
 
@@ -910,7 +930,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
     };
 
     return debugInfo;
-  }, [eggs, coops, belts, findOutputBelt]);
+  }, [eggs, coops, belts, findOutputBelt, calculatePath]);
 
   return { eggs, getDebugInfo };
 };
