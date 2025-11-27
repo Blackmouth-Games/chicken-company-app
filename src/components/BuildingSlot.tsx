@@ -74,16 +74,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             overflow: 'hidden',
           }}
         >
-          {/* Top section: Level badge */}
-          <div className="absolute top-0 left-0 z-50">
+          {/* Top section: level badge + chicken counter */}
+          <div className="absolute top-1 left-1 z-50 flex items-center gap-2">
             {/* Level badge */}
-            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white">
+            <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white shadow">
               {building.level}
             </div>
-          </div>
-
-          {/* Chicken counter - left side, below level badge, different style */}
-          <div className="absolute top-0 left-0 z-50 mt-9 md:mt-10">
+            {/* Chicken counter - top-left, distinct style */}
             <div className="bg-amber-500 text-white rounded-lg px-2 py-1 md:px-2.5 md:py-1.5 flex items-center gap-1 text-xs md:text-sm font-semibold border-2 border-white shadow-md">
               🐔 {building.current_chickens}
             </div>
