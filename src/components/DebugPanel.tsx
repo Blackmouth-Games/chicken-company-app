@@ -182,6 +182,19 @@ const DebugPanel = () => {
     };
   }, []);
 
+  // Auto-run verification when eggDebugInfo is available
+  useEffect(() => {
+    if (eggDebugInfo) {
+      const verify = (window as any).verifyEggSystem;
+      if (verify) {
+        // Run verification automatically
+        const result = verify();
+        setVerificationResult(result);
+        console.log('[DebugPanel] Auto-verification executed:', result);
+      }
+    }
+  }, [eggDebugInfo]);
+
   // Listen to layout changes
   useEffect(() => {
     const refreshLayout = () => {

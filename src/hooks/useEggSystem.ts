@@ -77,6 +77,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const eggCreationTimeRef = useRef<Map<string, number>>(new Map());
   const isPageVisibleRef = useRef(true);
   const coopBeltMappingRef = useRef<Map<string, string>>(new Map()); // Maps coopId to beltId
+  const spawnTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Store timers in ref to persist across renders
+  const spawnEggRef = useRef<(coopId: string, slotPosition: number) => void>();
 
   // Get coops from buildings - handle undefined/null
   const coops = (buildings || []).filter(b => b && b.building_type === 'coop');
@@ -370,6 +372,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
 
   // Spawn egg from a coop
   const spawnEgg = useCallback((coopId: string, slotPosition: number) => {
+    console.log(`[useEggSystem] spawnEgg called for coop ${coopId} at position ${slotPosition}`);
     const outputBelt = findOutputBelt(slotPosition, coopId);
     if (!outputBelt) {
       console.warn(`[useEggSystem] No output belt found for coop ${coopId} at position ${slotPosition}. Cannot spawn egg.`);
@@ -410,6 +413,11 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       return [...prev, newEgg];
     });
   }, [belts, findOutputBelt, calculatePath]);
+
+  // Keep spawnEgg ref updated
+  useEffect(() => {
+    spawnEggRef.current = spawnEgg;
+  }, [spawnEgg]);
 
   // Update egg positions
   const updateEggs = useCallback(() => {
@@ -721,13 +729,25 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       }
     });
 
-    // Set up individual timers for each corral to make spawning truly async
-    const timers: Map<string, NodeJS.Timeout> = new Map();
+    // Clear existing timers for coops that no longer exist or have changed
+    const existingCoopIdsSet = new Set(coops.map(c => c.id));
+    spawnTimersRef.current.forEach((timer, coopId) => {
+      if (!existingCoopIdsSet.has(coopId)) {
+        clearTimeout(timer);
+        spawnTimersRef.current.delete(coopId);
+      }
+    });
     
+    // Set up individual timers for each coop to make spawning truly async
     coops.forEach(coop => {
       const slotPosition = coop.position_index;
       if (slotPosition === undefined || slotPosition === null) {
         console.warn(`[useEggSystem] Coop ${coop.id} has no position_index, skipping spawn setup`);
+        return;
+      }
+      
+      // Skip if timer already exists for this coop (avoid re-scheduling)
+      if (spawnTimersRef.current.has(coop.id)) {
         return;
       }
       
@@ -736,9 +756,10 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       const scheduleNextSpawn = () => {
         const lastSpawn = lastSpawnTimeRef.current.get(coop.id);
         // Clear any existing timer for this coop
-        const existingTimer = timers.get(coop.id);
+        const existingTimer = spawnTimersRef.current.get(coop.id);
         if (existingTimer) {
           clearTimeout(existingTimer);
+          spawnTimersRef.current.delete(coop.id);
         }
         
         // Don't spawn if page is not visible
@@ -747,7 +768,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
           const checkTimer = setTimeout(() => {
             scheduleNextSpawn();
           }, 1000);
-          timers.set(coop.id, checkTimer);
+          spawnTimersRef.current.set(coop.id, checkTimer);
           return;
         }
         
@@ -757,7 +778,7 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         let delay: number;
         
         if (lastSpawn === undefined) {
-          // First spawn - use initial delay
+          // First spawn - use initial delay (reduced for faster first spawn)
           delay = Math.max(0, initialDelay);
         } else {
           // Subsequent spawns - calculate time until next spawn based on coop level
@@ -769,6 +790,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         const randomDelay = Math.random() * 500;
         const totalDelay = delay + randomDelay;
         
+        console.log(`[useEggSystem] Scheduling spawn for coop ${coop.id} (position ${slotPosition}) in ${totalDelay.toFixed(0)}ms`);
+        
         const timer = setTimeout(() => {
           // Don't spawn if page is not visible
           if (!isPageVisibleRef.current) {
@@ -776,26 +799,30 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
             return;
           }
           
-          spawnEgg(coop.id, slotPosition);
-          lastSpawnTimeRef.current.set(coop.id, Date.now());
+          // Use ref to get latest spawnEgg function
+          if (spawnEggRef.current) {
+            console.log(`[useEggSystem] Executing spawn for coop ${coop.id} at position ${slotPosition}`);
+            spawnEggRef.current(coop.id, slotPosition);
+            lastSpawnTimeRef.current.set(coop.id, Date.now());
+          }
           
           // Schedule next spawn
           scheduleNextSpawn();
         }, totalDelay);
         
-        timers.set(coop.id, timer);
+        spawnTimersRef.current.set(coop.id, timer);
       };
       
       // Start scheduling for this coop
       scheduleNextSpawn();
     });
     
-    // Cleanup function
+    // Cleanup function - only clear timers for coops that no longer exist
     return () => {
-      timers.forEach(timer => clearTimeout(timer));
-      timers.clear();
+      // Don't clear all timers on every render - only clear if coops actually changed
+      // This is handled by the existingCoopIdsSet check above
     };
-  }, [coops, belts, spawnEgg]);
+  }, [coops, belts]); // Removed spawnEgg from dependencies, using ref instead
 
   // Animation loop
   useEffect(() => {
