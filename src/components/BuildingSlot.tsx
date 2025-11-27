@@ -241,18 +241,20 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
           </div>
 
-          <div className="flex flex-col h-full overflow-hidden">
-            {/* Building image o emoji - centrado dentro del slot */}
-            <div className="flex justify-center items-center m-0 p-0 w-full h-[150px] md:h-[180px] overflow-hidden relative">
+          <div className="flex flex-col h-full overflow-hidden relative">
+            {/* Building image o emoji - anclado al fondo del slot */}
+            <div className="absolute inset-0 flex justify-center items-end m-0 p-0 overflow-hidden pointer-events-none">
               {buildingDisplay?.type === 'image' ? (
                 <img 
                   src={buildingDisplay.src} 
                   alt={`${building.building_type} nivel ${building.level}`}
                   className="max-w-full w-auto h-auto object-contain m-0 p-0"
                   style={{ 
-                    objectPosition: 'center center',
+                    objectPosition: 'center bottom',
                     display: 'block',
-                    maxHeight: '250%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto',
                     transform: 'scale(0.88)',
                   }}
                 />
@@ -264,7 +266,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             </div>
             
             {/* Chickens area - show chickens walking around */}
-            <div className="flex-1 flex flex-wrap gap-1.5 content-start mb-3 overflow-hidden">
+            <div className="flex-1 flex flex-wrap gap-1.5 content-start mb-3 overflow-hidden relative z-10">
               {Array.from({ length: visibleChickens }).map((_, i) => (
                 <div key={i} className="text-3xl md:text-4xl animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>
                   🐔
