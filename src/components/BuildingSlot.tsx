@@ -172,18 +172,13 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
             overflow: 'hidden',
           }}
         >
-          {/* Top section: level badge + chicken counter */}
-          <div className="absolute top-1 left-1 z-50 flex items-center gap-2">
+          {/* Top section: level badge */}
+          <div className="absolute top-1 left-1 z-50">
             {/* Level badge */}
             <div className="bg-green-600 text-white rounded-full w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-xs md:text-sm font-bold border-2 border-white shadow">
               {building.level}
             </div>
-            {/* Chicken counter - top-left, distinct style */}
-            <div className="bg-amber-500 text-white rounded-lg px-2 py-1 md:px-2.5 md:py-1.5 flex items-center gap-1 text-xs md:text-sm font-semibold border-2 border-white shadow-md">
-              🐔 {building.current_chickens}
-            </div>
           </div>
-
           {/* Egg debug overlay */}
           {eggDebugMode && building && (
             <div className="absolute top-1 right-1 z-50 flex flex-col items-end gap-1 text-[10px] md:text-xs pointer-events-none">
@@ -215,6 +210,12 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
               </div>
             </div>
           )}
+          {/* Chicken counter - top-right, distinct style */}
+          <div className="absolute top-1 right-1 z-40">
+            <div className="bg-amber-500 text-white rounded-lg px-2 py-1 md:px-2.5 md:py-1.5 flex items-center gap-1 text-xs md:text-sm font-semibold border-2 border-white shadow-md">
+              🐔 {building.current_chickens}
+            </div>
+          </div>
 
           {/* Vertical progress bar - right side of slot */}
           <div className="absolute top-0 right-0 bottom-0 w-2 md:w-3 z-40 p-1">
