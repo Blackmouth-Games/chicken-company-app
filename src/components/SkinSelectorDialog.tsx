@@ -262,44 +262,9 @@ export const SkinSelectorDialog = ({
         
         // Always create a slot (even if empty) to show future availability
         if (dbSkin) {
-          // Database skin exists - check if owned
-          const isOwned = hasItem("skin", dbSkin.skin_key);
-          const isDefault = dbSkin.is_default === true; // Explicitly check for true
-          const isVariantA = variant === 'A';
-          
-          // Check if user has any skins at all
-          const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
-          
-          // Debug log for default skins and owned skins
-          if (isDefault || isOwned) {
-            console.log(`[SkinSelector] Found skin: ${skinKey}`, {
-              level,
-              variant,
-              buildingLevel,
-              isDefault: dbSkin.is_default,
-              isOwned,
-              canUse: isOwned || isDefault || (!userHasAnySkins && isVariantA)
-            });
-          }
-          
-          // Always show skins if:
-          // 1. User owns it (in user_items) - ALWAYS show owned skins regardless of level, OR
-          // 2. It's default (always show default skins), OR
-          // 3. User has no skins at all AND it's variant A (show default A skins), OR
-          // 4. It's for the building's current level (to show as locked if not owned)
-          const canUse = isOwned || isDefault || (!userHasAnySkins && isVariantA);
-          const isCurrentLevel = buildingLevel ? level === buildingLevel : true;
-          
-          // ALWAYS show:
-          // - Default skins (regardless of other conditions)
-          // - Owned skins (regardless of level - user owns them, they should see them)
-          // - Skins for current level (to show as locked if not owned)
-          if (isDefault || isOwned || isCurrentLevel) {
-            slots.push({ level, variant, skin: dbSkin, isLocal: false });
-          } else {
-            // Still add as empty slot to show it exists but is not available
-            slots.push({ level, variant, skin: null, isLocal: false });
-          }
+          // Database skin exists - ALWAYS show it, even if locked
+          // The UI will handle showing it as locked if the user can't use it
+          slots.push({ level, variant, skin: dbSkin, isLocal: false });
         } else if (localImage) {
           // Only local image exists - create a virtual skin entry to show it
           // Check if user owns this skin (by item_key matching the skinKey)
