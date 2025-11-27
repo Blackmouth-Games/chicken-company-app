@@ -543,15 +543,6 @@ export const ConveyorBelt = ({
                   </div>
                 </div>
               )}
-              
-              {/* Show cinta number in egg debug mode */}
-              {eggDebugMode && belt.isOutput && belt.slotPosition !== undefined && belt.slotPosition !== null && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                  <div className="bg-emerald-600 text-white text-sm font-bold px-2 py-1 rounded shadow-lg border-2 border-white">
-                    #{belt.slotPosition + 1}
-                  </div>
-                </div>
-              )}
               {/* Input/Output indicators */}
               {belt.type === 'funnel' ? (
                 // Funnel: show 3 inputs and 1 output
@@ -685,6 +676,15 @@ export const ConveyorBelt = ({
             </>
           );
         })()}
+        
+        {/* Show cinta number in egg debug mode - outside edit mode */}
+        {eggDebugMode && belt.isOutput && belt.slotPosition !== undefined && belt.slotPosition !== null && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <div className="bg-emerald-600 text-white text-sm font-bold px-2 py-1 rounded shadow-lg border-2 border-white">
+              #{belt.slotPosition + 1}
+            </div>
+          </div>
+        )}
         
         {/* No tooltip inside the belt */}
       </div>
