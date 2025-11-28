@@ -81,7 +81,7 @@ export const CoopDialog = ({ open, onOpenChange, userId, buildingId }: CoopDialo
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-full max-h-[85vh] max-w-full flex flex-col">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
