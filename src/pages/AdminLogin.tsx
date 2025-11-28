@@ -79,7 +79,7 @@ const AdminLogin = () => {
         description: "Inicio de sesión exitoso",
       });
 
-      navigate("/admin/skins");
+      navigate("/admin");
     } catch (error: any) {
       console.error("Login error:", error);
       toast({

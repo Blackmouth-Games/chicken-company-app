@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addAllBuildingSkins, checkExistingSkins } from "@/scripts/addAllBuildingSkins";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, RefreshCw, LogOut } from "lucide-react";
+import { Loader2, CheckCircle, RefreshCw, LogOut, Grid3x3, List } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -47,6 +47,7 @@ const AdminSkins = () => {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [existingSkins, setExistingSkins] = useState<any[] | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
   const placeholderUrl = resolveAssetUrl('/src/assets/placeholder.png') ?? '/placeholder.svg';
 
@@ -126,6 +127,20 @@ const AdminSkins = () => {
           <Button 
             variant="outline" 
             size="sm" 
+            onClick={() => navigate("/admin")}
+          >
+            Dashboard
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/admin/building-prices")}
+          >
+            Precios de Edificios
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
             onClick={() => navigate("/admin/store")}
           >
             Gestionar Tienda
@@ -180,53 +195,117 @@ const AdminSkins = () => {
 
       {existingSkins && (
         <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Skins en la base de datos ({existingSkins.length})
-          </h2>
-          <div className="bg-card border rounded-lg p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {existingSkins.map((skin) => {
-                // Resolve local /src assets to actual URLs via Vite
-                const resolved = resolveAssetUrl(skin.image_url);
-                const imageUrl = resolved ?? placeholderUrl;
-                
-                return (
-                  <div
-                    key={skin.skin_key}
-                    className="border rounded-lg p-3 bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="aspect-square mb-2 bg-background rounded overflow-hidden flex items-center justify-center">
-                      <img 
-                        src={imageUrl}
-                        alt={skin.name}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          console.error(`Failed to load image: ${imageUrl}`);
-                          e.currentTarget.src = placeholderUrl;
-                        }}
-                      />
-                    </div>
-                    <div className="font-mono text-xs text-muted-foreground">{skin.skin_key}</div>
-                    <div className="font-medium text-sm mt-1">{skin.name}</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
-                        {skin.building_type}
-                      </span>
-                      {skin.rarity && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary-foreground">
-                          {skin.rarity}
-                        </span>
-                      )}
-                      {skin.is_default && (
-                        <span className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-600">
-                          Default
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">
+              Skins en la base de datos ({existingSkins.length})
+            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
+          <div className="bg-card border rounded-lg p-4">
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {existingSkins.map((skin) => {
+                  const resolved = resolveAssetUrl(skin.image_url);
+                  const imageUrl = resolved ?? placeholderUrl;
+                  
+                  return (
+                    <div
+                      key={skin.skin_key}
+                      className="border rounded-lg p-3 bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className="aspect-square mb-2 bg-background rounded overflow-hidden flex items-center justify-center">
+                        <img 
+                          src={imageUrl}
+                          alt={skin.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            console.error(`Failed to load image: ${imageUrl}`);
+                            e.currentTarget.src = placeholderUrl;
+                          }}
+                        />
+                      </div>
+                      <div className="font-mono text-xs text-muted-foreground">{skin.skin_key}</div>
+                      <div className="font-medium text-sm mt-1">{skin.name}</div>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                          {skin.building_type}
+                        </span>
+                        {skin.rarity && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary-foreground">
+                            {skin.rarity}
+                          </span>
+                        )}
+                        {skin.is_default && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-600">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {existingSkins.map((skin) => {
+                  const resolved = resolveAssetUrl(skin.image_url);
+                  const imageUrl = resolved ?? placeholderUrl;
+                  
+                  return (
+                    <div
+                      key={skin.skin_key}
+                      className="border rounded-lg p-4 bg-muted/50 hover:bg-muted transition-colors flex items-center gap-4"
+                    >
+                      <div className="w-20 h-20 bg-background rounded overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <img 
+                          src={imageUrl}
+                          alt={skin.name}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            console.error(`Failed to load image: ${imageUrl}`);
+                            e.currentTarget.src = placeholderUrl;
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-base">{skin.name}</div>
+                        <div className="font-mono text-xs text-muted-foreground mt-1">{skin.skin_key}</div>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                            {skin.building_type}
+                          </span>
+                          {skin.rarity && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-secondary/10 text-secondary-foreground">
+                              {skin.rarity}
+                            </span>
+                          )}
+                          {skin.is_default && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-green-500/10 text-green-600">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

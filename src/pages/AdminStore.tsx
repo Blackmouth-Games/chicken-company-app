@@ -156,6 +156,18 @@ export const AdminStore = () => {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
+            onClick={() => navigate("/admin")}
+          >
+            Dashboard
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/building-prices")}
+          >
+            Precios de Edificios
+          </Button>
+          <Button 
+            variant="outline" 
             onClick={() => navigate("/admin/skins")}
           >
             Gestionar Skins

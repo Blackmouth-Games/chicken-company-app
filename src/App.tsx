@@ -20,6 +20,8 @@ import Store from "./pages/Store";
 import AdminSkins from "./pages/AdminSkins";
 import AdminLogin from "./pages/AdminLogin";
 import { AdminStore } from "./pages/AdminStore";
+import { AdminDashboard } from "./pages/AdminDashboard";
+import { AdminBuildingPrices } from "./pages/AdminBuildingPrices";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -79,6 +81,9 @@ const AppRoutes = () => {
         <ErrorBoundary>
           <Routes>
             <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/building-prices" element={<AdminBuildingPrices />} />
             <Route path="/admin/skins" element={<AdminSkins />} />
             <Route path="/admin/store" element={<AdminStore />} />
             <Route path="*" element={<Navigate to="/admin/login" replace />} />
