@@ -307,6 +307,23 @@ export const UpgradeBuildingDialog = ({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error upgrading building:", error);
+      
+      // Update purchase status to failed/cancelled
+      try {
+        const purchaseId = purchaseData?.id;
+        if (purchaseId) {
+          const isCancelled = error?.message?.includes("User rejects") || error?.message?.includes("cancelled");
+          await supabase
+            .from("building_purchases")
+            .update({
+              status: isCancelled ? "cancelled" : "failed",
+            })
+            .eq("id", purchaseId);
+        }
+      } catch (updateError) {
+        console.error("Error updating purchase status:", updateError);
+      }
+      
       toast({
         title: "Error",
         description: error.message || "No se pudo mejorar el edificio",

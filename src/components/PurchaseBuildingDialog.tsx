@@ -142,6 +142,22 @@ export const PurchaseBuildingDialog = ({
     } catch (error: any) {
       console.error("Error purchasing building:", error);
       
+      // Update purchase status to failed/cancelled
+      try {
+        const purchaseId = purchaseRecord?.id;
+        if (purchaseId) {
+          const isCancelled = error?.message?.includes("User rejects") || error?.message?.includes("cancelled");
+          await supabase
+            .from("building_purchases")
+            .update({
+              status: isCancelled ? "cancelled" : "failed",
+            })
+            .eq("id", purchaseId);
+        }
+      } catch (updateError) {
+        console.error("Error updating purchase status:", updateError);
+      }
+      
       toast({
         title: "Error",
         description: error?.message || "No se pudo completar la compra. Intenta nuevamente.",

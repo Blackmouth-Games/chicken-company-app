@@ -154,6 +154,22 @@ export const ProductDetailDialog = ({ open, onOpenChange, product, isPurchased =
     } catch (error: any) {
       console.error("Purchase error:", error);
       
+      // Update purchase status to failed/cancelled
+      try {
+        const purchaseId = purchase?.id;
+        if (purchaseId) {
+          const isCancelled = error?.message?.includes("User rejects") || error?.message?.includes("cancelled");
+          await supabase
+            .from("store_purchases")
+            .update({
+              status: isCancelled ? "cancelled" : "failed",
+            })
+            .eq("id", purchaseId);
+        }
+      } catch (updateError) {
+        console.error("Error updating purchase status:", updateError);
+      }
+      
       let errorMessage = "No se pudo completar la compra";
       if (error?.message?.includes("User rejects")) {
         errorMessage = "Transacción cancelada";
