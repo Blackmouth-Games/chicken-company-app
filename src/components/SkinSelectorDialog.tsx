@@ -121,11 +121,12 @@ export const SkinSelectorDialog = ({
       return;
     }
 
-        // Verify user owns the skin
+        // Verify user owns the skin OR it's a default skin
         // Permitir seleccionar skins de niveles <= nivel actual del edificio
         const skin = skins.find(s => s.skin_key === skinKey);
         if (skin) {
           const userOwnsSkin = hasItem("skin", skinKey);
+          const isDefault = skin.is_default === true;
           const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
           const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
           
@@ -144,8 +145,8 @@ export const SkinSelectorDialog = ({
             return;
           }
           
-          // Solo permitir seleccionar si el usuario tiene la skin
-          if (!userOwnsSkin) {
+          // Permitir seleccionar si el usuario tiene la skin O si es por defecto
+          if (!userOwnsSkin && !isDefault) {
             const errorMsg = "No tienes esta skin";
             console.error("Error selecting skin:", errorMsg);
             window.dispatchEvent(new CustomEvent('skinSelectorError', { 
@@ -270,7 +271,7 @@ export const SkinSelectorDialog = ({
       const levelSkins: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean; isLocked?: boolean }> = [];
       
       if (level <= buildingLevel) {
-        // Niveles <= actual: Solo mostrar skins desbloqueadas
+        // Niveles <= actual: Mostrar skins desbloqueadas Y skins por defecto
         const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
         for (const variant of variants) {
           const skinKey = buildingType === 'coop' 
@@ -282,11 +283,17 @@ export const SkinSelectorDialog = ({
           
           if (dbSkin) {
             const userOwnsSkin = hasItem("skin", dbSkin.skin_key);
-            if (userOwnsSkin) {
+            const isDefault = dbSkin.is_default === true;
+            
+            // Mostrar si el usuario la tiene O si es por defecto
+            if (userOwnsSkin || isDefault) {
               levelSkins.push({ level, variant, skin: dbSkin, isLocal: false });
             }
           } else if (localImage) {
             const userOwnsSkin = hasItem("skin", skinKey);
+            
+            // Para skins locales, solo mostrar si el usuario las tiene
+            // (las skins por defecto deberían estar en la BD)
             if (userOwnsSkin) {
               const virtualSkin = {
                 id: `local-${skinKey}`,
@@ -608,8 +615,14 @@ export const SkinSelectorDialog = ({
                               : `${buildingType}_${slot.level}${slot.variant}`);
                             
                             const isSelected = skin ? currentSkin === skin.skin_key : false;
-                            // Permitir seleccionar si el nivel es <= al nivel actual y no está bloqueada
-                            const canSelect = !slot.isLocked && buildingLevel && level <= buildingLevel && skin && buildingId;
+                            // Verificar si el usuario puede usar esta skin
+                            const userOwnsSkin = skin ? hasItem("skin", skin.skin_key) : false;
+                            const isDefault = skin ? skin.is_default === true : false;
+                            // Permitir seleccionar si:
+                            // - No está bloqueada
+                            // - El nivel es <= al nivel actual
+                            // - El usuario la tiene O es por defecto
+                            const canSelect = !slot.isLocked && buildingLevel && level <= buildingLevel && skin && buildingId && (userOwnsSkin || isDefault);
                             
                             // Get building display
                             const skinDisplay = isLocal ? getBuildingDisplay(
