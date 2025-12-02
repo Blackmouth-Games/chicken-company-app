@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Search, User } from "lucide-react";
+import { Loader2, Users, Search, User, Filter, Activity, Clock, UserCheck, UserX } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -28,6 +28,8 @@ interface UserProfile {
   total_points: number | null;
   created_at: string | null;
   updated_at: string | null;
+  last_activity?: string | null;
+  has_recent_activity?: boolean;
 }
 
 export const AdminUsers = () => {
@@ -36,6 +38,7 @@ export const AdminUsers = () => {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activityFilter, setActivityFilter] = useState<'all' | 'active' | 'inactive' | 'recent' | 'last7days' | 'last30days'>('all');
   const { toast } = useToast();
 
   // Load users when user is authenticated and is admin
@@ -55,14 +58,47 @@ export const AdminUsers = () => {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      setUsers(data || []);
+      // Get last activity for each user from user_sessions
+      const userIds = (profiles || []).map(p => p.id);
+      const { data: sessions } = await supabase
+        .from("user_sessions")
+        .select("user_id, session_start")
+        .in("user_id", userIds)
+        .order("session_start", { ascending: false });
+
+      // Group sessions by user_id and get most recent
+      const lastActivityByUser: Record<string, string> = {};
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      sessions?.forEach(session => {
+        if (!lastActivityByUser[session.user_id] || 
+            new Date(session.session_start) > new Date(lastActivityByUser[session.user_id])) {
+          lastActivityByUser[session.user_id] = session.session_start;
+        }
+      });
+
+      // Enrich profiles with activity data
+      const enrichedUsers = (profiles || []).map(profile => {
+        const lastActivity = lastActivityByUser[profile.id];
+        const hasRecentActivity = lastActivity ? new Date(lastActivity) > sevenDaysAgo : false;
+        
+        return {
+          ...profile,
+          last_activity: lastActivity || null,
+          has_recent_activity: hasRecentActivity,
+        };
+      });
+
+      setUsers(enrichedUsers);
     } catch (error: any) {
       console.error("Error loading users:", error);
       toast({
@@ -75,17 +111,43 @@ export const AdminUsers = () => {
     }
   };
 
-  // Filter users based on search term
+  // Filter users based on search term and activity
   const filteredUsers = users.filter((user) => {
+    // Search filter
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = 
       user.telegram_id?.toString().includes(searchLower) ||
       user.telegram_username?.toLowerCase().includes(searchLower) ||
       user.telegram_first_name?.toLowerCase().includes(searchLower) ||
       user.telegram_last_name?.toLowerCase().includes(searchLower) ||
       user.id.toLowerCase().includes(searchLower) ||
-      user.referral_code?.toLowerCase().includes(searchLower)
-    );
+      user.referral_code?.toLowerCase().includes(searchLower);
+
+    if (!matchesSearch) return false;
+
+    // Activity filter
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const lastActivity = user.last_activity ? new Date(user.last_activity) : null;
+    const createdDate = user.created_at ? new Date(user.created_at) : null;
+    const sevenDaysAgoCreated = createdDate ? createdDate > sevenDaysAgo : false;
+
+    switch (activityFilter) {
+      case 'active':
+        return user.has_recent_activity === true;
+      case 'inactive':
+        return !user.has_recent_activity && (!lastActivity || lastActivity < sevenDaysAgo);
+      case 'recent':
+        return sevenDaysAgoCreated;
+      case 'last7days':
+        return lastActivity ? lastActivity > sevenDaysAgo : false;
+      case 'last30days':
+        return lastActivity ? lastActivity > thirtyDaysAgo : false;
+      case 'all':
+      default:
+        return true;
+    }
   });
 
   // Show loading while checking auth
@@ -115,7 +177,7 @@ export const AdminUsers = () => {
                 Total: {filteredUsers.length} {filteredUsers.length === 1 ? 'usuario' : 'usuarios'}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -130,6 +192,58 @@ export const AdminUsers = () => {
                 Actualizar
               </Button>
             </div>
+          </div>
+          {/* Activity Filters */}
+          <div className="flex items-center gap-2 flex-wrap mt-4">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Filtros de actividad:</span>
+            <Button
+              variant={activityFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('all')}
+            >
+              Todos
+            </Button>
+            <Button
+              variant={activityFilter === 'active' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('active')}
+            >
+              <UserCheck className="h-4 w-4 mr-1" />
+              Activos
+            </Button>
+            <Button
+              variant={activityFilter === 'inactive' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('inactive')}
+            >
+              <UserX className="h-4 w-4 mr-1" />
+              Inactivos
+            </Button>
+            <Button
+              variant={activityFilter === 'recent' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('recent')}
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Recientes
+            </Button>
+            <Button
+              variant={activityFilter === 'last7days' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('last7days')}
+            >
+              <Activity className="h-4 w-4 mr-1" />
+              Últimos 7 días
+            </Button>
+            <Button
+              variant={activityFilter === 'last30days' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActivityFilter('last30days')}
+            >
+              <Activity className="h-4 w-4 mr-1" />
+              Últimos 30 días
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -155,6 +269,8 @@ export const AdminUsers = () => {
                     <TableHead>Puntos</TableHead>
                     <TableHead>Fecha de Registro</TableHead>
                     <TableHead>Última Actualización</TableHead>
+                    <TableHead>Última Actividad</TableHead>
+                    <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -225,6 +341,34 @@ export const AdminUsers = () => {
                           })
                         ) : (
                           <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {userProfile.last_activity ? (
+                          <span className="text-sm">
+                            {new Date(userProfile.last_activity).toLocaleDateString('es-ES', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Sin actividad</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {userProfile.has_recent_activity ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            <Activity className="h-3 w-3" />
+                            Activo
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                            <UserX className="h-3 w-3" />
+                            Inactivo
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>
