@@ -26,21 +26,19 @@ export const AdminStore = () => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return <LoadingScreen message="Verificando permisos..." />;
-  }
+  // Load products when user is authenticated and is admin
+  useEffect(() => {
+    if (!authLoading && user && isAdmin === true) {
+      loadProducts();
+    }
+  }, [authLoading, user, isAdmin]);
 
   // Redirect to login if not authenticated or not admin
-  if (!user || isAdmin === false) {
-    navigate("/admin/login");
-    return null;
-  }
-
-  // Load products
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (!authLoading && (!user || isAdmin === false)) {
+      navigate("/admin/login");
+    }
+  }, [authLoading, user, isAdmin, navigate]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -145,6 +143,16 @@ export const AdminStore = () => {
       description: "Todos los precios se han establecido a 0.001 TON (aún no guardados)",
     });
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return <LoadingScreen message="Verificando permisos..." />;
+  }
+
+  // Don't render if not authenticated or not admin (redirect will happen in useEffect)
+  if (!user || isAdmin === false) {
+    return <LoadingScreen message="Redirigiendo..." />;
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">

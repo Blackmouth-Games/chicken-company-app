@@ -40,21 +40,19 @@ export const AdminBuildingPrices = () => {
   });
   const { toast } = useToast();
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return <LoadingScreen message="Verificando permisos..." />;
-  }
+  // Load prices when user is authenticated and is admin
+  useEffect(() => {
+    if (!authLoading && user && isAdmin === true) {
+      loadPrices();
+    }
+  }, [authLoading, user, isAdmin]);
 
   // Redirect to login if not authenticated or not admin
-  if (!user || isAdmin === false) {
-    navigate("/admin/login");
-    return null;
-  }
-
-  // Load prices
   useEffect(() => {
-    loadPrices();
-  }, []);
+    if (!authLoading && (!user || isAdmin === false)) {
+      navigate("/admin/login");
+    }
+  }, [authLoading, user, isAdmin, navigate]);
 
   const loadPrices = async () => {
     setLoading(true);
@@ -250,6 +248,16 @@ export const AdminBuildingPrices = () => {
     acc[type] = prices.filter(p => p.building_type === type);
     return acc;
   }, {} as Record<string, BuildingPrice[]>);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return <LoadingScreen message="Verificando permisos..." />;
+  }
+
+  // Don't render if not authenticated or not admin (redirect will happen in useEffect)
+  if (!user || isAdmin === false) {
+    return <LoadingScreen message="Redirigiendo..." />;
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-6xl">

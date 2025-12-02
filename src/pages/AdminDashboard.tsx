@@ -32,20 +32,19 @@ export const AdminDashboard = () => {
   const { toast } = useToast();
   const { stats, isLoading: metricsLoading } = useMetricsDashboard(30);
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return <LoadingScreen message="Verificando permisos..." />;
-  }
+  // Load metrics when user is authenticated and is admin
+  useEffect(() => {
+    if (!authLoading && user && isAdmin === true) {
+      loadMetrics();
+    }
+  }, [authLoading, user, isAdmin]);
 
   // Redirect to login if not authenticated or not admin
-  if (!user || isAdmin === false) {
-    navigate("/admin/login");
-    return null;
-  }
-
   useEffect(() => {
-    loadMetrics();
-  }, []);
+    if (!authLoading && (!user || isAdmin === false)) {
+      navigate("/admin/login");
+    }
+  }, [authLoading, user, isAdmin, navigate]);
 
   const loadMetrics = async () => {
     setLoading(true);
@@ -132,6 +131,16 @@ export const AdminDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return <LoadingScreen message="Verificando permisos..." />;
+  }
+
+  // Don't render if not authenticated or not admin (redirect will happen in useEffect)
+  if (!user || isAdmin === false) {
+    return <LoadingScreen message="Redirigiendo..." />;
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">

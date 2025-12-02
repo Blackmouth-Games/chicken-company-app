@@ -51,16 +51,12 @@ const AdminSkins = () => {
   const { toast } = useToast();
   const placeholderUrl = resolveAssetUrl('/src/assets/placeholder.png') ?? '/placeholder.svg';
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return <LoadingScreen message="Verificando permisos..." />;
-  }
-
   // Redirect to login if not authenticated or not admin
-  if (!user || isAdmin === false) {
-    navigate("/admin/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!authLoading && (!user || isAdmin === false)) {
+      navigate("/admin/login");
+    }
+  }, [authLoading, user, isAdmin, navigate]);
 
   const handleAddSkins = async () => {
     setLoading(true);
@@ -117,6 +113,16 @@ const AdminSkins = () => {
       setChecking(false);
     }
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return <LoadingScreen message="Verificando permisos..." />;
+  }
+
+  // Don't render if not authenticated or not admin (redirect will happen in useEffect)
+  if (!user || isAdmin === false) {
+    return <LoadingScreen message="Redirigiendo..." />;
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
