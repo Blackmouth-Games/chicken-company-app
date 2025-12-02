@@ -3,7 +3,7 @@
  * This page can be accessed to run the migration script
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { addAllBuildingSkins, checkExistingSkins } from "@/scripts/addAllBuildingSkins";
 import { useToast } from "@/hooks/use-toast";
