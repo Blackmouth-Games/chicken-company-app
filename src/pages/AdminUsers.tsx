@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, LogOut, Search, User } from "lucide-react";
+import { Loader2, Users, Search, User } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminLayout } from "@/components/AdminLayout";
 import {
   Table,
   TableBody,
