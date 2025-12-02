@@ -285,6 +285,12 @@ export const AdminBuildingPrices = () => {
           >
             Gestionar Skins
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/users")}
+          >
+            Usuarios
+          </Button>
           <Button variant="outline" onClick={signOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Cerrar sesión

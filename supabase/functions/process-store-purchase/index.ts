@@ -89,10 +89,21 @@ serve(async (req) => {
       item_key: string;
       quantity: number;
     }> = [];
+    
+    let chickensToAdd = 0;
 
     if (finalProduct.content_items && Array.isArray(finalProduct.content_items)) {
       for (const itemDesc of finalProduct.content_items) {
         if (typeof itemDesc !== 'string') continue;
+        
+        // Check if item is chickens (format: "chickens:100")
+        if (itemDesc.startsWith('chickens:')) {
+          const amount = parseInt(itemDesc.split(':')[1]);
+          if (!isNaN(amount) && amount > 0) {
+            chickensToAdd = amount;
+          }
+          continue;
+        }
         
         // Check if item is a valid skin_key (e.g., "coop_1B", "warehouse_2A")
         if (isValidSkinKey(itemDesc)) {
@@ -160,7 +171,56 @@ serve(async (req) => {
       console.log(`Successfully added ${itemsToInsert.length} items to user inventory`);
     }
 
-    // 5. Update purchase as completed
+    // 5. Add chickens to user's coops if specified
+    if (chickensToAdd > 0) {
+      console.log(`Adding ${chickensToAdd} chickens to user ${purchase.user_id}`);
+      
+      // Get all user's coops ordered by position_index
+      const { data: userCoops, error: coopsError } = await supabase
+        .from('user_buildings')
+        .select('id, current_chickens, capacity')
+        .eq('user_id', purchase.user_id)
+        .eq('building_type', 'coop')
+        .order('position_index');
+
+      if (coopsError) {
+        console.error('Error fetching user coops:', coopsError);
+        // Don't fail the purchase if we can't add chickens, just log it
+      } else if (userCoops && userCoops.length > 0) {
+        let remainingChickens = chickensToAdd;
+        
+        // Distribute chickens across coops, filling them up to capacity
+        for (const coop of userCoops) {
+          if (remainingChickens <= 0) break;
+          
+          const availableSpace = coop.capacity - coop.current_chickens;
+          if (availableSpace > 0) {
+            const chickensToAddToCoop = Math.min(remainingChickens, availableSpace);
+            const newChickenCount = coop.current_chickens + chickensToAddToCoop;
+            
+            const { error: updateError } = await supabase
+              .from('user_buildings')
+              .update({ current_chickens: newChickenCount })
+              .eq('id', coop.id);
+
+            if (updateError) {
+              console.error(`Error updating coop ${coop.id}:`, updateError);
+            } else {
+              console.log(`Added ${chickensToAddToCoop} chickens to coop ${coop.id} (now ${newChickenCount}/${coop.capacity})`);
+              remainingChickens -= chickensToAddToCoop;
+            }
+          }
+        }
+        
+        if (remainingChickens > 0) {
+          console.warn(`Could not add ${remainingChickens} chickens - all coops are full`);
+        }
+      } else {
+        console.warn(`User ${purchase.user_id} has no coops to add chickens to`);
+      }
+    }
+
+    // 6. Update purchase as completed
     const { error: updateError } = await supabase
       .from('store_purchases')
       .update({
@@ -185,6 +245,7 @@ serve(async (req) => {
         success: true,
         purchase_id,
         items_added: itemsToInsert.length,
+        chickens_added: chickensToAdd,
         items: itemsToInsert
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

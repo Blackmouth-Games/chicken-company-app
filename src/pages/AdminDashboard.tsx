@@ -169,6 +169,13 @@ export const AdminDashboard = () => {
           >
             Gestionar Skins
           </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/admin/users")}
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Usuarios
+          </Button>
           <Button variant="outline" onClick={signOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Cerrar sesión
@@ -346,6 +353,13 @@ export const AdminDashboard = () => {
                 >
                   <Package className="h-4 w-4 mr-2" />
                   Gestionar Skins
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/admin/users")}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Ver Usuarios
                 </Button>
                 <Button 
                   variant="outline" 
