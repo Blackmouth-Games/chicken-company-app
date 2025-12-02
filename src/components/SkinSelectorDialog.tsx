@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogOverlay, DialogPortal } from "./ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,7 @@ export const SkinSelectorDialog = ({
   const { skins, loading: skinsLoading } = useBuildingSkins(buildingType);
   const { hasItem, loading: itemsLoading, items: userItems, refetch: refetchUserItems } = useUserItems(userId);
   const { toast } = useToast();
+  const [selectedFilter, setSelectedFilter] = useState<number | 'all'>('all');
 
   // Get all local images for this building type
   const localImages = useMemo(() => {
@@ -120,19 +121,16 @@ export const SkinSelectorDialog = ({
       return;
     }
 
-        // Verify user owns the skin or it's the default for the building's level
-        // AND verify it's for the building's current level
+        // Verify user owns the skin
+        // Permitir seleccionar skins de niveles <= nivel actual del edificio
         const skin = skins.find(s => s.skin_key === skinKey);
         if (skin) {
           const userOwnsSkin = hasItem("skin", skinKey);
-          const isDefault = skin.is_default;
           const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
           const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
-          const skinVariant = skinLevelMatch ? skinLevelMatch[2] : null;
-          const isVariantA = skinVariant === 'A';
           
-          // Check if skin is for the building's current level
-          if (buildingLevel && skinLevel !== buildingLevel) {
+          // Verificar que la skin sea de un nivel <= al nivel actual del edificio
+          if (buildingLevel && skinLevel && skinLevel > buildingLevel) {
             const errorMsg = `Esta skin es del nivel ${skinLevel}, pero el edificio es nivel ${buildingLevel}`;
             console.error("Error selecting skin:", errorMsg);
             window.dispatchEvent(new CustomEvent('skinSelectorError', { 
@@ -140,22 +138,14 @@ export const SkinSelectorDialog = ({
             }));
             toast({
               title: "Error",
-              description: `Solo puedes seleccionar skins del nivel ${buildingLevel}`,
+              description: `Solo puedes seleccionar skins del nivel ${buildingLevel} o inferior`,
               variant: "destructive",
             });
             return;
           }
           
-          // Check if user has any skins at all
-          const userHasAnySkins = userItems?.some((item: any) => item.item_type === 'skin') || false;
-          
-          // Can only select if:
-          // 1. User owns it, OR
-          // 2. It's default for the building's level, OR
-          // 3. User has no skins at all AND it's variant A (allow default A skins)
-          const canUse = userOwnsSkin || (isDefault && skinLevel === buildingLevel) || (!userHasAnySkins && isVariantA && skinLevel === buildingLevel);
-          
-          if (!canUse) {
+          // Solo permitir seleccionar si el usuario tiene la skin
+          if (!userOwnsSkin) {
             const errorMsg = "No tienes esta skin";
             console.error("Error selecting skin:", errorMsg);
             window.dispatchEvent(new CustomEvent('skinSelectorError', { 
@@ -164,6 +154,39 @@ export const SkinSelectorDialog = ({
             toast({
               title: "Error",
               description: "No tienes esta skin en tu inventario",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          // Si no está en la BD, verificar si el usuario la tiene en su inventario
+          const userOwnsSkin = hasItem("skin", skinKey);
+          if (!userOwnsSkin) {
+            const errorMsg = "No tienes esta skin";
+            console.error("Error selecting skin:", errorMsg);
+            window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+              detail: { message: errorMsg, error: new Error(errorMsg) } 
+            }));
+            toast({
+              title: "Error",
+              description: "No tienes esta skin en tu inventario",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // Verificar nivel si es una skin local
+          const skinLevelMatch = skinKey.match(/_(\d+)([A-J]|\d{1,2})/);
+          const skinLevel = skinLevelMatch ? parseInt(skinLevelMatch[1], 10) : null;
+          if (buildingLevel && skinLevel && skinLevel > buildingLevel) {
+            const errorMsg = `Esta skin es del nivel ${skinLevel}, pero el edificio es nivel ${buildingLevel}`;
+            console.error("Error selecting skin:", errorMsg);
+            window.dispatchEvent(new CustomEvent('skinSelectorError', { 
+              detail: { message: errorMsg, error: new Error(errorMsg) } 
+            }));
+            toast({
+              title: "Error",
+              description: `Solo puedes seleccionar skins del nivel ${buildingLevel} o inferior`,
               variant: "destructive",
             });
             return;
@@ -219,10 +242,95 @@ export const SkinSelectorDialog = ({
 
   const loading = skinsLoading || itemsLoading;
 
-  // Create inventory slots organized by level and variant
-  // Now supports 10 skins per level (A-J or 1-10)
-  // Shows: all local images + database skins (owned/default)
-  // If buildingLevel is provided, only show skins for that level
+  // Get available levels
+  const availableLevels = useMemo(() => {
+    const levelSet = new Set<number>();
+    for (const img of localImages) {
+      levelSet.add(img.level);
+    }
+    for (const skin of skins) {
+      const levelMatch = skin.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
+      if (levelMatch) {
+        const level = parseInt(levelMatch[1], 10);
+        levelSet.add(level);
+      }
+    }
+    return Array.from(levelSet).sort((a, b) => a - b);
+  }, [localImages, skins]);
+
+  // Filter skins based on user ownership and level rules
+  // - Niveles <= nivel actual: Solo mostrar skins desbloqueadas (que el usuario tiene)
+  // - Niveles > nivel actual: Solo mostrar la skin default con lock
+  const filteredSkinsByLevel = useMemo(() => {
+    if (!buildingLevel) return {};
+    
+    const result: Record<number, Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean; isLocked?: boolean }>> = {};
+    
+    for (const level of availableLevels) {
+      const levelSkins: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean; isLocked?: boolean }> = [];
+      
+      if (level <= buildingLevel) {
+        // Niveles <= actual: Solo mostrar skins desbloqueadas
+        const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        for (const variant of variants) {
+          const skinKey = buildingType === 'coop' 
+            ? `coop_${level}${variant}` 
+            : `${buildingType}_${level}${variant}`;
+          
+          const dbSkin = skins.find(s => s.skin_key === skinKey);
+          const localImage = localImages.find(img => img.level === level && img.variant === variant);
+          
+          if (dbSkin) {
+            const userOwnsSkin = hasItem("skin", dbSkin.skin_key);
+            if (userOwnsSkin) {
+              levelSkins.push({ level, variant, skin: dbSkin, isLocal: false });
+            }
+          } else if (localImage) {
+            const userOwnsSkin = hasItem("skin", skinKey);
+            if (userOwnsSkin) {
+              const virtualSkin = {
+                id: `local-${skinKey}`,
+                skin_key: skinKey,
+                building_type: buildingType,
+                name: `${buildingType} Level ${level}${variant}`,
+                is_default: false,
+                rarity: 'common',
+              };
+              levelSkins.push({ level, variant, skin: virtualSkin as any, isLocal: true });
+            }
+          }
+        }
+      } else {
+        // Niveles > actual: Solo mostrar la skin default con lock
+        const defaultSkin = skins.find(s => {
+          const levelMatch = s.skin_key.match(/_(\d+)([A-J]|\d{1,2})/);
+          if (levelMatch) {
+            const skinLevel = parseInt(levelMatch[1], 10);
+            return skinLevel === level && s.is_default;
+          }
+          return false;
+        });
+        
+        if (defaultSkin) {
+          levelSkins.push({ 
+            level, 
+            variant: defaultSkin.skin_key.match(/_(\d+)([A-J]|\d{1,2})/)?.[2] || 'A', 
+            skin: defaultSkin, 
+            isLocal: false,
+            isLocked: true 
+          });
+        }
+      }
+      
+      if (levelSkins.length > 0) {
+        result[level] = levelSkins;
+      }
+    }
+    
+    return result;
+  }, [buildingLevel, availableLevels, skins, buildingType, hasItem, localImages]);
+
+  // Create inventory slots organized by level and variant (legacy - keeping for compatibility)
   const inventorySlots = useMemo(() => {
     let slots: Array<{ level: number; variant: string; skin: typeof skins[0] | null; isLocal?: boolean }> = [];
     
@@ -349,14 +457,22 @@ export const SkinSelectorDialog = ({
     return slots;
   }, [skins, buildingType, buildingLevel, hasItem, localImages, userItems, itemsLoading]);
 
-  const levelsList = useMemo(() => {
-    const levelSet = new Set<number>();
-    inventorySlots.forEach(slot => levelSet.add(slot.level));
-    if (levelSet.size === 0) {
-      return buildingLevel ? [buildingLevel] : [1];
+  // Get levels to display based on filter
+  const levelsToDisplay = useMemo(() => {
+    const allLevels = Object.keys(filteredSkinsByLevel).map(Number).sort((a, b) => {
+      // Priorizar el nivel actual primero
+      if (buildingLevel) {
+        if (a === buildingLevel) return -1;
+        if (b === buildingLevel) return 1;
+      }
+      return a - b;
+    });
+    
+    if (selectedFilter === 'all') {
+      return allLevels;
     }
-    return Array.from(levelSet).sort((a, b) => a - b);
-  }, [inventorySlots, buildingLevel]);
+    return allLevels.filter(level => level === selectedFilter);
+  }, [filteredSkinsByLevel, selectedFilter, buildingLevel]);
 
   // Find the default skin for the building's level
   const defaultSkinForLevel = useMemo(() => {
@@ -386,11 +502,49 @@ export const SkinSelectorDialog = ({
           <div className="flex flex-col max-h-[85vh]">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-2xl font-bold">Inventario de Skins</h2>
+            <div>
+              <h2 className="text-2xl font-bold">Inventario de Skins</h2>
+              {buildingLevel && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Nivel actual: {buildingLevel}
+                </p>
+              )}
+            </div>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               ✕
             </Button>
           </div>
+
+          {/* Filters */}
+          {buildingLevel && availableLevels.length > 0 && (
+            <div className="px-6 pb-4 border-b">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={selectedFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedFilter('all')}
+                >
+                  Todos
+                </Button>
+                {availableLevels.map(level => (
+                  <Button
+                    key={level}
+                    variant={selectedFilter === level ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedFilter(level)}
+                    className={cn(
+                      buildingLevel === level && "ring-2 ring-primary ring-offset-2"
+                    )}
+                  >
+                    Nivel {level}
+                    {buildingLevel === level && (
+                      <span className="ml-1 text-xs">(Actual)</span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-6">
@@ -398,148 +552,135 @@ export const SkinSelectorDialog = ({
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : inventorySlots.length === 0 ? (
+            ) : levelsToDisplay.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <p className="text-muted-foreground text-center">
-                  No hay skins disponibles para este edificio
+                  {selectedFilter === 'all' 
+                    ? "No hay skins desbloqueadas para este edificio"
+                    : `No hay skins desbloqueadas para el nivel ${selectedFilter}`
+                  }
                 </p>
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Group by level - Always show 8 slots (4 columns x 2 rows) per level */}
-                {levelsList.map(level => {
-                  const variants = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                {/* Lista jerárquica por nivel */}
+                {levelsToDisplay.map(level => {
+                  const levelSkins = filteredSkinsByLevel[level] || [];
+                  const isCurrentLevel = buildingLevel === level;
                   const isLockedLevel = !!buildingLevel && level > buildingLevel;
                   
                   return (
-                    <div key={level} className="space-y-2 relative">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-muted-foreground">
+                    <div key={level} className="space-y-3">
+                      {/* Header del nivel */}
+                      <div className="flex items-center gap-3">
+                        <h3 className={cn(
+                          "text-xl font-bold",
+                          isCurrentLevel ? "text-primary" : "text-muted-foreground"
+                        )}>
                           Nivel {level}
                         </h3>
+                        {isCurrentLevel && (
+                          <span className="text-xs font-semibold text-primary bg-primary/10 border border-primary/20 rounded-full px-2 py-1">
+                            Nivel Actual
+                          </span>
+                        )}
                         {isLockedLevel && (
-                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-0.5">
+                          <span className="text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-200 rounded-full px-2 py-1">
                             Requiere nivel {level}
                           </span>
                         )}
+                        <span className="text-sm text-muted-foreground">
+                          ({levelSkins.length} {levelSkins.length === 1 ? 'skin' : 'skins'})
+                        </span>
                       </div>
-                      <div className={cn("grid grid-cols-4 gap-2 transition-opacity relative", isLockedLevel && "opacity-50 pointer-events-none")}>
-                        {variants.map((variant, index) => {
-                          // Find the slot for this level and variant
-                          const slot = inventorySlots.find(s => s.level === level && s.variant === variant);
-                          // If no slot exists, create an empty one
-                          const emptySlot: typeof inventorySlots[0] = { level, variant, skin: null, isLocal: false };
-                          const currentSlot = slot || emptySlot;
-                          const skin = currentSlot.skin;
-                          const isLocal = currentSlot.isLocal || false;
-                          const skinKey = buildingType === 'coop' 
-                            ? `coop_${currentSlot.level}${currentSlot.variant}` 
-                            : `${buildingType}_${currentSlot.level}${currentSlot.variant}`;
-                          
-                          // Check if user actually owns this skin
-                          const userOwnsSkin = skin ? hasItem("skin", skin.skin_key) : false;
-                          const isDefault = skin ? skin.is_default : false;
-                          const isVariantA = currentSlot.variant === 'A';
-                          
-                          // Check if user has any skins at all
-                          const userHasAnySkins = itemsLoading ? false : (userItems?.some((item: any) => item.item_type === 'skin') || false);
-                          
-                          // Can only use if:
-                          // 1. User owns it, OR
-                          // 2. It's default (always allow default skins), OR
-                          // 3. User has no skins at all AND it's variant A (show default A skins)
-                          const canUse = userOwnsSkin || isDefault || (!userHasAnySkins && isVariantA);
-                          
-                          // Determine if this skin is selected:
-                          // 1. If currentSkin matches this skin's key
-                          // 2. If no currentSkin and this is the default skin for the building's level
-                          // 3. If no currentSkin and no default found, and this is the first variant (A) of the building's level
-                          const isSelected = skin ? (
-                            currentSkin === skin.skin_key || 
-                            (!currentSkin && skin.is_default && currentSlot.level === buildingLevel) ||
-                            (!currentSkin && !defaultSkinForLevel && currentSlot.level === buildingLevel && currentSlot.variant === 'A')
-                          ) : (
-                            currentSkin === null && currentSlot.level === buildingLevel && currentSlot.variant === 'A'
-                          );
-                          
-                          // Show select button ONLY if:
-                          // - It's for the building's current level AND user can use it
-                          // No skins from other levels can be selected, even if they're default
-                          const isCurrentLevel = buildingLevel ? currentSlot.level === buildingLevel : true;
-                          const canSelect = isCurrentLevel && canUse;
-                          
-                          const isEmpty = !skin && !isLocal;
-                          
-                          // Get building display - use local image if available, otherwise use skin from database
-                          const skinDisplay = isLocal ? getBuildingDisplay(
-                            buildingType as BuildingType,
-                            currentSlot.level,
-                            skinKey,
-                            null
-                          ) : skin ? getBuildingDisplay(
-                            buildingType as BuildingType,
-                            currentSlot.level,
-                            skin.skin_key,
-                            skin
-                          ) : null;
+                      
+                      {/* Grid de skins para este nivel */}
+                      {levelSkins.length > 0 ? (
+                        <div className={cn(
+                          "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3",
+                          isLockedLevel && "opacity-60"
+                        )}>
+                          {levelSkins.map((slot) => {
+                            const skin = slot.skin;
+                            const isLocal = slot.isLocal || false;
+                            const skinKey = skin?.skin_key || (buildingType === 'coop' 
+                              ? `coop_${slot.level}${slot.variant}` 
+                              : `${buildingType}_${slot.level}${slot.variant}`);
+                            
+                            const isSelected = skin ? currentSkin === skin.skin_key : false;
+                            // Permitir seleccionar si el nivel es <= al nivel actual y no está bloqueada
+                            const canSelect = !slot.isLocked && buildingLevel && level <= buildingLevel && skin && buildingId;
+                            
+                            // Get building display
+                            const skinDisplay = isLocal ? getBuildingDisplay(
+                              buildingType as BuildingType,
+                              slot.level,
+                              skinKey,
+                              null
+                            ) : skin ? getBuildingDisplay(
+                              buildingType as BuildingType,
+                              slot.level,
+                              skin.skin_key,
+                              skin
+                            ) : null;
 
-                          return (
-                            <div
-                              key={`${level}-${currentSlot.variant}-${index}`}
-                              className={`relative p-1.5 rounded-lg border-2 transition-all aspect-square ${
-                                isEmpty
-                                  ? "border-muted-foreground/40 bg-muted/40 border-dashed"
-                                  : isSelected
-                                  ? "border-primary bg-primary/10"
-                                  : canUse
-                                  ? "border-border hover:border-primary/50 cursor-pointer"
-                                  : "border-muted/50 bg-muted/5 opacity-60"
-                              }`}
-                              onClick={() => {
-                                if (canSelect && (skin || isLocal) && buildingId) {
-                                  const skinKeyToUse = skin ? skin.skin_key : skinKey;
-                                  handleSelectSkin(skinKeyToUse);
-                                }
-                              }}
-                            >
-                              {/* Skin Image or Empty Slot */}
-                              <div className="flex items-center justify-center h-full">
-                                {isEmpty ? (
-                                  <div className="w-full h-full rounded-md bg-muted-foreground/20 border border-dashed border-muted-foreground/40" />
-                                ) : skinDisplay?.type === 'image' ? (
-                                  <img 
-                                    src={skinDisplay.src} 
-                                    alt={skin?.name || `Nivel ${slot.level}${slot.variant}`}
-                                    className="w-full h-full object-contain p-1"
-                                  />
-                                ) : (
-                                  <div className="text-2xl">{skin?.image_url || '🏚️'}</div>
+                            return (
+                              <div
+                                key={`${slot.level}-${slot.variant}`}
+                                className={cn(
+                                  "relative p-3 rounded-lg border-2 transition-all aspect-square cursor-pointer",
+                                  isSelected
+                                    ? "border-primary bg-primary/10 shadow-md"
+                                    : slot.isLocked
+                                    ? "border-muted/50 bg-muted/5 opacity-60 cursor-not-allowed"
+                                    : canSelect
+                                    ? "border-border hover:border-primary/50 hover:shadow-md"
+                                    : "border-muted/50 bg-muted/5 opacity-60 cursor-not-allowed"
+                                )}
+                                onClick={() => {
+                                  if (canSelect && skin) {
+                                    handleSelectSkin(skin.skin_key);
+                                  }
+                                }}
+                              >
+                                {/* Skin Image */}
+                                <div className="flex items-center justify-center h-full">
+                                  {skinDisplay?.type === 'image' ? (
+                                    <img 
+                                      src={skinDisplay.src} 
+                                      alt={skin?.name || `Nivel ${slot.level}${slot.variant}`}
+                                      className="w-full h-full object-contain p-1"
+                                    />
+                                  ) : (
+                                    <div className="text-3xl">{skin?.image_url || '🏚️'}</div>
+                                  )}
+                                </div>
+
+                                {/* Selected Badge */}
+                                {isSelected && (
+                                  <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                                    <Check className="w-4 h-4" />
+                                  </div>
+                                )}
+
+                                {/* Lock Badge */}
+                                {slot.isLocked && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                                    <div className="flex flex-col items-center gap-1">
+                                      <Lock className="w-6 h-6 text-muted-foreground" />
+                                      <span className="text-xs font-semibold text-muted-foreground">
+                                        Nivel {level}
+                                      </span>
+                                    </div>
+                                  </div>
                                 )}
                               </div>
-
-                              {/* Selected Badge */}
-                              {isSelected && (
-                                <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
-                                  <Check className="w-3 h-3" />
-                                </div>
-                              )}
-
-                              {/* Lock Badge for unowned/unavailable skins */}
-                              {skin && !canUse && !isSelected && (
-                                <div className="absolute top-1 right-1 bg-muted text-muted-foreground rounded-full p-0.5">
-                                  <Lock className="w-3 h-3" />
-                                </div>
-                              )}
-
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {isLockedLevel && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="rounded-xl bg-background/85 border border-dashed border-orange-300 px-4 py-2 text-center text-sm font-semibold text-orange-600 shadow-sm">
-                            Mejora el edificio a nivel {level} para desbloquear estas skins
-                          </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground py-4">
+                          No hay skins desbloqueadas para este nivel
                         </div>
                       )}
                     </div>
