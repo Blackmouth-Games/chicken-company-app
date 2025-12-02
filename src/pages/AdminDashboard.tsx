@@ -175,17 +175,6 @@ export const AdminDashboard = () => {
       loadDailyMetrics(30);
     }
   }, [authLoading, user, isAdmin]);
-    } catch (error: any) {
-      console.error("Error loading metrics:", error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las métricas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Show loading while checking auth
   if (authLoading) {
