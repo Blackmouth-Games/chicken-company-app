@@ -91,6 +91,7 @@ serve(async (req) => {
     }> = [];
     
     let chickensToAdd = 0;
+    let buildingToCreate: { type: string; level: number } | null = null;
 
     if (finalProduct.content_items && Array.isArray(finalProduct.content_items)) {
       for (const itemDesc of finalProduct.content_items) {
@@ -101,6 +102,22 @@ serve(async (req) => {
           const amount = parseInt(itemDesc.split(':')[1]);
           if (!isNaN(amount) && amount > 0) {
             chickensToAdd = amount;
+          }
+          continue;
+        }
+        
+        // Check if item is a building (format: "building:coop:1")
+        if (itemDesc.startsWith('building:')) {
+          const parts = itemDesc.split(':');
+          if (parts.length >= 3) {
+            const buildingType = parts[1];
+            const buildingLevel = parseInt(parts[2]) || 1;
+            if (['coop', 'warehouse', 'market'].includes(buildingType)) {
+              buildingToCreate = {
+                type: buildingType,
+                level: buildingLevel,
+              };
+            }
           }
           continue;
         }
@@ -171,7 +188,73 @@ serve(async (req) => {
       console.log(`Successfully added ${itemsToInsert.length} items to user inventory`);
     }
 
-    // 5. Add chickens to user's coops if specified
+    // 5. Create building if specified
+    if (buildingToCreate) {
+      console.log(`Creating ${buildingToCreate.type} level ${buildingToCreate.level} for user ${purchase.user_id}`);
+      
+      // Get building price to get capacity
+      const { data: buildingPrice } = await supabase
+        .from('building_prices')
+        .select('capacity')
+        .eq('building_type', buildingToCreate.type)
+        .eq('level', buildingToCreate.level)
+        .single();
+
+      // Find first available position_index (0-19 for regular buildings, -1/-2 for special)
+      let positionIndex = -1;
+      if (buildingToCreate.type === 'warehouse') {
+        positionIndex = -1;
+      } else if (buildingToCreate.type === 'market') {
+        positionIndex = -2;
+      } else {
+        // For coops, find first available position (0-19)
+        const { data: existingBuildings } = await supabase
+          .from('user_buildings')
+          .select('position_index')
+          .eq('user_id', purchase.user_id)
+          .gte('position_index', 0)
+          .lt('position_index', 20);
+
+        const occupiedPositions = new Set((existingBuildings || []).map(b => b.position_index));
+        for (let i = 0; i < 20; i++) {
+          if (!occupiedPositions.has(i)) {
+            positionIndex = i;
+            break;
+          }
+        }
+      }
+
+      // Check if building already exists at this position
+      const { data: existingBuilding } = await supabase
+        .from('user_buildings')
+        .select('id')
+        .eq('user_id', purchase.user_id)
+        .eq('position_index', positionIndex)
+        .single();
+
+      if (!existingBuilding) {
+        const { error: buildingError } = await supabase
+          .from('user_buildings')
+          .insert({
+            user_id: purchase.user_id,
+            building_type: buildingToCreate.type,
+            level: buildingToCreate.level,
+            position_index: positionIndex,
+            capacity: buildingPrice?.capacity || 100,
+            current_chickens: 0,
+          });
+
+        if (buildingError) {
+          console.error(`Error creating building:`, buildingError);
+        } else {
+          console.log(`Successfully created ${buildingToCreate.type} level ${buildingToCreate.level} at position ${positionIndex}`);
+        }
+      } else {
+        console.log(`Building already exists at position ${positionIndex}, skipping creation`);
+      }
+    }
+
+    // 6. Add chickens to user's coops if specified
     if (chickensToAdd > 0) {
       console.log(`Adding ${chickensToAdd} chickens to user ${purchase.user_id}`);
       
@@ -220,7 +303,7 @@ serve(async (req) => {
       }
     }
 
-    // 6. Update purchase as completed
+    // 7. Update purchase as completed
     const { error: updateError } = await supabase
       .from('store_purchases')
       .update({
@@ -246,6 +329,7 @@ serve(async (req) => {
         purchase_id,
         items_added: itemsToInsert.length,
         chickens_added: chickensToAdd,
+        building_created: buildingToCreate ? `${buildingToCreate.type} level ${buildingToCreate.level}` : null,
         items: itemsToInsert
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

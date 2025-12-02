@@ -177,6 +177,11 @@ export const AdminStore = () => {
         description: product.description || "",
       }
     });
+    // Initialize building state if exists
+    const building = getBuildingFromContentItems(product.content_items);
+    if (building) {
+      // Building will be loaded from content_items when dialog opens
+    }
   };
 
   const closeEditDialog = () => {
@@ -196,13 +201,31 @@ export const AdminStore = () => {
 
   const getSkinsFromContentItems = (contentItems: string[] | null): string[] => {
     if (!contentItems) return [];
-    return contentItems.filter(item => !item.startsWith("chickens:"));
+    return contentItems.filter(item => !item.startsWith("chickens:") && !item.startsWith("building:"));
   };
 
-  const updateProductContentItems = (productId: string, skins: string[], chickens: number) => {
+  const getBuildingFromContentItems = (contentItems: string[] | null): { type: string; level: number } | null => {
+    if (!contentItems) return null;
+    const buildingItem = contentItems.find(item => item.startsWith("building:"));
+    if (buildingItem) {
+      const parts = buildingItem.split(":");
+      if (parts.length >= 3) {
+        return {
+          type: parts[1],
+          level: parseInt(parts[2]) || 1,
+        };
+      }
+    }
+    return null;
+  };
+
+  const updateProductContentItems = (productId: string, skins: string[], chickens: number, building: { type: string; level: number } | null) => {
     const items: string[] = [...skins];
     if (chickens > 0) {
       items.push(`chickens:${chickens}`);
+    }
+    if (building && building.type) {
+      items.push(`building:${building.type}:${building.level}`);
     }
     setEditingProducts(prev => ({
       ...prev,
@@ -340,6 +363,11 @@ export const AdminStore = () => {
                             🐔 {currentChickens} gallinas
                           </p>
                         )}
+                        {getBuildingFromContentItems(product.content_items) && (
+                          <p className="text-xs text-blue-600 font-medium">
+                            🏚️ {getBuildingFromContentItems(product.content_items)?.type} nivel {getBuildingFromContentItems(product.content_items)?.level}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -427,7 +455,8 @@ export const AdminStore = () => {
                     onChange={(e) => {
                       const chickens = parseInt(e.target.value) || 0;
                       const currentSkins = getSkinsFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
-                      updateProductContentItems(editingProduct.id, currentSkins, chickens);
+                      const currentBuilding = getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                      updateProductContentItems(editingProduct.id, currentSkins, chickens, currentBuilding);
                     }}
                     placeholder="0"
                     className="w-32"
@@ -461,7 +490,8 @@ export const AdminStore = () => {
                               const currentSkins = getSkinsFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
                               const newSkins = currentSkins.filter(s => s !== skinKey);
                               const chickens = getChickensFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
-                              updateProductContentItems(editingProduct.id, newSkins, chickens);
+                              const currentBuilding = getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                              updateProductContentItems(editingProduct.id, newSkins, chickens, currentBuilding);
                             }}
                             className="ml-1 hover:bg-destructive/20 rounded-full p-0.5"
                           >
@@ -485,7 +515,8 @@ export const AdminStore = () => {
                           const currentSkins = getSkinsFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
                           if (!currentSkins.includes(selectedSkin)) {
                             const chickens = getChickensFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
-                            updateProductContentItems(editingProduct.id, [...currentSkins, selectedSkin], chickens);
+                            const currentBuilding = getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                            updateProductContentItems(editingProduct.id, [...currentSkins, selectedSkin], chickens, currentBuilding);
                           }
                           e.target.value = "";
                         }
@@ -501,6 +532,64 @@ export const AdminStore = () => {
                     </select>
                   </div>
                 </div>
+              </div>
+
+              {/* Building */}
+              <div className="space-y-2">
+                <Label htmlFor="building">Edificio a Otorgar</Label>
+                <div className="flex items-center gap-2">
+                  <select
+                    id="building-type"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items)?.type || ""}
+                    onChange={(e) => {
+                      const buildingType = e.target.value;
+                      const currentSkins = getSkinsFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                      const chickens = getChickensFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                      const currentBuilding = getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                      
+                      if (buildingType) {
+                        updateProductContentItems(editingProduct.id, currentSkins, chickens, {
+                          type: buildingType,
+                          level: currentBuilding?.level || 1,
+                        });
+                      } else {
+                        updateProductContentItems(editingProduct.id, currentSkins, chickens, null);
+                      }
+                    }}
+                  >
+                    <option value="">Ninguno</option>
+                    <option value="coop">Coop</option>
+                    <option value="warehouse">Almacén</option>
+                    <option value="market">Mercado</option>
+                  </select>
+                  {getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items)?.type && (
+                    <Input
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items)?.level || 1}
+                      onChange={(e) => {
+                        const level = parseInt(e.target.value) || 1;
+                        const currentSkins = getSkinsFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                        const chickens = getChickensFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                        const currentBuilding = getBuildingFromContentItems(editingProducts[editingProduct.id]?.content_items || editingProduct.content_items);
+                        
+                        if (currentBuilding) {
+                          updateProductContentItems(editingProduct.id, currentSkins, chickens, {
+                            type: currentBuilding.type,
+                            level: level,
+                          });
+                        }
+                      }}
+                      className="w-20"
+                      placeholder="Nivel"
+                    />
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona un tipo de edificio y nivel para otorgar al usuario al comprar este producto
+                </p>
               </div>
             </div>
 
