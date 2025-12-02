@@ -175,33 +175,67 @@ export const UpgradeBuildingDialog = ({
       if (!existingBuilding && (buildingType === 'warehouse' || buildingType === 'market')) {
         console.log("[UpgradeBuildingDialog] Creating default building:", buildingType);
         
-        // Get level 1 price to get default capacity
-        const { data: level1Price } = await supabase
-          .from("building_prices")
-          .select("capacity")
-          .eq("building_type", buildingType)
-          .eq("level", 1)
-          .single();
-
-        const { data: newBuilding, error: createError } = await supabase
+        const targetPosition = buildingType === 'warehouse' ? -1 : -2;
+        
+        // Check if position is already occupied
+        const { data: existingAtPosition } = await supabase
           .from("user_buildings")
-          .insert({
-            user_id: userId,
-            building_type: buildingType,
-            level: 1,
-            position_index: buildingType === 'warehouse' ? -1 : -2,
-            capacity: level1Price?.capacity || 100,
-            current_chickens: 0,
-          })
-          .select()
+          .select("id, building_type, position_index")
+          .eq("user_id", userId)
+          .eq("position_index", targetPosition)
           .single();
 
-        if (createError) {
-          throw new Error(`Error al crear edificio: ${createError.message}`);
-        }
+        if (existingAtPosition) {
+          // Position is occupied, use the existing building
+          console.log(`[UpgradeBuildingDialog] Position ${targetPosition} already occupied by ${existingAtPosition.building_type}, using existing building`);
+          existingBuilding = existingAtPosition;
+        } else {
+          // Get level 1 price to get default capacity
+          const { data: level1Price } = await supabase
+            .from("building_prices")
+            .select("capacity")
+            .eq("building_type", buildingType)
+            .eq("level", 1)
+            .single();
 
-        existingBuilding = newBuilding;
-        console.log("[UpgradeBuildingDialog] Default building created:", existingBuilding);
+          const { data: newBuilding, error: createError } = await supabase
+            .from("user_buildings")
+            .insert({
+              user_id: userId,
+              building_type: buildingType,
+              level: 1,
+              position_index: targetPosition,
+              capacity: level1Price?.capacity || 100,
+              current_chickens: 0,
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            // Check if it's a duplicate key error (race condition)
+            if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
+              // Try to fetch the building that was created by another process
+              const { data: raceConditionBuilding } = await supabase
+                .from("user_buildings")
+                .select("*")
+                .eq("user_id", userId)
+                .eq("position_index", targetPosition)
+                .single();
+              
+              if (raceConditionBuilding) {
+                console.log("[UpgradeBuildingDialog] Building created by race condition, using it");
+                existingBuilding = raceConditionBuilding;
+              } else {
+                throw new Error(`Error al crear edificio: ${createError.message}`);
+              }
+            } else {
+              throw new Error(`Error al crear edificio: ${createError.message}`);
+            }
+          } else {
+            existingBuilding = newBuilding;
+            console.log("[UpgradeBuildingDialog] Default building created:", existingBuilding);
+          }
+        }
       } else if (!existingBuilding) {
         throw new Error(`Edificio no encontrado y no se puede crear automáticamente`);
       } else {

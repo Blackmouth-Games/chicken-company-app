@@ -628,14 +628,40 @@ const Home = () => {
       }
 
       if (buildingsToCreate.length > 0) {
-        const { error: createError } = await supabase
+        // Check for existing buildings at these positions before inserting
+        const positionsToCheck = buildingsToCreate.map(b => b.position_index);
+        const { data: existingAtPositions } = await supabase
           .from("user_buildings")
-          .insert(buildingsToCreate);
+          .select("position_index, building_type")
+          .eq("user_id", profileId)
+          .in("position_index", positionsToCheck);
 
-        if (createError) {
-          console.error("[Home] Error creating default buildings:", createError);
-        } else {
-          console.log("[Home] Created default buildings:", buildingsToCreate.map(b => b.building_type));
+        const occupiedPositions = new Set((existingAtPositions || []).map(b => b.position_index));
+        
+        // Filter out buildings that would conflict
+        const safeBuildingsToCreate = buildingsToCreate.filter(b => {
+          if (occupiedPositions.has(b.position_index)) {
+            console.warn(`[Home] Position ${b.position_index} already occupied, skipping ${b.building_type}`);
+            return false;
+          }
+          return true;
+        });
+
+        if (safeBuildingsToCreate.length > 0) {
+          const { error: createError } = await supabase
+            .from("user_buildings")
+            .insert(safeBuildingsToCreate);
+
+          if (createError) {
+            // Check if it's a duplicate key error (race condition)
+            if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
+              console.warn("[Home] Duplicate key error creating default buildings (likely race condition), ignoring");
+            } else {
+              console.error("[Home] Error creating default buildings:", createError);
+            }
+          } else {
+            console.log("[Home] Created default buildings:", safeBuildingsToCreate.map(b => b.building_type));
+          }
         }
       }
     } catch (error) {

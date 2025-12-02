@@ -101,6 +101,43 @@ export const PurchaseBuildingDialog = ({
       };
       const result = await tonConnectUI.sendTransaction(transaction);
 
+      // Check if position is already occupied
+      const { data: existingBuildingAtPosition } = await supabase
+        .from("user_buildings")
+        .select("id, position_index")
+        .eq("user_id", userId)
+        .eq("position_index", position)
+        .single();
+
+      let actualPosition = position;
+      
+      // If position is occupied, find the first available position
+      if (existingBuildingAtPosition) {
+        console.warn(`[PurchaseBuildingDialog] Position ${position} is occupied, finding available position`);
+        
+        // Get all occupied positions
+        const { data: allBuildings } = await supabase
+          .from("user_buildings")
+          .select("position_index")
+          .eq("user_id", userId)
+          .gte("position_index", 0); // Only check non-negative positions
+        
+        const occupiedPositions = new Set((allBuildings || []).map(b => b.position_index));
+        
+        // Find first available position (0-19 for coops)
+        for (let i = 0; i < 20; i++) {
+          if (!occupiedPositions.has(i)) {
+            actualPosition = i;
+            break;
+          }
+        }
+        
+        if (actualPosition === position) {
+          // No available position found, this shouldn't happen but handle gracefully
+          throw new Error("No hay espacios disponibles para construir");
+        }
+      }
+
       // Insert building into database
       const { data: newBuilding, error: buildingError } = await supabase
         .from("user_buildings")
@@ -108,14 +145,20 @@ export const PurchaseBuildingDialog = ({
           user_id: userId,
           building_type: "coop",
           level: 1,
-          position_index: position,
+          position_index: actualPosition,
           capacity: COOP_CAPACITY,
           current_chickens: 0,
         })
         .select()
         .single();
 
-      if (buildingError) throw buildingError;
+      if (buildingError) {
+        // Check if it's a duplicate key error
+        if (buildingError.code === '23505' || buildingError.message?.includes('duplicate key')) {
+          throw new Error("Esta posición ya está ocupada. Por favor, intenta en otra posición.");
+        }
+        throw buildingError;
+      }
 
       // Update purchase record as completed
       await supabase
@@ -158,9 +201,17 @@ export const PurchaseBuildingDialog = ({
         console.error("Error updating purchase status:", updateError);
       }
       
+      // Provide user-friendly error message
+      let errorMessage = error?.message || "No se pudo completar la compra. Intenta nuevamente.";
+      if (error?.code === '23505' || error?.message?.includes('duplicate key')) {
+        errorMessage = "Esta posición ya está ocupada. Por favor, intenta en otra posición.";
+      } else if (error?.message?.includes("User rejects")) {
+        errorMessage = "Transacción cancelada";
+      }
+      
       toast({
         title: "Error",
-        description: error?.message || "No se pudo completar la compra. Intenta nuevamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
