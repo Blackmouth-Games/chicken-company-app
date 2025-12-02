@@ -8,6 +8,7 @@ import {
   Users,
   LogOut,
   BarChart3,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -43,6 +44,11 @@ const navItems: NavItem[] = [
     title: "Usuarios",
     href: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Métricas de Ventas",
+    href: "/admin/sales",
+    icon: TrendingUp,
   },
 ];
 

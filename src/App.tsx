@@ -23,6 +23,7 @@ import { AdminStore } from "./pages/AdminStore";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import { AdminBuildingPrices } from "./pages/AdminBuildingPrices";
 import { AdminUsers } from "./pages/AdminUsers";
+import { AdminSales } from "./pages/AdminSales";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -88,6 +89,7 @@ const AppRoutes = () => {
             <Route path="/admin/skins" element={<AdminSkins />} />
             <Route path="/admin/store" element={<AdminStore />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/sales" element={<AdminSales />} />
             <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
         </ErrorBoundary>
