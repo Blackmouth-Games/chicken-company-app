@@ -7,10 +7,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { addAllBuildingSkins, checkExistingSkins } from "@/scripts/addAllBuildingSkins";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, RefreshCw, LogOut, Grid3x3, List } from "lucide-react";
+import { Loader2, CheckCircle, RefreshCw, Grid3x3, List } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { AdminLayout } from "@/components/AdminLayout";
 
 // Map all assets in /src/assets to URLs and normalize keys for robust lookup
 const assetModules = import.meta.glob('/src/assets/**/*.{png,jpg,jpeg,webp,svg}', { eager: true, as: 'url' }) as Record<string, string>;
@@ -125,45 +126,12 @@ const AdminSkins = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Administración de Skins</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user.email}</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/admin")}
-          >
-            Dashboard
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/admin/building-prices")}
-          >
-            Precios de Edificios
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/admin/store")}
-          >
-            Gestionar Tienda
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate("/admin/users")}
-          >
-            Usuarios
-          </Button>
-          <Button variant="outline" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar Sesión
-          </Button>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Administración de Skins</h1>
+          <p className="text-muted-foreground mt-1">Gestiona las skins de los edificios</p>
         </div>
-      </div>
       
       <div className="space-y-4 mb-6">
         <div className="flex gap-4">
@@ -322,7 +290,8 @@ const AdminSkins = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

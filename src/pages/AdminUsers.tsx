@@ -98,43 +98,12 @@ export const AdminUsers = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-7xl">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
           <p className="text-muted-foreground mt-1">Visualiza y gestiona los usuarios de la aplicación</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/dashboard")}
-          >
-            Dashboard
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/building-prices")}
-          >
-            Precios de Edificios
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/store")}
-          >
-            Gestionar Tienda
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/skins")}
-          >
-            Gestionar Skins
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
 
       <Card>
         <CardHeader>
@@ -265,7 +234,8 @@ export const AdminUsers = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

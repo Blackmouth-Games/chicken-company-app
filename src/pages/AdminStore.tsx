@@ -7,6 +7,7 @@ import { Loader2, Save, DollarSign, Edit, X, Plus, Package } from "lucide-react"
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -259,42 +260,12 @@ export const AdminStore = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Administración de Tienda</h1>
           <p className="text-muted-foreground mt-1">Gestiona los precios de los productos de la tienda</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin")}
-          >
-            Dashboard
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/building-prices")}
-          >
-            Precios de Edificios
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/skins")}
-          >
-            Gestionar Skins
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/users")}
-          >
-            Usuarios
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -557,7 +528,8 @@ export const AdminStore = () => {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

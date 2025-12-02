@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Building2, ShoppingCart, TrendingUp, DollarSign, Package, BarChart3, LogOut } from "lucide-react";
+import { Loader2, Users, Building2, ShoppingCart, TrendingUp, DollarSign, Package, BarChart3 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useMetricsDashboard } from "@/hooks/useMetricsDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AdminLayout } from "@/components/AdminLayout";
 
 interface AppMetrics {
   totalUsers: number;
@@ -17,6 +18,7 @@ interface AppMetrics {
   totalMarkets: number;
   totalPurchases: number;
   totalRevenue: number;
+  totalChickens: number;
   avgBuildingsPerUser: number;
   buildingsByLevel: Record<number, number>;
   buildingsByType: Record<string, number>;
@@ -24,20 +26,22 @@ interface AppMetrics {
   recentPurchases: number; // Last 7 days
 }
 
+interface DailyMetric {
+  date: string;
+  metric_type: string;
+  metric_value: number;
+  metadata?: any;
+}
+
 export const AdminDashboard = () => {
-  const { user, isAdmin, loading: authLoading, signOut } = useAdminAuth();
+  const { user, isAdmin, loading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<AppMetrics | null>(null);
+  const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const { toast } = useToast();
   const { stats, isLoading: metricsLoading } = useMetricsDashboard(30);
-
-  // Load metrics when user is authenticated and is admin
-  useEffect(() => {
-    if (!authLoading && user && isAdmin === true) {
-      loadMetrics();
-    }
-  }, [authLoading, user, isAdmin]);
 
   // Redirect to login if not authenticated or not admin
   useEffect(() => {
@@ -62,7 +66,10 @@ export const AdminDashboard = () => {
       // Get buildings by type
       const { data: buildingsData } = await supabase
         .from("user_buildings")
-        .select("building_type, level");
+        .select("building_type, level, current_chickens");
+
+      // Get total chickens
+      const totalChickens = buildingsData?.reduce((sum, b) => sum + (b.current_chickens || 0), 0) || 0;
 
       // Get total purchases
       const { count: totalPurchases } = await supabase
@@ -114,12 +121,60 @@ export const AdminDashboard = () => {
         totalMarkets: buildingsByType["market"] || 0,
         totalPurchases: totalPurchases || 0,
         totalRevenue,
+        totalChickens,
         avgBuildingsPerUser: Math.round(avgBuildingsPerUser * 100) / 100,
         buildingsByLevel,
         buildingsByType,
         recentUsers: recentUsers || 0,
         recentPurchases: recentPurchases || 0,
       });
+    } catch (error: any) {
+      console.error("Error loading metrics:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las métricas",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDailyMetrics = async (days: number = 30) => {
+    setLoadingHistory(true);
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = new Date().toISOString().split('T')[0];
+
+      const { data, error } = await supabase
+        .from("daily_metrics")
+        .select("*")
+        .gte("date", startDateStr)
+        .lte("date", endDateStr)
+        .order("date", { ascending: false });
+
+      if (error) throw error;
+      setDailyMetrics(data || []);
+    } catch (error: any) {
+      console.error("Error loading daily metrics:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las métricas históricas",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && user && isAdmin === true) {
+      loadMetrics();
+      loadDailyMetrics(30);
+    }
+  }, [authLoading, user, isAdmin]);
     } catch (error: any) {
       console.error("Error loading metrics:", error);
       toast({
@@ -143,45 +198,13 @@ export const AdminDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-7xl">
+        {/* Header */}
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Panel de Administración</h1>
           <p className="text-muted-foreground mt-1">Métricas y estadísticas de la aplicación</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/building-prices")}
-          >
-            Precios de Edificios
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/store")}
-          >
-            Gestionar Tienda
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/skins")}
-          >
-            Gestionar Skins
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/users")}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Usuarios
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
 
       {loading || metricsLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -190,7 +213,7 @@ export const AdminDashboard = () => {
       ) : metrics ? (
         <div className="space-y-6">
           {/* Main Metrics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Usuarios</CardTitle>
@@ -213,6 +236,19 @@ export const AdminDashboard = () => {
                 <div className="text-2xl font-bold">{metrics.totalBuildings.toLocaleString()}</div>
                 <p className="text-xs text-muted-foreground">
                   Promedio: {metrics.avgBuildingsPerUser} por usuario
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Gallinas</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{metrics.totalChickens.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  En todos los coops
                 </p>
               </CardContent>
             </Card>
@@ -363,12 +399,140 @@ export const AdminDashboard = () => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={loadMetrics}
+                  onClick={() => {
+                    loadMetrics();
+                    loadDailyMetrics(30);
+                  }}
                 >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   Actualizar Métricas
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Historical Metrics */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Métricas Históricas</CardTitle>
+                  <CardDescription>Evolución diaria de las métricas (últimos 30 días)</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadDailyMetrics(7)}
+                    disabled={loadingHistory}
+                  >
+                    7 días
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadDailyMetrics(30)}
+                    disabled={loadingHistory}
+                  >
+                    30 días
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadDailyMetrics(90)}
+                    disabled={loadingHistory}
+                  >
+                    90 días
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingHistory ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : dailyMetrics.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay métricas históricas disponibles. El cron job capturará métricas diarias automáticamente.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Group metrics by date */}
+                  {Object.entries(
+                    dailyMetrics.reduce((acc, metric) => {
+                      if (!acc[metric.date]) {
+                        acc[metric.date] = {
+                          aggregates: null,
+                          events: [],
+                        };
+                      }
+                      
+                      // Check if this is the aggregate metrics record
+                      if (metric.metadata && typeof metric.metadata === 'object' && 'metric_name' in metric.metadata && metric.metadata.metric_name === 'daily_aggregates') {
+                        acc[metric.date].aggregates = metric.metadata as any;
+                      } else {
+                        acc[metric.date].events.push(metric);
+                      }
+                      
+                      return acc;
+                    }, {} as Record<string, { aggregates: any; events: DailyMetric[] }>)
+                  )
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .slice(0, 30)
+                    .map(([date, data]) => {
+                      const dateObj = new Date(date);
+                      const formattedDate = dateObj.toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                      });
+
+                      const aggregates = data.aggregates;
+                      const events = data.events;
+
+                      return (
+                        <div key={date} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold">{formattedDate}</h4>
+                            <span className="text-sm text-muted-foreground">
+                              {aggregates ? 'Métricas completas' : `${events.length} eventos`}
+                            </span>
+                          </div>
+                          {aggregates ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              {Object.entries(aggregates)
+                                .filter(([key]) => key !== 'metric_name' && key !== 'captured_at')
+                                .map(([key, value]) => (
+                                  <div key={key} className="flex flex-col">
+                                    <span className="text-xs text-muted-foreground capitalize">
+                                      {key.replace(/_/g, ' ')}
+                                    </span>
+                                    <span className="text-lg font-semibold">
+                                      {typeof value === 'number' ? value.toLocaleString() : String(value)}
+                                    </span>
+                                  </div>
+                                ))}
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              {events.map((metric) => (
+                                <div key={`${date}-${metric.metric_type}`} className="flex flex-col">
+                                  <span className="text-xs text-muted-foreground capitalize">
+                                    {metric.metric_type.replace(/_/g, ' ')}
+                                  </span>
+                                  <span className="text-lg font-semibold">
+                                    {metric.metric_value.toLocaleString()}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -377,7 +541,8 @@ export const AdminDashboard = () => {
           No se pudieron cargar las métricas
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Building2, LogOut, Plus, Trash2 } from "lucide-react";
+import { Loader2, Save, Building2, Plus, Trash2 } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { AdminLayout } from "@/components/AdminLayout";
 
 interface BuildingPrice {
   id: string;
@@ -260,43 +261,12 @@ export const AdminBuildingPrices = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
+    <AdminLayout>
+      <div className="container mx-auto p-6 max-w-6xl">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Precios de Edificios</h1>
           <p className="text-muted-foreground mt-1">Gestiona los precios y capacidades de los edificios</p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin")}
-          >
-            Dashboard
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/store")}
-          >
-            Gestionar Tienda
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/skins")}
-          >
-            Gestionar Skins
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/admin/users")}
-          >
-            Usuarios
-          </Button>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar sesión
-          </Button>
-        </div>
-      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -494,7 +464,8 @@ export const AdminBuildingPrices = () => {
           )}
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
