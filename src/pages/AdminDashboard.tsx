@@ -2,13 +2,16 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, Building2, ShoppingCart, TrendingUp, DollarSign, Package, BarChart3 } from "lucide-react";
+import { Loader2, Users, Building2, ShoppingCart, TrendingUp, DollarSign, Package, BarChart3, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useMetricsDashboard } from "@/hooks/useMetricsDashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminLayout } from "@/components/AdminLayout";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 interface AppMetrics {
   totalUsers: number;
@@ -22,6 +25,7 @@ interface AppMetrics {
   avgBuildingsPerUser: number;
   buildingsByLevel: Record<number, number>;
   buildingsByType: Record<string, number>;
+  buildingsByTypeAndLevel?: Record<string, Record<number, number>>;
   recentUsers: number; // Last 7 days
   recentPurchases: number; // Last 7 days
 }
@@ -40,6 +44,21 @@ export const AdminDashboard = () => {
   const [metrics, setMetrics] = useState<AppMetrics | null>(null);
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedBuildingTypes, setSelectedBuildingTypes] = useState<Record<string, boolean>>({
+    coop: true,
+    warehouse: true,
+    market: true,
+  });
+  const [historyStartDate, setHistoryStartDate] = useState<string>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  });
+  const [historyEndDate, setHistoryEndDate] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize] = useState(10);
   const { toast } = useToast();
   const { stats, isLoading: metricsLoading } = useMetricsDashboard(30);
 
@@ -98,11 +117,16 @@ export const AdminDashboard = () => {
 
       // Calculate buildings by type
       const buildingsByType: Record<string, number> = {};
-      const buildingsByLevel: Record<number, number> = {};
+      const buildingsByTypeAndLevel: Record<string, Record<number, number>> = {};
       
       buildingsData?.forEach((building) => {
         buildingsByType[building.building_type] = (buildingsByType[building.building_type] || 0) + 1;
-        buildingsByLevel[building.level] = (buildingsByLevel[building.level] || 0) + 1;
+        
+        if (!buildingsByTypeAndLevel[building.building_type]) {
+          buildingsByTypeAndLevel[building.building_type] = {};
+        }
+        buildingsByTypeAndLevel[building.building_type][building.level] = 
+          (buildingsByTypeAndLevel[building.building_type][building.level] || 0) + 1;
       });
 
       // Calculate revenue
@@ -123,11 +147,12 @@ export const AdminDashboard = () => {
         totalRevenue,
         totalChickens,
         avgBuildingsPerUser: Math.round(avgBuildingsPerUser * 100) / 100,
-        buildingsByLevel,
+        buildingsByLevel: {}, // Deprecated, using buildingsByTypeAndLevel instead
         buildingsByType,
+        buildingsByTypeAndLevel: buildingsByTypeAndLevel,
         recentUsers: recentUsers || 0,
         recentPurchases: recentPurchases || 0,
-      });
+      } as any);
     } catch (error: any) {
       console.error("Error loading metrics:", error);
       toast({
@@ -140,23 +165,19 @@ export const AdminDashboard = () => {
     }
   };
 
-  const loadDailyMetrics = async (days: number = 30) => {
+  const loadDailyMetrics = async () => {
     setLoadingHistory(true);
     try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      const startDateStr = startDate.toISOString().split('T')[0];
-      const endDateStr = new Date().toISOString().split('T')[0];
-
       const { data, error } = await supabase
         .from("daily_metrics")
         .select("*")
-        .gte("date", startDateStr)
-        .lte("date", endDateStr)
+        .gte("date", historyStartDate)
+        .lte("date", historyEndDate)
         .order("date", { ascending: false });
 
       if (error) throw error;
       setDailyMetrics(data || []);
+      setHistoryPage(1); // Reset to first page
     } catch (error: any) {
       console.error("Error loading daily metrics:", error);
       toast({
@@ -169,12 +190,69 @@ export const AdminDashboard = () => {
     }
   };
 
+  const downloadHistoryCSV = () => {
+    const headers = ['Fecha', 'Tipo Métrica', 'Valor', 'Metadata'];
+    const rows: string[][] = [];
+
+    dailyMetrics.forEach(metric => {
+      rows.push([
+        metric.date,
+        metric.metric_type,
+        metric.metric_value.toString(),
+        JSON.stringify(metric.metadata || {}),
+      ]);
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `metricas_historicas_${historyStartDate}_${historyEndDate}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadHistoryJSON = () => {
+    const data = {
+      exportDate: new Date().toISOString(),
+      dateRange: {
+        start: historyStartDate,
+        end: historyEndDate,
+      },
+      metrics: dailyMetrics,
+    };
+
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `metricas_historicas_${historyStartDate}_${historyEndDate}.json`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   useEffect(() => {
     if (!authLoading && user && isAdmin === true) {
       loadMetrics();
-      loadDailyMetrics(30);
+      loadDailyMetrics();
     }
   }, [authLoading, user, isAdmin]);
+
+  useEffect(() => {
+    if (!authLoading && user && isAdmin === true) {
+      loadDailyMetrics();
+    }
+  }, [historyStartDate, historyEndDate]);
 
   // Show loading while checking auth
   if (authLoading) {
@@ -305,19 +383,62 @@ export const AdminDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Edificios por Nivel</CardTitle>
-                <CardDescription>Distribución de niveles de edificios</CardDescription>
+                <CardTitle className="text-lg">Edificios por Tipo y Nivel</CardTitle>
+                <CardDescription>Distribución de niveles por tipo de edificio</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(metrics.buildingsByLevel)
-                    .sort(([a], [b]) => parseInt(a) - parseInt(b))
-                    .map(([level, count]) => (
-                      <div key={level} className="flex items-center justify-between">
-                        <span className="text-sm">Nivel {level}</span>
-                        <span className="font-semibold">{count}</span>
-                      </div>
-                    ))}
+                <div className="space-y-4">
+                  {/* Building Type Filters */}
+                  <div className="space-y-2 pb-3 border-b">
+                    <Label className="text-sm font-medium">Filtrar por tipo:</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {['coop', 'warehouse', 'market'].map((type) => (
+                        <div key={type} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`filter-${type}`}
+                            checked={selectedBuildingTypes[type] ?? false}
+                            onCheckedChange={(checked) => {
+                              setSelectedBuildingTypes({
+                                ...selectedBuildingTypes,
+                                [type]: !!checked,
+                              });
+                            }}
+                          />
+                          <Label htmlFor={`filter-${type}`} className="text-sm cursor-pointer capitalize">
+                            {type === 'coop' ? 'Coops' : type === 'warehouse' ? 'Almacenes' : 'Mercados'}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Buildings by Type and Level */}
+                  <div className="space-y-4">
+                    {Object.entries(metrics.buildingsByTypeAndLevel || {})
+                      .filter(([type]) => selectedBuildingTypes[type] !== false)
+                      .map(([type, levels]) => (
+                        <div key={type} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            {type === 'coop' && <Package className="h-4 w-4 text-green-600" />}
+                            {type === 'warehouse' && <Building2 className="h-4 w-4 text-blue-600" />}
+                            {type === 'market' && <ShoppingCart className="h-4 w-4 text-orange-600" />}
+                            <span className="font-semibold text-sm capitalize">
+                              {type === 'coop' ? 'Coops' : type === 'warehouse' ? 'Almacenes' : 'Mercados'}
+                            </span>
+                          </div>
+                          <div className="ml-6 space-y-1">
+                            {Object.entries(levels)
+                              .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                              .map(([level, count]) => (
+                                <div key={level} className="flex items-center justify-between text-sm">
+                                  <span className="text-muted-foreground">Nivel {level}</span>
+                                  <span className="font-semibold">{count}</span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -343,7 +464,19 @@ export const AdminDashboard = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Duración Promedio</span>
-                    <span className="font-semibold">{Math.round(stats.avgSessionDuration / 60)} min</span>
+                    <span className="font-semibold">
+                      {stats.avgSessionDuration > 0 
+                        ? `${Math.round(stats.avgSessionDuration / 60)} min ${Math.round(stats.avgSessionDuration % 60)} seg`
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Tiempo Total en App</span>
+                    <span className="font-semibold">
+                      {stats.avgSessionDuration > 0 
+                        ? `${Math.round((stats.avgSessionDuration * (stats.totalNewUsers || 1)) / 3600)} horas`
+                        : 'N/A'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -403,35 +536,58 @@ export const AdminDashboard = () => {
           {/* Historical Metrics */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <CardTitle className="text-lg">Métricas Históricas</CardTitle>
-                  <CardDescription>Evolución diaria de las métricas (últimos 30 días)</CardDescription>
+                  <CardDescription>Evolución diaria de las métricas</CardDescription>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="start-date" className="text-sm">Desde:</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={historyStartDate}
+                      onChange={(e) => setHistoryStartDate(e.target.value)}
+                      className="w-40"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="end-date" className="text-sm">Hasta:</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={historyEndDate}
+                      onChange={(e) => setHistoryEndDate(e.target.value)}
+                      className="w-40"
+                    />
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => loadDailyMetrics(7)}
+                    onClick={loadDailyMetrics}
                     disabled={loadingHistory}
                   >
-                    7 días
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Cargar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => loadDailyMetrics(30)}
-                    disabled={loadingHistory}
+                    onClick={downloadHistoryCSV}
+                    disabled={loadingHistory || dailyMetrics.length === 0}
                   >
-                    30 días
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => loadDailyMetrics(90)}
-                    disabled={loadingHistory}
+                    onClick={downloadHistoryJSON}
+                    disabled={loadingHistory || dailyMetrics.length === 0}
                   >
-                    90 días
+                    <Download className="h-4 w-4 mr-2" />
+                    JSON
                   </Button>
                 </div>
               </div>
@@ -447,6 +603,34 @@ export const AdminDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  {/* Pagination Info */}
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>
+                      Mostrando {((historyPage - 1) * historyPageSize) + 1} - {Math.min(historyPage * historyPageSize, dailyMetrics.length)} de {dailyMetrics.length} registros
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setHistoryPage(p => Math.max(1, p - 1))}
+                        disabled={historyPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm">
+                        Página {historyPage} de {Math.ceil(dailyMetrics.length / historyPageSize)}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setHistoryPage(p => Math.min(Math.ceil(dailyMetrics.length / historyPageSize), p + 1))}
+                        disabled={historyPage >= Math.ceil(dailyMetrics.length / historyPageSize)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
                   {/* Group metrics by date */}
                   {Object.entries(
                     dailyMetrics.reduce((acc, metric) => {
@@ -468,7 +652,7 @@ export const AdminDashboard = () => {
                     }, {} as Record<string, { aggregates: any; events: DailyMetric[] }>)
                   )
                     .sort(([a], [b]) => b.localeCompare(a))
-                    .slice(0, 30)
+                    .slice((historyPage - 1) * historyPageSize, historyPage * historyPageSize)
                     .map(([date, data]) => {
                       const dateObj = new Date(date);
                       const formattedDate = dateObj.toLocaleDateString('es-ES', {

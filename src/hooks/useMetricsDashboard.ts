@@ -49,15 +49,32 @@ export const useMetricsDashboard = (days: number = 30) => {
     },
   });
 
+  // Get session duration from user_sessions table directly
+  const { data: userSessions } = useQuery({
+    queryKey: ["user-sessions", days],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_sessions")
+        .select("duration_seconds, session_start")
+        .gte("session_start", subDays(new Date(), days).toISOString())
+        .not("duration_seconds", "is", null);
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Calculate aggregated stats
+  const avgSessionDuration = userSessions && userSessions.length > 0
+    ? userSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / userSessions.length
+    : 0;
+
   const stats = {
     totalNewGuests: dailyMetrics?.reduce((sum, m) => 
       m.metric_type === "new_guest_users" ? sum + (m.metric_value || 0) : sum, 0) || 0,
     totalNewUsers: dailyMetrics?.reduce((sum, m) => 
       m.metric_type === "new_registered_users" ? sum + (m.metric_value || 0) : sum, 0) || 0,
-    avgSessionDuration: dailyMetrics
-      ?.filter(m => m.metric_type === "session_duration")
-      .reduce((sum, m, _, arr) => sum + (m.metric_value || 0) / arr.length, 0) || 0,
+    avgSessionDuration,
     totalPageViews: dailyMetrics?.reduce((sum, m) => 
       m.metric_type === "page_view" ? sum + (m.metric_value || 0) : sum, 0) || 0,
     totalButtonClicks: dailyMetrics?.reduce((sum, m) => 
