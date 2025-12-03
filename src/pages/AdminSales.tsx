@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, TrendingUp, DollarSign, ShoppingCart, Building2, Calendar, Filter } from "lucide-react";
+import { Loader2, TrendingUp, DollarSign, ShoppingCart, Building2, Calendar, Filter, Download, FileText } from "lucide-react";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -213,6 +213,166 @@ export const AdminSales = () => {
 
   const maxRevenue = metrics?.revenueByDay.length ? Math.max(...metrics.revenueByDay.map(d => d.revenue)) : 0;
 
+  const downloadCSV = () => {
+    const headers = ['Tipo', 'Categoría', 'Precio (TON)', 'Estado', 'Fecha Creación', 'Fecha Completado', 'Hash Transacción'];
+    const rows: string[][] = [];
+
+    filteredBuildingPurchases.forEach(p => {
+      rows.push([
+        'Edificio',
+        `${p.building_type}_${p.level}`,
+        p.price_ton.toString(),
+        p.status,
+        p.created_at,
+        p.completed_at || '',
+        p.transaction_hash || '',
+      ]);
+    });
+
+    filteredStorePurchases.forEach(p => {
+      rows.push([
+        'Tienda',
+        p.product_key,
+        p.price_ton.toString(),
+        p.status,
+        p.created_at,
+        p.completed_at || '',
+        p.transaction_hash || '',
+      ]);
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ventas_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadJSON = () => {
+    const data = {
+      exportDate: new Date().toISOString(),
+      dateRange,
+      filters: {
+        status: statusFilter,
+        type: typeFilter,
+      },
+      metrics,
+      sales: {
+        buildings: filteredBuildingPurchases,
+        store: filteredStorePurchases,
+      },
+    };
+
+    const jsonContent = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ventas_${dateRange}_${new Date().toISOString().split('T')[0]}.json`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadDailySales = async () => {
+    try {
+      setLoading(true);
+      
+      // Calculate date range
+      const now = new Date();
+      let startDate: Date | null = null;
+      
+      switch (dateRange) {
+        case '7days':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30days':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '90days':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          break;
+        case 'all':
+          startDate = null;
+          break;
+      }
+
+      let query = supabase
+        .from("daily_sales")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (startDate) {
+        query = query.gte("date", startDate.toISOString().split('T')[0]);
+      }
+
+      const { data: dailySales, error } = await query;
+
+      if (error) throw error;
+
+      // Convert to CSV
+      const headers = ['Fecha', 'Tipo Venta', 'Categoría', 'Tipo Edificio', 'Nivel', 'Producto', 'Total Ventas', 'Total Ingresos (TON)', 'Ventas Completadas', 'Ingresos Completados (TON)', 'Ventas Pendientes', 'Ventas Fallidas', 'Ventas Canceladas'];
+      const rows: string[][] = [];
+
+      dailySales?.forEach(sale => {
+        rows.push([
+          sale.date,
+          sale.sale_type,
+          sale.sale_category || '',
+          sale.building_type || '',
+          sale.building_level?.toString() || '',
+          sale.product_key || '',
+          sale.total_sales.toString(),
+          sale.total_revenue.toString(),
+          sale.completed_sales.toString(),
+          sale.completed_revenue.toString(),
+          sale.pending_sales.toString(),
+          sale.failed_sales.toString(),
+          sale.cancelled_sales.toString(),
+        ]);
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `ventas_diarias_por_tipologia_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "¡Éxito!",
+        description: `Se descargaron ${dailySales?.length || 0} registros de ventas diarias`,
+      });
+    } catch (error: any) {
+      console.error("Error descargando ventas diarias:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron descargar las ventas diarias",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (authLoading) {
     return <LoadingScreen message="Verificando permisos..." />;
   }
@@ -227,6 +387,13 @@ export const AdminSales = () => {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Métricas de Ventas</h1>
           <p className="text-muted-foreground mt-1">Análisis de ventas y transacciones</p>
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-sm text-blue-900 dark:text-blue-100">
+              <strong>💡 Sistema de Ventas Diarias:</strong> Cada día, el cron job captura automáticamente las ventas del día anterior 
+              y las guarda en la tabla <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">daily_sales</code> desglosadas por tipología 
+              (edificios por tipo/nivel y productos de tienda). Puedes descargar estos datos usando el botón "Descargar Ventas Diarias".
+            </p>
+          </div>
         </div>
 
         {loading ? (
@@ -290,10 +457,41 @@ export const AdminSales = () => {
               </Card>
             </div>
 
-            {/* Filters */}
+            {/* Filters and Export */}
             <Card>
               <CardHeader>
-                <CardTitle>Filtros</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Filtros</CardTitle>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadDailySales}
+                      disabled={loading}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Descargar Ventas Diarias (CSV)
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadCSV}
+                      disabled={loading || !metrics}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      CSV
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadJSON}
+                      disabled={loading || !metrics}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      JSON
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-4">

@@ -182,15 +182,174 @@ serve(async (req) => {
         });
     }
 
-    console.log(`Successfully captured daily metrics for ${todayStr}`);
+    // Capture daily sales by type
+    console.log(`Capturing daily sales by type for ${todayStr}`);
+
+    // Get building purchases from yesterday (to capture yesterday's sales)
+    const { data: buildingPurchases } = await supabase
+      .from("building_purchases")
+      .select("building_type, level, price_ton, status, completed_at, created_at")
+      .gte("created_at", yesterdayStr)
+      .lt("created_at", todayStr);
+
+    // Get store purchases from yesterday
+    const { data: storePurchases } = await supabase
+      .from("store_purchases")
+      .select("product_key, price_ton, status, completed_at, created_at")
+      .gte("created_at", yesterdayStr)
+      .lt("created_at", todayStr);
+
+    // Aggregate building sales by type and level
+    const buildingSalesByCategory: Record<string, {
+      total_sales: number;
+      total_revenue: number;
+      completed_sales: number;
+      completed_revenue: number;
+      pending_sales: number;
+      failed_sales: number;
+      cancelled_sales: number;
+      building_type: string;
+      building_level: number;
+    }> = {};
+
+    buildingPurchases?.forEach((purchase) => {
+      const category = `${purchase.building_type}_${purchase.level}`;
+      if (!buildingSalesByCategory[category]) {
+        buildingSalesByCategory[category] = {
+          total_sales: 0,
+          total_revenue: 0,
+          completed_sales: 0,
+          completed_revenue: 0,
+          pending_sales: 0,
+          failed_sales: 0,
+          cancelled_sales: 0,
+          building_type: purchase.building_type,
+          building_level: purchase.level,
+        };
+      }
+
+      buildingSalesByCategory[category].total_sales += 1;
+      buildingSalesByCategory[category].total_revenue += purchase.price_ton || 0;
+
+      if (purchase.status === 'completed') {
+        buildingSalesByCategory[category].completed_sales += 1;
+        buildingSalesByCategory[category].completed_revenue += purchase.price_ton || 0;
+      } else if (purchase.status === 'pending') {
+        buildingSalesByCategory[category].pending_sales += 1;
+      } else if (purchase.status === 'failed') {
+        buildingSalesByCategory[category].failed_sales += 1;
+      } else if (purchase.status === 'cancelled') {
+        buildingSalesByCategory[category].cancelled_sales += 1;
+      }
+    });
+
+    // Aggregate store sales by product
+    const storeSalesByCategory: Record<string, {
+      total_sales: number;
+      total_revenue: number;
+      completed_sales: number;
+      completed_revenue: number;
+      pending_sales: number;
+      failed_sales: number;
+      cancelled_sales: number;
+      product_key: string;
+    }> = {};
+
+    storePurchases?.forEach((purchase) => {
+      const category = purchase.product_key;
+      if (!storeSalesByCategory[category]) {
+        storeSalesByCategory[category] = {
+          total_sales: 0,
+          total_revenue: 0,
+          completed_sales: 0,
+          completed_revenue: 0,
+          pending_sales: 0,
+          failed_sales: 0,
+          cancelled_sales: 0,
+          product_key: purchase.product_key,
+        };
+      }
+
+      storeSalesByCategory[category].total_sales += 1;
+      storeSalesByCategory[category].total_revenue += purchase.price_ton || 0;
+
+      if (purchase.status === 'completed') {
+        storeSalesByCategory[category].completed_sales += 1;
+        storeSalesByCategory[category].completed_revenue += purchase.price_ton || 0;
+      } else if (purchase.status === 'pending') {
+        storeSalesByCategory[category].pending_sales += 1;
+      } else if (purchase.status === 'failed') {
+        storeSalesByCategory[category].failed_sales += 1;
+      } else if (purchase.status === 'cancelled') {
+        storeSalesByCategory[category].cancelled_sales += 1;
+      }
+    });
+
+    // Save building sales
+    for (const [category, data] of Object.entries(buildingSalesByCategory)) {
+      const { error } = await supabase
+        .from("daily_sales")
+        .upsert({
+          date: yesterdayStr,
+          sale_type: 'building',
+          sale_category: category,
+          building_type: data.building_type,
+          building_level: data.building_level,
+          total_sales: data.total_sales,
+          total_revenue: data.total_revenue,
+          completed_sales: data.completed_sales,
+          completed_revenue: data.completed_revenue,
+          pending_sales: data.pending_sales,
+          failed_sales: data.failed_sales,
+          cancelled_sales: data.cancelled_sales,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'date,sale_type,sale_category',
+        });
+
+      if (error) {
+        console.error(`Error saving building sales for ${category}:`, error);
+      }
+    }
+
+    // Save store sales
+    for (const [category, data] of Object.entries(storeSalesByCategory)) {
+      const { error } = await supabase
+        .from("daily_sales")
+        .upsert({
+          date: yesterdayStr,
+          sale_type: 'store',
+          sale_category: category,
+          product_key: data.product_key,
+          total_sales: data.total_sales,
+          total_revenue: data.total_revenue,
+          completed_sales: data.completed_sales,
+          completed_revenue: data.completed_revenue,
+          pending_sales: data.pending_sales,
+          failed_sales: data.failed_sales,
+          cancelled_sales: data.cancelled_sales,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'date,sale_type,sale_category',
+        });
+
+      if (error) {
+        console.error(`Error saving store sales for ${category}:`, error);
+      }
+    }
+
+    console.log(`Successfully captured daily metrics and sales for ${todayStr}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         date: todayStr,
         metrics_captured: metrics.length + 1, // +1 for aggregate metrics
+        sales_captured: Object.keys(buildingSalesByCategory).length + Object.keys(storeSalesByCategory).length,
         metrics,
         aggregate_metrics: aggregateMetrics,
+        building_sales_categories: Object.keys(buildingSalesByCategory).length,
+        store_sales_categories: Object.keys(storeSalesByCategory).length,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
