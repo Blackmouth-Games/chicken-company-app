@@ -466,17 +466,21 @@ export const AdminDashboard = () => {
                     <span className="text-sm">Duración Promedio</span>
                     <span className="font-semibold">
                       {stats.avgSessionDuration > 0 
-                        ? `${Math.round(stats.avgSessionDuration / 60)} min ${Math.round(stats.avgSessionDuration % 60)} seg`
+                        ? `${Math.floor(stats.avgSessionDuration / 60)} min ${Math.floor(stats.avgSessionDuration % 60)} seg`
                         : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Tiempo Total en App</span>
                     <span className="font-semibold">
-                      {stats.avgSessionDuration > 0 
-                        ? `${Math.round((stats.avgSessionDuration * (stats.totalNewUsers || 1)) / 3600)} horas`
+                      {stats.totalSessionDuration > 0 
+                        ? `${Math.floor(stats.totalSessionDuration / 3600)} horas ${Math.floor((stats.totalSessionDuration % 3600) / 60)} min`
                         : 'N/A'}
                     </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Total Sesiones</span>
+                    <span className="font-semibold">{stats.totalSessions || 0}</span>
                   </div>
                 </div>
               </CardContent>

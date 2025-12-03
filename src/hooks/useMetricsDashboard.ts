@@ -50,14 +50,17 @@ export const useMetricsDashboard = (days: number = 30) => {
   });
 
   // Get session duration from user_sessions table directly
+  // Only get completed sessions (is_active = false) with valid duration
   const { data: userSessions } = useQuery({
     queryKey: ["user-sessions", days],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_sessions")
-        .select("duration_seconds, session_start")
+        .select("duration_seconds, session_start, is_active")
         .gte("session_start", subDays(new Date(), days).toISOString())
-        .not("duration_seconds", "is", null);
+        .eq("is_active", false) // Only completed sessions
+        .not("duration_seconds", "is", null)
+        .gt("duration_seconds", 0); // Only sessions with positive duration
 
       if (error) throw error;
       return data;
@@ -65,9 +68,9 @@ export const useMetricsDashboard = (days: number = 30) => {
   });
 
   // Calculate aggregated stats
-  const avgSessionDuration = userSessions && userSessions.length > 0
-    ? userSessions.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) / userSessions.length
-    : 0;
+  const totalSessions = userSessions?.length || 0;
+  const totalSessionDuration = userSessions?.reduce((sum, s) => sum + (s.duration_seconds || 0), 0) || 0;
+  const avgSessionDuration = totalSessions > 0 ? totalSessionDuration / totalSessions : 0;
 
   const stats = {
     totalNewGuests: dailyMetrics?.reduce((sum, m) => 
@@ -75,6 +78,8 @@ export const useMetricsDashboard = (days: number = 30) => {
     totalNewUsers: dailyMetrics?.reduce((sum, m) => 
       m.metric_type === "new_registered_users" ? sum + (m.metric_value || 0) : sum, 0) || 0,
     avgSessionDuration,
+    totalSessionDuration, // Total time in seconds
+    totalSessions, // Total number of completed sessions
     totalPageViews: dailyMetrics?.reduce((sum, m) => 
       m.metric_type === "page_view" ? sum + (m.metric_value || 0) : sum, 0) || 0,
     totalButtonClicks: dailyMetrics?.reduce((sum, m) => 
