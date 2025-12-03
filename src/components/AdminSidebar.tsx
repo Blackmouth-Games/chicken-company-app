@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
     icon: LayoutDashboard,
   },
   {
-    title: "Precios de Edificios",
+    title: "Edificios",
     href: "/admin/building-prices",
     icon: DollarSign,
   },

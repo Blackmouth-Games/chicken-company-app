@@ -22,8 +22,35 @@ interface BuildingPrice {
   updated_at: string;
 }
 
+// Helper function to get property label based on building type
+const getPropertyLabel = (buildingType: string): string => {
+  switch (buildingType) {
+    case 'coop':
+      return 'Capacidad de gallinas';
+    case 'warehouse':
+      return 'Capacidad';
+    case 'market':
+      return 'Velocidad in';
+    default:
+      return 'Capacidad';
+  }
+};
+
+// Helper function to get property placeholder
+const getPropertyPlaceholder = (buildingType: string): string => {
+  switch (buildingType) {
+    case 'coop':
+      return 'Ej: 50';
+    case 'warehouse':
+      return 'Ej: 100';
+    case 'market':
+      return 'Ej: 1.0';
+    default:
+      return '';
+  }
+};
+
 const BUILDING_TYPES = ['coop', 'warehouse', 'market'] as const;
-const MAX_LEVEL = 5;
 
 export const AdminBuildingPrices = () => {
   const { user, isAdmin, loading: authLoading, signOut } = useAdminAuth();
@@ -264,8 +291,8 @@ export const AdminBuildingPrices = () => {
     <AdminLayout>
       <div className="container mx-auto p-6 max-w-6xl">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold">Precios de Edificios</h1>
-          <p className="text-muted-foreground mt-1">Gestiona los precios y capacidades de los edificios</p>
+          <h1 className="text-3xl font-bold">Edificios</h1>
+          <p className="text-muted-foreground mt-1">Gestiona los precios y propiedades de los edificios</p>
         </div>
 
       {loading ? (
@@ -308,9 +335,9 @@ export const AdminBuildingPrices = () => {
                     <Input
                       type="number"
                       min="1"
-                      max={MAX_LEVEL}
                       value={newPrice.level}
                       onChange={(e) => setNewPrice({ ...newPrice, level: parseInt(e.target.value) || 1 })}
+                      placeholder="Ej: 1, 2, 3..."
                     />
                   </div>
                   <div className="space-y-2">
@@ -324,12 +351,19 @@ export const AdminBuildingPrices = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Capacidad</Label>
+                    <Label>{getPropertyLabel(newPrice.building_type)}</Label>
                     <Input
                       type="number"
+                      step={newPrice.building_type === 'market' ? '0.1' : '1'}
                       min="0"
                       value={newPrice.capacity}
-                      onChange={(e) => setNewPrice({ ...newPrice, capacity: parseInt(e.target.value) || 0 })}
+                      onChange={(e) => {
+                        const value = newPrice.building_type === 'market' 
+                          ? parseFloat(e.target.value) || 0
+                          : parseInt(e.target.value) || 0;
+                        setNewPrice({ ...newPrice, capacity: value });
+                      }}
+                      placeholder={getPropertyPlaceholder(newPrice.building_type)}
                     />
                   </div>
                 </div>
@@ -407,7 +441,7 @@ export const AdminBuildingPrices = () => {
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  Precio actual: {price.price_ton} TON | Capacidad: {price.capacity}
+                                  Precio actual: {price.price_ton} TON | {getPropertyLabel(price.building_type)}: {price.capacity}
                                 </div>
                               </div>
                               <div className="flex items-center gap-3">
@@ -426,16 +460,20 @@ export const AdminBuildingPrices = () => {
                                   />
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Label className="text-xs">Capacidad</Label>
+                                  <Label className="text-xs">{getPropertyLabel(price.building_type)}</Label>
                                   <Input
                                     type="number"
+                                    step={price.building_type === 'market' ? '0.1' : '1'}
                                     min="0"
                                     value={editingPrices[price.id]?.capacity ?? price.capacity}
                                     onChange={(e) => {
-                                      const newCapacity = parseInt(e.target.value) || 0;
-                                      handlePriceChange(price.id, 'capacity', newCapacity);
+                                      const value = price.building_type === 'market'
+                                        ? parseFloat(e.target.value) || 0
+                                        : parseInt(e.target.value) || 0;
+                                      handlePriceChange(price.id, 'capacity', value);
                                     }}
                                     className="w-32"
+                                    placeholder={getPropertyPlaceholder(price.building_type)}
                                   />
                                 </div>
                                 <Button
