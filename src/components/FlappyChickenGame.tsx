@@ -579,6 +579,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
+    // Fallback to L0 if image not loaded yet
+    const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
+    const actualImageIndex = currentChickenImg ? currentLevel : 0;
+    
     // Track level changes and log for debugging
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
       console.log(`[FlappyChicken] Level changed in draw: ${lastChickenLevelRef.current} → ${currentLevel} (Score: ${scoreRef.current}, ScoreForLevel: ${scoreForLevel})`);
@@ -588,15 +592,6 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         totalImages: CHICKEN_LEVEL_IMAGES.length,
         allImagesLoaded: chickenImgRefs.current.every(img => !!img)
       });
-      lastChickenLevelRef.current = currentLevel;
-    }
-    
-    // Fallback to L0 if image not loaded yet
-    const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
-    const actualImageIndex = currentChickenImg ? currentLevel : 0;
-    
-    // Debug: Log what image is being drawn when level changes
-    if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
       console.log(`[FlappyChicken] Drawing image: Level ${currentLevel}, Using index ${actualImageIndex}`);
       console.log(`[FlappyChicken] Image refs array:`, chickenImgRefs.current.map((img, idx) => ({ 
         index: idx, 
@@ -610,6 +605,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         imgSrc: imgToDraw?.src?.substring(imgToDraw.src.lastIndexOf('/') + 1) || 'none',
         isFallback: !currentChickenImg && currentLevel > 0
       });
+      lastChickenLevelRef.current = currentLevel;
     }
     
     // Debug: Log every frame when level is 1 to see what's being drawn
