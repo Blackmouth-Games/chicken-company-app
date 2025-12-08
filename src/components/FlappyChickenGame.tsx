@@ -73,6 +73,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const [scale, setScale] = useState(1);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Game metrics
   interface GameMetrics {
@@ -144,6 +145,38 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     localStorage.setItem("flappy_chicken_metrics", JSON.stringify(newMetrics));
     setMetrics(newMetrics);
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (!userId) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking admin role:", error);
+          setIsAdmin(false);
+          return;
+        }
+
+        setIsAdmin(!!data);
+      } catch (error) {
+        console.error("Error checking admin role:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdminRole();
+  }, [userId]);
 
   // Load high score, metrics and images
   useEffect(() => {
@@ -750,16 +783,18 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
                   </p>
                 )}
                 
-                <div className="flex gap-2 mb-2">
-                  <Button
-                    onClick={(e) => { e.stopPropagation(); setShowStats(true); }}
-                    variant="outline"
-                    className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-700"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    Estadísticas
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2 mb-2">
+                    <Button
+                      onClick={(e) => { e.stopPropagation(); setShowStats(true); }}
+                      variant="outline"
+                      className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-700"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      Estadísticas
+                    </Button>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button
                     onClick={(e) => { e.stopPropagation(); goToReady(); }}
@@ -778,6 +813,74 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Stats Dialog - Only for admins */}
+          {isAdmin && (
+            <Dialog open={showStats} onOpenChange={setShowStats}>
+              <DialogContent className="max-w-md">
+                <h2 className="text-2xl font-bold text-amber-900 mb-4">
+                  Estadísticas del Juego
+                </h2>
+                
+                <div className="space-y-3">
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Intentos totales:</span>
+                      <span className="text-amber-900 font-bold text-lg">{metrics.totalAttempts}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Muertes totales:</span>
+                      <span className="text-amber-900 font-bold text-lg">{metrics.totalDeaths}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Tiempo total jugado:</span>
+                      <span className="text-amber-900 font-bold text-lg">
+                        {Math.floor(metrics.totalPlayTime / 60)}m {metrics.totalPlayTime % 60}s
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Puntuación máxima:</span>
+                      <span className="text-amber-900 font-bold text-lg">{highScore}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Puntuación promedio:</span>
+                      <span className="text-amber-900 font-bold text-lg">{metrics.averageScore}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-800 font-medium">Nivel máximo alcanzado:</span>
+                      <span className="text-amber-900 font-bold text-lg">
+                        L{metrics.maxLevelReached}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    onClick={() => setShowStats(false)}
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    Cerrar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </DialogContent>
