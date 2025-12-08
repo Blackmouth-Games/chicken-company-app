@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trophy, Target, Clock, TrendingUp, BarChart3, Search } from "lucide-react";
+import { Loader2, Trophy, Target, Clock, TrendingUp, BarChart3, Search, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -136,11 +137,22 @@ export const AdminFlappyChickenMetrics = () => {
   return (
     <AdminLayout signOut={signOut}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Métricas Flappy Chicken</h1>
-          <p className="text-muted-foreground">
-            Estadísticas del minijuego Flappy Chicken de todos los usuarios
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Métricas Flappy Chicken</h1>
+            <p className="text-muted-foreground">
+              Estadísticas del minijuego Flappy Chicken de todos los usuarios
+            </p>
+          </div>
+          <Button
+            onClick={loadMetrics}
+            disabled={loading}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
         </div>
 
         {/* Summary Cards */}

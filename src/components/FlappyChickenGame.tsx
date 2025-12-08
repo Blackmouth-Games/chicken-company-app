@@ -162,10 +162,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     playTimeSeconds: number,
     levelReached: number
   ) => {
-    if (!userId) return;
+    if (!userId) return Promise.resolve();
     
     try {
-      const { error } = await supabase.rpc("upsert_flappy_chicken_metrics" as any, {
+      const { data, error } = await supabase.rpc("upsert_flappy_chicken_metrics" as any, {
         p_user_id: userId,
         p_score: score,
         p_play_time_seconds: playTimeSeconds,
@@ -173,10 +173,14 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       });
       
       if (error) {
-        console.error("Error saving metrics to database:", error);
+        console.error("[FlappyChicken] Error saving metrics to database:", error);
+        throw error;
       }
+      
+      return Promise.resolve();
     } catch (e) {
-      console.error("Error saving metrics:", e);
+      console.error("[FlappyChicken] Error saving metrics:", e);
+      return Promise.reject(e);
     }
   }, [userId]);
 
@@ -284,16 +288,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       img.onload = () => {
         chickenImgRefs.current[index] = img;
         loadedCount++;
-        console.log(`[FlappyChicken] Loaded image L${index} (${loadedCount}/${totalImages})`);
         
         // Set imageLoaded when first image loads (for initial display)
         if (loadedCount === 1) {
           setImageLoaded(true);
-        }
-        
-        // Log when all images are loaded
-        if (loadedCount === totalImages) {
-          console.log(`[FlappyChicken] All ${totalImages} chicken level images loaded successfully`);
         }
       };
       img.onerror = () => {
@@ -389,24 +387,13 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       const levelReached = getChickenLevel(finalScore);
       
       // Save to database using upsert function (this will also update high_score if it's higher)
-      saveMetricsToDB(finalScore, playTime, levelReached);
-      
-      // Update high score if it's a new record
-      if (newHighScore) {
-        setHighScore(finalScore);
-        localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
-        
-        // Also update high score directly in database
-        supabase
-          .from("flappy_chicken_metrics" as any)
-          .update({ high_score: finalScore })
-          .eq("user_id", userId)
-          .then(({ error }) => {
-            if (error) {
-              console.error("Error updating high score:", error);
-            }
-          });
-      }
+      saveMetricsToDB(finalScore, playTime, levelReached).then(() => {
+        // Update local high score if it's a new record
+        if (newHighScore) {
+          setHighScore(finalScore);
+          localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
+        }
+      });
       
       // If admin, also update local state for display
       if (isAdmin) {
@@ -539,18 +526,13 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
-    // Log level changes for debugging
+    // Track level changes (only log once per level change)
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
-      console.log(`[FlappyChicken] Level changed: ${lastChickenLevelRef.current} → ${currentLevel} (Score: ${scoreRef.current})`);
       lastChickenLevelRef.current = currentLevel;
     }
     
     // Fallback to L0 if image not loaded yet
     const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
-    
-    if (!currentChickenImg && currentLevel > 0) {
-      console.warn(`[FlappyChicken] Image for level ${currentLevel} (L${currentLevel}) not loaded yet, using L0 as fallback`);
-    }
     
     if (imgToDraw) {
       ctx.save();
