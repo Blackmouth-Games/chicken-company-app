@@ -281,7 +281,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       rotation = Math.max(-30, Math.min(90, rotation));
       ctx.rotate((rotation * Math.PI) / 180);
       
-      ctx.scale(-1, 1);
+      ctx.scale(1, -1); // Flip vertical
       ctx.drawImage(
         chickenImgRef.current,
         -CHICKEN_SIZE / 2,
