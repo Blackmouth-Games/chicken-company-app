@@ -539,6 +539,17 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     // Fallback to L0 if image not loaded yet
     const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
+    const actualImageIndex = currentChickenImg ? currentLevel : 0;
+    
+    // Debug: Log what image is being drawn (only when level changes)
+    if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
+      console.log(`[FlappyChicken] Drawing image: Level ${currentLevel}, Using index ${actualImageIndex}, Image object:`, imgToDraw);
+      console.log(`[FlappyChicken] Image refs array:`, chickenImgRefs.current.map((img, idx) => ({ 
+        index: idx, 
+        loaded: !!img, 
+        src: img?.src?.substring(img.src.lastIndexOf('/') + 1) || 'none' 
+      })));
+    }
     
     if (!currentChickenImg && currentLevel > 0 && isPlayingRef.current) {
       console.warn(`[FlappyChicken] Draw: Image for level ${currentLevel} not available, using L0 fallback`);
