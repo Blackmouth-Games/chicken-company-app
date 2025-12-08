@@ -574,8 +574,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     // Draw chicken with level-based image
     const chickenY = chickenYRef.current;
-    // Reset level to 0 when in ready state (after death or restart)
-    const scoreForLevel = displayState === "ready" ? 0 : scoreRef.current;
+    // Reset level to 0 when not playing (use isPlayingRef for accurate state)
+    const scoreForLevel = isPlayingRef.current ? scoreRef.current : 0;
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
