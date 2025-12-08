@@ -20,7 +20,7 @@ interface Pipe {
 // Game constants
 const GAME_WIDTH = 288;
 const GAME_HEIGHT = 512;
-const CHICKEN_SIZE = 24; // Reduced from 38 to make it more challenging like original
+const CHICKEN_SIZE = 72; // Made 3x bigger as requested
 const CHICKEN_X = 60;
 
 // Physics - more like original Flappy Bird curve
