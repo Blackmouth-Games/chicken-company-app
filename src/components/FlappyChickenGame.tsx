@@ -296,7 +296,6 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       };
       img.onerror = () => {
         errorCount++;
-        console.error(`[FlappyChicken] Failed to load chicken level ${index} image (L${index})`);
         // Use L0 as fallback for failed images
         if (index > 0 && chickenImgRefs.current[0]) {
           chickenImgRefs.current[index] = chickenImgRefs.current[0];

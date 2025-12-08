@@ -107,7 +107,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
         // Don't steal the belt - each coop needs its own
       } else {
         coopBeltMappingRef.current.set(coopId, exactMatch.id);
-        console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) matched exact belt ${exactMatch.id}`);
         return exactMatch;
       }
     }
@@ -120,7 +119,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
         // Verify this belt is not assigned to another coop
         const otherOwner = Array.from(coopBeltMappingRef.current.entries()).find(([id, beltId]) => beltId === assignedBeltId && id !== coopId)?.[0];
         if (!otherOwner) {
-          console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) using previously assigned dedicated belt ${assignedBelt.id}`);
           return assignedBelt;
         } else {
           // Belt was reassigned to another coop, clear our mapping
@@ -157,7 +155,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
     
     if (unassignedBelt) {
       coopBeltMappingRef.current.set(coopId, unassignedBelt.id);
-      console.log(`[useEggSystem] ✅ Coop ${coopId} (position ${slotPosition}) assigned to dedicated belt ${unassignedBelt.id} (slotPosition: ${unassignedBelt.slotPosition ?? 'none'})`);
       return unassignedBelt;
     }
     
@@ -383,7 +380,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
 
   // Spawn egg from a coop
   const spawnEgg = useCallback((coopId: string, slotPosition: number) => {
-    console.log(`[useEggSystem] spawnEgg called for coop ${coopId} at position ${slotPosition}`);
     const outputBelt = findOutputBelt(slotPosition, coopId);
     if (!outputBelt) {
       console.warn(`[useEggSystem] No output belt found for coop ${coopId} at position ${slotPosition}. Cannot spawn egg.`);
@@ -635,9 +631,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
             }
             
             const matches = nextEntryDirection === expectedEntry;
-            console.log(`[useEggSystem] Egg ${egg.id} entering curve belt ${nextBelt.id} (${nextBelt.type})`);
-            console.log(`  - Entry direction: ${nextEntryDirection}, Expected: ${expectedEntry}, Matches: ${matches}`);
-            console.log(`  - Belt exit direction: ${nextBelt.direction}`);
             
             if (!matches) {
               console.warn(`[useEggSystem] WARNING: Entry direction mismatch! Egg will enter from ${nextEntryDirection} but belt expects ${expectedEntry}`);
@@ -814,8 +807,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
         const randomDelay = Math.random() * 500;
         const totalDelay = delay + randomDelay;
         
-        console.log(`[useEggSystem] Scheduling spawn for coop ${coop.id} (position ${slotPosition}) in ${totalDelay.toFixed(0)}ms`);
-        
         const timer = setTimeout(() => {
           // Don't spawn if page is not visible
           if (!isPageVisibleRef.current) {
@@ -825,7 +816,6 @@ export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | 
           
           // Use ref to get latest spawnEgg function
           if (spawnEggRef.current) {
-            console.log(`[useEggSystem] Executing spawn for coop ${coop.id} at position ${slotPosition}`);
             spawnEggRef.current(coop.id, slotPosition);
             lastSpawnTimeRef.current.set(coop.id, Date.now());
           }
