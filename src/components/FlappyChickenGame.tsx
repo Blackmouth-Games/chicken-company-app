@@ -21,6 +21,7 @@ import barBottomImg from "@/assets/game/bar_bottom.png";
 import { supabase } from "@/integrations/supabase/client";
 
 // Array de imágenes de niveles de la gallina (L0 es el nivel inicial)
+// Nota: L6 no existe, se salta de L5 a L7
 const CHICKEN_LEVEL_IMAGES = [
   chickenL0, chickenL1, chickenL2, chickenL3, chickenL4, chickenL5,
   chickenL7, chickenL8, chickenL9, chickenL10, chickenL11, chickenL12,
@@ -112,6 +113,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const chickenImgRefs = useRef<(HTMLImageElement | null)[]>([]);
   const barTopImgRef = useRef<HTMLImageElement | null>(null);
   const barBottomImgRef = useRef<HTMLImageElement | null>(null);
+  const lastChickenLevelRef = useRef<number>(-1);
 
   // Calculate chicken level based on score (every 10 points = +1 level, cycles)
   const getChickenLevel = useCallback((currentScore: number): number => {
@@ -270,9 +272,11 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     // Detect touch device
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-    // Preload all chicken level images
+    // Preload all chicken level images - ensure all are loaded before allowing level changes
     let loadedCount = 0;
-    chickenImgRefs.current = new Array(CHICKEN_LEVEL_IMAGES.length).fill(null);
+    let errorCount = 0;
+    const totalImages = CHICKEN_LEVEL_IMAGES.length;
+    chickenImgRefs.current = new Array(totalImages).fill(null);
     
     CHICKEN_LEVEL_IMAGES.forEach((imgSrc, index) => {
       const img = new Image();
@@ -280,13 +284,26 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       img.onload = () => {
         chickenImgRefs.current[index] = img;
         loadedCount++;
-        // Set imageLoaded when first image loads
+        console.log(`[FlappyChicken] Loaded image L${index} (${loadedCount}/${totalImages})`);
+        
+        // Set imageLoaded when first image loads (for initial display)
         if (loadedCount === 1) {
           setImageLoaded(true);
         }
+        
+        // Log when all images are loaded
+        if (loadedCount === totalImages) {
+          console.log(`[FlappyChicken] All ${totalImages} chicken level images loaded successfully`);
+        }
       };
       img.onerror = () => {
-        console.error(`Failed to load chicken level ${index + 1} image`);
+        errorCount++;
+        console.error(`[FlappyChicken] Failed to load chicken level ${index} image (L${index})`);
+        // Use L0 as fallback for failed images
+        if (index > 0 && chickenImgRefs.current[0]) {
+          chickenImgRefs.current[index] = chickenImgRefs.current[0];
+          loadedCount++;
+        }
       };
     });
 
@@ -522,7 +539,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
-    if (currentChickenImg) {
+    // Log level changes for debugging
+    if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
+      console.log(`[FlappyChicken] Level changed: ${lastChickenLevelRef.current} → ${currentLevel} (Score: ${scoreRef.current})`);
+      lastChickenLevelRef.current = currentLevel;
+    }
+    
+    // Fallback to L0 if image not loaded yet
+    const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
+    
+    if (!currentChickenImg && currentLevel > 0) {
+      console.warn(`[FlappyChicken] Image for level ${currentLevel} (L${currentLevel}) not loaded yet, using L0 as fallback`);
+    }
+    
+    if (imgToDraw) {
       ctx.save();
       ctx.translate(CHICKEN_X + CHICKEN_SIZE / 2, chickenY + CHICKEN_SIZE / 2);
       
@@ -532,7 +562,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.rotate((rotation * Math.PI) / 180);
       
       ctx.drawImage(
-        currentChickenImg,
+        imgToDraw,
         -CHICKEN_SIZE / 2,
         -CHICKEN_SIZE / 2,
         CHICKEN_SIZE,
@@ -649,6 +679,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     lastInteractionTimeRef.current = 0;
     pipeSpeedRef.current = INITIAL_PIPE_SPEED;
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
+    lastChickenLevelRef.current = -1; // Reset level tracking
 
     setScore(0);
     setBoostEarned(null);
@@ -668,6 +699,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     pipeSpeedRef.current = INITIAL_PIPE_SPEED;
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
     gameStartTimeRef.current = Date.now(); // Track game start time
+    lastChickenLevelRef.current = -1; // Reset level tracking
 
     setScore(0);
     setBoostEarned(null);
