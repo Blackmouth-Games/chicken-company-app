@@ -1047,7 +1047,7 @@ const Home = () => {
   const allRoads = layoutConfig.roads || [];
 
   // Egg system - must be after allBelts is defined
-  const { eggs, getDebugInfo: getEggDebugInfo, verifySystem: verifyEggSystem } = useEggSystem(allBelts, buildings);
+  const { eggs, getDebugInfo: getEggDebugInfo, verifySystem: verifyEggSystem } = useEggSystem(allBelts, buildings, userId);
   
   // Vehicle system - must be after roads are defined
   const { vehicles, getDebugInfo: getVehicleDebugInfo } = useVehicleSystem(allRoads, marketLevel);

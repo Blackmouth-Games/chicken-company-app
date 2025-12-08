@@ -216,7 +216,7 @@ export const BuildingSlot = ({ position, building, onBuyClick, onBuildingClick, 
                   <span className="text-slate-200 flex items-center gap-1">
                     ⏱ {effectiveCountdownSeconds != null ? `${effectiveCountdownSeconds.toFixed(1)}s` : '—'}
                   </span>
-                </div>
+              </div>
                 {eggDebugDetails?.beltId && (
                   <div className="text-[10px] text-slate-400 font-mono truncate">
                     {eggDebugDetails.beltId}

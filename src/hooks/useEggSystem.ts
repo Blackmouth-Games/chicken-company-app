@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { parseGridNotation } from "@/lib/layoutCollisions";
+import { supabase } from "@/integrations/supabase/client";
 
 type Direction = 'north' | 'south' | 'east' | 'west';
 
@@ -70,7 +71,11 @@ const getCurveExitDirection = (type?: Belt['type'], entryDir?: Direction): Direc
   }
 };
 
-export const useEggSystem = (belts: Belt[], buildings: any[]) => {
+// Batch tracking for egg events
+const BATCH_INTERVAL_MS = 10000; // Send batch every 10 seconds
+const MIN_BATCH_SIZE = 1; // Minimum events before sending batch
+
+export const useEggSystem = (belts: Belt[], buildings: any[], userId?: string | null) => {
   const [eggs, setEggs] = useState<Egg[]>([]);
   const animationFrameRef = useRef<number>();
   const lastSpawnTimeRef = useRef<Map<string, number>>(new Map());
@@ -79,6 +84,12 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
   const coopBeltMappingRef = useRef<Map<string, string>>(new Map()); // Maps coopId to beltId
   const spawnTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map()); // Store timers in ref to persist across renders
   const spawnEggRef = useRef<(coopId: string, slotPosition: number) => void>();
+  
+  // Batch tracking for egg events
+  const eggsProducedBatchRef = useRef<number>(0);
+  const eggsMarketBatchRef = useRef<number>(0);
+  const lastBatchFlushRef = useRef<number>(Date.now());
+  const batchFlushTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get coops from buildings - handle undefined/null
   const coops = (buildings || []).filter(b => b && b.building_type === 'coop');
@@ -410,9 +421,14 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       // Track creation time for age-based removal
       eggCreationTimeRef.current.set(newEgg.id, Date.now());
       
+      // Track egg production for metrics (batch)
+      if (userId) {
+        eggsProducedBatchRef.current += 1;
+      }
+      
       return [...prev, newEgg];
     });
-  }, [belts, findOutputBelt, calculatePath]);
+  }, [belts, findOutputBelt, calculatePath, userId]);
 
   // Keep spawnEgg ref updated
   useEffect(() => {
@@ -428,6 +444,8 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         const creationTime = eggCreationTimeRef.current.get(egg.id);
         if (creationTime && (now - creationTime) > EGG_MAX_AGE) {
           eggCreationTimeRef.current.delete(egg.id);
+          // Note: Expired eggs are tracked implicitly as (eggs_produced - eggs_market)
+          // No need to track expiration separately
           return null; // Remove old eggs
         }
         
@@ -642,6 +660,12 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
         if (currentBelt.isDestiny && newProgress >= 0.99) {
           // Remove egg when it reaches the end of destiny belt
           eggCreationTimeRef.current.delete(egg.id);
+          
+          // Track egg reaching market (batch)
+          if (userId) {
+            eggsMarketBatchRef.current += 1;
+          }
+          
           return null;
         }
         
@@ -1167,6 +1191,81 @@ export const useEggSystem = (belts: Belt[], buildings: any[]) => {
       }
     };
   }, [coops, belts, eggs, findOutputBelt, calculatePath, isPageVisibleRef]);
+
+  // Function to flush batched egg events to database
+  const flushEggEventsBatch = useCallback(async () => {
+    if (!userId) return;
+    
+    const produced = eggsProducedBatchRef.current;
+    const market = eggsMarketBatchRef.current;
+    
+    // Only send if there are events to send
+    if (produced === 0 && market === 0) return;
+    
+    try {
+      // Send eggs_produced_batch event
+      if (produced > 0) {
+        await supabase.rpc("record_metric_event", {
+          p_user_id: userId,
+          p_event_type: "eggs_produced_batch",
+          p_event_value: produced,
+          p_metadata: {
+            batch_timestamp: new Date().toISOString(),
+            source: "egg_system",
+          },
+          p_session_id: null,
+        });
+      }
+      
+      // Send eggs_market_batch event
+      if (market > 0) {
+        await supabase.rpc("record_metric_event", {
+          p_user_id: userId,
+          p_event_type: "eggs_market_batch",
+          p_event_value: market,
+          p_metadata: {
+            batch_timestamp: new Date().toISOString(),
+            source: "egg_system",
+          },
+          p_session_id: null,
+        });
+      }
+      
+      // Reset batch counters
+      eggsProducedBatchRef.current = 0;
+      eggsMarketBatchRef.current = 0;
+      lastBatchFlushRef.current = Date.now();
+      
+      console.log(`[useEggSystem] Flushed egg events batch: ${produced} produced, ${market} market`);
+    } catch (error) {
+      console.error("[useEggSystem] Error flushing egg events batch:", error);
+      // Don't reset counters on error - will retry on next flush
+    }
+  }, [userId]);
+
+  // Set up periodic batch flushing
+  useEffect(() => {
+    if (!userId) return;
+    
+    // Clear existing timer
+    if (batchFlushTimerRef.current) {
+      clearInterval(batchFlushTimerRef.current);
+    }
+    
+    // Set up periodic flush
+    batchFlushTimerRef.current = setInterval(() => {
+      flushEggEventsBatch();
+    }, BATCH_INTERVAL_MS);
+    
+    // Flush on unmount
+    return () => {
+      if (batchFlushTimerRef.current) {
+        clearInterval(batchFlushTimerRef.current);
+      }
+      // Final flush on unmount
+      flushEggEventsBatch();
+    };
+  }, [userId, flushEggEventsBatch]);
 
   return { eggs, getDebugInfo, verifySystem };
 };
