@@ -2,14 +2,30 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X, Play, RotateCcw, Trophy, Zap, Medal } from "lucide-react";
-import chickenLevel1 from "@/assets/game/chicken/Level_1.png";
-import chickenLevel2 from "@/assets/game/chicken/Level_2.png";
+import chickenL0 from "@/assets/game/chicken/L0.png";
+import chickenL1 from "@/assets/game/chicken/L1.png";
+import chickenL2 from "@/assets/game/chicken/L2.png";
+import chickenL3 from "@/assets/game/chicken/L3.png";
+import chickenL4 from "@/assets/game/chicken/L4.png";
+import chickenL5 from "@/assets/game/chicken/L5.png";
+import chickenL7 from "@/assets/game/chicken/L7.png";
+import chickenL8 from "@/assets/game/chicken/L8.png";
+import chickenL9 from "@/assets/game/chicken/L9.png";
+import chickenL10 from "@/assets/game/chicken/L10.png";
+import chickenL11 from "@/assets/game/chicken/L11.png";
+import chickenL12 from "@/assets/game/chicken/L12.png";
+import chickenL13 from "@/assets/game/chicken/L13.png";
+import chickenL14 from "@/assets/game/chicken/L14.png";
 import barTopImg from "@/assets/game/bar_top.png";
 import barBottomImg from "@/assets/game/bar_bottom.png";
 import { supabase } from "@/integrations/supabase/client";
 
-// Array de imágenes de niveles de la gallina
-const CHICKEN_LEVEL_IMAGES = [chickenLevel1, chickenLevel2];
+// Array de imágenes de niveles de la gallina (L0 es el nivel inicial)
+const CHICKEN_LEVEL_IMAGES = [
+  chickenL0, chickenL1, chickenL2, chickenL3, chickenL4, chickenL5,
+  chickenL7, chickenL8, chickenL9, chickenL10, chickenL11, chickenL12,
+  chickenL13, chickenL14
+];
 const LEVELS_PER_SCORE = 10; // Cada 10 puntos sube un nivel
 
 interface FlappyChickenGameProps {
