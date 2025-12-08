@@ -526,13 +526,24 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
-    // Track level changes (only log once per level change)
+    // Track level changes and log for debugging
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
+      console.log(`[FlappyChicken] Level changed in draw: ${lastChickenLevelRef.current} → ${currentLevel} (Score: ${scoreRef.current}, ScoreForLevel: ${scoreForLevel})`);
+      console.log(`[FlappyChicken] Image for level ${currentLevel}:`, {
+        exists: !!currentChickenImg,
+        imageIndex: currentLevel,
+        totalImages: CHICKEN_LEVEL_IMAGES.length,
+        allImagesLoaded: chickenImgRefs.current.every(img => !!img)
+      });
       lastChickenLevelRef.current = currentLevel;
     }
     
     // Fallback to L0 if image not loaded yet
     const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
+    
+    if (!currentChickenImg && currentLevel > 0 && isPlayingRef.current) {
+      console.warn(`[FlappyChicken] Draw: Image for level ${currentLevel} not available, using L0 fallback`);
+    }
     
     if (imgToDraw) {
       ctx.save();
@@ -637,6 +648,17 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         pipe.passed = true;
         scoreRef.current++;
         setScore(scoreRef.current);
+
+        // Debug: Log when reaching level milestones (every 10 points)
+        if (scoreRef.current % LEVELS_PER_SCORE === 0) {
+          const newLevel = getChickenLevel(scoreRef.current);
+          const levelImage = chickenImgRefs.current[newLevel];
+          console.log(`[FlappyChicken] Score reached ${scoreRef.current} - Level: ${newLevel}, Image loaded: ${!!levelImage}, Total images: ${CHICKEN_LEVEL_IMAGES.length}`);
+          if (!levelImage) {
+            console.warn(`[FlappyChicken] WARNING: Image for level ${newLevel} (L${newLevel}) is not loaded!`);
+            console.log(`[FlappyChicken] Available images:`, chickenImgRefs.current.map((img, idx) => ({ index: idx, loaded: !!img })));
+          }
+        }
 
         // Increase speed every SPEED_INCREASE_INTERVAL points
         if (scoreRef.current % SPEED_INCREASE_INTERVAL === 0) {
