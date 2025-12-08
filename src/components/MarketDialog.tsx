@@ -39,22 +39,6 @@ export const MarketDialog = ({ open, onOpenChange, userId }: MarketDialogProps) 
     selected_skin: null,
   };
 
-  // Debug: Log market status
-  useEffect(() => {
-    if (open) {
-      console.log("[MarketDialog] Market status:", {
-        market,
-        marketId: market?.id,
-        currentLevel,
-        nextLevelPrice,
-        canUpgrade,
-        userId,
-        buildingsCount: buildings.length,
-        allBuildings: buildings.map(b => ({ type: b.building_type, id: b.id, level: b.level }))
-      });
-    }
-  }, [open, market, currentLevel, nextLevelPrice, canUpgrade, userId, buildings]);
-
   // Refetch market data when modal opens to ensure we have the latest selected_skin
   useEffect(() => {
     if (open) {
