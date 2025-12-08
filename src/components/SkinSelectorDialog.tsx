@@ -424,27 +424,9 @@ export const SkinSelectorDialog = ({
       return a.variant.localeCompare(b.variant);
     });
 
-    // Debug: Log slots for default skins
+    // Debug: Check for missing default skins (only log errors)
     const defaultSlots = slots.filter(s => s.skin?.is_default === true);
     const allDefaultSkinsInDB = skins.filter(s => s.is_default === true);
-    console.log("🔍 [SkinSelector] Slot generation complete", {
-      totalSlots: slots.length,
-      defaultSlotsInSlots: defaultSlots.length,
-      defaultSkinsInDBCount: allDefaultSkinsInDB.length,
-      defaultSkinsInDBList: allDefaultSkinsInDB.map(s => ({
-        skin_key: s.skin_key,
-        building_type: s.building_type,
-        is_default: s.is_default
-      })),
-      defaultSlots: defaultSlots.map(s => ({
-        level: s.level,
-        variant: s.variant,
-        skinKey: s.skin?.skin_key,
-        isDefault: s.skin?.is_default
-      })),
-      buildingType,
-      buildingLevel
-    });
     
     if (defaultSlots.length === 0 && allDefaultSkinsInDB.length > 0) {
       console.error("❌ [SkinSelector] Default skins exist in DB but not in slots!", {

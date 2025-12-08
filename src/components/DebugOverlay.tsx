@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { isTelegramWebApp, getTelegramUser } from "@/lib/telegram";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { X, Bug, ChevronUp, ChevronDown } from "lucide-react";
 
 // Simple in-memory log store attached to window for persistence across re-renders
 declare global {
@@ -15,6 +16,8 @@ interface DebugOverlayProps {
 export const DebugOverlay = ({ manifestUrl }: DebugOverlayProps) => {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const enabled = params.get("debug") === "1";
+  const [isVisible, setIsVisible] = useState(false); // Start hidden
+  const [isMinimized, setIsMinimized] = useState(false);
   const [logs, setLogs] = useState<Array<{ level: string; args: any[]; ts: number }>>(window.__APP_LOGS || []);
   const [errors, setErrors] = useState<string[]>([]);
   const [txErrors, setTxErrors] = useState<Array<{ ts: number; msg: string }>>([]);
@@ -137,89 +140,127 @@ export const DebugOverlay = ({ manifestUrl }: DebugOverlayProps) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-black/90 text-white overflow-auto p-4">
-      <div className="max-w-4xl mx-auto space-y-4">
-        <h2 className="text-xl font-bold">Debug Overlay</h2>
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">General</TabsTrigger>
-            <TabsTrigger value="layout">Layout</TabsTrigger>
-          </TabsList>
+    <>
+      {/* Floating toggle button - always visible in debug mode */}
+      <button
+        onClick={() => setIsVisible(!isVisible)}
+        className="fixed bottom-20 right-4 z-[10001] p-3 bg-purple-600 hover:bg-purple-500 rounded-full text-white shadow-lg transition-all"
+        title={isVisible ? "Cerrar Debug" : "Abrir Debug"}
+      >
+        {isVisible ? <X className="w-5 h-5" /> : <Bug className="w-5 h-5" />}
+      </button>
 
-          <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="bg-white/10 p-3 rounded">
-                <div className="font-semibold mb-1">Environment</div>
-                <div>Path: {window.location.pathname}{window.location.search}</div>
-                <div>Manifest URL: {manifestUrl}</div>
-                <div>UA: {navigator.userAgent}</div>
-              </div>
-              <div className="bg-white/10 p-3 rounded">
-                <div className="font-semibold mb-1">Telegram</div>
-                <div>isTelegramWebApp: {String(tg)}</div>
-                <div>User ID: {tgUser?.id ?? "-"}</div>
-                <div>Username: {tgUser?.username ?? "-"}</div>
-              </div>
-              <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
-                <div className="font-semibold mb-1">TON Transaction Errors</div>
-                {txErrors.length === 0 ? <div className="opacity-70">No TX errors</div> : (
-                  <ul className="space-y-1 list-disc list-inside text-xs">
-                    {txErrors.map((e, i) => (<li key={i}>[{new Date(e.ts).toLocaleTimeString()}] {e.msg}</li>))}
-                  </ul>
-                )}
-              </div>
-              <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
-                <div className="font-semibold mb-1">Errors</div>
-                {errors.length === 0 ? <div className="opacity-70">No captured errors</div> : (
-                  <ul className="space-y-1 list-disc list-inside">
-                    {errors.map((e, i) => (<li key={i}>{e}</li>))}
-                  </ul>
-                )}
-              </div>
-              <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
-                <div className="font-semibold mb-1">Logs</div>
-                {logs.length === 0 ? <div className="opacity-70">No logs</div> : (
-                  <ul className="space-y-1 text-xs font-mono">
-                    {logs.slice(-200).map((l, i) => (
-                      <li key={i}>
-                        <span className="opacity-70">[{new Date(l.ts).toLocaleTimeString()}] {l.level.toUpperCase()}:</span> {l.args.map(String).join(" ")}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+      {/* Debug panel - only visible when toggled */}
+      {isVisible && (
+        <div className={`fixed z-[10000] bg-black/95 text-white overflow-auto transition-all ${isMinimized ? 'bottom-20 right-16 w-80 h-12 rounded-lg' : 'inset-0 p-4'}`}>
+          {isMinimized ? (
+            <div className="flex items-center justify-between h-full px-3">
+              <span className="text-sm font-bold">Debug Panel</span>
+              <div className="flex gap-2">
+                <button onClick={() => setIsMinimized(false)} className="p-1 hover:bg-white/20 rounded">
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button onClick={() => setIsVisible(false)} className="p-1 hover:bg-white/20 rounded">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
-            <Button className="mt-2" variant="secondary" onClick={() => navigator.clipboard.writeText(JSON.stringify({ errors, logs }, null, 2))}>Copiar</Button>
-          </TabsContent>
-
-          <TabsContent value="layout">
-            <div className="space-y-3 text-sm">
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" onClick={toggleEdit}>{isEditMode ? 'Desactivar edición' : 'Activar edición'}</Button>
-                <Button size="sm" variant="outline" onClick={addBelt}>Añadir cinta</Button>
-                <Button size="sm" variant="outline" onClick={resetLayout}>Restablecer layout</Button>
-                <Button size="sm" variant="outline" onClick={copyLayout}>Copiar layout</Button>
+          ) : (
+            <div className="max-w-4xl mx-auto space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold">Debug Overlay</h2>
+                <div className="flex gap-2">
+                  <button onClick={() => setIsMinimized(true)} className="p-2 hover:bg-white/20 rounded" title="Minimizar">
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => setIsVisible(false)} className="p-2 hover:bg-white/20 rounded" title="Cerrar">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white/10 p-3 rounded">
-                  <div className="font-semibold mb-1">Estado</div>
-                  <div>Edición: {isEditMode ? 'ON' : 'OFF'}</div>
-                  <div>Belts manuales: {beltCount}</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <label className="opacity-80">Gap:</label>
-                    <input className="text-black px-2 py-1 rounded" value={gap} onChange={(e) => onGapChange(e.target.value)} placeholder="20px" />
+              <Tabs defaultValue="overview" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="overview">General</TabsTrigger>
+                  <TabsTrigger value="layout">Layout</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="overview">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-white/10 p-3 rounded">
+                      <div className="font-semibold mb-1">Environment</div>
+                      <div>Path: {window.location.pathname}{window.location.search}</div>
+                      <div>Manifest URL: {manifestUrl}</div>
+                      <div className="truncate">UA: {navigator.userAgent.slice(0, 50)}...</div>
+                    </div>
+                    <div className="bg-white/10 p-3 rounded">
+                      <div className="font-semibold mb-1">Telegram</div>
+                      <div>isTelegramWebApp: {String(tg)}</div>
+                      <div>User ID: {tgUser?.id ?? "-"}</div>
+                      <div>Username: {tgUser?.username ?? "-"}</div>
+                    </div>
+                    <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
+                      <div className="font-semibold mb-1">TON Transaction Errors</div>
+                      {txErrors.length === 0 ? <div className="opacity-70">No TX errors</div> : (
+                        <ul className="space-y-1 list-disc list-inside text-xs">
+                          {txErrors.map((e, i) => (<li key={i}>[{new Date(e.ts).toLocaleTimeString()}] {e.msg}</li>))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
+                      <div className="font-semibold mb-1">Errors ({errors.length})</div>
+                      {errors.length === 0 ? <div className="opacity-70">No captured errors</div> : (
+                        <ul className="space-y-1 list-disc list-inside max-h-32 overflow-auto">
+                          {errors.slice(-10).map((e, i) => (<li key={i} className="text-xs">{e}</li>))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="bg-white/10 p-3 rounded col-span-1 md:col-span-2">
+                      <div className="font-semibold mb-1">Logs ({logs.length})</div>
+                      {logs.length === 0 ? <div className="opacity-70">No logs</div> : (
+                        <ul className="space-y-1 text-xs font-mono max-h-48 overflow-auto">
+                          {logs.slice(-50).map((l, i) => (
+                            <li key={i}>
+                              <span className="opacity-70">[{new Date(l.ts).toLocaleTimeString()}] {l.level.toUpperCase()}:</span> {l.args.map(String).join(" ").slice(0, 100)}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="bg-white/10 p-3 rounded">
-                  <div className="font-semibold mb-1">JSON</div>
-                  <pre className="text-xs max-h-56 overflow-auto whitespace-pre-wrap break-all">{layoutText || 'Sin datos'}</pre>
-                </div>
-              </div>
+                  <Button className="mt-2" variant="secondary" onClick={() => navigator.clipboard.writeText(JSON.stringify({ errors, logs }, null, 2))}>Copiar</Button>
+                </TabsContent>
+
+                <TabsContent value="layout">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" onClick={toggleEdit}>{isEditMode ? 'Desactivar edición' : 'Activar edición'}</Button>
+                      <Button size="sm" variant="outline" onClick={addBelt}>Añadir cinta</Button>
+                      <Button size="sm" variant="outline" onClick={resetLayout}>Restablecer layout</Button>
+                      <Button size="sm" variant="outline" onClick={copyLayout}>Copiar layout</Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="bg-white/10 p-3 rounded">
+                        <div className="font-semibold mb-1">Estado</div>
+                        <div>Edición: {isEditMode ? 'ON' : 'OFF'}</div>
+                        <div>Belts manuales: {beltCount}</div>
+                        <div className="mt-2 flex items-center gap-2">
+                          <label className="opacity-80">Gap:</label>
+                          <input className="text-black px-2 py-1 rounded" value={gap} onChange={(e) => onGapChange(e.target.value)} placeholder="20px" />
+                        </div>
+                      </div>
+                      <div className="bg-white/10 p-3 rounded">
+                        <div className="font-semibold mb-1">JSON</div>
+                        <pre className="text-xs max-h-56 overflow-auto whitespace-pre-wrap break-all">{layoutText || 'Sin datos'}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+          )}
+        </div>
+      )}
+    </>
   );
 };
 

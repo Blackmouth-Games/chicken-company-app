@@ -190,7 +190,6 @@ const DebugPanel = () => {
         // Run verification automatically
         const result = verify();
         setVerificationResult(result);
-        console.log('[DebugPanel] Auto-verification executed:', result);
       }
     }
   }, [eggDebugInfo]);

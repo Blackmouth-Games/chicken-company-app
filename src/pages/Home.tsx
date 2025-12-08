@@ -1060,7 +1060,6 @@ const Home = () => {
     }
     if (getVehicleDebugInfo) {
       const debugInfo = getVehicleDebugInfo();
-      console.log('[Home] Sending vehicle debug info:', debugInfo);
       window.dispatchEvent(new CustomEvent('vehicleDebugInfo', { detail: debugInfo }));
     }
     
