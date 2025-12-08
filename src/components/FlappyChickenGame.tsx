@@ -165,6 +165,19 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     if (!userId) return Promise.resolve();
     
     try {
+      // Verify user exists in profiles table before saving
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (profileError || !profile) {
+        // User doesn't exist in profiles, skip saving metrics
+        console.warn("[FlappyChicken] User not found in profiles, skipping metrics save");
+        return Promise.resolve();
+      }
+      
       const { data, error } = await supabase.rpc("upsert_flappy_chicken_metrics" as any, {
         p_user_id: userId,
         p_score: score,
@@ -173,14 +186,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       });
       
       if (error) {
-        console.error("[FlappyChicken] Error saving metrics to database:", error);
-        throw error;
+        // Only log if it's not a foreign key constraint error (user not found)
+        if (error.code !== '23503') {
+          console.error("[FlappyChicken] Error saving metrics to database:", error);
+        }
+        return Promise.resolve(); // Don't throw, just fail silently
       }
       
       return Promise.resolve();
-    } catch (e) {
-      console.error("[FlappyChicken] Error saving metrics:", e);
-      return Promise.reject(e);
+    } catch (e: any) {
+      // Only log if it's not a foreign key constraint error
+      if (e?.code !== '23503') {
+        console.error("[FlappyChicken] Error saving metrics:", e);
+      }
+      return Promise.resolve(); // Don't throw, just fail silently
     }
   }, [userId]);
 
@@ -228,14 +247,31 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       }
 
       try {
+        // Verify user exists in profiles table before loading
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", userId)
+          .single();
+        
+        if (profileError || !profile) {
+          // User doesn't exist in profiles, use localStorage
+          const saved = localStorage.getItem("flappy_chicken_highscore");
+          if (saved) setHighScore(parseInt(saved));
+          return;
+        }
+        
         const { data, error } = await supabase
           .from("flappy_chicken_metrics" as any)
           .select("high_score")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
-          console.error("Error loading high score:", error);
+          // Only log if it's not a "not found" error
+          if (error.code !== '23503' && error.status !== 406) {
+            console.error("Error loading high score:", error);
+          }
           // Fallback to localStorage
           const saved = localStorage.getItem("flappy_chicken_highscore");
           if (saved) setHighScore(parseInt(saved));
@@ -344,10 +380,22 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const saveBoost = useCallback(async (finalScore: number) => {
     if (!userId || finalScore < 10) return;
     
-    const boostValue = calculateBoost(finalScore);
-    const durationMinutes = 60;
-    
     try {
+      // Verify user exists in profiles table before saving
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .single();
+      
+      if (profileError || !profile) {
+        // User doesn't exist in profiles, skip saving boost
+        return;
+      }
+      
+      const boostValue = calculateBoost(finalScore);
+      const durationMinutes = 60;
+      
       const { error } = await supabase.rpc("add_minigame_boost" as any, {
         p_user_id: userId,
         p_boost_value: boostValue,
@@ -356,9 +404,15 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       
       if (!error) {
         setBoostEarned(boostValue);
+      } else if (error.code !== '23503') {
+        // Only log if it's not a foreign key constraint error
+        console.error("[FlappyChicken] Error saving boost:", error);
       }
-    } catch (e) {
-      console.error("[FlappyChicken] Error saving boost:", e);
+    } catch (e: any) {
+      // Only log if it's not a foreign key constraint error
+      if (e?.code !== '23503') {
+        console.error("[FlappyChicken] Error saving boost:", e);
+      }
     }
   }, [userId]);
 

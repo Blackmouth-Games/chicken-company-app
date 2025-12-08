@@ -591,14 +591,6 @@ export const useVehicleSystem = (roads: Road[], marketLevel: number = 1) => {
         const lastSpawn = lastSpawnTimeRef.current.get(routeKey) || 0;
         const timeSinceLastSpawn = now - lastSpawn;
         
-        console.log('[useVehicleSystem] Spawn check:', {
-          currentVehicles: currentVehicles.length,
-          maxVehicles: MAX_VEHICLES,
-          timeSinceLastSpawn,
-          vehicleSpawnInterval,
-          canSpawn: timeSinceLastSpawn >= vehicleSpawnInterval,
-        });
-        
         if (timeSinceLastSpawn >= vehicleSpawnInterval) {
           const newVehicle = spawnVehicle(pointA, pointB);
           if (newVehicle) {
