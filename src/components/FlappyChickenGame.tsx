@@ -579,21 +579,29 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentLevel = getChickenLevel(scoreForLevel);
     const currentChickenImg = chickenImgRefs.current[currentLevel];
     
+    // Fallback to L0 if image not loaded yet
+    const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
+    const actualImageIndex = currentChickenImg ? currentLevel : 0;
+    
     // Debug: Log every frame when score >= 10 to see what's happening
     if (scoreRef.current >= 10 && isPlayingRef.current) {
       const now = Date.now();
       if (now - lastDebugLogTimeRef.current > 500) { // Log every 500ms
-        console.log(`[FlappyChicken] DRAW DEBUG - Score: ${scoreRef.current}, ScoreForLevel: ${scoreForLevel}, CurrentLevel: ${currentLevel}, Image exists: ${!!currentChickenImg}, Image index in array: ${currentLevel}, Array length: ${chickenImgRefs.current.length}`);
+        console.log(`[FlappyChicken] DRAW DEBUG - Score: ${scoreRef.current}, ScoreForLevel: ${scoreForLevel}, CurrentLevel: ${currentLevel}`);
+        console.log(`[FlappyChicken] Image selection - currentChickenImg exists: ${!!currentChickenImg}, imgToDraw is fallback: ${!currentChickenImg}`);
+        console.log(`[FlappyChicken] Image index in array: ${currentLevel}, Array length: ${chickenImgRefs.current.length}`);
         if (currentChickenImg) {
-          console.log(`[FlappyChicken] Image source: ${currentChickenImg.src}`);
+          console.log(`[FlappyChicken] currentChickenImg source: ${currentChickenImg.src}`);
+        } else {
+          console.warn(`[FlappyChicken] WARNING: currentChickenImg is null/undefined for level ${currentLevel}! Using L0 fallback.`);
+          console.log(`[FlappyChicken] chickenImgRefs.current[${currentLevel}]:`, chickenImgRefs.current[currentLevel]);
+        }
+        if (imgToDraw) {
+          console.log(`[FlappyChicken] imgToDraw source: ${imgToDraw.src}`);
         }
         lastDebugLogTimeRef.current = now;
       }
     }
-    
-    // Fallback to L0 if image not loaded yet
-    const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
-    const actualImageIndex = currentChickenImg ? currentLevel : 0;
     
     // Track level changes and log for debugging
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
@@ -635,6 +643,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     }
     
     if (imgToDraw) {
+      // Debug: Log what image is actually being drawn to canvas
+      if (currentLevel === 1 && isPlayingRef.current && scoreRef.current >= 10) {
+        const now = Date.now();
+        if (now - lastDebugLogTimeRef.current > 500) {
+          console.log(`[FlappyChicken] ACTUALLY DRAWING - Level: ${currentLevel}, Image object:`, imgToDraw);
+          console.log(`[FlappyChicken] Image src: ${imgToDraw.src}`);
+          console.log(`[FlappyChicken] Image width: ${imgToDraw.width}, height: ${imgToDraw.height}`);
+          console.log(`[FlappyChicken] Image complete: ${imgToDraw.complete}`);
+          console.log(`[FlappyChicken] currentChickenImg (index ${currentLevel}):`, currentChickenImg);
+          console.log(`[FlappyChicken] chickenImgRefs.current[${currentLevel}]:`, chickenImgRefs.current[currentLevel]);
+          lastDebugLogTimeRef.current = now;
+        }
+      }
+      
       ctx.save();
       ctx.translate(CHICKEN_X + CHICKEN_SIZE / 2, chickenY + CHICKEN_SIZE / 2);
       
