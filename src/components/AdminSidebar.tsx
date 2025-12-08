@@ -9,6 +9,7 @@ import {
   LogOut,
   BarChart3,
   TrendingUp,
+  Gamepad2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -49,6 +50,11 @@ const navItems: NavItem[] = [
     title: "Métricas de Ventas",
     href: "/admin/sales",
     icon: TrendingUp,
+  },
+  {
+    title: "Flappy Chicken",
+    href: "/admin/flappy-chicken-metrics",
+    icon: Gamepad2,
   },
 ];
 

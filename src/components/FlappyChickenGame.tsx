@@ -120,31 +120,63 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     return level % CHICKEN_LEVEL_IMAGES.length;
   }, []);
 
-  // Load metrics from localStorage
-  const loadMetrics = useCallback((): GameMetrics => {
-    const saved = localStorage.getItem("flappy_chicken_metrics");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Error loading metrics:", e);
+  // Load metrics from database
+  const loadMetrics = useCallback(async (): Promise<GameMetrics | null> => {
+    if (!userId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from("flappy_chicken_metrics" as any)
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error("Error loading metrics:", error);
+        return null;
       }
+      
+      if (data) {
+        const metricsData = data as any;
+        return {
+          totalAttempts: metricsData.total_attempts || 0,
+          totalDeaths: metricsData.total_deaths || 0,
+          totalPlayTime: metricsData.total_play_time_seconds || 0,
+          averageScore: Number(metricsData.average_score) || 0,
+          maxLevelReached: metricsData.max_level_reached || 0,
+          scores: metricsData.recent_scores || []
+        };
+      }
+    } catch (e) {
+      console.error("Error loading metrics:", e);
     }
-    return {
-      totalAttempts: 0,
-      totalDeaths: 0,
-      totalPlayTime: 0,
-      averageScore: 0,
-      maxLevelReached: 0,
-      scores: []
-    };
-  }, []);
+    
+    return null;
+  }, [userId]);
 
-  // Save metrics to localStorage
-  const saveMetrics = useCallback((newMetrics: GameMetrics) => {
-    localStorage.setItem("flappy_chicken_metrics", JSON.stringify(newMetrics));
-    setMetrics(newMetrics);
-  }, []);
+  // Save metrics to database using upsert function
+  const saveMetricsToDB = useCallback(async (
+    score: number,
+    playTimeSeconds: number,
+    levelReached: number
+  ) => {
+    if (!userId) return;
+    
+    try {
+      const { error } = await supabase.rpc("upsert_flappy_chicken_metrics" as any, {
+        p_user_id: userId,
+        p_score: score,
+        p_play_time_seconds: playTimeSeconds,
+        p_level_reached: levelReached
+      });
+      
+      if (error) {
+        console.error("Error saving metrics to database:", error);
+      }
+    } catch (e) {
+      console.error("Error saving metrics:", e);
+    }
+  }, [userId]);
 
   // Check if user is admin
   useEffect(() => {
@@ -180,12 +212,60 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
 
   // Load high score, metrics and images
   useEffect(() => {
-    const saved = localStorage.getItem("flappy_chicken_highscore");
-    if (saved) setHighScore(parseInt(saved));
+    // Load high score from database
+    const loadHighScore = async () => {
+      if (!userId) {
+        // Fallback to localStorage if no user
+        const saved = localStorage.getItem("flappy_chicken_highscore");
+        if (saved) setHighScore(parseInt(saved));
+        return;
+      }
 
-    // Load metrics
-    const loadedMetrics = loadMetrics();
-    setMetrics(loadedMetrics);
+      try {
+        const { data, error } = await supabase
+          .from("flappy_chicken_metrics" as any)
+          .select("high_score")
+          .eq("user_id", userId)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error("Error loading high score:", error);
+          // Fallback to localStorage
+          const saved = localStorage.getItem("flappy_chicken_highscore");
+          if (saved) setHighScore(parseInt(saved));
+          return;
+        }
+
+        if (data) {
+          const dbHighScore = (data as any).high_score || 0;
+          setHighScore(dbHighScore);
+          // Also update localStorage as backup
+          localStorage.setItem("flappy_chicken_highscore", dbHighScore.toString());
+        } else {
+          // No record yet, check localStorage
+          const saved = localStorage.getItem("flappy_chicken_highscore");
+          if (saved) setHighScore(parseInt(saved));
+        }
+      } catch (e) {
+        console.error("Error loading high score:", e);
+        // Fallback to localStorage
+        const saved = localStorage.getItem("flappy_chicken_highscore");
+        if (saved) setHighScore(parseInt(saved));
+      }
+    };
+
+    loadHighScore();
+
+    // Load metrics from database (for admin display)
+    const loadMetricsData = async () => {
+      if (isAdmin) {
+        const loadedMetrics = await loadMetrics();
+        if (loadedMetrics) {
+          setMetrics(loadedMetrics);
+        }
+      }
+    };
+    loadMetricsData();
 
     // Detect touch device
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -222,7 +302,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     bottomImg.onload = () => {
       barBottomImgRef.current = bottomImg;
     };
-  }, []);
+  }, [userId, isAdmin, loadMetrics]);
 
   // Calculate scale to fit 90% of screen
   useEffect(() => {
@@ -254,7 +334,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const durationMinutes = 60;
     
     try {
-      const { error } = await supabase.rpc("add_minigame_boost", {
+      const { error } = await supabase.rpc("add_minigame_boost" as any, {
         p_user_id: userId,
         p_boost_value: boostValue,
         p_duration_minutes: durationMinutes
@@ -283,39 +363,53 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const newHighScore = finalScore > highScore;
     setIsNewHighScore(newHighScore);
     
-    if (newHighScore) {
-      setHighScore(finalScore);
-      localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
+    // Save metrics to database for all users (only admin can view them)
+    if (userId) {
+      const playTime = gameStartTimeRef.current 
+        ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+        : 0;
+      
+      const levelReached = getChickenLevel(finalScore);
+      
+      // Save to database using upsert function (this will also update high_score if it's higher)
+      saveMetricsToDB(finalScore, playTime, levelReached);
+      
+      // Update high score if it's a new record
+      if (newHighScore) {
+        setHighScore(finalScore);
+        localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
+        
+        // Also update high score directly in database
+        supabase
+          .from("flappy_chicken_metrics" as any)
+          .update({ high_score: finalScore })
+          .eq("user_id", userId)
+          .then(({ error }) => {
+            if (error) {
+              console.error("Error updating high score:", error);
+            }
+          });
+      }
+      
+      // If admin, also update local state for display
+      if (isAdmin) {
+        loadMetrics().then(loadedMetrics => {
+          if (loadedMetrics) {
+            setMetrics(loadedMetrics);
+          }
+        });
+      }
+    } else {
+      // No user, use localStorage only
+      if (newHighScore) {
+        setHighScore(finalScore);
+        localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
+      }
     }
-    
-    // Update metrics
-    const currentMetrics = loadMetrics();
-    const playTime = gameStartTimeRef.current 
-      ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
-      : 0;
-    
-    const newScores = [...currentMetrics.scores, finalScore];
-    const averageScore = newScores.length > 0
-      ? Math.round(newScores.reduce((sum, s) => sum + s, 0) / newScores.length)
-      : 0;
-    
-    const maxLevel = getChickenLevel(finalScore);
-    const newMaxLevel = Math.max(currentMetrics.maxLevelReached, maxLevel);
-    
-    const updatedMetrics: GameMetrics = {
-      totalAttempts: currentMetrics.totalAttempts + 1,
-      totalDeaths: currentMetrics.totalDeaths + 1,
-      totalPlayTime: currentMetrics.totalPlayTime + playTime,
-      averageScore,
-      maxLevelReached: newMaxLevel,
-      scores: newScores.slice(-100) // Keep last 100 scores
-    };
-    
-    saveMetrics(updatedMetrics);
     gameStartTimeRef.current = null;
     
     saveBoost(finalScore);
-  }, [highScore, saveBoost, loadMetrics, saveMetrics, getChickenLevel]);
+  }, [highScore, saveBoost, saveMetricsToDB, loadMetrics, getChickenLevel, isAdmin, userId]);
 
   // Draw the game
   const draw = useCallback(() => {
@@ -580,19 +674,11 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     setIsNewHighScore(false);
     setDisplayState("playing");
 
-    // Update total attempts metric
-    const currentMetrics = loadMetrics();
-    const updatedMetrics: GameMetrics = {
-      ...currentMetrics,
-      totalAttempts: currentMetrics.totalAttempts + 1
-    };
-    saveMetrics(updatedMetrics);
-
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameLoop, loadMetrics, saveMetrics]);
+  }, [gameLoop]);
 
   // Jump
   const jump = useCallback(() => {
@@ -670,6 +756,17 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     animationId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationId);
   }, [open, imageLoaded, displayState, draw]);
+
+  // Reload metrics when stats dialog opens (for admin)
+  useEffect(() => {
+    if (showStats && isAdmin && userId) {
+      loadMetrics().then(loadedMetrics => {
+        if (loadedMetrics) {
+          setMetrics(loadedMetrics);
+        }
+      });
+    }
+  }, [showStats, isAdmin, userId, loadMetrics]);
 
   const scaledWidth = Math.round(GAME_WIDTH * scale);
   const scaledHeight = Math.round(GAME_HEIGHT * scale);
