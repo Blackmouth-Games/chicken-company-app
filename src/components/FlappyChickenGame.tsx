@@ -2,10 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X, Play, RotateCcw, Trophy, Zap, Medal } from "lucide-react";
-import chickenIcon from "@/assets/game/chicken/Level_1.png";
+import chickenLevel1 from "@/assets/game/chicken/Level_1.png";
+import chickenLevel2 from "@/assets/game/chicken/Level_2.png";
 import barTopImg from "@/assets/game/bar_top.png";
 import barBottomImg from "@/assets/game/bar_bottom.png";
 import { supabase } from "@/integrations/supabase/client";
+
+// Array de imágenes de niveles de la gallina
+const CHICKEN_LEVEL_IMAGES = [chickenLevel1, chickenLevel2];
+const LEVELS_PER_SCORE = 10; // Cada 10 puntos sube un nivel
 
 interface FlappyChickenGameProps {
   open: boolean;
@@ -65,9 +70,16 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
 
   const gameLoopRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chickenImgRef = useRef<HTMLImageElement | null>(null);
+  const chickenImgRefs = useRef<(HTMLImageElement | null)[]>([]);
   const barTopImgRef = useRef<HTMLImageElement | null>(null);
   const barBottomImgRef = useRef<HTMLImageElement | null>(null);
+
+  // Calculate chicken level based on score (every 10 points = +1 level, cycles)
+  const getChickenLevel = useCallback((currentScore: number): number => {
+    const level = Math.floor(currentScore / LEVELS_PER_SCORE);
+    // Cycle through available levels (if 2 images, level 2 becomes level 0 again)
+    return level % CHICKEN_LEVEL_IMAGES.length;
+  }, []);
 
   // Load high score and images
   useEffect(() => {
@@ -77,13 +89,25 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     // Detect touch device
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
-    // Preload chicken image
-    const chickenImg = new Image();
-    chickenImg.src = chickenIcon;
-    chickenImg.onload = () => {
-      chickenImgRef.current = chickenImg;
-      setImageLoaded(true);
-    };
+    // Preload all chicken level images
+    let loadedCount = 0;
+    chickenImgRefs.current = new Array(CHICKEN_LEVEL_IMAGES.length).fill(null);
+    
+    CHICKEN_LEVEL_IMAGES.forEach((imgSrc, index) => {
+      const img = new Image();
+      img.src = imgSrc;
+      img.onload = () => {
+        chickenImgRefs.current[index] = img;
+        loadedCount++;
+        // Set imageLoaded when first image loads
+        if (loadedCount === 1) {
+          setImageLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        console.error(`Failed to load chicken level ${index + 1} image`);
+      };
+    });
 
     // Preload bar images
     const topImg = new Image();
@@ -270,9 +294,14 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.globalAlpha = 1.0;
     }
     
-    // Draw chicken
+    // Draw chicken with level-based image
     const chickenY = chickenYRef.current;
-    if (chickenImgRef.current) {
+    // Reset level to 0 when in ready state (after death or restart)
+    const scoreForLevel = displayState === "ready" ? 0 : scoreRef.current;
+    const currentLevel = getChickenLevel(scoreForLevel);
+    const currentChickenImg = chickenImgRefs.current[currentLevel];
+    
+    if (currentChickenImg) {
       ctx.save();
       ctx.translate(CHICKEN_X + CHICKEN_SIZE / 2, chickenY + CHICKEN_SIZE / 2);
       
@@ -283,7 +312,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       
       ctx.scale(1, -1); // Flip vertical
       ctx.drawImage(
-        chickenImgRef.current,
+        currentChickenImg,
         -CHICKEN_SIZE / 2,
         -CHICKEN_SIZE / 2,
         CHICKEN_SIZE,
@@ -304,7 +333,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.strokeText(scoreText, GAME_WIDTH / 2, 20);
       ctx.fillText(scoreText, GAME_WIDTH / 2, 20);
     }
-  }, []);
+  }, [getChickenLevel, displayState]);
 
   // Game loop
   const gameLoop = useCallback(() => {
