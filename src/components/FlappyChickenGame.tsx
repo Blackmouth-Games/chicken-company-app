@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X, Play, RotateCcw, Trophy, Zap, Medal } from "lucide-react";
+import { X, Play, RotateCcw, Trophy, Zap, Medal, BarChart3 } from "lucide-react";
 import chickenL0 from "@/assets/game/chicken/L0.png";
 import chickenL1 from "@/assets/game/chicken/L1.png";
 import chickenL2 from "@/assets/game/chicken/L2.png";
@@ -43,7 +43,7 @@ interface Pipe {
 // Game constants
 const GAME_WIDTH = 288;
 const GAME_HEIGHT = 512;
-const CHICKEN_SIZE = 54; // 50% bigger than previous 36px
+const CHICKEN_SIZE = 35; // 35% smaller than previous 54px
 const CHICKEN_X = 60;
 
 // Physics - more like original Flappy Bird curve
@@ -72,6 +72,28 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const [imageLoaded, setImageLoaded] = useState(false);
   const [scale, setScale] = useState(1);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  
+  // Game metrics
+  interface GameMetrics {
+    totalAttempts: number;
+    totalDeaths: number;
+    totalPlayTime: number; // in seconds
+    averageScore: number;
+    maxLevelReached: number;
+    scores: number[]; // Array of all scores for average calculation
+  }
+  
+  const [metrics, setMetrics] = useState<GameMetrics>({
+    totalAttempts: 0,
+    totalDeaths: 0,
+    totalPlayTime: 0,
+    averageScore: 0,
+    maxLevelReached: 0,
+    scores: []
+  });
+  
+  const gameStartTimeRef = useRef<number | null>(null);
   
   // Game state refs
   const chickenYRef = useRef((GAME_HEIGHT - GROUND_HEIGHT) / 2 - CHICKEN_SIZE / 2);
@@ -97,10 +119,40 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     return level % CHICKEN_LEVEL_IMAGES.length;
   }, []);
 
-  // Load high score and images
+  // Load metrics from localStorage
+  const loadMetrics = useCallback((): GameMetrics => {
+    const saved = localStorage.getItem("flappy_chicken_metrics");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error loading metrics:", e);
+      }
+    }
+    return {
+      totalAttempts: 0,
+      totalDeaths: 0,
+      totalPlayTime: 0,
+      averageScore: 0,
+      maxLevelReached: 0,
+      scores: []
+    };
+  }, []);
+
+  // Save metrics to localStorage
+  const saveMetrics = useCallback((newMetrics: GameMetrics) => {
+    localStorage.setItem("flappy_chicken_metrics", JSON.stringify(newMetrics));
+    setMetrics(newMetrics);
+  }, []);
+
+  // Load high score, metrics and images
   useEffect(() => {
     const saved = localStorage.getItem("flappy_chicken_highscore");
     if (saved) setHighScore(parseInt(saved));
+
+    // Load metrics
+    const loadedMetrics = loadMetrics();
+    setMetrics(loadedMetrics);
 
     // Detect touch device
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -203,8 +255,34 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       localStorage.setItem("flappy_chicken_highscore", finalScore.toString());
     }
     
+    // Update metrics
+    const currentMetrics = loadMetrics();
+    const playTime = gameStartTimeRef.current 
+      ? Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+      : 0;
+    
+    const newScores = [...currentMetrics.scores, finalScore];
+    const averageScore = newScores.length > 0
+      ? Math.round(newScores.reduce((sum, s) => sum + s, 0) / newScores.length)
+      : 0;
+    
+    const maxLevel = getChickenLevel(finalScore);
+    const newMaxLevel = Math.max(currentMetrics.maxLevelReached, maxLevel);
+    
+    const updatedMetrics: GameMetrics = {
+      totalAttempts: currentMetrics.totalAttempts + 1,
+      totalDeaths: currentMetrics.totalDeaths + 1,
+      totalPlayTime: currentMetrics.totalPlayTime + playTime,
+      averageScore,
+      maxLevelReached: newMaxLevel,
+      scores: newScores.slice(-100) // Keep last 100 scores
+    };
+    
+    saveMetrics(updatedMetrics);
+    gameStartTimeRef.current = null;
+    
     saveBoost(finalScore);
-  }, [highScore, saveBoost]);
+  }, [highScore, saveBoost, loadMetrics, saveMetrics, getChickenLevel]);
 
   // Draw the game
   const draw = useCallback(() => {
@@ -462,17 +540,26 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     lastInteractionTimeRef.current = 0;
     pipeSpeedRef.current = INITIAL_PIPE_SPEED;
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
+    gameStartTimeRef.current = Date.now(); // Track game start time
 
     setScore(0);
     setBoostEarned(null);
     setIsNewHighScore(false);
     setDisplayState("playing");
 
+    // Update total attempts metric
+    const currentMetrics = loadMetrics();
+    const updatedMetrics: GameMetrics = {
+      ...currentMetrics,
+      totalAttempts: currentMetrics.totalAttempts + 1
+    };
+    saveMetrics(updatedMetrics);
+
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [gameLoop]);
+  }, [gameLoop, loadMetrics, saveMetrics]);
 
   // Jump
   const jump = useCallback(() => {
@@ -663,6 +750,16 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
                   </p>
                 )}
                 
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); setShowStats(true); }}
+                    variant="outline"
+                    className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-900 border-2 border-blue-700"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Estadísticas
+                  </Button>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={(e) => { e.stopPropagation(); goToReady(); }}
