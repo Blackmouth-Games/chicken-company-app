@@ -31,12 +31,14 @@ const TERMINAL_VELOCITY = 8;
 // Pipes
 const PIPE_WIDTH = 52;
 const PIPE_GAP = 125;
-const PIPE_SPEED = 1.8;
+const INITIAL_PIPE_SPEED = 1.8;
 const PIPE_SPAWN_DISTANCE = 200;
+const SPEED_INCREASE_INTERVAL = 5; // Increase speed every 5 pipes
+const SPEED_INCREASE_AMOUNT = 0.2; // How much to increase speed by
 
 // Ground
 const GROUND_HEIGHT = 100;
-const GROUND_SPEED = 1.8; // Match pipe speed
+const INITIAL_GROUND_SPEED = 1.8; // Match pipe speed
 
 const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProps) => {
   const [displayState, setDisplayState] = useState<"ready" | "playing" | "gameover">("ready");
@@ -56,6 +58,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const groundOffsetRef = useRef(0);
   const isPlayingRef = useRef(false);
   const lastInteractionTimeRef = useRef(0);
+  const pipeSpeedRef = useRef(INITIAL_PIPE_SPEED);
+  const groundSpeedRef = useRef(INITIAL_GROUND_SPEED);
 
   const gameLoopRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -269,7 +273,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     chickenYRef.current += chickenVelocityRef.current;
     
     // Update ground scroll
-    groundOffsetRef.current += GROUND_SPEED;
+    groundOffsetRef.current += groundSpeedRef.current;
     
     // Check ceiling
     if (chickenYRef.current < 0) {
@@ -302,20 +306,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     for (let i = pipesRef.current.length - 1; i >= 0; i--) {
       const pipe = pipesRef.current[i];
-      pipe.x -= PIPE_SPEED;
-      
+      pipe.x -= pipeSpeedRef.current;
+
       // Remove off-screen pipes
       if (pipe.x < -PIPE_WIDTH) {
         pipesRef.current.splice(i, 1);
         continue;
       }
-      
+
       // Collision check
       const pipeLeft = pipe.x;
       const pipeRight = pipe.x + PIPE_WIDTH;
       const topPipeBottom = pipe.gapY;
       const bottomPipeTop = pipe.gapY + PIPE_GAP;
-      
+
       if (chickenRight > pipeLeft && chickenLeft < pipeRight) {
         if (chickenTop < topPipeBottom || chickenBottom > bottomPipeTop) {
           handleGameOver(scoreRef.current);
@@ -323,12 +327,18 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
           return;
         }
       }
-      
-      // Score when passing pipe
+
+      // Score when passing pipe and increase speed every SPEED_INCREASE_INTERVAL pipes
       if (!pipe.passed && CHICKEN_X > pipe.x + PIPE_WIDTH) {
         pipe.passed = true;
         scoreRef.current++;
         setScore(scoreRef.current);
+
+        // Increase speed every SPEED_INCREASE_INTERVAL points
+        if (scoreRef.current % SPEED_INCREASE_INTERVAL === 0) {
+          pipeSpeedRef.current += SPEED_INCREASE_AMOUNT;
+          groundSpeedRef.current += SPEED_INCREASE_AMOUNT;
+        }
       }
     }
     
@@ -345,6 +355,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     groundOffsetRef.current = 0;
     isPlayingRef.current = false;
     lastInteractionTimeRef.current = 0;
+    pipeSpeedRef.current = INITIAL_PIPE_SPEED;
+    groundSpeedRef.current = INITIAL_GROUND_SPEED;
 
     setScore(0);
     setBoostEarned(null);
@@ -361,6 +373,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     groundOffsetRef.current = 0;
     isPlayingRef.current = true;
     lastInteractionTimeRef.current = 0;
+    pipeSpeedRef.current = INITIAL_PIPE_SPEED;
+    groundSpeedRef.current = INITIAL_GROUND_SPEED;
 
     setScore(0);
     setBoostEarned(null);
