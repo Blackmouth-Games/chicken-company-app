@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X, Play, RotateCcw, Trophy, Zap, Medal } from "lucide-react";
-import chickenIcon from "@/assets/game/icon.png";
+import chickenIcon from "@/assets/game/chicken/Level_1.png";
+import barTopImg from "@/assets/game/bar_top.png";
+import barBottomImg from "@/assets/game/bar_bottom.png";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FlappyChickenGameProps {
@@ -20,7 +22,7 @@ interface Pipe {
 // Game constants
 const GAME_WIDTH = 288;
 const GAME_HEIGHT = 512;
-const CHICKEN_SIZE = 36; // Half size from previous 72px
+const CHICKEN_SIZE = 54; // 50% bigger than previous 36px
 const CHICKEN_X = 60;
 
 // Physics - more like original Flappy Bird curve
@@ -64,8 +66,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const gameLoopRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chickenImgRef = useRef<HTMLImageElement | null>(null);
+  const barTopImgRef = useRef<HTMLImageElement | null>(null);
+  const barBottomImgRef = useRef<HTMLImageElement | null>(null);
 
-  // Load high score and image
+  // Load high score and images
   useEffect(() => {
     const saved = localStorage.getItem("flappy_chicken_highscore");
     if (saved) setHighScore(parseInt(saved));
@@ -74,11 +78,24 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
     // Preload chicken image
-    const img = new Image();
-    img.src = chickenIcon;
-    img.onload = () => {
-      chickenImgRef.current = img;
+    const chickenImg = new Image();
+    chickenImg.src = chickenIcon;
+    chickenImg.onload = () => {
+      chickenImgRef.current = chickenImg;
       setImageLoaded(true);
+    };
+
+    // Preload bar images
+    const topImg = new Image();
+    topImg.src = barTopImg;
+    topImg.onload = () => {
+      barTopImgRef.current = topImg;
+    };
+
+    const bottomImg = new Image();
+    bottomImg.src = barBottomImg;
+    bottomImg.onload = () => {
+      barBottomImgRef.current = bottomImg;
     };
   }, []);
 
@@ -159,31 +176,57 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     ctx.fillStyle = "#4EC0CA";
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     
-    // Draw pipes
+    // Draw pipes using images
     pipesRef.current.forEach(pipe => {
-      const pipeCapHeight = 24;
-      const pipeCapOverhang = 3;
-      
-      // Top pipe
-      ctx.fillStyle = "#73BF2E";
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY - pipeCapHeight);
-      ctx.fillRect(pipe.x - pipeCapOverhang, pipe.gapY - pipeCapHeight, PIPE_WIDTH + pipeCapOverhang * 2, pipeCapHeight);
-      
-      ctx.strokeStyle = "#558B2F";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY - pipeCapHeight);
-      ctx.strokeRect(pipe.x - pipeCapOverhang, pipe.gapY - pipeCapHeight, PIPE_WIDTH + pipeCapOverhang * 2, pipeCapHeight);
-      
-      // Bottom pipe
       const bottomPipeTop = pipe.gapY + PIPE_GAP;
-      const bottomPipeHeight = GAME_HEIGHT - GROUND_HEIGHT - bottomPipeTop;
       
-      ctx.fillStyle = "#73BF2E";
-      ctx.fillRect(pipe.x, bottomPipeTop + pipeCapHeight, PIPE_WIDTH, bottomPipeHeight - pipeCapHeight);
-      ctx.fillRect(pipe.x - pipeCapOverhang, bottomPipeTop, PIPE_WIDTH + pipeCapOverhang * 2, pipeCapHeight);
+      // Top pipe - draw from top down to gapY
+      if (barTopImgRef.current) {
+        const topPipeHeight = pipe.gapY;
+        const img = barTopImgRef.current;
+        const imgHeight = img.height;
+        const imgWidth = img.width;
+        
+        // Draw the top pipe image, scaling to match PIPE_WIDTH
+        // The image is longer than needed, so we draw it from the bottom of the image
+        const scale = PIPE_WIDTH / imgWidth;
+        const drawHeight = topPipeHeight / scale;
+        
+        // Calculate source Y to show bottom part of image (since image is longer)
+        const sourceY = Math.max(0, imgHeight - drawHeight);
+        const sourceHeight = Math.min(drawHeight, imgHeight - sourceY);
+        const destHeight = sourceHeight * scale;
+        
+        ctx.drawImage(
+          img,
+          0, sourceY, imgWidth, sourceHeight, // source
+          pipe.x, 0, PIPE_WIDTH, destHeight // destination
+        );
+      }
       
-      ctx.strokeRect(pipe.x, bottomPipeTop + pipeCapHeight, PIPE_WIDTH, bottomPipeHeight - pipeCapHeight);
-      ctx.strokeRect(pipe.x - pipeCapOverhang, bottomPipeTop, PIPE_WIDTH + pipeCapOverhang * 2, pipeCapHeight);
+      // Bottom pipe - draw from bottomPipeTop to ground
+      if (barBottomImgRef.current) {
+        const bottomPipeHeight = GAME_HEIGHT - GROUND_HEIGHT - bottomPipeTop;
+        const img = barBottomImgRef.current;
+        const imgHeight = img.height;
+        const imgWidth = img.width;
+        
+        // Draw the bottom pipe image, scaling to match PIPE_WIDTH
+        // The image is longer than needed, so we draw it from the top of the image
+        const scale = PIPE_WIDTH / imgWidth;
+        const drawHeight = bottomPipeHeight / scale;
+        
+        // Calculate source Y to show top part of image (since image is longer)
+        const sourceY = 0;
+        const sourceHeight = Math.min(drawHeight, imgHeight);
+        const destHeight = sourceHeight * scale;
+        
+        ctx.drawImage(
+          img,
+          0, sourceY, imgWidth, sourceHeight, // source
+          pipe.x, bottomPipeTop, PIPE_WIDTH, destHeight // destination
+        );
+      }
     });
     
     // Draw ground
