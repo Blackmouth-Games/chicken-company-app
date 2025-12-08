@@ -20,7 +20,7 @@ interface Pipe {
 // Game constants
 const GAME_WIDTH = 288;
 const GAME_HEIGHT = 512;
-const CHICKEN_SIZE = 38;
+const CHICKEN_SIZE = 24; // Reduced from 38 to make it more challenging like original
 const CHICKEN_X = 60;
 
 // Physics - more like original Flappy Bird curve
@@ -46,6 +46,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const [isNewHighScore, setIsNewHighScore] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [scale, setScale] = useState(1);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   
   // Game state refs
   const chickenYRef = useRef((GAME_HEIGHT - GROUND_HEIGHT) / 2 - CHICKEN_SIZE / 2);
@@ -54,7 +55,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const scoreRef = useRef(0);
   const groundOffsetRef = useRef(0);
   const isPlayingRef = useRef(false);
-  
+  const lastInteractionTimeRef = useRef(0);
+
   const gameLoopRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chickenImgRef = useRef<HTMLImageElement | null>(null);
@@ -63,7 +65,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   useEffect(() => {
     const saved = localStorage.getItem("flappy_chicken_highscore");
     if (saved) setHighScore(parseInt(saved));
-    
+
+    // Detect touch device
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
     // Preload chicken image
     const img = new Image();
     img.src = chickenIcon;
@@ -224,9 +229,9 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.save();
       ctx.translate(CHICKEN_X + CHICKEN_SIZE / 2, chickenY + CHICKEN_SIZE / 2);
       
-      // Rotation based on velocity - more pronounced curve feel
-      let rotation = chickenVelocityRef.current * 8;
-      rotation = Math.max(-25, Math.min(90, rotation));
+      // Rotation based on velocity - more subtle like original Flappy Bird
+      let rotation = chickenVelocityRef.current * 3;
+      rotation = Math.max(-30, Math.min(90, rotation));
       ctx.rotate((rotation * Math.PI) / 180);
       
       ctx.scale(-1, 1);
@@ -282,14 +287,14 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     // Spawn pipes
     if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < GAME_WIDTH - PIPE_SPAWN_DISTANCE) {
-      const minGapY = 80;
-      const maxGapY = GAME_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 80;
+      const minGapY = 100; // Increased from 80 to make gaps appear higher, more challenging
+      const maxGapY = GAME_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 100;
       const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
       pipesRef.current.push({ x: GAME_WIDTH, gapY, passed: false });
     }
-    
+
     // Update pipes and check collisions
-    const hitboxPadding = 4;
+    const hitboxPadding = 2; // Reduced from 4 to make hitbox less forgiving
     const chickenLeft = CHICKEN_X + hitboxPadding;
     const chickenRight = CHICKEN_X + CHICKEN_SIZE - hitboxPadding;
     const chickenTop = chickenYRef.current + hitboxPadding;
@@ -339,7 +344,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     scoreRef.current = 0;
     groundOffsetRef.current = 0;
     isPlayingRef.current = false;
-    
+    lastInteractionTimeRef.current = 0;
+
     setScore(0);
     setBoostEarned(null);
     setIsNewHighScore(false);
@@ -354,12 +360,13 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     scoreRef.current = 0;
     groundOffsetRef.current = 0;
     isPlayingRef.current = true;
-    
+    lastInteractionTimeRef.current = 0;
+
     setScore(0);
     setBoostEarned(null);
     setIsNewHighScore(false);
     setDisplayState("playing");
-    
+
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
@@ -377,7 +384,17 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const handleInteraction = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    const now = Date.now();
+    const timeSinceLastInteraction = now - lastInteractionTimeRef.current;
+
+    // Prevent double jumps - minimum 100ms between interactions
+    if (timeSinceLastInteraction < 100) {
+      return;
+    }
+
+    lastInteractionTimeRef.current = now;
+
     if (displayState === "playing") {
       jump();
     } else if (displayState === "ready") {
@@ -460,7 +477,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
             width={GAME_WIDTH}
             height={GAME_HEIGHT}
             className="cursor-pointer block"
-            onClick={handleInteraction}
+            onClick={isTouchDevice ? undefined : handleInteraction}
             onTouchStart={handleInteraction}
             style={{ width: scaledWidth, height: scaledHeight }}
           />
