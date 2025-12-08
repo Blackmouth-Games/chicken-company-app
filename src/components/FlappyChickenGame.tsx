@@ -114,6 +114,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const barTopImgRef = useRef<HTMLImageElement | null>(null);
   const barBottomImgRef = useRef<HTMLImageElement | null>(null);
   const lastChickenLevelRef = useRef<number>(-1);
+  const lastDebugLogTimeRef = useRef<number>(0);
 
   // Calculate chicken level based on score (every 10 points = +1 level, cycles)
   const getChickenLevel = useCallback((currentScore: number): number => {
@@ -170,11 +171,10 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         .from("profiles")
         .select("id")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       
       if (profileError || !profile) {
         // User doesn't exist in profiles, skip saving metrics
-        console.warn("[FlappyChicken] User not found in profiles, skipping metrics save");
         return Promise.resolve();
       }
       
@@ -252,7 +252,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
           .from("profiles")
           .select("id")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
         
         if (profileError || !profile) {
           // User doesn't exist in profiles, use localStorage
@@ -268,8 +268,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
           .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
-          // Only log if it's not a "not found" error
-          if (error.code !== '23503' && error.status !== 406) {
+          // Only log if it's not a "not found" or foreign key constraint error
+          if (error.code !== '23503') {
             console.error("Error loading high score:", error);
           }
           // Fallback to localStorage
@@ -386,7 +386,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         .from("profiles")
         .select("id")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       
       if (profileError || !profile) {
         // User doesn't exist in profiles, skip saving boost
@@ -595,14 +595,31 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const imgToDraw = currentChickenImg || chickenImgRefs.current[0];
     const actualImageIndex = currentChickenImg ? currentLevel : 0;
     
-    // Debug: Log what image is being drawn (only when level changes)
+    // Debug: Log what image is being drawn when level changes
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
-      console.log(`[FlappyChicken] Drawing image: Level ${currentLevel}, Using index ${actualImageIndex}, Image object:`, imgToDraw);
+      console.log(`[FlappyChicken] Drawing image: Level ${currentLevel}, Using index ${actualImageIndex}`);
       console.log(`[FlappyChicken] Image refs array:`, chickenImgRefs.current.map((img, idx) => ({ 
         index: idx, 
         loaded: !!img, 
         src: img?.src?.substring(img.src.lastIndexOf('/') + 1) || 'none' 
       })));
+      console.log(`[FlappyChicken] Image being drawn:`, {
+        level: currentLevel,
+        index: actualImageIndex,
+        imgExists: !!imgToDraw,
+        imgSrc: imgToDraw?.src?.substring(imgToDraw.src.lastIndexOf('/') + 1) || 'none',
+        isFallback: !currentChickenImg && currentLevel > 0
+      });
+    }
+    
+    // Debug: Log every frame when level is 1 to see what's being drawn
+    if (currentLevel === 1 && isPlayingRef.current && scoreRef.current >= 10) {
+      // Only log once per second to avoid spam
+      const now = Date.now();
+      if (now - lastDebugLogTimeRef.current > 1000) {
+        console.log(`[FlappyChicken] DRAW FRAME - Level: ${currentLevel}, Score: ${scoreRef.current}, Drawing image at index: ${actualImageIndex}, Image: ${imgToDraw?.src?.substring(imgToDraw.src.lastIndexOf('/') + 1) || 'none'}`);
+        lastDebugLogTimeRef.current = now;
+      }
     }
     
     if (!currentChickenImg && currentLevel > 0 && isPlayingRef.current) {
