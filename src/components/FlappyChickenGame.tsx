@@ -16,8 +16,12 @@ import chickenL11 from "@/assets/game/chicken/L11.png";
 import chickenL12 from "@/assets/game/chicken/L12.png";
 import chickenL13 from "@/assets/game/chicken/L13.png";
 import chickenL14 from "@/assets/game/chicken/L14.png";
-import barTopImg from "@/assets/game/bar_top.png";
-import barBottomImg from "@/assets/game/bar_bottom.png";
+import barTopImg1 from "@/assets/game/bar_top_1.png";
+import barBottomImg1 from "@/assets/game/bar_bottom_1.png";
+import barTopImg2 from "@/assets/game/bar_top_2.png";
+import barBottomImg2 from "@/assets/game/bar_bottom_2.png";
+import barTopImg3 from "@/assets/game/bar_top_3.png";
+import barBottomImg3 from "@/assets/game/bar_bottom_3.png";
 import { supabase } from "@/integrations/supabase/client";
 
 // Array de imágenes de niveles de la gallina (L0 es el nivel inicial)
@@ -28,6 +32,8 @@ const CHICKEN_LEVEL_IMAGES = [
   chickenL13, chickenL14
 ];
 const LEVELS_PER_SCORE = 10; // Cada 10 puntos sube un nivel
+const BAR_LEVEL_INTERVAL = 30; // Cada 30 puntos cambia el nivel de barras
+const BAR_TRANSITION_RANGE = 5; // Rango de transición (ej: 25-30, 55-60)
 
 interface FlappyChickenGameProps {
   open: boolean;
@@ -39,6 +45,7 @@ interface Pipe {
   x: number;
   gapY: number;
   passed: boolean;
+  barLevel: number; // 1, 2, 3, etc. - nivel de barras que usa este pipe
 }
 
 interface Particle {
@@ -121,8 +128,9 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const gameLoopRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chickenImgRefs = useRef<(HTMLImageElement | null)[]>([]);
-  const barTopImgRef = useRef<HTMLImageElement | null>(null);
-  const barBottomImgRef = useRef<HTMLImageElement | null>(null);
+  // Arrays para almacenar imágenes de barras de diferentes niveles
+  const barTopImgRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const barBottomImgRefs = useRef<(HTMLImageElement | null)[]>([]);
   const lastChickenLevelRef = useRef<number>(-1);
   const lastDebugLogTimeRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
@@ -132,6 +140,34 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const level = Math.floor(currentScore / LEVELS_PER_SCORE);
     // Cycle through available levels (if 2 images, level 2 becomes level 0 again)
     return level % CHICKEN_LEVEL_IMAGES.length;
+  }, []);
+
+  // Determine bar level with gradual transition
+  // Returns the bar level (1, 2, 3, etc.) that should be used for a pipe at the current score
+  // Transition logic: In range 25-30, ~40% should be level 2 (2 out of 5 pipes)
+  // In range 55-60, ~40% should be level 3 (2 out of 5 pipes)
+  const getBarLevelForScore = useCallback((currentScore: number): number => {
+    // Base level: every 30 points = +1 bar level
+    const baseLevel = Math.floor(currentScore / BAR_LEVEL_INTERVAL) + 1;
+    
+    // Check if we're in a transition range (25-30, 55-60, etc.)
+    const scoreInCycle = currentScore % BAR_LEVEL_INTERVAL;
+    const transitionStart = BAR_LEVEL_INTERVAL - BAR_TRANSITION_RANGE;
+    
+    if (scoreInCycle >= transitionStart) {
+      // We're in transition range - mix levels gradually
+      // At the start of transition (score 25): ~40% chance of next level (2 out of 5 pipes)
+      // At the end of transition (score 30): 100% chance of next level
+      const progressInTransition = (scoreInCycle - transitionStart) / BAR_TRANSITION_RANGE;
+      // Interpolate from 0.4 (40%) at start to 1.0 (100%) at end
+      const nextLevelProbability = 0.4 + (progressInTransition * 0.6);
+      
+      if (Math.random() < nextLevelProbability) {
+        return baseLevel + 1;
+      }
+    }
+    
+    return baseLevel;
   }, []);
 
   // Generate particles when level changes
@@ -376,17 +412,65 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       };
     });
 
-    // Preload bar images
-    const topImg = new Image();
-    topImg.src = barTopImg;
-    topImg.onload = () => {
-      barTopImgRef.current = topImg;
+    // Preload bar images - niveles 1, 2 y 3
+    barTopImgRefs.current = [];
+    barBottomImgRefs.current = [];
+    
+    // Cargar nivel 1
+    const topImg1 = new Image();
+    topImg1.src = barTopImg1;
+    topImg1.onload = () => {
+      barTopImgRefs.current[1] = topImg1;
+    };
+    topImg1.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_top_1.png");
     };
 
-    const bottomImg = new Image();
-    bottomImg.src = barBottomImg;
-    bottomImg.onload = () => {
-      barBottomImgRef.current = bottomImg;
+    const bottomImg1 = new Image();
+    bottomImg1.src = barBottomImg1;
+    bottomImg1.onload = () => {
+      barBottomImgRefs.current[1] = bottomImg1;
+    };
+    bottomImg1.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_bottom_1.png");
+    };
+    
+    // Cargar nivel 2
+    const topImg2 = new Image();
+    topImg2.src = barTopImg2;
+    topImg2.onload = () => {
+      barTopImgRefs.current[2] = topImg2;
+    };
+    topImg2.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_top_2.png");
+    };
+
+    const bottomImg2 = new Image();
+    bottomImg2.src = barBottomImg2;
+    bottomImg2.onload = () => {
+      barBottomImgRefs.current[2] = bottomImg2;
+    };
+    bottomImg2.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_bottom_2.png");
+    };
+    
+    // Cargar nivel 3
+    const topImg3 = new Image();
+    topImg3.src = barTopImg3;
+    topImg3.onload = () => {
+      barTopImgRefs.current[3] = topImg3;
+    };
+    topImg3.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_top_3.png");
+    };
+
+    const bottomImg3 = new Image();
+    bottomImg3.src = barBottomImg3;
+    bottomImg3.onload = () => {
+      barBottomImgRefs.current[3] = bottomImg3;
+    };
+    bottomImg3.onerror = () => {
+      console.warn("[FlappyChicken] Failed to load bar_bottom_3.png");
     };
   }, [userId, isAdmin, loadMetrics]);
 
@@ -518,10 +602,15 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     pipesRef.current.forEach(pipe => {
       const bottomPipeTop = pipe.gapY + PIPE_GAP;
       
+      // Get the correct bar images for this pipe's level (fallback to level 1 if not loaded)
+      const barLevel = pipe.barLevel || 1;
+      const topImg = barTopImgRefs.current[barLevel] || barTopImgRefs.current[1];
+      const bottomImg = barBottomImgRefs.current[barLevel] || barBottomImgRefs.current[1];
+      
       // Top pipe - draw from top down to gapY
-      if (barTopImgRef.current) {
+      if (topImg) {
         const topPipeHeight = pipe.gapY;
-        const img = barTopImgRef.current;
+        const img = topImg;
         const imgHeight = img.height;
         const imgWidth = img.width;
         
@@ -543,9 +632,9 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       }
       
       // Bottom pipe - draw from bottomPipeTop to ground
-      if (barBottomImgRef.current) {
+      if (bottomImg) {
         const bottomPipeHeight = GAME_HEIGHT - GROUND_HEIGHT - bottomPipeTop;
-        const img = barBottomImgRef.current;
+        const img = bottomImg;
         const imgHeight = img.height;
         const imgWidth = img.width;
         
@@ -819,7 +908,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       const minGapY = 100; // Increased from 80 to make gaps appear higher, more challenging
       const maxGapY = GAME_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 100;
       const gapY = Math.random() * (maxGapY - minGapY) + minGapY;
-      pipesRef.current.push({ x: GAME_WIDTH, gapY, passed: false });
+      const barLevel = getBarLevelForScore(scoreRef.current);
+      pipesRef.current.push({ x: GAME_WIDTH, gapY, passed: false, barLevel });
     }
 
     // Update pipes and check collisions
@@ -880,7 +970,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     draw();
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [draw, handleGameOver]);
+  }, [draw, handleGameOver, getBarLevelForScore, getChickenLevel]);
 
   // Go to ready state
   const goToReady = useCallback(() => {
