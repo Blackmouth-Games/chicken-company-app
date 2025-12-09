@@ -41,6 +41,16 @@ interface Pipe {
   passed: boolean;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number; // velocity x
+  vy: number; // velocity y
+  life: number; // 0 to 1, starts at 1, decreases over time
+  size: number;
+  color: string;
+}
+
 // Game constants
 const GAME_WIDTH = 288;
 const GAME_HEIGHT = 512;
@@ -115,12 +125,38 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const barBottomImgRef = useRef<HTMLImageElement | null>(null);
   const lastChickenLevelRef = useRef<number>(-1);
   const lastDebugLogTimeRef = useRef<number>(0);
+  const particlesRef = useRef<Particle[]>([]);
 
   // Calculate chicken level based on score (every 10 points = +1 level, cycles)
   const getChickenLevel = useCallback((currentScore: number): number => {
     const level = Math.floor(currentScore / LEVELS_PER_SCORE);
     // Cycle through available levels (if 2 images, level 2 becomes level 0 again)
     return level % CHICKEN_LEVEL_IMAGES.length;
+  }, []);
+
+  // Generate particles when level changes
+  const createLevelUpParticles = useCallback((x: number, y: number) => {
+    const particleCount = 20;
+    const colors = ["#FFD700", "#FFA500", "#FFFF00", "#FFFFFF", "#FF6B6B"];
+    const newParticles: Particle[] = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+      const speed = 2 + Math.random() * 3;
+      const size = 3 + Math.random() * 4;
+      
+      newParticles.push({
+        x: x + CHICKEN_SIZE / 2,
+        y: y + CHICKEN_SIZE / 2,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.0,
+        size: size,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+    
+    particlesRef.current.push(...newParticles);
   }, []);
 
   // Load metrics from database
@@ -614,8 +650,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       }
     }
     
-    // Track level changes and log for debugging
-    if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current) {
+    // Track level changes and create particles
+    if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current && lastChickenLevelRef.current >= 0) {
       console.log(`[FlappyChicken] Level changed in draw: ${lastChickenLevelRef.current} → ${currentLevel} (Score: ${scoreRef.current}, ScoreForLevel: ${scoreForLevel})`);
       console.log(`[FlappyChicken] Image for level ${currentLevel}:`, {
         exists: !!currentChickenImg,
@@ -623,6 +659,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
         totalImages: CHICKEN_LEVEL_IMAGES.length,
         allImagesLoaded: chickenImgRefs.current.every(img => !!img)
       });
+      // Create particles when leveling up
+      createLevelUpParticles(CHICKEN_X, chickenY);
       console.log(`[FlappyChicken] Drawing image: Level ${currentLevel}, Using index ${actualImageIndex}`);
       console.log(`[FlappyChicken] Image refs array:`, chickenImgRefs.current.map((img, idx) => ({ 
         index: idx, 
@@ -709,6 +747,19 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.restore();
     }
     
+    // Draw particles
+    particlesRef.current.forEach(particle => {
+      ctx.save();
+      ctx.globalAlpha = particle.life;
+      ctx.fillStyle = particle.color;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+    
     // Draw score
     if (isPlayingRef.current) {
       ctx.fillStyle = "white";
@@ -721,7 +772,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.strokeText(scoreText, GAME_WIDTH / 2, 20);
       ctx.fillText(scoreText, GAME_WIDTH / 2, 20);
     }
-  }, [getChickenLevel, displayState]);
+  }, [getChickenLevel, displayState, createLevelUpParticles]);
 
   // Game loop
   const gameLoop = useCallback(() => {
@@ -734,6 +785,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     
     // Update ground scroll
     groundOffsetRef.current += groundSpeedRef.current;
+    
+    // Update particles
+    for (let i = particlesRef.current.length - 1; i >= 0; i--) {
+      const particle = particlesRef.current[i];
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.vy += 0.15; // gravity
+      particle.life -= 0.02; // fade out
+      
+      // Remove dead particles
+      if (particle.life <= 0 || particle.y > GAME_HEIGHT) {
+        particlesRef.current.splice(i, 1);
+      }
+    }
     
     // Check ceiling
     if (chickenYRef.current < 0) {
@@ -829,6 +894,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     pipeSpeedRef.current = INITIAL_PIPE_SPEED;
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
     lastChickenLevelRef.current = -1; // Reset level tracking
+    particlesRef.current = []; // Clear particles
 
     setScore(0);
     setBoostEarned(null);
@@ -849,6 +915,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
     gameStartTimeRef.current = Date.now(); // Track game start time
     lastChickenLevelRef.current = -1; // Reset level tracking
+    particlesRef.current = []; // Clear particles
 
     setScore(0);
     setBoostEarned(null);
