@@ -165,9 +165,13 @@ const Home = () => {
 
   // Filter buildings to only count coops (slots are only for coops)
   // Use useMemo to ensure it updates when buildings change
+  // Only show coops if wallet is connected
   const coops = useMemo(() => {
+    if (!isWalletConnected) {
+      return []; // No coops if wallet not connected
+    }
     return buildings.filter(b => b.building_type === 'coop');
-  }, [buildings]);
+  }, [buildings, isWalletConnected]);
   const occupiedSlots = coops.length;
   
   // Calculate total slots based on wallet connection status
@@ -197,8 +201,8 @@ const Home = () => {
       totalSlots = 2;
     }
   } else {
-    // Wallet not connected: show 2 empty slots (1 per side) to encourage wallet connection
-    totalSlots = 2;
+    // Wallet not connected: show no slots (as if user has no coops)
+    totalSlots = 0;
   }
   
   const TOTAL_SLOTS = totalSlots;
