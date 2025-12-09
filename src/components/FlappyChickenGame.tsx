@@ -640,31 +640,34 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const previousBgImg = bgImgRefs.current[previousBgLevelRef.current];
     
     // Helper function to draw background image scaled to fit canvas
+    // Background stops at ground level (above the green grass line)
     const drawBackgroundImage = (img: HTMLImageElement, alpha: number) => {
       ctx.save();
       ctx.globalAlpha = alpha;
       
-      // Calculate scaling to cover entire canvas while maintaining aspect ratio
+      // Background area: from top to just before ground
+      const bgHeight = GAME_HEIGHT - GROUND_HEIGHT;
       const imgAspect = img.width / img.height;
-      const canvasAspect = GAME_WIDTH / GAME_HEIGHT;
+      const canvasAspect = GAME_WIDTH / bgHeight;
       
       let drawWidth = GAME_WIDTH;
-      let drawHeight = GAME_HEIGHT;
+      let drawHeight = bgHeight;
       let offsetX = 0;
       let offsetY = 0;
       
       if (imgAspect > canvasAspect) {
         // Image is wider - fit to height and center horizontally
-        drawHeight = GAME_HEIGHT;
+        drawHeight = bgHeight;
         drawWidth = drawHeight * imgAspect;
         offsetX = (GAME_WIDTH - drawWidth) / 2;
       } else {
         // Image is taller - fit to width and center vertically
         drawWidth = GAME_WIDTH;
         drawHeight = drawWidth / imgAspect;
-        offsetY = (GAME_HEIGHT - drawHeight) / 2;
+        offsetY = (bgHeight - drawHeight) / 2;
       }
       
+      // Draw background only up to ground level
       ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
       ctx.restore();
     };
