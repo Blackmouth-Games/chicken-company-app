@@ -144,6 +144,8 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const lastChickenLevelRef = useRef<number>(-1);
   const lastDebugLogTimeRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
+  const chickenUpgradeEffectStartRef = useRef<number | null>(null);
+  const CHICKEN_UPGRADE_DURATION = 1500; // Duración del efecto de mejora en ms
   
   // Background system
   const bgImgRefs = useRef<(HTMLImageElement | null)[]>([]);
@@ -785,10 +787,12 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     }
     const actualImageIndex = currentChickenImg ? currentLevel : 0;
     
-    // Track level changes and create particles
+    // Track level changes and create particles + upgrade effect
     if (currentLevel !== lastChickenLevelRef.current && isPlayingRef.current && lastChickenLevelRef.current >= 0) {
       // Create particles when leveling up
       createLevelUpParticles(CHICKEN_X, chickenY);
+      // Start upgrade effect
+      chickenUpgradeEffectStartRef.current = Date.now();
       lastChickenLevelRef.current = currentLevel;
     }
     
@@ -801,15 +805,82 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     }
     
     if (imgToDraw) {
+      // Check if upgrade effect is active
+      const upgradeEffectActive = chickenUpgradeEffectStartRef.current !== null;
+      let upgradeProgress = 0;
+      let scale = 1.0;
+      let glowIntensity = 0;
+      
+      if (upgradeEffectActive) {
+        const elapsed = Date.now() - chickenUpgradeEffectStartRef.current!;
+        upgradeProgress = Math.min(1, elapsed / CHICKEN_UPGRADE_DURATION);
+        
+        if (upgradeProgress >= 1) {
+          // Effect complete, clear it
+          chickenUpgradeEffectStartRef.current = null;
+        } else {
+          // Calculate scale effect (grow then shrink back)
+          // First half: grow from 1.0 to 1.3
+          // Second half: shrink from 1.3 back to 1.0
+          if (upgradeProgress < 0.5) {
+            scale = 1.0 + (upgradeProgress * 2) * 0.3; // 1.0 to 1.3
+          } else {
+            scale = 1.3 - ((upgradeProgress - 0.5) * 2) * 0.3; // 1.3 back to 1.0
+          }
+          
+          // Glow intensity (strongest at the middle, fades at edges)
+          glowIntensity = Math.sin(upgradeProgress * Math.PI); // 0 -> 1 -> 0
+        }
+      }
       
       ctx.save();
       ctx.translate(CHICKEN_X + CHICKEN_SIZE / 2, chickenY + CHICKEN_SIZE / 2);
       
+      // Draw glow effect during upgrade
+      if (upgradeEffectActive && glowIntensity > 0) {
+        const glowSize = CHICKEN_SIZE * scale * (1 + glowIntensity * 0.5);
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize / 2);
+        gradient.addColorStop(0, `rgba(255, 215, 0, ${glowIntensity * 0.6})`); // Gold center
+        gradient.addColorStop(0.5, `rgba(255, 165, 0, ${glowIntensity * 0.4})`); // Orange middle
+        gradient.addColorStop(1, `rgba(255, 215, 0, 0)`); // Transparent edge
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      // Apply scale transformation
+      ctx.scale(scale, scale);
+      
       // Rotation based on velocity - more subtle like original Flappy Bird
       let rotation = chickenVelocityRef.current * 3;
       rotation = Math.max(-30, Math.min(90, rotation));
+      
+      // Add extra rotation during upgrade effect (spinning effect)
+      if (upgradeEffectActive && upgradeProgress < 1) {
+        const spinAmount = Math.sin(upgradeProgress * Math.PI * 2) * 15; // -15 to +15 degrees
+        rotation += spinAmount;
+      }
+      
       ctx.rotate((rotation * Math.PI) / 180);
       
+      // Draw chicken with enhanced brightness during upgrade
+      if (upgradeEffectActive && glowIntensity > 0) {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.3 + glowIntensity * 0.3; // Add brightness
+        ctx.drawImage(
+          imgToDraw,
+          -CHICKEN_SIZE / 2,
+          -CHICKEN_SIZE / 2,
+          CHICKEN_SIZE,
+          CHICKEN_SIZE
+        );
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1.0;
+      }
+      
+      // Draw main chicken image
       ctx.drawImage(
         imgToDraw,
         -CHICKEN_SIZE / 2,
@@ -973,6 +1044,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     currentBgLevelRef.current = 1; // Reset background to level 1
     previousBgLevelRef.current = 1;
     bgTransitionStartTimeRef.current = null; // Clear any ongoing transition
+    chickenUpgradeEffectStartRef.current = null; // Clear upgrade effect
 
     setScore(0);
     setBoostEarned(null);
@@ -997,6 +1069,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     currentBgLevelRef.current = 1; // Reset background to level 1
     previousBgLevelRef.current = 1;
     bgTransitionStartTimeRef.current = null; // Clear any ongoing transition
+    chickenUpgradeEffectStartRef.current = null; // Clear upgrade effect
 
     setScore(0);
     setBoostEarned(null);
