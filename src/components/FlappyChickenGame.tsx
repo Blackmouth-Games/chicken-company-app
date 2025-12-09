@@ -22,6 +22,12 @@ import barTopImg2 from "@/assets/game/bar_top_2.png";
 import barBottomImg2 from "@/assets/game/bar_bottom_2.png";
 import barTopImg3 from "@/assets/game/bar_top_3.png";
 import barBottomImg3 from "@/assets/game/bar_bottom_3.png";
+import bg1 from "@/assets/game/bg/bg_1.jpg";
+import bg2 from "@/assets/game/bg/bg_2.jpg";
+import bg3 from "@/assets/game/bg/bg_3.jpg";
+import bg4 from "@/assets/game/bg/bg_4.jpg";
+import bg5 from "@/assets/game/bg/bg_5.jpg";
+import bg6 from "@/assets/game/bg/bg_6.jpg";
 import { supabase } from "@/integrations/supabase/client";
 
 // Array de imágenes de niveles de la gallina (L0 es el nivel inicial)
@@ -32,8 +38,12 @@ const CHICKEN_LEVEL_IMAGES = [
   chickenL13, chickenL14
 ];
 const LEVELS_PER_SCORE = 10; // Cada 10 puntos sube un nivel
-const BAR_LEVEL_INTERVAL = 30; // Cada 30 puntos cambia el nivel de barras
-const BAR_TRANSITION_RANGE = 5; // Rango de transición (ej: 25-30, 55-60)
+const BAR_LEVEL_INTERVAL = 30; // Cada 30 puntos cambia el nivel de barras (cambio inmediato)
+const BG_LEVEL_INTERVAL = 30; // Cada 30 puntos cambia el fondo
+const BG_FADE_DURATION = 2000; // Duración del fade en milisegundos (2 segundos)
+
+// Array de imágenes de fondo (orden: bg_1, bg_2, bg_3, bg_4, bg_5, bg_6)
+const BACKGROUND_IMAGES = [bg1, bg2, bg3, bg4, bg5, bg6];
 
 interface FlappyChickenGameProps {
   open: boolean;
@@ -134,6 +144,12 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const lastChickenLevelRef = useRef<number>(-1);
   const lastDebugLogTimeRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
+  
+  // Background system
+  const bgImgRefs = useRef<(HTMLImageElement | null)[]>([]);
+  const currentBgLevelRef = useRef<number>(1);
+  const bgTransitionStartTimeRef = useRef<number | null>(null);
+  const previousBgLevelRef = useRef<number>(1);
 
   // Calculate chicken level based on score (every 10 points = +1 level, cycles)
   const getChickenLevel = useCallback((currentScore: number): number => {
@@ -142,32 +158,23 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     return level % CHICKEN_LEVEL_IMAGES.length;
   }, []);
 
-  // Determine bar level with gradual transition
+  // Determine bar level - changes immediately at level thresholds (30, 60, etc.)
   // Returns the bar level (1, 2, 3, etc.) that should be used for a pipe at the current score
-  // Transition logic: In range 25-30, ~40% should be level 2 (2 out of 5 pipes)
-  // In range 55-60, ~40% should be level 3 (2 out of 5 pipes)
   const getBarLevelForScore = useCallback((currentScore: number): number => {
     // Base level: every 30 points = +1 bar level
-    const baseLevel = Math.floor(currentScore / BAR_LEVEL_INTERVAL) + 1;
-    
-    // Check if we're in a transition range (25-30, 55-60, etc.)
-    const scoreInCycle = currentScore % BAR_LEVEL_INTERVAL;
-    const transitionStart = BAR_LEVEL_INTERVAL - BAR_TRANSITION_RANGE;
-    
-    if (scoreInCycle >= transitionStart) {
-      // We're in transition range - mix levels gradually
-      // At the start of transition (score 25): ~40% chance of next level (2 out of 5 pipes)
-      // At the end of transition (score 30): 100% chance of next level
-      const progressInTransition = (scoreInCycle - transitionStart) / BAR_TRANSITION_RANGE;
-      // Interpolate from 0.4 (40%) at start to 1.0 (100%) at end
-      const nextLevelProbability = 0.4 + (progressInTransition * 0.6);
-      
-      if (Math.random() < nextLevelProbability) {
-        return baseLevel + 1;
-      }
-    }
-    
-    return baseLevel;
+    // Level 1: scores 0-29
+    // Level 2: scores 30-59
+    // Level 3: scores 60-89
+    // etc.
+    return Math.floor(currentScore / BAR_LEVEL_INTERVAL) + 1;
+  }, []);
+
+  // Determine background level - changes at level thresholds (30, 60, etc.)
+  // Returns the background level (1-5, cycles)
+  const getBackgroundLevel = useCallback((currentScore: number): number => {
+    const level = Math.floor(currentScore / BG_LEVEL_INTERVAL);
+    // Cycle through available backgrounds (if 5 images, level 5 becomes level 0 again)
+    return (level % BACKGROUND_IMAGES.length) + 1; // +1 because array is 0-indexed but levels are 1-indexed
   }, []);
 
   // Generate particles when level changes
@@ -478,6 +485,19 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     bottomImg3.onerror = () => {
       console.warn("[FlappyChicken] Failed to load bar_bottom_3.png");
     };
+
+    // Preload background images
+    bgImgRefs.current = [];
+    BACKGROUND_IMAGES.forEach((imgSrc, index) => {
+      const bgImg = new Image();
+      bgImg.src = imgSrc;
+      bgImg.onload = () => {
+        bgImgRefs.current[index + 1] = bgImg; // +1 because levels are 1-indexed
+      };
+      bgImg.onerror = () => {
+        console.warn(`[FlappyChicken] Failed to load background ${index + 1}`);
+      };
+    });
   }, [userId, isAdmin, loadMetrics]);
 
   // Calculate scale to fit 90% of screen
@@ -603,9 +623,50 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     });
     if (!canvas || !ctx) return;
     
-    // Clear and draw sky
-    ctx.fillStyle = "#4EC0CA";
-    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    // Determine current background level
+    const scoreForBg = isPlayingRef.current ? scoreRef.current : 0;
+    const newBgLevel = getBackgroundLevel(scoreForBg);
+    
+    // Check if background level changed
+    if (newBgLevel !== currentBgLevelRef.current && isPlayingRef.current) {
+      previousBgLevelRef.current = currentBgLevelRef.current;
+      currentBgLevelRef.current = newBgLevel;
+      bgTransitionStartTimeRef.current = Date.now();
+    }
+    
+    // Draw background with fade transition
+    const currentBgImg = bgImgRefs.current[currentBgLevelRef.current];
+    const previousBgImg = bgImgRefs.current[previousBgLevelRef.current];
+    
+    if (bgTransitionStartTimeRef.current !== null && previousBgImg && currentBgImg) {
+      // We're in a transition
+      const elapsed = Date.now() - bgTransitionStartTimeRef.current;
+      const progress = Math.min(1, elapsed / BG_FADE_DURATION);
+      
+      // Draw previous background fading out
+      ctx.save();
+      ctx.globalAlpha = 1 - progress;
+      ctx.drawImage(previousBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+      ctx.restore();
+      
+      // Draw new background fading in
+      ctx.save();
+      ctx.globalAlpha = progress;
+      ctx.drawImage(currentBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+      ctx.restore();
+      
+      // Clear transition when complete
+      if (progress >= 1) {
+        bgTransitionStartTimeRef.current = null;
+      }
+    } else if (currentBgImg) {
+      // No transition, just draw current background
+      ctx.drawImage(currentBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+    } else {
+      // Fallback to solid color if image not loaded
+      ctx.fillStyle = "#4EC0CA";
+      ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    }
     
     // Draw pipes using images
     pipesRef.current.forEach(pipe => {
@@ -787,7 +848,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       ctx.strokeText(scoreText, GAME_WIDTH / 2, 20);
       ctx.fillText(scoreText, GAME_WIDTH / 2, 20);
     }
-  }, [getChickenLevel, displayState, createLevelUpParticles]);
+  }, [getChickenLevel, displayState, createLevelUpParticles, getBackgroundLevel]);
 
   // Game loop
   const gameLoop = useCallback(() => {
@@ -909,6 +970,9 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     groundSpeedRef.current = INITIAL_GROUND_SPEED;
     lastChickenLevelRef.current = -1; // Reset level tracking
     particlesRef.current = []; // Clear particles
+    currentBgLevelRef.current = 1; // Reset background to level 1
+    previousBgLevelRef.current = 1;
+    bgTransitionStartTimeRef.current = null; // Clear any ongoing transition
 
     setScore(0);
     setBoostEarned(null);
@@ -930,6 +994,9 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     gameStartTimeRef.current = Date.now(); // Track game start time
     lastChickenLevelRef.current = -1; // Reset level tracking
     particlesRef.current = []; // Clear particles
+    currentBgLevelRef.current = 1; // Reset background to level 1
+    previousBgLevelRef.current = 1;
+    bgTransitionStartTimeRef.current = null; // Clear any ongoing transition
 
     setScore(0);
     setBoostEarned(null);
