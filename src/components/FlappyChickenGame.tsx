@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X, Play, RotateCcw, Trophy, Zap, Medal, BarChart3 } from "lucide-react";
 import chickenL0 from "@/assets/game/chicken/L0.png";
 import chickenL1 from "@/assets/game/chicken/L1.png";
@@ -640,22 +639,46 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
     const currentBgImg = bgImgRefs.current[currentBgLevelRef.current];
     const previousBgImg = bgImgRefs.current[previousBgLevelRef.current];
     
+    // Helper function to draw background image scaled to fit canvas
+    const drawBackgroundImage = (img: HTMLImageElement, alpha: number) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      
+      // Calculate scaling to cover entire canvas while maintaining aspect ratio
+      const imgAspect = img.width / img.height;
+      const canvasAspect = GAME_WIDTH / GAME_HEIGHT;
+      
+      let drawWidth = GAME_WIDTH;
+      let drawHeight = GAME_HEIGHT;
+      let offsetX = 0;
+      let offsetY = 0;
+      
+      if (imgAspect > canvasAspect) {
+        // Image is wider - fit to height and center horizontally
+        drawHeight = GAME_HEIGHT;
+        drawWidth = drawHeight * imgAspect;
+        offsetX = (GAME_WIDTH - drawWidth) / 2;
+      } else {
+        // Image is taller - fit to width and center vertically
+        drawWidth = GAME_WIDTH;
+        drawHeight = drawWidth / imgAspect;
+        offsetY = (GAME_HEIGHT - drawHeight) / 2;
+      }
+      
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+      ctx.restore();
+    };
+    
     if (bgTransitionStartTimeRef.current !== null && previousBgImg && currentBgImg) {
       // We're in a transition
       const elapsed = Date.now() - bgTransitionStartTimeRef.current;
       const progress = Math.min(1, elapsed / BG_FADE_DURATION);
       
       // Draw previous background fading out
-      ctx.save();
-      ctx.globalAlpha = 1 - progress;
-      ctx.drawImage(previousBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
-      ctx.restore();
+      drawBackgroundImage(previousBgImg, 1 - progress);
       
       // Draw new background fading in
-      ctx.save();
-      ctx.globalAlpha = progress;
-      ctx.drawImage(currentBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
-      ctx.restore();
+      drawBackgroundImage(currentBgImg, progress);
       
       // Clear transition when complete
       if (progress >= 1) {
@@ -663,7 +686,7 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
       }
     } else if (currentBgImg) {
       // No transition, just draw current background
-      ctx.drawImage(currentBgImg, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+      drawBackgroundImage(currentBgImg, 1);
     } else {
       // Fallback to solid color if image not loaded
       ctx.fillStyle = "#4EC0CA";
@@ -1173,23 +1196,26 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
   const scaledWidth = Math.round(GAME_WIDTH * scale);
   const scaledHeight = Math.round(GAME_HEIGHT * scale);
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="p-0 bg-transparent border-none shadow-none [&>button]:hidden"
-        style={{ maxWidth: scaledWidth + 16 }}
+    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
+      <div 
+        className="relative w-full h-full flex items-center justify-center"
+        style={{ maxWidth: '100vw', maxHeight: '100vh' }}
       >
+        {/* Close button */}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 z-50 p-3 bg-black/70 rounded-full text-white hover:bg-black/90 transition-colors shadow-lg"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        
         <div 
-          className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-900"
+          className="relative"
           style={{ width: scaledWidth, height: scaledHeight }}
         >
-          {/* Close button */}
-          <button
-            onClick={() => onOpenChange(false)}
-            className="absolute top-2 right-2 z-50 p-2 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
           
           {/* Game canvas */}
           <canvas
@@ -1315,12 +1341,20 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
           )}
 
           {/* Stats Dialog - Only for admins */}
-          {isAdmin && (
-            <Dialog open={showStats} onOpenChange={setShowStats}>
-              <DialogContent className="max-w-md">
-                <h2 className="text-2xl font-bold text-amber-900 mb-4">
-                  Estadísticas del Juego
-                </h2>
+          {isAdmin && showStats && (
+            <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-bold text-amber-900">
+                    Estadísticas del Juego
+                  </h2>
+                  <button
+                    onClick={() => setShowStats(false)}
+                    className="p-1 hover:bg-gray-200 rounded"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
                 
                 <div className="space-y-3">
                   <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
@@ -1378,12 +1412,12 @@ const FlappyChickenGame = ({ open, onOpenChange, userId }: FlappyChickenGameProp
                     Cerrar
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
