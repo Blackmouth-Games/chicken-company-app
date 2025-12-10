@@ -19,6 +19,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Distributor Contract Addresses (desplegado 2025-01-30)
+const DISTRIBUTOR_CONTRACT_ADDRESSES: Record<string, string> = {
+  ton: 'EQDEnTBYm8p9JbQ6jdlfqp1DwMYGUtsYSafrvQxl65cU93rt', // Testnet
+  sol: '', // TODO: Configurar cuando se despliegue en Solana
+};
+
 // Chain configurations
 const CHAIN_CONFIG: Record<string, { 
   baseUnitMultiplier: number; 
@@ -474,6 +480,7 @@ serve(async (req) => {
         epochNumber,
         chain,
         merkleRoot: root,
+        contractAddress: DISTRIBUTOR_CONTRACT_ADDRESSES[chain] || null, // Dirección del contrato para hacer claims
         stats: {
           usersCount: usersWithRewards.length,
           totalEggsProduced,

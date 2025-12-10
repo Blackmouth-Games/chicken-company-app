@@ -25,6 +25,7 @@ import { AdminBuildingPrices } from "./pages/AdminBuildingPrices";
 import { AdminUsers } from "./pages/AdminUsers";
 import { AdminSales } from "./pages/AdminSales";
 import { AdminFlappyChickenMetrics } from "./pages/AdminFlappyChickenMetrics";
+import { AdminBlockchain } from "./pages/AdminBlockchain";
 import NotFound from "./pages/NotFound";
 import TelegramLayout from "./components/TelegramLayout";
 import DebugOverlay from "./components/DebugOverlay";
@@ -92,6 +93,7 @@ const AppRoutes = () => {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/sales" element={<AdminSales />} />
             <Route path="/admin/flappy-chicken-metrics" element={<AdminFlappyChickenMetrics />} />
+            <Route path="/admin/blockchain" element={<AdminBlockchain />} />
             <Route path="*" element={<Navigate to="/admin/login" replace />} />
           </Routes>
         </ErrorBoundary>

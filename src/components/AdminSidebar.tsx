@@ -10,6 +10,7 @@ import {
   BarChart3,
   TrendingUp,
   Gamepad2,
+  Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
@@ -55,6 +56,11 @@ const navItems: NavItem[] = [
     title: "Flappy Chicken",
     href: "/admin/flappy-chicken-metrics",
     icon: Gamepad2,
+  },
+  {
+    title: "Blockchain",
+    href: "/admin/blockchain",
+    icon: Network,
   },
 ];
 
